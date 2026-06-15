@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# turbo
+.turbo/
+
+# env (keep examples)
+.env
+.env.*
+!.env.example
+
+# test / coverage
+coverage/
+
+# local dev scratch (mongod data, etc.)
+.devdata/
+
+# editor / os
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+*.local

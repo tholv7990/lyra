@@ -1,0 +1,30 @@
+{
+  "name": "lyra",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
+    "turbo": "^2.9.18",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.50.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "argon2",
+      "esbuild",
+      "mongodb-memory-server",
+      "unrs-resolver"
+    ]
+  }
+}
