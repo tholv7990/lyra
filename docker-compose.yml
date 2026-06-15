@@ -1,0 +1,50 @@
+# Local dev backing services. The apps themselves run on the host via
+# `pnpm dev` — only stateful services live in Docker.
+#
+#   docker compose up -d mongo            # MongoDB (default)
+#   docker compose --profile queue up -d  # + Redis (needed from Phase 6)
+#   docker compose down                   # stop (keeps data volumes)
+#   docker compose down -v                # stop + wipe data
+#
+# Mongo runs as a single-node replica set (rs0) so multi-document
+# transactions work — Phase 1 creates user + workspace + membership atomically.
+
+services:
+  mongo:
+    image: mongo:8
+    container_name: lyra-mongo
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      # Initiate the replica set on first boot (advertise localhost so the
+      # host-side driver can reach the primary); report ok thereafter.
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: lyra-redis
+    restart: unless-stopped
+    profiles: ["queue"] # only starts with `--profile queue` (Phase 6+)
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mongo_data:
+  redis_data:

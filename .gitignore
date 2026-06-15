@@ -21,6 +21,12 @@ coverage/
 # local dev scratch (mongod data, etc.)
 .devdata/
 
+# Claude Code settings + MCP config (may hold connection strings / local prefs).
+# Shared, non-secret config in .claude/ (agents, per-package CLAUDE.md) IS committed.
+.claude/settings.json
+.claude/settings.local.json
+.mcp.json
+
 # editor / os
 .DS_Store
 .vscode/*

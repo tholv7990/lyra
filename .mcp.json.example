@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy to .mcp.json (gitignored). Read-only MongoDB MCP for inspecting the dev DB. Swap the connection string for your Atlas SRV URI if not using Docker. Restart Claude Code to load; you'll be prompted to approve the server.",
+  "mcpServers": {
+    "mongodb": {
+      "command": "npx",
+      "args": ["-y", "mongodb-mcp-server@latest", "--readOnly"],
+      "env": {
+        "MDB_MCP_CONNECTION_STRING": "mongodb://localhost:27017/lyra?replicaSet=rs0"
+      }
+    }
+  }
+}

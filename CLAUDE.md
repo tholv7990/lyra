@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Current state: docs-only, pre-scaffold
+## Current state: Phase 0 complete (monorepo + auth)
 
-This repo currently contains **only specification documents** under `docs/` — no code, no `package.json`, no monorepo yet. Lyra has not been bootstrapped. The first substantial task is to scaffold the Turborepo monorepo per the getting-started doc. Treat the docs as the authoritative spec; nothing in them has been built or verified yet.
+The Turborepo monorepo is scaffolded and **Phase 0 (Monorepo + Auth) is built and verified**: `@lyra/shared` contracts, `apps/api` (signup/login/refresh/logout/me with argon2 + rotating refresh), and `apps/web` (AuthContext + auth pages). **Phase 1 (Workspaces) is next** — see the build-phase list below. The `docs/` remain the authoritative spec for everything not yet built; later phases have not been implemented.
 
 **Read these before doing anything** (they are the source of truth, in priority order):
 - [docs/lyra-requirements.md](docs/lyra-requirements.md) — business + technical requirements, data model, API surface, all resolved decisions, and the **build-phase order (§B8)**.
@@ -67,13 +67,13 @@ Build **one phase at a time**; each has a Definition of Done. See [docs/lyra-req
 6. **Render steps + queue** — image (6) + video (7); BullMQ/Redis; assets to R2/S3.
 7. **Assemble/QA + loop + harden** — step 8; learnings loop into step 5; rate limits, deploy.
 
-## Commands (once the monorepo is scaffolded)
+## Commands
 
-These come from the planned root `package.json` / `turbo.json` — they do not work yet because nothing is bootstrapped. Package manager is **pnpm** (v9), Node 20.
+Phase 0 is scaffolded. Package manager is **pnpm** (v10), Node 20+ (developed on 24).
 
 ```bash
 pnpm install              # install workspace deps
-pnpm dev                  # turbo run dev — web + api together
+pnpm dev                  # turbo run dev — web (:5173) + api (:3001) together
 pnpm build                # turbo run build (dependsOn ^build; shared builds first)
 pnpm lint                 # turbo run lint
 pnpm type-check           # turbo run type-check
@@ -82,7 +82,22 @@ pnpm test                 # turbo run test (whole suite; what CI gates)
 # scope a task to one package
 pnpm turbo run build --filter=@lyra/api
 pnpm turbo run test  --filter=@lyra/shared
+pnpm --filter @lyra/api test:e2e          # auth e2e (spins up in-memory MongoDB)
 ```
+
+### Local services
+
+The api needs MongoDB to run (`pnpm dev`); the e2e tests spin up their own
+in-memory MongoDB, so they need no external DB. For dev, use Docker:
+
+```bash
+docker compose up -d mongo                # MongoDB single-node replica set (rs0)
+docker compose --profile queue up -d      # + Redis (from Phase 6)
+```
+
+Mongo is a single-node replica set so transactions work (Phase 1+). Dev URI:
+`mongodb://localhost:27017/lyra?replicaSet=rs0`. Alternatively point `MONGODB_URI`
+at a MongoDB Atlas SRV string. Provider keys are **never** env vars (see invariant 7).
 
 CI runs `pnpm turbo run lint type-check test build` on every PR and push to `main`. Nothing is "done" until those pass **and** the phase's Definition of Done is met.
 

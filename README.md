@@ -23,7 +23,7 @@ docs/         # product, technical, design-system, and hosting/CI specs
 ## Prerequisites
 
 - **Node 20+** (developed on 24) and **pnpm 10**
-- A running **MongoDB** at `MONGODB_URI` (default `mongodb://localhost:27017/lyra`)
+- **Docker** (for the local MongoDB), or any MongoDB reachable at `MONGODB_URI`
 
 ## Getting started
 
@@ -33,8 +33,27 @@ pnpm install
 # api environment — copy the example and fill in secrets
 cp apps/api/.env.example apps/api/.env
 
+# start the local backing services (MongoDB replica set)
+docker compose up -d mongo
+
 pnpm dev          # runs web (:5173) + api (:3001) together via Turbo
 ```
+
+### Local services (Docker)
+
+Only stateful services run in Docker; the apps run on the host for fast HMR.
+
+```bash
+docker compose up -d mongo             # MongoDB (single-node replica set rs0)
+docker compose --profile queue up -d   # + Redis (needed from Phase 6)
+docker compose down                    # stop (keeps data)
+docker compose down -v                 # stop + wipe data
+```
+
+Mongo runs as a single-node replica set so multi-document transactions work
+(Phase 1 onward). The matching URI is `mongodb://localhost:27017/lyra?replicaSet=rs0`.
+Prefer a cloud DB instead? Point `MONGODB_URI` at a MongoDB Atlas SRV string —
+no other change needed.
 
 ## Common commands
 
