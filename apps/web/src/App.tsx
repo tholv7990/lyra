@@ -7,7 +7,8 @@ import {
 import { useAuth } from './auth/useAuth';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
-import { Dashboard } from './pages/Dashboard';
+import { Home } from './pages/Home';
+import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
   return <div className="center muted">Loading…</div>;
@@ -18,7 +19,7 @@ function ProtectedLayout() {
   const { user, loading } = useAuth();
   if (loading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
-  return <Outlet />;
+  return <AppLayout />;
 }
 
 // Keeps logged-in users out of /login and /signup.
@@ -39,7 +40,7 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedLayout />,
-    children: [{ path: '/', element: <Dashboard /> }],
+    children: [{ path: '/', element: <Home /> }],
   },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
