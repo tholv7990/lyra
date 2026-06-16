@@ -157,10 +157,30 @@ MODEL_CATALOG: Record<Provider, { id: string; label: string }[]>
     nav: Home / Projects / Prompts / Pipelines / Settings.
 19. **v1 node type:** every node is a prompt-run. No non-AI / non-prompt nodes yet.
 
+### Builder editing & data flow
+20. **Editing a step in the builder.** Provider & model are **per-step** — editing
+    them affects only that step in that pipeline (never anything shared, no copy).
+    Editing the step's **prompt content** prompts a choice: **Update the shared
+    prompt** (propagates to every use, with a heads-up) or **Save as a new copy**
+    (creates a new library prompt and repoints this step to it). The original never
+    changes silently.
+21. **Output → input chaining.** Each step's output feeds the next. By **default**
+    the previous step's output is passed to the next step as context; a prompt can
+    place it precisely with the **`{input}`** placeholder, and reference any earlier
+    step with **`{step:Name}`**. The **Start** node supplies the first input
+    (project context). Placeholder vocabulary: `{product}` / `{niche}` /
+    `{homepage}` (project context) · `{input}` (previous output) · `{step:Name}`
+    (a specific earlier step's output).
+
 ## 6. Execution semantics
 
 - **Create run** = pick a pipeline **in a project** → snapshot its steps, fill each
-  step's prompt placeholders from the project context, copy provider/model/mode.
+  step's project placeholders (`{product}/{niche}/{homepage}`) from the project
+  context, copy provider/model/mode.
+- **Chaining**: as each step completes, its output becomes the next step's
+  `{input}` (and is available to later steps via `{step:Name}`); without an
+  explicit placeholder, the previous output is supplied as context by default. So
+  data flows start → step₁ → step₂ → … → End.
 - The **run engine carries over** (`assertRunnable → begin → complete/fail →
   approve`, plus stop/reset). It already walks an ordered step array with gates —
   it just stops assuming a fixed length of 8 and reads **provider/model from each

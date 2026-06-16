@@ -12,6 +12,7 @@ Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` inter
 
 **Read these before doing anything** (source of truth, in priority order):
 - [docs/lyra-pipelines.md](docs/lyra-pipelines.md) — **composable Pipelines (business model v2)**: entities, full decision log, UI spec, build phases. Supersedes the fixed-pipeline model.
+- [docs/lyra-prompt-testing.md](docs/lyra-prompt-testing.md) — **Prompt testing playground**: chat-style per-prompt testing with starrable/taggable history (design approved, not built).
 - [docs/lyra-requirements.md](docs/lyra-requirements.md) — business + technical requirements, data model, API surface, resolved decisions, **build-phase order (§B8)**. (Fixed 8-step run model is superseded by lyra-pipelines.md.)
 - [docs/lyra-getting-started.md](docs/lyra-getting-started.md) — the concrete kickoff: exact bootstrap commands, root config files, and **copy-paste-ready `@lyra/shared` contracts (§5)**. Build Phase 0 (Monorepo + Auth) from this.
 - [docs/lyra-design-system.md](docs/lyra-design-system.md) — the dark, Apple-style design tokens for the web UI. Honor these tokens when building React components.
