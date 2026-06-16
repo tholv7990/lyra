@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import {
   MediaType,
   PromptStatus,
@@ -11,6 +11,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { PromptsIcon } from '../layout/icons';
 
 const TYPE_LABELS: Record<StepKey, string> = {
   [StepKey.Find]: 'Find',
@@ -31,6 +32,17 @@ const MEDIA_LABELS: Record<MediaType, string> = {
   [MediaType.File]: 'File',
 };
 const MEDIA_TYPES = Object.values(MediaType);
+
+const STATUS_COLORS: Record<PromptStatus, string> = {
+  [PromptStatus.Draft]: '#d4a72c',
+  [PromptStatus.Public]: '#2da44e',
+};
+
+function initials(name?: string) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+}
 
 interface FormState {
   title: string;
@@ -81,6 +93,13 @@ export function Prompts() {
       cancelled = true;
     };
   }, [wsId]);
+
+  const counts = useMemo(() => {
+    const m = {} as Record<StepKey, number>;
+    for (const t of TYPES) m[t] = 0;
+    for (const p of prompts) m[p.type] = (m[p.type] ?? 0) + 1;
+    return m;
+  }, [prompts]);
 
   const visible = useMemo(
     () => (filter === 'all' ? prompts : prompts.filter((p) => p.type === filter)),
@@ -187,8 +206,11 @@ export function Prompts() {
 
   return (
     <div>
-      <div className="section-head">
-        <h2>Prompts</h2>
+      <div className="prompts-head">
+        <div className="titles">
+          <h2>Prompts</h2>
+          <p>Reusable, on-brand prompts for every step of the pipeline.</p>
+        </div>
         {!editing && (
           <button
             className="btn-primary"
@@ -200,29 +222,45 @@ export function Prompts() {
         )}
       </div>
 
-      {!editing && (
+      {!editing && prompts.length > 0 && (
         <div className="type-filter">
           <button
             className={`type-chip ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
             All
+            <span className="count">{prompts.length}</span>
           </button>
-          {TYPES.map((t) => (
-            <button
-              key={t}
-              className={`type-chip ${filter === t ? 'active' : ''}`}
-              onClick={() => setFilter(t)}
-            >
-              <span className="dot" style={{ background: STEP_COLORS[t] }} />
-              {TYPE_LABELS[t]}
-            </button>
-          ))}
+          {TYPES.filter((t) => counts[t] > 0).map((t) => {
+            const active = filter === t;
+            const style: CSSProperties | undefined = active
+              ? {
+                  color: STEP_COLORS[t],
+                  borderColor: `${STEP_COLORS[t]}66`,
+                  background: `${STEP_COLORS[t]}14`,
+                }
+              : undefined;
+            return (
+              <button
+                key={t}
+                className={`type-chip ${active ? 'active' : ''}`}
+                style={style}
+                onClick={() => setFilter(t)}
+              >
+                <span className="dot" style={{ background: STEP_COLORS[t] }} />
+                {TYPE_LABELS[t]}
+                <span className="count">{counts[t]}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
       {editing && (
-        <form className="form-inline" onSubmit={onSubmit}>
+        <form className="form-inline prompt-form" onSubmit={onSubmit}>
+          <p className="form-title">
+            {editing.kind === 'new' ? 'New prompt' : 'Edit prompt'}
+          </p>
           {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
           <input
             className="text-input"
@@ -233,8 +271,8 @@ export function Prompts() {
           />
 
           <div className="form-row">
-            <label className="field">
-              <span className="field-label">Type</span>
+            <label className="pf-field">
+              <span className="pf-label">Type</span>
               <select
                 className="text-input"
                 value={form.type}
@@ -249,14 +287,18 @@ export function Prompts() {
                 ))}
               </select>
             </label>
-            <label className="field">
-              <span className="field-label">Status</span>
+            <div className="pf-field">
+              <span className="pf-label">Status</span>
               <div className="seg">
                 <button
                   type="button"
                   className={form.status === PromptStatus.Draft ? 'on' : ''}
                   onClick={() => setForm({ ...form, status: PromptStatus.Draft })}
                 >
+                  <span
+                    className="pip"
+                    style={{ background: STATUS_COLORS[PromptStatus.Draft] }}
+                  />
                   Draft
                 </button>
                 <button
@@ -264,10 +306,14 @@ export function Prompts() {
                   className={form.status === PromptStatus.Public ? 'on' : ''}
                   onClick={() => setForm({ ...form, status: PromptStatus.Public })}
                 >
+                  <span
+                    className="pip"
+                    style={{ background: STATUS_COLORS[PromptStatus.Public] }}
+                  />
                   Public
                 </button>
               </div>
-            </label>
+            </div>
           </div>
 
           <textarea
@@ -278,7 +324,7 @@ export function Prompts() {
             onChange={(e) => setForm({ ...form, content: e.target.value })}
           />
 
-          <div className="field-label">Media (sent to the AI provider)</div>
+          <div className="pf-label">Media — sent to the AI provider</div>
           {form.media.length > 0 && (
             <div className="media-chips">
               {form.media.map((m, i) => (
@@ -331,7 +377,7 @@ export function Prompts() {
               className="btn-primary"
               type="submit"
               disabled={busy}
-              style={{ marginTop: 0 }}
+              style={{ marginTop: 0, width: 'auto' }}
             >
               {busy
                 ? 'Saving…'
@@ -350,19 +396,39 @@ export function Prompts() {
 
       {loading ? (
         <p className="empty">Loading prompts…</p>
+      ) : prompts.length === 0 && !editing ? (
+        <div className="prompt-empty">
+          <div className="prompt-empty-art">
+            <PromptsIcon width={26} height={26} />
+          </div>
+          <h3>Build your prompt library</h3>
+          <p>
+            Save reusable prompts for each step of the pipeline — briefs, insights,
+            image and video directions — tagged by type and shared with your team.
+          </p>
+          <div className="prompt-empty-dots">
+            {TYPES.map((t) => (
+              <span key={t} className="d" style={{ background: STEP_COLORS[t] }} />
+            ))}
+          </div>
+          <button className="btn-primary" onClick={openCreate}>
+            Create your first prompt
+          </button>
+        </div>
       ) : visible.length === 0 ? (
-        <p className="empty">
-          {prompts.length === 0
-            ? 'No prompts yet. Create your first one.'
-            : 'No prompts of this type.'}
-        </p>
+        <p className="empty">No prompts of this type.</p>
       ) : (
         <div className="prompt-grid">
-          {visible.map((p) => (
+          {visible.map((p, i) => (
             <div
               className="prompt-card"
               key={p.id}
-              style={{ borderLeftColor: STEP_COLORS[p.type] }}
+              style={
+                {
+                  '--accent': STEP_COLORS[p.type],
+                  animationDelay: `${Math.min(i, 12) * 40}ms`,
+                } as CSSProperties
+              }
             >
               <div className="prompt-card-head">
                 <span className="prompt-card-title">{p.title}</span>
@@ -386,8 +452,8 @@ export function Prompts() {
 
               {p.media.length > 0 && (
                 <div className="media-chips">
-                  {p.media.map((m, i) => (
-                    <span className="media-chip ro" key={`${m.url}-${i}`}>
+                  {p.media.map((m, idx) => (
+                    <span className="media-chip ro" key={`${m.url}-${idx}`}>
                       <span className="media-kind">{MEDIA_LABELS[m.type]}</span>
                       <span className="media-name">{m.name || m.url}</span>
                     </span>
@@ -396,16 +462,19 @@ export function Prompts() {
               )}
 
               <div className="prompt-card-foot">
-                <span className="prompt-by">by {p.createdBy.name}</span>
+                <span className="prompt-author">
+                  <span className="av">{initials(p.createdBy.name)}</span>
+                  {p.createdBy.name}
+                </span>
                 {canEdit(p) && (
-                  <div className="row-actions" style={{ marginLeft: 'auto' }}>
-                    <button className="btn-ghost" onClick={() => toggleStatus(p)}>
+                  <div className="prompt-actions">
+                    <button className="txt-btn accent" onClick={() => toggleStatus(p)}>
                       {p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}
                     </button>
-                    <button className="btn-ghost" onClick={() => openEdit(p)}>
+                    <button className="txt-btn" onClick={() => openEdit(p)}>
                       Edit
                     </button>
-                    <button className="btn-danger" onClick={() => setToDelete(p)}>
+                    <button className="txt-btn danger" onClick={() => setToDelete(p)}>
                       Delete
                     </button>
                   </div>

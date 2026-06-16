@@ -160,25 +160,7 @@ export function ProjectDetail() {
 
       <div className="detail-panel">
         <div className="detail-grid">
-          <div className="detail-field">
-            <div className="label">Visibility</div>
-            <div className="value">
-              {canEdit ? (
-                <select
-                  className="text-input select-sm"
-                  value={project.visibility}
-                  onChange={(e) => void changeVisibility(e.target.value as ProjectVisibility)}
-                >
-                  {Object.values(ProjectVisibility).map((v) => (
-                    <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>
-                  ))}
-                </select>
-              ) : (
-                <span className={`badge vis-${project.visibility}`}>{VISIBILITY_LABELS[project.visibility]}</span>
-              )}
-            </div>
-          </div>
-          <div className="detail-field">
+          <div className="detail-field wide">
             <div className="label">Product</div>
             <div className="value">{project.product || '—'}</div>
           </div>
@@ -197,6 +179,25 @@ export function ProjectDetail() {
             </div>
           </div>
           <div className="detail-field">
+            <div className="label">Visibility</div>
+            <div className="value">
+              {canEdit ? (
+                <select
+                  className="text-input select-sm"
+                  style={{ width: 'auto' }}
+                  value={project.visibility}
+                  onChange={(e) => void changeVisibility(e.target.value as ProjectVisibility)}
+                >
+                  {Object.values(ProjectVisibility).map((v) => (
+                    <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className={`badge vis-${project.visibility}`}>{VISIBILITY_LABELS[project.visibility]}</span>
+              )}
+            </div>
+          </div>
+          <div className="detail-field">
             <div className="label">Created</div>
             <div className="value">
               {new Date(project.createdAt).toLocaleDateString()} · by {project.createdBy.name}
@@ -208,7 +209,26 @@ export function ProjectDetail() {
       {error && <p className="error">{error}</p>}
 
       {!run ? (
-        <p className="empty">No run yet. Start a run to populate the 8-step workbench.</p>
+        <div className="prompt-empty">
+          <div className="prompt-empty-art">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 3.5 19 12 5 20.5z" />
+            </svg>
+          </div>
+          <h3>Ready to run the pipeline</h3>
+          <p>
+            Start a run to populate the 8-step workbench — find, crawl, brief,
+            insight, prompts, images, video, and assemble — each step editable and
+            gated for approval.
+          </p>
+          <button
+            className="btn-primary"
+            disabled={busy}
+            onClick={startRun}
+          >
+            Start run
+          </button>
+        </div>
       ) : (
         <div className="steps">
           {run.steps.map((step) => (

@@ -9,6 +9,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ProjectsIcon } from '../layout/icons';
 
 const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
   [ProjectVisibility.Private]: 'Private',
@@ -121,7 +122,21 @@ export function Projects() {
       {loading ? (
         <p className="empty">Loading projects…</p>
       ) : projects.length === 0 ? (
-        <p className="empty">No projects yet. Create your first one.</p>
+        !creating && (
+          <div className="prompt-empty">
+            <div className="prompt-empty-art">
+              <ProjectsIcon width={26} height={26} />
+            </div>
+            <h3>Create your first project</h3>
+            <p>
+              A project holds a brand or product. Run the 8-step AI pipeline against
+              it to produce on-brand images and video.
+            </p>
+            <button className="btn-primary" onClick={() => setCreating(true)}>
+              New project
+            </button>
+          </div>
+        )
       ) : (
         <div className="project-grid">
           {projects.map((p) => (
