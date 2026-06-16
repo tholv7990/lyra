@@ -1,6 +1,7 @@
 import type { Project as ProjectModel, UserRef } from '@lyra/shared';
 import type { ProjectDocument } from './project.schema';
 import { userRef, userRefs } from '../common/refs';
+import { iso } from '../common/dates';
 
 export function toProject(
   p: ProjectDocument,
@@ -17,11 +18,11 @@ export function toProject(
     learnings: p.learnings,
     visibility: p.visibility,
     sharedWith: userRefs(p.sharedWith, refs),
-    active: p.active,
+    active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
+    createdAt: iso(p.createdAt),
+    updatedAt: iso(p.updatedAt ?? p.createdAt),
   };
 }
 

@@ -9,6 +9,7 @@ import type { WorkspaceDocument } from './workspace.schema';
 import type { MembershipDocument } from './membership.schema';
 import type { InviteDocument } from './invite.schema';
 import { userRef } from '../common/refs';
+import { iso } from '../common/dates';
 
 export function toWorkspaceView(
   w: WorkspaceDocument,
@@ -20,11 +21,11 @@ export function toWorkspaceView(
     id: w._id.toString(),
     name: w.name,
     type: w.type,
-    active: w.active,
+    active: w.active ?? true,
     createdBy: userRef(w.createdBy, refs),
     updatedBy: userRef(w.updatedBy, refs),
-    createdAt: w.createdAt.toISOString(),
-    updatedAt: w.updatedAt.toISOString(),
+    createdAt: iso(w.createdAt),
+    updatedAt: iso(w.updatedAt ?? w.createdAt),
     role,
     canManageKeys,
   };
@@ -42,7 +43,7 @@ export function toMemberView(
     name: user.name,
     role: m.role,
     canManageKeys: m.canManageKeys,
-    createdAt: m.createdAt.toISOString(),
+    createdAt: iso(m.createdAt),
   };
 }
 
@@ -56,11 +57,11 @@ export function toInviteView(
     email: i.email,
     role: i.role,
     status: i.status,
-    active: i.active,
+    active: i.active ?? true,
     createdBy: userRef(i.createdBy, refs),
     updatedBy: userRef(i.updatedBy, refs),
-    createdAt: i.createdAt.toISOString(),
-    updatedAt: i.updatedAt.toISOString(),
-    expiresAt: i.expiresAt.toISOString(),
+    createdAt: iso(i.createdAt),
+    updatedAt: iso(i.updatedAt ?? i.createdAt),
+    expiresAt: iso(i.expiresAt),
   };
 }

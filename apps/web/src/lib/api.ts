@@ -95,8 +95,11 @@ export async function api<T = unknown>(
     },
   });
 
-  // On 401, transparently refresh the access token once, then retry.
-  if (res.status === 401 && retry && path !== '/auth/refresh') {
+  // On 401, transparently refresh the access token once, then retry — but not
+  // for the session-establishing endpoints (a 401 there is bad credentials, not
+  // an expired token).
+  const noRefresh = ['/auth/refresh', '/auth/login', '/auth/signup'];
+  if (res.status === 401 && retry && !noRefresh.includes(path)) {
     const ok = await refreshSession();
     if (ok) return api<T>(path, { ...options, retry: false });
   }

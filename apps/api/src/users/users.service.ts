@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import { BaseRepository } from '../common/database/base.repository';
+import { iso } from '../common/dates';
 import type { User as SafeUser, UserRef } from '@lyra/shared';
 
 @Injectable()
@@ -35,9 +36,9 @@ export class UsersService extends BaseRepository<User> {
       id: doc._id.toString(),
       email: doc.email,
       name: doc.name,
-      active: doc.active,
-      createdAt: doc.createdAt.toISOString(),
-      updatedAt: doc.updatedAt.toISOString(),
+      active: doc.active ?? true,
+      createdAt: iso(doc.createdAt),
+      updatedAt: iso(doc.updatedAt ?? doc.createdAt),
     };
   }
 }

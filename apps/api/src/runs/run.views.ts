@@ -10,6 +10,7 @@ import type {
 import type { RunDocument, RunStep } from './run.schema';
 import type { RunState } from './run.engine';
 import { userRef } from '../common/refs';
+import { iso } from '../common/dates';
 
 function toStep(s: RunStep): Step {
   return {
@@ -36,11 +37,11 @@ export function toRun(doc: RunDocument, refs: Map<string, UserRef>): RunModel {
     status: doc.status as RunStatus,
     currentStep: doc.currentStep,
     steps: doc.steps.map(toStep),
-    active: doc.active,
+    active: doc.active ?? true,
     createdBy: userRef(doc.createdBy, refs),
     updatedBy: userRef(doc.updatedBy, refs),
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
+    createdAt: iso(doc.createdAt),
+    updatedAt: iso(doc.updatedAt ?? doc.createdAt),
   };
 }
 
