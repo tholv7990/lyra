@@ -544,27 +544,66 @@
   margin-top: 6px;
 }
 
-/* prompt editor: borderless big title, full-width composer, tags+toggle row */
+/* prompt editor: one white framed panel (matches the testing chat) */
+.pe { max-width: 720px; margin: 0 auto; padding: 4px 0 60px; }
+
+.pe-top { display: flex; align-items: center; gap: 10px; padding: 10px 2px 14px; }
+.pe-back {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--ink-muted); text-decoration: none; font-weight: 500; font-size: 13px;
+  height: 32px; padding: 0 10px 0 8px; border-radius: 8px;
+}
+.pe-back:hover { background: var(--surface-2); color: var(--ink); }
+.pe-here { font-weight: 600; letter-spacing: -0.02em; }
+.pe-spacer { flex: 1; }
+.pe-top .pe-btn { width: auto; margin-top: 0; }
+.pe-error { margin: 0 2px 12px; }
+
+.pe-frame {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 18px 18px 12px;
+}
+
 .pe-title {
   width: 100%;
   border: none;
   outline: none;
   background: transparent;
   font: inherit;
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--ink);
-  padding: 2px 0 4px;
+  padding: 2px 0 2px;
 }
 .pe-title::placeholder { color: var(--ink-tertiary); }
 
-.pe-composer { max-width: none; }
+.pe-editor {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
+  min-height: 200px;
+  padding: 4px 0 0;
+}
+.pe-editor::placeholder { color: var(--ink-subtle); }
+
+.pe-bar { display: flex; align-items: center; gap: 8px; padding-top: 8px; }
+.pe-counter { margin-left: auto; font-size: 12px; color: var(--ink-subtle); font-variant-numeric: tabular-nums; }
 
 .pe-row {
   display: flex;
   align-items: center;
   gap: 14px;
+  margin: 6px 0 14px;
 }
 .pe-tags { flex: 1; min-width: 0; }
 

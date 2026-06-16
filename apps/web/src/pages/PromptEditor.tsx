@@ -109,21 +109,31 @@ export function PromptEditor() {
   if (loading) return <p className="empty">Loading…</p>;
   if (denied) {
     return (
-      <div className="editor">
-        <Link to="/prompts" className="pg-back">← Prompts</Link>
+      <div className="pe">
+        <div className="pe-top">
+          <Link to="/prompts" className="pe-back">‹ Prompts</Link>
+        </div>
         <p className="empty">You can only edit prompts you created.</p>
       </div>
     );
   }
 
   return (
-    <div className="editor">
-      <Link to="/prompts" className="pg-back">← Prompts</Link>
-      <h2 className="editor-title">{isEdit ? 'Edit prompt' : 'New prompt'}</h2>
+    <form className="pe" onSubmit={onSubmit}>
+      <div className="pe-top">
+        <Link to="/prompts" className="pe-back">‹ Prompts</Link>
+        <span className="pe-here">{isEdit ? 'Edit prompt' : 'New prompt'}</span>
+        <span className="pe-spacer" />
+        <button type="button" className="btn-ghost pe-btn" onClick={() => navigate('/prompts')}>Cancel</button>
+        <button type="submit" className="btn-primary pe-btn" disabled={busy || !form.title.trim()}>
+          {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create prompt'}
+        </button>
+      </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error pe-error">{error}</p>}
 
-      <form onSubmit={onSubmit}>
+      {/* one white framed panel: title, tags+toggle row, then the composer */}
+      <div className="pe-frame">
         <input
           className="pe-title"
           placeholder="Prompt title"
@@ -132,26 +142,7 @@ export function PromptEditor() {
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
 
-        <div className="composer-box pe-composer">
-          <AttachmentPreviews
-            media={form.media}
-            uploading={uploading}
-            onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
-          />
-          <textarea
-            className="composer-input"
-            placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-            rows={8}
-            value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-          />
-          <div className="composer-bar">
-            <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
-            <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
-          </div>
-        </div>
-
-        {/* tags (left) + visibility toggle (right) on one row, no labels */}
+        {/* tags (left) + Public toggle (right), one row, no labels */}
         <div className="pe-row">
           <div className="pe-tags">
             <TagInput value={form.tags} suggestions={vocab} onChange={(tags) => setForm({ ...form, tags })} />
@@ -167,13 +158,26 @@ export function PromptEditor() {
           </label>
         </div>
 
-        <div className="editor-actions">
-          <button className="btn-ghost" type="button" onClick={() => navigate('/prompts')}>Cancel</button>
-          <button className="btn-primary" type="submit" disabled={busy || !form.title.trim()} style={{ width: 'auto', marginTop: 0 }}>
-            {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create prompt'}
-          </button>
+        <AttachmentPreviews
+          media={form.media}
+          uploading={uploading}
+          onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
+        />
+
+        <textarea
+          className="pe-editor"
+          placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+          rows={8}
+          value={form.content}
+          onChange={(e) => setForm({ ...form, content: e.target.value })}
+        />
+
+        <div className="pe-bar">
+          <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
+          <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
+          <span className="pe-counter">{form.content.length.toLocaleString()} chars</span>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }

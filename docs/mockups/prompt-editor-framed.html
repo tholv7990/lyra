@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lyra — Prompt editor (framed)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: #ff6b1a; --primary-hover: #ff7d35; --primary-tint: rgba(255,107,26,0.12);
+    --app-bg: #f4f4f6; --surface-1: #f7f7f9; --surface-2: #eeeef1; --surface-3: #e6e6ea;
+    --hairline: rgba(0,0,0,0.07); --hairline-strong: rgba(0,0,0,0.12);
+    --ink: #1d1d1f; --ink-muted: rgba(60,60,67,0.62); --ink-subtle: rgba(60,60,67,0.42); --ink-tertiary: rgba(60,60,67,0.28);
+    --shadow-sm: 0 1px 2px rgba(16,17,26,0.04), 0 1px 3px rgba(16,17,26,0.03);
+    --r-ctl: 8px; --ctl-h: 36px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
+  body {
+    font-family: Inter, -apple-system, system-ui, sans-serif;
+    color: var(--ink); font-size: 14px; line-height: 1.5; letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased; background: var(--app-bg); min-height: 100vh;
+  }
+  ::selection { background: var(--primary-tint); }
+
+  /* top bar */
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 18px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; height: var(--ctl-h); padding: 0 11px 0 8px; border-radius: var(--r-ctl); color: var(--ink-muted); text-decoration: none; font-weight: 500; font-size: 13px; }
+  .back:hover { background: var(--surface-2); color: var(--ink); }
+  .here { font-weight: 600; letter-spacing: -0.02em; }
+  .spacer { flex: 1; }
+  .btn { height: var(--ctl-h); display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-ctl); padding: 0 14px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
+  .btn-ghost { background: var(--surface-2); color: var(--ink); }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); }
+
+  /* page + frame */
+  .page { max-width: 720px; margin: 0 auto; padding: 6px 16px 60px; }
+
+  /* THE white framed panel (same style as the testing chat) */
+  .frame {
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    padding: 18px 18px 12px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .title {
+    width: 100%; border: none; outline: none; background: transparent; font: inherit;
+    font-size: 25px; font-weight: 700; letter-spacing: -0.025em; color: var(--ink);
+    padding: 2px 0 12px;
+  }
+  .title::placeholder { color: var(--ink-tertiary); }
+
+  /* tags (left) + switch (right) — one row, no labels */
+  .row { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; }
+  .tags { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 3px 5px 3px 8px; border-radius: 7px; border: 1px solid; }
+  .chip .d { width: 7px; height: 7px; border-radius: 50%; }
+  .chip .x { cursor: pointer; opacity: 0.55; width: 15px; height: 15px; display: grid; place-items: center; border-radius: 4px; }
+  .add-tag { font: inherit; font-size: 12.5px; color: var(--ink-muted); background: transparent; border: 1px dashed var(--hairline-strong); border-radius: 7px; padding: 4px 9px; cursor: pointer; }
+  .add-tag:hover { color: var(--ink); border-color: var(--ink-subtle); }
+
+  .switch { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; cursor: pointer; }
+  .switch .lbl { font-size: 13px; font-weight: 500; color: var(--ink-muted); }
+  .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .track { position: relative; display: block; width: 40px; height: 24px; border-radius: 999px; background: var(--surface-3); transition: background .18s ease; }
+  .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.22); transition: transform .18s cubic-bezier(.4,0,.2,1); }
+  .switch input:checked ~ .track { background: var(--primary); }
+  .switch input:checked ~ .track .knob { transform: translateX(16px); }
+
+  /* content composer (the writing area, inside the same frame, no separators) */
+  .editor {
+    width: 100%; border: none; outline: none; resize: none; background: transparent;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13.5px; line-height: 1.7;
+    color: var(--ink); min-height: 200px; padding: 2px 0;
+  }
+  .editor::placeholder { color: var(--ink-subtle); font-family: Inter, sans-serif; }
+
+  .att { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 12px; }
+  .thumb { position: relative; width: 56px; height: 56px; border-radius: 10px; overflow: hidden; border: 1px solid var(--hairline); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .x { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border: none; border-radius: 6px; background: rgba(0,0,0,0.55); color: #fff; cursor: pointer; font-size: 13px; display: grid; place-items: center; }
+  .file { display: inline-flex; align-items: center; gap: 8px; height: 56px; padding: 0 12px 0 10px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--surface-1); }
+  .file .ext { font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 6px; color: #fff; background: #5e6ad2; }
+  .file .fn { font-size: 12.5px; } .file .fs { font-size: 11px; color: var(--ink-subtle); }
+
+  .bar { display: flex; align-items: center; gap: 8px; padding-top: 8px; }
+  .addbtn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--hairline-strong); background: #fff; color: var(--ink-muted); font-size: 18px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+  .addbtn:hover { color: var(--primary); border-color: var(--primary); }
+  .counter { margin-left: auto; font-size: 12px; color: var(--ink-subtle); font-variant-numeric: tabular-nums; }
+
+  /* actions under the frame */
+  .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  .note { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; color: var(--ink-subtle); font-size: 12px; }
+  .note b { color: var(--ink-muted); }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="back" href="#">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Prompts
+    </a>
+    <span class="here">Edit prompt</span>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost">Cancel</button>
+    <button class="btn btn-primary">Save changes</button>
+  </div>
+
+  <div class="page">
+    <div class="frame">
+      <input class="title" value="Brand brief — hero hook" placeholder="Prompt title" />
+
+      <!-- tags (left) + switch (right), no labels -->
+      <div class="row">
+        <div class="tags">
+          <span class="chip" style="color:#7c5cff;border-color:#7c5cff55;background:#7c5cff14"><span class="d" style="background:#7c5cff"></span>brief<span class="x">×</span></span>
+          <span class="chip" style="color:#0a84ff;border-color:#0a84ff55;background:#0a84ff14"><span class="d" style="background:#0a84ff"></span>hooks<span class="x">×</span></span>
+          <button class="add-tag">+ Add tag</button>
+        </div>
+        <label class="switch" title="Public prompts can be reused across the workspace">
+          <span class="lbl">Public</span>
+          <input type="checkbox" id="pub" />
+          <span class="track"><span class="knob"></span></span>
+        </label>
+      </div>
+
+      <!-- content composer (same frame, no separators) -->
+      <div class="att">
+        <span class="thumb"><img src="https://images.unsplash.com/photo-1503602642458-232111445657?w=200&q=80" alt=""><button class="x" onclick="this.parentElement.remove()">×</button></span>
+        <span class="thumb"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&q=80" alt=""><button class="x" onclick="this.parentElement.remove()">×</button></span>
+        <span class="file"><span class="ext">PDF</span><span><span class="fn">brand-guidelines.pdf</span><br><span class="fs">2.4 MB</span></span></span>
+      </div>
+      <textarea class="editor" id="editor" spellcheck="false">Write a punchy hero hook for {product} aimed at {niche}.
+
+Pull tone and proof points from {homepage}. Constraints:
+- One sentence, under 12 words.
+- Lead with the transformation, not the feature.
+
+Return 3 variations, each on its own line.</textarea>
+      <div class="bar">
+        <button class="addbtn" title="Attach files">+</button>
+        <span class="counter" id="counter">0 chars</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-primary">Save changes</button>
+    </div>
+  </div>
+
+  <p class="note"><b>Mockup</b> — create/edit prompt in one white framed panel (like the testing chat). Title on top, then tags (left) + a Public toggle (right) on one row with no labels, then the content composer with attachments + “＋”. Default toggle = off (Draft).</p>
+
+<script>
+  const ed = document.getElementById('editor'), c = document.getElementById('counter');
+  function up(){ c.textContent = ed.value.length.toLocaleString() + ' chars'; ed.style.height='auto'; ed.style.height=Math.max(200,ed.scrollHeight)+'px'; }
+  ed.addEventListener('input', up); up();
+  const pub = document.getElementById('pub');
+  pub.addEventListener('change', () => { pub.closest('.switch').querySelector('.lbl').textContent = pub.checked ? 'Public' : 'Public'; });
+  document.querySelectorAll('.chip .x').forEach(x => x.onclick = () => x.closest('.chip').remove());
+</script>
+</body>
+</html>
