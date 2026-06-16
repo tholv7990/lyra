@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   MediaType,
   PromptStatus,
@@ -484,19 +485,24 @@ export function Prompts() {
                   <span className="av">{initials(p.createdBy.name)}</span>
                   {p.createdBy.name}
                 </span>
-                {canEdit(p) && (
-                  <div className="prompt-actions">
-                    <button className="txt-btn accent" onClick={() => toggleStatus(p)}>
-                      {p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}
-                    </button>
-                    <button className="txt-btn" onClick={() => openEdit(p)}>
-                      Edit
-                    </button>
-                    <button className="txt-btn danger" onClick={() => setToDelete(p)}>
-                      Delete
-                    </button>
-                  </div>
-                )}
+                <div className="prompt-actions">
+                  <Link className="txt-btn accent" to={`/prompts/${p.id}/test`}>
+                    Test
+                  </Link>
+                  {canEdit(p) && (
+                    <>
+                      <button className="txt-btn" onClick={() => toggleStatus(p)}>
+                        {p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}
+                      </button>
+                      <button className="txt-btn" onClick={() => openEdit(p)}>
+                        Edit
+                      </button>
+                      <button className="txt-btn danger" onClick={() => setToDelete(p)}>
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ))}

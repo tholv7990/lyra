@@ -7,6 +7,7 @@ import { ApiKey, ApiKeySchema } from '../../keys/api-key.schema';
 import { Project, ProjectSchema } from '../../projects/project.schema';
 import { Run, RunSchema } from '../../runs/run.schema';
 import { Prompt, PromptSchema } from '../../prompts/prompt.schema';
+import { PromptTest, PromptTestSchema } from '../../prompt-tests/prompt-test.schema';
 import { CascadeService } from './cascade.service';
 
 // Standalone: depends only on schemas (not feature modules), so importing it
@@ -21,6 +22,7 @@ import { CascadeService } from './cascade.service';
       { name: Project.name, schema: ProjectSchema },
       { name: Run.name, schema: RunSchema },
       { name: Prompt.name, schema: PromptSchema },
+      { name: PromptTest.name, schema: PromptTestSchema },
     ]),
   ],
   providers: [CascadeService],

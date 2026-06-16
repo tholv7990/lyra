@@ -126,3 +126,58 @@ export async function api<T = unknown>(
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
+
+// POST a request and consume a Server-Sent Events stream, invoking onEvent for
+// each parsed `data:` payload. Errors before the stream opens (4xx) throw an
+// ApiError; errors mid-stream arrive as events for the caller to handle.
+export async function streamSSE(
+  path: string,
+  body: unknown,
+  onEvent: (evt: Record<string, unknown>) => void,
+): Promise<void> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(currentWorkspaceId ? { 'X-Workspace-Id': currentWorkspaceId } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok || !res.body) {
+    let message: string = res.statusText;
+    try {
+      const b = (await res.json()) as { message?: string | string[] };
+      if (b.message) {
+        message = Array.isArray(b.message) ? b.message.join(', ') : b.message;
+      }
+    } catch {
+      // keep statusText
+    }
+    throw new ApiError(res.status, message);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let sep: number;
+    while ((sep = buffer.indexOf('\n\n')) >= 0) {
+      const chunk = buffer.slice(0, sep).trim();
+      buffer = buffer.slice(sep + 2);
+      if (!chunk.startsWith('data:')) continue;
+      const payload = chunk.slice(5).trim();
+      if (!payload) continue;
+      try {
+        onEvent(JSON.parse(payload) as Record<string, unknown>);
+      } catch {
+        // ignore malformed event
+      }
+    }
+  }
+}

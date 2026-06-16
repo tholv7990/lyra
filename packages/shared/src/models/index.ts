@@ -7,6 +7,7 @@ import {
   StepKey,
   PromptStatus,
   MediaType,
+  Provider,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -145,6 +146,22 @@ export interface Prompt extends Audited {
 export interface TagCount {
   value: string;
   count: number;
+}
+
+// One run of a prompt against a model — the unit of the testing playground's
+// history. Single-turn: `input` is what was sent, `result` is the model reply.
+export interface PromptTest extends Audited {
+  id: string;
+  workspaceId: string;
+  promptId: string;
+  provider: Provider;
+  model: string;
+  input: string;
+  result: string;
+  usage?: { tokens?: number; costUsd?: number };
+  starred: boolean;
+  tags: string[];
+  error?: string;
 }
 
 export interface Asset {

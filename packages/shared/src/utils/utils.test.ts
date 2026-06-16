@@ -12,7 +12,8 @@ import {
   isAllowedMedia,
   type MemberCtx,
 } from './index';
-import { MediaType } from '../enums';
+import { MediaType, Provider } from '../enums';
+import { MODEL_CATALOG, isModelAllowed, defaultModel } from '../constants/models';
 import { Role, ProjectVisibility } from '../enums';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 
@@ -151,5 +152,21 @@ describe('isAllowedMedia', () => {
   });
   it('rejects disallowed files', () => {
     expect(isAllowedMedia('application/x-msdownload', 'virus.exe')).toBe(false);
+  });
+});
+
+describe('model catalog', () => {
+  it('has at least one model per provider', () => {
+    for (const p of Object.values(Provider)) {
+      expect((MODEL_CATALOG[p] ?? []).length).toBeGreaterThan(0);
+    }
+  });
+  it('validates models against the catalog', () => {
+    expect(isModelAllowed(Provider.Anthropic, 'claude-sonnet-4-6')).toBe(true);
+    expect(isModelAllowed(Provider.Anthropic, 'gpt-5.5')).toBe(false);
+  });
+  it('defaultModel returns the first catalog entry', () => {
+    expect(defaultModel(Provider.Anthropic)).toBe('claude-opus-4-8');
+    expect(isModelAllowed(Provider.OpenAI, defaultModel(Provider.OpenAI))).toBe(true);
   });
 });
