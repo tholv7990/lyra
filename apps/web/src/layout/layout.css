@@ -2680,11 +2680,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #fff;
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  background: transparent;
 }
 
 .chat-top {
@@ -2692,7 +2688,6 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--hairline);
 }
 
 .chat-top h2 {
@@ -2866,7 +2861,7 @@
 .cbubble {
   align-self: flex-start;
   max-width: 100%;
-  background: var(--surface-1);
+  background: #fff;
   border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 9px 13px;
@@ -3076,7 +3071,6 @@
 
 /* composer */
 .chat-composer {
-  border-top: 1px solid var(--hairline);
   padding: 12px 16px 14px;
 }
 
