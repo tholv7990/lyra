@@ -438,6 +438,141 @@
   text-align: center;
 }
 
+/* ===== Run controls + status badges ===== */
+.run-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge.status-idle {
+  color: var(--ink-muted);
+}
+.badge.status-running,
+.badge.status-queued {
+  color: var(--color-info, #0a84ff);
+  border-color: rgba(10, 132, 255, 0.3);
+}
+.badge.status-waiting,
+.badge.status-awaiting_gate {
+  color: var(--primary);
+  border-color: var(--primary-tint);
+}
+.badge.status-done {
+  color: #2da44e;
+  border-color: rgba(45, 164, 78, 0.3);
+}
+.badge.status-error {
+  color: var(--danger);
+  border-color: rgba(229, 72, 77, 0.3);
+}
+
+/* ===== Workbench steps ===== */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 16px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.step.current {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+.step.is-done {
+  opacity: 0.92;
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.step.current .step-num {
+  background: var(--primary);
+  color: #fff;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.step-model {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.mode-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.mode-tag.gate {
+  color: var(--primary);
+  border-color: var(--primary-tint);
+  background: var(--primary-tint);
+}
+
+.prompt-area {
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.step-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.result-box {
+  margin: 12px 0 0;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono, monospace);
+  color: var(--ink);
+}
+
 /* ===== Mobile: sidebar becomes a drawer ===== */
 .scrim {
   display: none;

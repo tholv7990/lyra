@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   canEditProject,
   ProjectVisibility,
@@ -121,7 +122,9 @@ export function Projects() {
           {projects.map((p) => (
             <div className="row" key={p.id}>
               <div className="grow">
-                <div className="title">{p.name}</div>
+                <Link to={`/projects/${p.id}`} className="title" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                  {p.name}
+                </Link>
                 <div className="sub">
                   {[p.product, p.niche].filter(Boolean).join(' · ') || 'No details yet'}
                 </div>

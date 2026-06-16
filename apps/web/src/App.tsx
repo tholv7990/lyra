@@ -9,6 +9,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Home } from './pages/Home';
 import { Projects } from './pages/Projects';
+import { ProjectDetail } from './pages/ProjectDetail';
 import { Settings } from './pages/Settings';
 import { AppLayout } from './layout/AppLayout';
 
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/projects', element: <Projects /> },
+      { path: '/projects/:id', element: <ProjectDetail /> },
       { path: '/settings', element: <Settings /> },
     ],
   },

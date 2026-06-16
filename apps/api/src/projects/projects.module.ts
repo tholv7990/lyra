@@ -13,5 +13,7 @@ import { ProjectAccessGuard } from './guards/project-access.guard';
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService, ProjectAccessGuard],
+  // Exported so RunsModule can load projects + reuse the access guard.
+  exports: [ProjectsService, ProjectAccessGuard],
 })
 export class ProjectsModule {}
