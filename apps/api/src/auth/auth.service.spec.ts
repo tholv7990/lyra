@@ -1,11 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
+import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { WorkspacesService } from '../workspaces/workspaces.service';
+import { MembershipsService } from '../workspaces/memberships.service';
 import { RefreshToken } from './refresh-token.schema';
 
 // In-memory stand-in for the RefreshToken Mongoose model — keeps the unit
@@ -60,12 +62,26 @@ describe('AuthService', () => {
       })),
     };
 
+    // Onboarding collaborators + a transaction that just runs the callback.
+    const workspaces = {
+      createPersonal: jest.fn(async () => ({ _id: 'ws1' })),
+    };
+    const memberships = { create: jest.fn(async () => ({})) };
+    const connection = {
+      transaction: jest.fn(async (fn: (s: unknown) => Promise<unknown>) =>
+        fn({} as unknown),
+      ),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UsersService, useValue: users },
+        { provide: WorkspacesService, useValue: workspaces },
+        { provide: MembershipsService, useValue: memberships },
         { provide: JwtService, useValue: { sign: jest.fn(() => 'access.jwt.token') } },
         { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
+        { provide: getConnectionToken(), useValue: connection },
         { provide: getModelToken(RefreshToken.name), useValue: rtModel },
       ],
     }).compile();

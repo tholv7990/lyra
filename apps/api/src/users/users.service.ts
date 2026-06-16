@@ -2,28 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
+import { BaseRepository } from '../common/database/base.repository';
 import type { User as SafeUser } from '@lyra/shared';
 
 @Injectable()
-export class UsersService {
-  constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {}
+export class UsersService extends BaseRepository<User> {
+  constructor(@InjectModel(User.name) model: Model<User>) {
+    super(model);
+  }
 
   findByEmail(email: string) {
-    return this.userModel.findOne({ email: email.toLowerCase() }).exec();
+    return this.findOne({ email: email.toLowerCase() });
   }
 
-  findById(id: string) {
-    return this.userModel.findById(id).exec();
-  }
-
-  create(data: { email: string; passwordHash: string; name: string }) {
-    return this.userModel.create({
-      email: data.email.toLowerCase(),
-      passwordHash: data.passwordHash,
-      name: data.name,
-    });
+  findByIds(ids: string[]) {
+    return this.find({ _id: { $in: ids } });
   }
 
   /** Maps a Mongoose document to the safe transport shape (no passwordHash). */

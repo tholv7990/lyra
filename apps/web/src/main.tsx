@@ -2,7 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './auth/AuthContext';
+import { WorkspaceProvider } from './workspace/WorkspaceContext';
 import { App } from './App';
+// Design tokens (CSS vars + Tailwind @theme) — single source of truth.
+// Usage: <button className="bg-primary text-on-primary rounded-pill shadow-glow font-sans">
+//        <h1 className="text-display-xl font-display text-ink">
+import './styles/tokens.css';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -11,7 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <App />
+        <WorkspaceProvider>
+          <App />
+        </WorkspaceProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

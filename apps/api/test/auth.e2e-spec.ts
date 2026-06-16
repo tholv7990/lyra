@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
@@ -10,10 +10,11 @@ import { AppModule } from '../src/app.module';
 // rotates, /auth/me is gated, and no secret ever appears in a response.
 describe('Auth (e2e)', () => {
   let app: INestApplication;
-  let mongod: MongoMemoryServer;
+  let mongod: MongoMemoryReplSet;
 
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
+    // Single-node replica set so the transactional signup works in tests.
+    mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     process.env.MONGODB_URI = mongod.getUri();
     process.env.JWT_ACCESS_SECRET = 'test-access-secret';
     process.env.ACCESS_TOKEN_TTL = '15m';

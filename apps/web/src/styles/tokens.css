@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+/*
+ * Lyra design tokens — single source of truth.
+ * Values come ONLY from the YAML front matter of docs/lyra-design-system.md.
+ * Dark by default (this is a dark system). No light theme.
+ *
+ * Usage:
+ *   <button class="bg-primary text-on-primary rounded-pill shadow-glow font-sans">
+ *   <h1 class="text-display-xl font-display text-ink">
+ *
+ * Naming: tokens whose Tailwind v4 namespace matches the design name are defined
+ * directly in @theme (which emits them to :root AND generates utilities). Tokens
+ * with design-specific names (line-height / tracking / weight / spacing aliases /
+ * shadows) live in :root below and are referenced from @theme — so each value is
+ * defined exactly once.
+ */
+
+:root {
+  /* ===== Typography — line-height / letter-spacing / weight per step ===== */
+  --leading-display-xl: 1.05;
+  --tracking-display-xl: -2.5px;
+  --weight-display-xl: 700;
+
+  --leading-display-lg: 1.08;
+  --tracking-display-lg: -1.6px;
+  --weight-display-lg: 700;
+
+  --leading-display-md: 1.12;
+  --tracking-display-md: -1px;
+  --weight-display-md: 600;
+
+  --leading-headline: 1.2;
+  --tracking-headline: -0.5px;
+  --weight-headline: 600;
+
+  --leading-card-title: 1.25;
+  --tracking-card-title: -0.4px;
+  --weight-card-title: 600;
+
+  --leading-subhead: 1.4;
+  --tracking-subhead: -0.2px;
+  --weight-subhead: 500;
+
+  --leading-body-lg: 1.5;
+  --tracking-body-lg: -0.1px;
+  --weight-body-lg: 400;
+
+  --leading-body: 1.5;
+  --tracking-body: -0.01em;
+  --weight-body: 400;
+
+  --leading-body-sm: 1.5;
+  --tracking-body-sm: 0;
+  --weight-body-sm: 400;
+
+  --leading-caption: 1.4;
+  --tracking-caption: 0.2px;
+  --weight-caption: 500;
+
+  --leading-button: 1.2;
+  --tracking-button: -0.01em;
+  --weight-button: 600;
+
+  --leading-eyebrow: 1.3;
+  --tracking-eyebrow: 0.12em;
+  --weight-eyebrow: 600;
+
+  --leading-mono: 1.5;
+  --tracking-mono: 0;
+  --weight-mono: 400;
+
+  /* ===== Spacing (4px base) — design names ===== */
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  --space-section: 96px;
+
+  /* ===== Shadows ===== */
+  /* From the Elevation table prose (not in front matter). shadow-2 has no
+   * defined value in the doc (level 2 = surface-2 + hairline-strong, no shadow),
+   * so it is intentionally omitted. */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 22px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 26px var(--color-primary-glow);
+}
+
+/* `static` forces every theme variable into :root (no tree-shaking), so the
+ * full palette is always available to plain CSS — not just the utilities used. */
+@theme static {
+  /* ===== Brand / Accent ===== */
+  --color-primary: #ff6b1a;
+  --color-primary-hover: #ff7d35;
+  --color-primary-pressed: #e25a0e;
+  --color-primary-tint: rgba(255, 107, 26, 0.12);
+  --color-primary-glow: rgba(255, 107, 26, 0.34);
+  --color-on-primary: #ffffff;
+  --color-gold: #c9a060; /* secondary-gold */
+
+  /* ===== Surface ===== */
+  --color-canvas: #000000;
+  --color-surface-1: #1c1c1e;
+  --color-surface-2: #2c2c2e;
+  --color-surface-3: #3a3a3c;
+  --color-surface-4: #48484a;
+  --color-field: #161618;
+  --color-hairline: rgba(255, 255, 255, 0.09);
+  --color-hairline-strong: rgba(255, 255, 255, 0.14);
+  --color-hairline-tertiary: rgba(255, 255, 255, 0.06);
+
+  /* ===== Text ===== */
+  --color-ink: #f5f5f7;
+  --color-ink-muted: rgba(235, 235, 245, 0.6);
+  --color-ink-subtle: rgba(235, 235, 245, 0.3);
+  --color-ink-tertiary: rgba(235, 235, 245, 0.18);
+
+  /* ===== Semantic ===== */
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff453a;
+  --color-info: #0a84ff;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  /* ===== Inverse (rare light sections) ===== */
+  --color-inverse-canvas: #ffffff;
+  --color-inverse-ink: #1d1d1f;
+
+  /* ===== Fonts ===== */
+  --font-display: Inter, "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-sans: Inter, "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ===== Typography — size + composite line-height/tracking/weight ===== */
+  --text-display-xl: 80px;
+  --text-display-xl--line-height: var(--leading-display-xl);
+  --text-display-xl--letter-spacing: var(--tracking-display-xl);
+  --text-display-xl--font-weight: var(--weight-display-xl);
+
+  --text-display-lg: 56px;
+  --text-display-lg--line-height: var(--leading-display-lg);
+  --text-display-lg--letter-spacing: var(--tracking-display-lg);
+  --text-display-lg--font-weight: var(--weight-display-lg);
+
+  --text-display-md: 40px;
+  --text-display-md--line-height: var(--leading-display-md);
+  --text-display-md--letter-spacing: var(--tracking-display-md);
+  --text-display-md--font-weight: var(--weight-display-md);
+
+  --text-headline: 28px;
+  --text-headline--line-height: var(--leading-headline);
+  --text-headline--letter-spacing: var(--tracking-headline);
+  --text-headline--font-weight: var(--weight-headline);
+
+  --text-card-title: 22px;
+  --text-card-title--line-height: var(--leading-card-title);
+  --text-card-title--letter-spacing: var(--tracking-card-title);
+  --text-card-title--font-weight: var(--weight-card-title);
+
+  --text-subhead: 20px;
+  --text-subhead--line-height: var(--leading-subhead);
+  --text-subhead--letter-spacing: var(--tracking-subhead);
+  --text-subhead--font-weight: var(--weight-subhead);
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: var(--leading-body-lg);
+  --text-body-lg--letter-spacing: var(--tracking-body-lg);
+  --text-body-lg--font-weight: var(--weight-body-lg);
+
+  --text-body: 16px;
+  --text-body--line-height: var(--leading-body);
+  --text-body--letter-spacing: var(--tracking-body);
+  --text-body--font-weight: var(--weight-body);
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: var(--leading-body-sm);
+  --text-body-sm--letter-spacing: var(--tracking-body-sm);
+  --text-body-sm--font-weight: var(--weight-body-sm);
+
+  --text-caption: 12px;
+  --text-caption--line-height: var(--leading-caption);
+  --text-caption--letter-spacing: var(--tracking-caption);
+  --text-caption--font-weight: var(--weight-caption);
+
+  --text-button: 15px;
+  --text-button--line-height: var(--leading-button);
+  --text-button--letter-spacing: var(--tracking-button);
+  --text-button--font-weight: var(--weight-button);
+
+  /* eyebrow is also uppercase in the design — apply `uppercase` alongside `text-eyebrow` */
+  --text-eyebrow: 12px;
+  --text-eyebrow--line-height: var(--leading-eyebrow);
+  --text-eyebrow--letter-spacing: var(--tracking-eyebrow);
+  --text-eyebrow--font-weight: var(--weight-eyebrow);
+
+  --text-mono: 12px;
+  --text-mono--line-height: var(--leading-mono);
+  --text-mono--letter-spacing: var(--tracking-mono);
+  --text-mono--font-weight: var(--weight-mono);
+
+  /* ===== Spacing (named; v4 keeps its numeric scale) ===== */
+  --spacing-xxs: var(--space-xxs);
+  --spacing-xs: var(--space-xs);
+  --spacing-sm: var(--space-sm);
+  --spacing-md: var(--space-md);
+  --spacing-lg: var(--space-lg);
+  --spacing-xl: var(--space-xl);
+  --spacing-xxl: var(--space-xxl);
+  --spacing-section: var(--space-section);
+
+  /* ===== Radii ===== */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-xxl: 28px;
+  --radius-pill: 980px;
+  --radius-full: 9999px;
+
+  /* ===== Shadows ===== */
+  --shadow-elevation-1: var(--shadow-1);
+  --shadow-glow: var(--glow);
+}

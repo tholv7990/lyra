@@ -3,13 +3,16 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
+import { Role } from '@lyra/shared';
 import { UsersService } from '../users/users.service';
+import { WorkspacesService } from '../workspaces/workspaces.service';
+import { MembershipsService } from '../workspaces/memberships.service';
 import { RefreshToken, RefreshTokenDocument } from './refresh-token.schema';
 import type { User as SafeUser } from '@lyra/shared';
 
@@ -24,8 +27,11 @@ const REFRESH_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 export class AuthService {
   constructor(
     private readonly users: UsersService,
+    private readonly workspaces: WorkspacesService,
+    private readonly memberships: MembershipsService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(RefreshToken.name)
     private readonly rtModel: Model<RefreshTokenDocument>,
   ) {}
@@ -62,7 +68,31 @@ export class AuthService {
     const existing = await this.users.findByEmail(email);
     if (existing) throw new ConflictException('Email already registered');
     const passwordHash = await argon2.hash(password);
-    const user = await this.users.create({ email, passwordHash, name });
+
+    // Atomically create the user, their personal workspace, and the owner
+    // membership — requires the replica set (see docker-compose / Atlas).
+    const user = await this.connection.transaction(async (session) => {
+      const created = await this.users.create(
+        { email, passwordHash, name },
+        session,
+      );
+      const ws = await this.workspaces.createPersonal(
+        created._id.toString(),
+        `${name}'s Workspace`,
+        session,
+      );
+      await this.memberships.create(
+        {
+          workspaceId: ws._id.toString(),
+          userId: created._id.toString(),
+          role: Role.Owner,
+          canManageKeys: false,
+        },
+        session,
+      );
+      return created;
+    });
+
     const userId = user._id.toString();
     const refreshToken = await this.issueRefreshToken(userId);
     return {

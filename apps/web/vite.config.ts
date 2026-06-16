@@ -1,9 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+
+// The API is proxied so the browser sees a single origin (the web app). This
+// keeps the access/refresh cookie same-site and avoids CORS — and lets a single
+// tunnel expose the whole app for previews. Set VITE_API_URL to override.
+const API = 'http://localhost:3001';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
+    host: true, // listen on all interfaces (LAN / tunnel previews)
     port: 5173,
+    allowedHosts: true, // accept tunnel hostnames (e.g. *.trycloudflare.com)
+    proxy: {
+      '/auth': { target: API, changeOrigin: false },
+      '/workspaces': { target: API, changeOrigin: false },
+      '/invites': { target: API, changeOrigin: false },
+      '/health': { target: API, changeOrigin: false },
+    },
   },
 });

@@ -22,6 +22,24 @@ export interface Workspace {
   createdAt: string;
 }
 
+// A workspace plus the requesting user's role in it — what GET /workspaces returns.
+export interface WorkspaceView extends Workspace {
+  role: Role;
+  canManageKeys: boolean;
+}
+
+// A member row for the workspace members list (membership joined with the user).
+export interface MemberView {
+  membershipId: string;
+  workspaceId: string;
+  userId: string;
+  email: string;
+  name: string;
+  role: Role;
+  canManageKeys: boolean;
+  createdAt: string;
+}
+
 export interface Membership {
   id: string;
   workspaceId: string;

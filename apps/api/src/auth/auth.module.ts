@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from '../users/users.module';
+import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
@@ -11,6 +12,7 @@ import { RefreshToken, RefreshTokenSchema } from './refresh-token.schema';
 @Module({
   imports: [
     UsersModule,
+    WorkspacesModule,
     PassportModule,
     JwtModule.register({}),
     MongooseModule.forFeature([

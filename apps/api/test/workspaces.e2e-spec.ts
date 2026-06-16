@@ -1,0 +1,141 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import cookieParser from 'cookie-parser';
+import request from 'supertest';
+import { AppModule } from '../src/app.module';
+
+// Phase 1: workspaces, memberships, invites.
+describe('Workspaces (e2e)', () => {
+  let app: INestApplication;
+  let mongod: MongoMemoryReplSet;
+
+  beforeAll(async () => {
+    mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+    process.env.MONGODB_URI = mongod.getUri();
+    process.env.JWT_ACCESS_SECRET = 'test-access-secret';
+    process.env.NODE_ENV = 'test';
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    app = moduleRef.createNestApplication();
+    app.use(cookieParser());
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    await mongod?.stop();
+  });
+
+  const http = () => request(app.getHttpServer());
+  const signup = async (email: string, name: string) => {
+    const res = await http()
+      .post('/auth/signup')
+      .send({ email, password: 'password123', name })
+      .expect(201);
+    return res.body.accessToken as string;
+  };
+  const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
+
+  let ownerToken: string;
+  let teamId: string;
+
+  it('creates a personal workspace on signup', async () => {
+    ownerToken = await signup('owner@example.com', 'Owner');
+    const res = await http().get('/workspaces').set(auth(ownerToken)).expect(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].type).toBe('personal');
+    expect(res.body[0].role).toBe('owner');
+  });
+
+  it('creates a team workspace with the creator as owner', async () => {
+    const res = await http()
+      .post('/workspaces')
+      .set(auth(ownerToken))
+      .send({ name: 'Acme' })
+      .expect(201);
+    expect(res.body.type).toBe('team');
+    expect(res.body.role).toBe('owner');
+    teamId = res.body.id;
+
+    const list = await http().get('/workspaces').set(auth(ownerToken)).expect(200);
+    expect(list.body).toHaveLength(2);
+  });
+
+  it('invites a member, who accepts and joins', async () => {
+    const inviteRes = await http()
+      .post(`/workspaces/${teamId}/invites`)
+      .set(auth(ownerToken))
+      .send({ email: 'member@example.com', role: 'member' })
+      .expect(201);
+    const token = inviteRes.body.token as string;
+    expect(token).toBeTruthy();
+
+    const memberToken = await signup('member@example.com', 'Member');
+    const accept = await http()
+      .post('/invites/accept')
+      .set(auth(memberToken))
+      .send({ token })
+      .expect(200);
+    expect(accept.body.id).toBe(teamId);
+    expect(accept.body.role).toBe('member');
+
+    const members = await http()
+      .get(`/workspaces/${teamId}/members`)
+      .set(auth(memberToken))
+      .expect(200);
+    expect(members.body).toHaveLength(2);
+    expect(members.body.map((m: { email: string }) => m.email).sort()).toEqual([
+      'member@example.com',
+      'owner@example.com',
+    ]);
+  });
+
+  it('enforces owner-only management and workspace membership', async () => {
+    const memberToken = (
+      await http()
+        .post('/auth/login')
+        .send({ email: 'member@example.com', password: 'password123' })
+        .expect(200)
+    ).body.accessToken as string;
+
+    // member cannot rename the workspace (owner only)
+    await http()
+      .patch(`/workspaces/${teamId}`)
+      .set(auth(memberToken))
+      .send({ name: 'Hacked' })
+      .expect(403);
+
+    // a non-member cannot read someone else's personal workspace
+    const memberWorkspaces = await http()
+      .get('/workspaces')
+      .set(auth(memberToken))
+      .expect(200);
+    const memberPersonal = memberWorkspaces.body.find(
+      (w: { type: string }) => w.type === 'personal',
+    );
+    await http()
+      .get(`/workspaces/${memberPersonal.id}`)
+      .set(auth(ownerToken))
+      .expect(403);
+  });
+
+  it('rejects an invite accepted by the wrong email', async () => {
+    const inviteRes = await http()
+      .post(`/workspaces/${teamId}/invites`)
+      .set(auth(ownerToken))
+      .send({ email: 'someone@example.com', role: 'member' })
+      .expect(201);
+    const token = inviteRes.body.token as string;
+
+    const otherToken = await signup('different@example.com', 'Different');
+    await http()
+      .post('/invites/accept')
+      .set(auth(otherToken))
+      .send({ token })
+      .expect(403);
+  });
+});

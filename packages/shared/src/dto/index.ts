@@ -32,9 +32,26 @@ export interface UpdateProjectDto {
   sharedWith?: string[];
 }
 
+export interface CreateWorkspaceDto {
+  name: string;
+}
+
+export interface UpdateWorkspaceDto {
+  name: string;
+}
+
 export interface InviteDto {
   email: string;
   role: Role;
+}
+
+export interface AcceptInviteDto {
+  token: string;
+}
+
+export interface UpdateMemberDto {
+  role?: Role;
+  canManageKeys?: boolean;
 }
 
 export interface UpdatePromptDto {

@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+// Empty default = same-origin: in dev the Vite proxy forwards /auth, /workspaces,
+// etc. to the API; in prod set VITE_API_URL to the API origin.
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 // The access token lives in memory only — never localStorage. The refresh
 // token is an httpOnly cookie the browser sends automatically.
@@ -10,6 +12,18 @@ export function setAccessToken(token: string | null) {
 
 export function getAccessToken() {
   return accessToken;
+}
+
+// The active workspace — sent as X-Workspace-Id so workspace-scoped endpoints
+// (projects, runs, keys in later phases) target the right tenant.
+let currentWorkspaceId: string | null = null;
+
+export function setWorkspaceId(id: string | null) {
+  currentWorkspaceId = id;
+}
+
+export function getWorkspaceId() {
+  return currentWorkspaceId;
 }
 
 export class ApiError extends Error {
@@ -65,6 +79,7 @@ export async function api<T = unknown>(
     headers: {
       'Content-Type': 'application/json',
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(currentWorkspaceId ? { 'X-Workspace-Id': currentWorkspaceId } : {}),
       ...headers,
     },
   });
