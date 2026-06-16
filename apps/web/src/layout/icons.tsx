@@ -75,6 +75,12 @@ export const CheckIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const TrashIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)} className="icon">
+    <path d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M4 4.5l.7 8.5a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9L12 4.5" />
+  </svg>
+);
+
 export const LogoutIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)} className="icon">
     <path d="M6 14H3.5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1H6" />

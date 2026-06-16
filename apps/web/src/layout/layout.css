@@ -460,6 +460,68 @@
   font-size: 13px;
 }
 
+/* provider-key indicator + icon action buttons */
+.key-set {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.key-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-tertiary);
+  flex-shrink: 0;
+}
+
+.key-dot.on {
+  background: #2da44e;
+  box-shadow: 0 0 0 3px rgba(45, 164, 78, 0.16);
+}
+
+.icon-btn-primary,
+.icon-btn-danger {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.icon-btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.icon-btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.icon-btn-primary:disabled {
+  background: #e8e8ea;
+  color: rgba(60, 60, 67, 0.4);
+  cursor: not-allowed;
+}
+
+.icon-btn-danger {
+  background: rgba(229, 72, 77, 0.1);
+  color: var(--danger);
+}
+
+.icon-btn-danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
 .badge {
   font-size: 11px;
   font-weight: 500;

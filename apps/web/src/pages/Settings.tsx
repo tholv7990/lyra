@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { CheckIcon, TrashIcon } from '../layout/icons';
 
 const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
   { id: Provider.OpenAI, label: 'OpenAI', hint: 'GPT-5.5 — Find sources' },
@@ -106,12 +107,11 @@ export function Settings() {
               <div className="row" key={p.id}>
                 <div className="grow">
                   <div className="title">
-                    {p.label}{' '}
-                    {existing ? (
-                      <span className="badge" style={{ marginLeft: 6 }}>•••• {existing.last4}</span>
-                    ) : (
-                      <span className="badge" style={{ marginLeft: 6 }}>Not set</span>
-                    )}
+                    {p.label}
+                    <span className="key-set">
+                      <span className={`key-dot ${existing ? 'on' : ''}`} />
+                      {existing ? `Key set ···· ${existing.last4}` : 'Not set'}
+                    </span>
                   </div>
                   <div className="sub">{p.hint}</div>
                 </div>
@@ -120,15 +120,22 @@ export function Settings() {
                     <input
                       className="text-input key-input"
                       type="password"
-                      placeholder={existing ? 'Replace key' : 'Paste key'}
+                      placeholder={existing ? '••••••••••  replace' : 'Paste key'}
                       value={drafts[p.id] ?? ''}
                       onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
                     />
-                    <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={() => void save(p.id)}>
-                      Save
+                    <button
+                      className="icon-btn-primary"
+                      title="Save key"
+                      disabled={!(drafts[p.id] ?? '').trim()}
+                      onClick={() => void save(p.id)}
+                    >
+                      <CheckIcon width={16} height={16} />
                     </button>
                     {existing && (
-                      <button className="btn-danger" style={{ marginTop: 0 }} onClick={() => setToRemove(p.id)}>Remove</button>
+                      <button className="icon-btn-danger" title="Remove key" onClick={() => setToRemove(p.id)}>
+                        <TrashIcon width={16} height={16} />
+                      </button>
                     )}
                   </div>
                 )}
