@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   defaultModel,
@@ -56,6 +56,8 @@ export function PipelineBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const dragFrom = useRef<number | null>(null);
+  const dragTo = useRef<number | null>(null);
 
   useEffect(() => {
     if (!id || !wsId) return;
@@ -149,7 +151,7 @@ export function PipelineBuilder() {
     setDirty(true);
   }
 
-  // Drag-to-reorder (desktop): drop the dragged step before the target step.
+  // Drag-to-reorder: drop the dragged step before the target step.
   function reorder(from: number, to: number) {
     if (from === to) return;
     setSteps((list) => {
@@ -161,10 +163,43 @@ export function PipelineBuilder() {
     setDirty(true);
   }
 
-  function onDrop(target: number) {
-    if (dragIndex !== null) reorder(dragIndex, target);
-    setDragIndex(null);
-    setOverIndex(null);
+  // Pointer-based drag — works with mouse AND touch (native HTML5 DnD doesn't
+  // fire on touchscreens). Grab the grip, drag over another step, release to drop.
+  function startDrag(e: ReactPointerEvent, index: number) {
+    if (!canEdit) return;
+    e.preventDefault();
+    dragFrom.current = index;
+    dragTo.current = index;
+    setDragIndex(index);
+    setOverIndex(index);
+
+    const move = (ev: PointerEvent) => {
+      ev.preventDefault(); // stop the page scrolling under the finger
+      const el = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
+      const node = el?.closest('[data-step-index]') as HTMLElement | null;
+      if (!node) return;
+      const idx = Number(node.dataset.stepIndex);
+      if (!Number.isNaN(idx) && idx !== dragTo.current) {
+        dragTo.current = idx;
+        setOverIndex(idx);
+      }
+    };
+    const end = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', end);
+      document.removeEventListener('pointercancel', end);
+      const from = dragFrom.current;
+      const to = dragTo.current;
+      dragFrom.current = null;
+      dragTo.current = null;
+      setDragIndex(null);
+      setOverIndex(null);
+      if (from !== null && to !== null) reorder(from, to);
+    };
+
+    document.addEventListener('pointermove', move, { passive: false });
+    document.addEventListener('pointerup', end);
+    document.addEventListener('pointercancel', end);
   }
 
   async function save() {
@@ -239,20 +274,17 @@ export function PipelineBuilder() {
           <div key={s.id}>
             <Connector onAdd={canEdit ? () => openNew(i) : undefined} />
             <div
+              data-step-index={i}
               className={`flow-node${dragIndex === i ? ' dragging' : ''}${
                 overIndex === i && dragIndex !== null && dragIndex !== i ? ' drag-over' : ''
               }`}
               style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}
-              onDragOver={canEdit ? (e) => { e.preventDefault(); if (overIndex !== i) setOverIndex(i); } : undefined}
-              onDrop={canEdit ? (e) => { e.preventDefault(); onDrop(i); } : undefined}
             >
               {canEdit && (
                 <div
                   className="flow-grip"
                   title="Drag to reorder"
-                  draggable
-                  onDragStart={() => setDragIndex(i)}
-                  onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
+                  onPointerDown={(e) => startDrag(e, i)}
                   aria-hidden
                 >
                   ⠿

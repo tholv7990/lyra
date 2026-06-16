@@ -2284,14 +2284,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
+  width: 30px;
   flex-shrink: 0;
   border-right: 1px solid var(--hairline);
   color: var(--ink-tertiary);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
   cursor: grab;
   user-select: none;
+  /* Let the grip own touch gestures so dragging doesn't scroll the page. */
+  touch-action: none;
+}
+
+/* Roomier touch target on phones. */
+@media (max-width: 560px) {
+  .flow-grip {
+    width: 42px;
+    font-size: 18px;
+  }
 }
 
 .flow-grip:hover {
