@@ -594,25 +594,32 @@
 }
 .pe-title::placeholder { color: var(--ink-tertiary); }
 
-/* bordered input box (reuses .composer-box) that grows to fill the frame;
-   higher specificity so it overrides composer-box's width/margin/padding */
-.pe .pe-composer {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  max-width: none;
-  margin: 0;
-  padding: 10px 12px;
-}
-
-/* the scrollable content area between the meta rows and the bottom bar */
-.pe-content {
+/* live preview area (the "answer") — grows and scrolls, like the chat thread */
+.pe-preview-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+  padding: 8px 2px 12px;
+}
+.pe-preview-hint {
+  color: var(--ink-muted);
+  padding: 20px 2px;
+}
+.pe-preview-hint h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.pe-preview-hint p { margin: 0; font-size: 13.5px; }
+
+/* small composer at the bottom (reuses .composer-box); higher specificity so it
+   overrides composer-box's centered max-width */
+.pe .pe-composer {
+  flex-shrink: 0;
+  max-width: none;
+  margin: 0;
 }
 
 .pe-editor {

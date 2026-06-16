@@ -55,7 +55,6 @@ export function PromptEditor() {
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
-  const [mode, setMode] = useState<'write' | 'preview'>('write');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -178,39 +177,33 @@ export function PromptEditor() {
           </label>
         </div>
 
-        <div className="pe-tabs">
-          <button type="button" className={mode === 'write' ? 'on' : ''} onClick={() => setMode('write')}>Write</button>
-          <button type="button" className={mode === 'preview' ? 'on' : ''} onClick={() => setMode('preview')}>Preview</button>
+        {/* live preview (the "answer" area) — grows and scrolls */}
+        <div className="pe-preview-scroll">
+          {form.content.trim() ? (
+            <Markdown>{form.content}</Markdown>
+          ) : (
+            <div className="pe-preview-hint">
+              <h3>Write your prompt</h3>
+              <p>Type below — a live preview renders here. Use {'{product}'}, {'{niche}'}, {'{homepage}'} placeholders.</p>
+            </div>
+          )}
         </div>
 
-        {/* bordered box for the input + result, with the model picker (matches the chat) */}
+        {/* small composer at the bottom — input + attach + model (matches the chat) */}
         <div className="composer-box pe-composer">
-          <div className="pe-content">
-            <AttachmentPreviews
-              media={form.media}
-              uploading={uploading}
-              onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
-            />
-
-            {mode === 'write' ? (
-              <textarea
-                className="pe-editor"
-                placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-              />
-            ) : (
-              <div className="pe-preview">
-                {form.content.trim() ? (
-                  <Markdown>{form.content}</Markdown>
-                ) : (
-                  <p className="pe-preview-empty">Nothing to preview yet.</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="pe-bar">
+          <AttachmentPreviews
+            media={form.media}
+            uploading={uploading}
+            onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
+          />
+          <textarea
+            className="composer-input"
+            rows={3}
+            placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+          />
+          <div className="composer-bar">
             <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
             <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
             <ModelPicker
