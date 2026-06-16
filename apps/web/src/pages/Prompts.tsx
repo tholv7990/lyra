@@ -1,7 +1,12 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from 'react';
 import { Link } from 'react-router-dom';
 import {
-  MediaType,
   PromptStatus,
   tagColor,
   type Paged,
@@ -17,25 +22,19 @@ import { TagInput } from '../components/TagInput';
 import { FileUpload } from '../components/FileUpload';
 import { PromptsIcon } from '../layout/icons';
 
-const MEDIA_LABELS: Record<MediaType, string> = {
-  [MediaType.Image]: 'Image',
-  [MediaType.Audio]: 'Audio',
-  [MediaType.Video]: 'Video',
-  [MediaType.File]: 'File',
-};
-
-function extLabel(name?: string): string {
-  if (!name) return 'FILE';
-  const i = name.lastIndexOf('.');
-  return (i >= 0 ? name.slice(i + 1) : 'file').toUpperCase().slice(0, 4);
-}
-
 const STATUS_COLOR: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: '#d4a72c',
   [PromptStatus.Public]: '#2da44e',
 };
+const STATUS_LABEL: Record<PromptStatus, string> = {
+  [PromptStatus.Draft]: 'Draft',
+  [PromptStatus.Public]: 'Public',
+};
+const PAGE_SIZE = 15;
 
-const PAGE_SIZE = 12;
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 interface FormState {
   title: string;
@@ -64,11 +63,13 @@ export function Prompts() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  // filters
-  const [status, setStatus] = useState<'all' | PromptStatus>('all');
+  // filters (Linear-style: search always visible, status/tag added via + Filter)
+  const [status, setStatus] = useState<PromptStatus | ''>('');
   const [tag, setTag] = useState('');
   const [q, setQ] = useState('');
   const [vocab, setVocab] = useState<TagCount[]>([]);
+  const [filterMenu, setFilterMenu] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   // create/edit modal
   const [editing, setEditing] = useState<Editing>(null);
@@ -80,23 +81,35 @@ export function Prompts() {
   const [deleting, setDeleting] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = !!status || !!tag || !!q.trim();
 
-  // Reset to page 1 whenever a filter changes.
+  useEffect(() => setPage(1), [status, tag, q]);
+
+  // close the filter menu on outside click
   useEffect(() => {
-    setPage(1);
-  }, [status, tag, q]);
+    if (!filterMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterMenu(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [filterMenu]);
 
-  // Debounced, filtered, paginated fetch.
+  const buildQuery = () => {
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+    if (status) params.set('status', status);
+    if (tag) params.set('tag', tag);
+    if (q.trim()) params.set('q', q.trim());
+    return params.toString();
+  };
+
   useEffect(() => {
     if (!wsId) return;
     let cancelled = false;
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
-    if (status !== 'all') params.set('status', status);
-    if (tag) params.set('tag', tag);
-    if (q.trim()) params.set('q', q.trim());
+    const query = buildQuery();
     const timer = setTimeout(() => {
-      api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?${params.toString()}`)
+      api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?${query}`)
         .then((res) => {
           if (cancelled) return;
           setPrompts(res.items);
@@ -104,7 +117,7 @@ export function Prompts() {
         })
         .catch(() => !cancelled && setPrompts([]))
         .finally(() => !cancelled && setLoading(false));
-    }, 250);
+    }, 220);
     return () => {
       cancelled = true;
       clearTimeout(timer);
@@ -135,16 +148,9 @@ export function Prompts() {
     setError(null);
   }
 
-  // Re-fetch the current page after a mutation.
   function reload() {
-    setPage((p) => p); // triggers effect via state identity? force via toggle below
-    // simplest: bump a refetch by resetting page to itself won't trigger; call directly
     if (!wsId) return;
-    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
-    if (status !== 'all') params.set('status', status);
-    if (tag) params.set('tag', tag);
-    if (q.trim()) params.set('q', q.trim());
-    api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?${params.toString()}`)
+    api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?${buildQuery()}`)
       .then((res) => { setPrompts(res.items); setTotal(res.total); })
       .catch(() => undefined);
   }
@@ -207,24 +213,50 @@ export function Prompts() {
         </button>
       </div>
 
-      <div className="prompt-toolbar">
+      {/* Linear-style filter toolbar */}
+      <div className="lin-toolbar">
         <input
-          className="text-input"
-          placeholder="Search by name…"
+          className="lin-search"
+          placeholder="Search prompts…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <select className="text-input select-sm" value={status} onChange={(e) => setStatus(e.target.value as 'all' | PromptStatus)}>
-          <option value="all">All statuses</option>
-          <option value={PromptStatus.Draft}>Draft</option>
-          <option value={PromptStatus.Public}>Public</option>
-        </select>
-        <select className="text-input select-sm" value={tag} onChange={(e) => setTag(e.target.value)}>
-          <option value="">All tags</option>
-          {vocab.map((t) => (
-            <option key={t.value} value={t.value}>{t.value} ({t.count})</option>
-          ))}
-        </select>
+        {status && (
+          <span className="lin-chip">
+            Status: {STATUS_LABEL[status]}
+            <button className="lin-chip-x" onClick={() => setStatus('')} aria-label="Remove">×</button>
+          </span>
+        )}
+        {tag && (
+          <span className="lin-chip">
+            Tag: {tag}
+            <button className="lin-chip-x" onClick={() => setTag('')} aria-label="Remove">×</button>
+          </span>
+        )}
+        <div className="lin-filter" ref={filterRef}>
+          <button className="lin-filter-btn" onClick={() => setFilterMenu((s) => !s)}>+ Filter</button>
+          {filterMenu && (
+            <div className="lin-menu">
+              <div className="lin-menu-label">Status</div>
+              {[PromptStatus.Draft, PromptStatus.Public].map((s) => (
+                <button key={s} className="lin-menu-item" onClick={() => { setStatus(s); setFilterMenu(false); }}>
+                  <span className="dot" style={{ background: STATUS_COLOR[s] }} />
+                  {STATUS_LABEL[s]}
+                </button>
+              ))}
+              {vocab.length > 0 && <div className="lin-menu-label">Tag</div>}
+              {vocab.slice(0, 12).map((t) => (
+                <button key={t.value} className="lin-menu-item" onClick={() => { setTag(t.value); setFilterMenu(false); }}>
+                  <span className="dot" style={{ background: tagColor(t.value) }} />
+                  {t.value} <span className="lin-menu-count">{t.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {hasFilters && (
+          <button className="lin-clear" onClick={() => { setStatus(''); setTag(''); setQ(''); }}>Clear</button>
+        )}
       </div>
 
       {error && !editing && <p className="error">{error}</p>}
@@ -232,7 +264,7 @@ export function Prompts() {
       {loading ? (
         <p className="empty">Loading prompts…</p>
       ) : prompts.length === 0 ? (
-        total === 0 && status === 'all' && !tag && !q ? (
+        !hasFilters ? (
           <div className="prompt-empty">
             <div className="prompt-empty-art"><PromptsIcon width={26} height={26} /></div>
             <h3>Build your prompt library</h3>
@@ -244,68 +276,47 @@ export function Prompts() {
         )
       ) : (
         <>
-          <div className="prompt-grid">
-            {prompts.map((p, i) => (
-              <div
-                className="prompt-card"
-                key={p.id}
-                style={{ '--accent': STATUS_COLOR[p.status], animationDelay: `${Math.min(i, 12) * 35}ms` } as CSSProperties}
-              >
-                <div className="prompt-card-head">
-                  <span className="prompt-card-title">{p.title}</span>
-                  <span className={`badge status-${p.status}`}>
-                    {p.status === PromptStatus.Public ? 'Public' : 'Draft'}
-                  </span>
-                </div>
-
-                {p.content && <div className="prompt-body">{p.content}</div>}
-
-                {p.tags.length > 0 && (
-                  <div className="prompt-tags">
-                    {p.tags.map((t) => {
-                      const c = tagColor(t);
-                      return (
-                        <span key={t} className="tag-chip ro" style={{ color: c, borderColor: `${c}55`, background: `${c}14` }}>
-                          <span className="tdot" style={{ background: c }} />
-                          {t}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {p.media.length > 0 && (
-                  <div className="card-media">
-                    {p.media.map((m, idx) =>
-                      m.type === MediaType.Image ? (
-                        <a key={`${m.url}-${idx}`} href={m.url} target="_blank" rel="noreferrer" className="card-media-thumb" title={m.name}>
-                          <img src={m.url} alt={m.name ?? 'image'} />
-                        </a>
-                      ) : (
-                        <a key={`${m.url}-${idx}`} href={m.url} target="_blank" rel="noreferrer" className="card-media-file" title={m.name}>
-                          <span className="ext">{extLabel(m.name)}</span>
-                          <span className="nm">{m.name || MEDIA_LABELS[m.type]}</span>
-                        </a>
-                      ),
-                    )}
-                  </div>
-                )}
-
-                <div className="prompt-card-foot">
-                  <span className="prompt-author">by {p.createdBy.name}</span>
-                  <div className="prompt-actions">
-                    <Link className="txt-btn accent" to={`/prompts/${p.id}/test`}>Test</Link>
-                    {canEdit(p) && (
-                      <>
-                        <button className="txt-btn" onClick={() => toggleStatus(p)}>
-                          {p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <button className="txt-btn" onClick={() => openEdit(p)}>Edit</button>
-                        <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>
-                      </>
-                    )}
-                  </div>
-                </div>
+          <div className="ptable">
+            <div className="ptable-head">
+              <span>Name</span>
+              <span>Status</span>
+              <span>Tags</span>
+              <span>Updated</span>
+              <span />
+            </div>
+            {prompts.map((p) => (
+              <div className="prow" key={p.id}>
+                <button className="prow-name" onClick={() => (canEdit(p) ? openEdit(p) : undefined)}>
+                  <span className="nm">{p.title}</span>
+                  {p.content && <span className="snip">{p.content}</span>}
+                </button>
+                <span>
+                  <span className={`badge status-${p.status}`}>{STATUS_LABEL[p.status]}</span>
+                </span>
+                <span className="prow-tags">
+                  {p.tags.slice(0, 3).map((t) => {
+                    const c = tagColor(t);
+                    return (
+                      <span key={t} className="tag-chip ro" style={{ color: c, borderColor: `${c}55`, background: `${c}14` } as CSSProperties}>
+                        {t}
+                      </span>
+                    );
+                  })}
+                  {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
+                </span>
+                <span className="prow-date">{fmtDate(p.updatedAt)}</span>
+                <span className="prow-actions">
+                  <Link className="txt-btn accent" to={`/prompts/${p.id}/test`}>Test</Link>
+                  {canEdit(p) && (
+                    <>
+                      <button className="txt-btn" onClick={() => toggleStatus(p)} title={p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}>
+                        {p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}
+                      </button>
+                      <button className="txt-btn" onClick={() => openEdit(p)}>Edit</button>
+                      <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>
+                    </>
+                  )}
+                </span>
               </div>
             ))}
           </div>

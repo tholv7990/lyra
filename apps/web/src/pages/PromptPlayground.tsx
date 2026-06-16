@@ -57,9 +57,21 @@ export function PromptPlayground() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [modelMenu, setModelMenu] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const modelRef = useRef<HTMLDivElement>(null);
+
+  // close the model picker on outside click
+  useEffect(() => {
+    if (!modelMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (modelRef.current && !modelRef.current.contains(e.target as Node)) setModelMenu(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [modelMenu]);
 
   const loadHistory = useCallback(() => {
     if (!wsId || !id) return;
@@ -90,11 +102,6 @@ export function PromptPlayground() {
     () => (starredOnly ? history.filter((t) => t.starred) : history),
     [history, starredOnly],
   );
-
-  function pickProvider(p: Provider) {
-    setProvider(p);
-    setModel(defaultModel(p));
-  }
 
   const send = useCallback(
     async (text: string) => {
@@ -310,17 +317,35 @@ export function PromptPlayground() {
               placeholder="Prompt to test…  (⌘/Ctrl + Enter to send)"
             />
             <div className="composer-bar">
-              <div className="composer-models">
-                <select className="model-select" value={provider} onChange={(e) => pickProvider(e.target.value as Provider)}>
-                  {PROVIDERS.map((p) => (
-                    <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
-                  ))}
-                </select>
-                <select className="model-select" value={model} onChange={(e) => setModel(e.target.value)}>
-                  {(MODEL_CATALOG[provider] ?? []).map((m) => (
-                    <option key={m.id} value={m.id}>{m.label}</option>
-                  ))}
-                </select>
+              <div className="model-pick" ref={modelRef}>
+                <button type="button" className="model-pill" onClick={() => setModelMenu((s) => !s)}>
+                  <span className="mp-provider">{PROVIDER_LABELS[provider]}</span>
+                  <span className="mp-model">{modelLabel(provider, model)}</span>
+                  <span className="mp-caret">⌄</span>
+                </button>
+                {modelMenu && (
+                  <div className="model-menu">
+                    {PROVIDERS.map((p) => (
+                      <div key={p} className="model-menu-group">
+                        <div className="mmg-label">{PROVIDER_LABELS[p]}</div>
+                        {(MODEL_CATALOG[p] ?? []).map((m) => {
+                          const active = provider === p && model === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              className={`model-menu-item ${active ? 'active' : ''}`}
+                              onClick={() => { setProvider(p); setModel(m.id); setModelMenu(false); }}
+                            >
+                              <span>{m.label}</span>
+                              {active && <span className="mm-check">✓</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {streaming ? (
                 <button className="send-btn stop" onClick={stop} title="Stop">■</button>
