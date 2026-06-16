@@ -6,6 +6,7 @@ import {
   HomeIcon,
   ProjectsIcon,
   PromptsIcon,
+  PipelinesIcon,
   MembersIcon,
   SettingsIcon,
   MenuIcon,
@@ -23,6 +24,7 @@ const TITLES: Record<string, string> = {
   '/': 'Home',
   '/projects': 'Projects',
   '/prompts': 'Prompts',
+  '/pipelines': 'Pipelines',
   '/settings': 'Settings',
 };
 
@@ -65,6 +67,14 @@ export function AppLayout() {
           >
             <PromptsIcon />
             Prompts
+          </NavLink>
+          <NavLink
+            to="/pipelines"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            onClick={close}
+          >
+            <PipelinesIcon />
+            Pipelines
           </NavLink>
           <div className="nav-item disabled">
             <MembersIcon />

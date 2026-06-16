@@ -20,6 +20,7 @@ export default defineConfig({
       '/invites': { target: API, changeOrigin: false },
       '/projects': { target: API, changeOrigin: false },
       '/prompts': { target: API, changeOrigin: false },
+      '/pipelines': { target: API, changeOrigin: false },
       '/files': { target: API, changeOrigin: false },
       '/runs': { target: API, changeOrigin: false },
       '/health': { target: API, changeOrigin: false },
