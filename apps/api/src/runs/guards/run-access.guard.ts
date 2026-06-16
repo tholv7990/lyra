@@ -29,7 +29,7 @@ export class RunAccessGuard implements CanActivate {
     const run = await this.runs.findById(req.params?.id as string);
     if (!run) throw new NotFoundException('Run not found');
 
-    const project = await this.projects.findById(run.projectId);
+    const project = await this.projects.findActiveById(run.projectId);
     if (!project) throw new NotFoundException('Project not found');
 
     const membership = await this.memberships.findFor(run.workspaceId, user.id);

@@ -34,6 +34,18 @@ button {
   max-width: 100%;
 }
 
+/* iOS Safari zooms in (and breaks the layout) when a focused control has a
+   font-size below 16px. Use 16px on touch/small screens to prevent it. */
+@media (max-width: 820px) {
+  input,
+  select,
+  textarea,
+  .text-input,
+  .select-sm {
+    font-size: 16px;
+  }
+}
+
 html,
 body {
   max-width: 100%;
@@ -188,6 +200,29 @@ select.text-input {
 .btn-ghost:hover {
   background: var(--surface-1);
   border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Destructive actions */
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn-danger:hover {
+  background: #d33b40;
+}
+
+.btn-danger:disabled {
+  background: #e8e8ea;
+  color: rgba(60, 60, 67, 0.4);
+  cursor: not-allowed;
 }
 
 .error {

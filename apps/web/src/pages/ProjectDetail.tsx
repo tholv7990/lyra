@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  canEditProject,
+  ProjectVisibility,
   STEP_DEFS,
   STEP_PROVIDERS,
   StepMode,
@@ -11,6 +13,8 @@ import {
   type Step,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { useAuth } from '../auth/useAuth';
+import { useWorkspace } from '../workspace/useWorkspace';
 
 const STATUS_LABEL: Record<string, string> = {
   idle: 'Idle',
@@ -21,8 +25,16 @@ const STATUS_LABEL: Record<string, string> = {
   error: 'Error',
 };
 
+const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
+  [ProjectVisibility.Private]: 'Private',
+  [ProjectVisibility.Shared]: 'Shared',
+  [ProjectVisibility.Workspace]: 'Workspace',
+};
+
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { current } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
@@ -88,19 +100,42 @@ export function ProjectDetail() {
       ),
     );
 
+  const changeVisibility = (visibility: ProjectVisibility) => {
+    if (!project) return;
+    const pid = project.id;
+    return act(async () =>
+      setProject(
+        await api<Project>(`/projects/${pid}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ visibility }),
+        }),
+      ),
+    );
+  };
+
   if (loading) return <p className="empty">Loading…</p>;
   if (!project) return <p className="empty">{error ?? 'Project not found.'}</p>;
+
+  const canEdit =
+    !!user &&
+    !!current &&
+    project.workspaceId === current.id &&
+    canEditProject(project, {
+      userId: user.id,
+      role: current.role,
+      canManageKeys: current.canManageKeys,
+    });
 
   return (
     <div>
       <div className="section-head">
         <div>
-          <h2>{project.name}</h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {project.name}
+            <span className={`badge vis-${project.visibility}`}>{VISIBILITY_LABELS[project.visibility]}</span>
+          </h2>
           <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
-            {[project.product, project.niche].filter(Boolean).join(' · ') || 'No details'} ·{' '}
-            <Link to="/projects" style={{ color: 'var(--primary)' }}>
-              Back to projects
-            </Link>
+            <Link to="/projects" style={{ color: 'var(--primary)' }}>← Back to projects</Link>
           </p>
         </div>
         <div className="run-controls">
@@ -121,6 +156,51 @@ export function ProjectDetail() {
               </button>
             </>
           )}
+        </div>
+      </div>
+
+      <div className="detail-panel">
+        <div className="detail-grid">
+          <div className="detail-field">
+            <div className="label">Visibility</div>
+            <div className="value">
+              {canEdit ? (
+                <select
+                  className="text-input select-sm"
+                  value={project.visibility}
+                  onChange={(e) => void changeVisibility(e.target.value as ProjectVisibility)}
+                >
+                  {Object.values(ProjectVisibility).map((v) => (
+                    <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className={`badge vis-${project.visibility}`}>{VISIBILITY_LABELS[project.visibility]}</span>
+              )}
+            </div>
+          </div>
+          <div className="detail-field">
+            <div className="label">Product</div>
+            <div className="value">{project.product || '—'}</div>
+          </div>
+          <div className="detail-field">
+            <div className="label">Niche</div>
+            <div className="value">{project.niche || '—'}</div>
+          </div>
+          <div className="detail-field">
+            <div className="label">Homepage</div>
+            <div className="value">
+              {project.homepageUrl ? (
+                <a href={project.homepageUrl} target="_blank" rel="noreferrer">{project.homepageUrl}</a>
+              ) : (
+                '—'
+              )}
+            </div>
+          </div>
+          <div className="detail-field">
+            <div className="label">Created</div>
+            <div className="value">{new Date(project.createdAt).toLocaleDateString()}</div>
+          </div>
         </div>
       </div>
 

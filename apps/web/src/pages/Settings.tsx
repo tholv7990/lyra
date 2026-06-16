@@ -3,6 +3,7 @@ import { Provider, canManageKeys, type ApiKeyInfo } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
   { id: Provider.OpenAI, label: 'OpenAI', hint: 'GPT-5.5 — Find sources' },
@@ -19,6 +20,8 @@ export function Settings() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toRemove, setToRemove] = useState<Provider | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const wsId = current?.id;
   const canManage =
@@ -68,6 +71,17 @@ export function Settings() {
     });
   }
 
+  async function confirmRemove() {
+    if (!toRemove) return;
+    setRemoving(true);
+    try {
+      await remove(toRemove);
+      setToRemove(null);
+    } finally {
+      setRemoving(false);
+    }
+  }
+
   return (
     <div>
       <div className="section-head">
@@ -112,7 +126,7 @@ export function Settings() {
                       Save
                     </button>
                     {existing && (
-                      <button className="btn-ghost" onClick={() => void remove(p.id)}>Remove</button>
+                      <button className="btn-danger" onClick={() => setToRemove(p.id)}>Remove</button>
                     )}
                   </div>
                 )}
@@ -121,6 +135,21 @@ export function Settings() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!toRemove}
+        title="Remove key?"
+        message={
+          <>
+            Remove the <strong>{toRemove}</strong> key for this workspace? Steps using it will lock until a new key is set.
+          </>
+        }
+        confirmLabel="Remove"
+        danger
+        busy={removing}
+        onConfirm={() => void confirmRemove()}
+        onCancel={() => setToRemove(null)}
+      />
     </div>
   );
 }

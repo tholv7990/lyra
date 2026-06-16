@@ -438,6 +438,101 @@
   text-align: center;
 }
 
+/* ===== Visibility badges (colored by type) ===== */
+.badge.vis-private {
+  color: #6a6a76;
+  background: #f0f0f3;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.badge.vis-shared {
+  color: #0a6ed1;
+  background: rgba(10, 132, 255, 0.1);
+  border-color: rgba(10, 132, 255, 0.25);
+}
+.badge.vis-workspace {
+  color: #1f9d57;
+  background: rgba(45, 164, 78, 0.12);
+  border-color: rgba(45, 164, 78, 0.28);
+}
+
+/* ===== Confirm dialog ===== */
+.dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.dialog h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dialog p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ===== Project detail info panel ===== */
+.detail-panel {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--primary);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 20px;
+}
+
+.detail-field .label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 3px;
+}
+
+.detail-field .value {
+  font-size: 14px;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.detail-field .value a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
 /* ===== Project cards (grid, one card per row) ===== */
 .project-grid {
   display: grid;
@@ -448,11 +543,22 @@
 .project-card {
   background: #fff;
   border: 1px solid var(--hairline);
+  border-left: 3px solid var(--hairline-strong);
   border-radius: 12px;
   padding: 16px 18px;
   transition:
     border-color 0.12s ease,
     box-shadow 0.12s ease;
+}
+
+.project-card.vis-private {
+  border-left-color: #c9c9d0;
+}
+.project-card.vis-shared {
+  border-left-color: #0a84ff;
+}
+.project-card.vis-workspace {
+  border-left-color: #2da44e;
 }
 
 .project-card:hover {

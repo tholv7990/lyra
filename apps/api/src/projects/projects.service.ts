@@ -11,14 +11,25 @@ export class ProjectsService extends BaseRepository<Project> {
     super(model);
   }
 
+  // Active (non-deleted) project by id.
+  findActiveById(id: string) {
+    return this.findOne({ _id: id, active: { $ne: false } });
+  }
+
+  // Soft delete: flip active to false (the document is retained).
+  softDelete(id: string) {
+    return this.findByIdAndUpdate(id, { active: false });
+  }
+
   // Projects in a workspace the member is allowed to see (owner sees all).
   listForMember(workspaceId: string, ctx: { userId: string; role: Role }) {
     if (ctx.role === Role.Owner) {
-      return this.find({ workspaceId }, { sort: { createdAt: -1 } });
+      return this.find({ workspaceId, active: { $ne: false } }, { sort: { createdAt: -1 } });
     }
     return this.find(
       {
         workspaceId,
+        active: { $ne: false },
         $or: [
           { visibility: ProjectVisibility.Workspace },
           { createdBy: ctx.userId },

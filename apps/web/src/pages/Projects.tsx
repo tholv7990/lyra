@@ -8,6 +8,7 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
   [ProjectVisibility.Private]: 'Private',
@@ -26,6 +27,8 @@ export function Projects() {
   const [form, setForm] = useState(empty);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const wsId = current?.id;
 
@@ -71,17 +74,18 @@ export function Projects() {
     }
   }
 
-  async function changeVisibility(p: Project, visibility: ProjectVisibility) {
-    const updated = await api<Project>(`/projects/${p.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ visibility }),
-    });
-    setProjects((list) => list.map((x) => (x.id === p.id ? updated : x)));
-  }
-
-  async function remove(p: Project) {
-    await api(`/projects/${p.id}`, { method: 'DELETE', retry: true });
-    setProjects((list) => list.filter((x) => x.id !== p.id));
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      await api(`/projects/${toDelete.id}`, { method: 'DELETE' });
+      setProjects((list) => list.filter((x) => x.id !== toDelete.id));
+      setToDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete project');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -113,6 +117,8 @@ export function Projects() {
         </form>
       )}
 
+      {error && !creating && <p className="error">{error}</p>}
+
       {loading ? (
         <p className="empty">Loading projects…</p>
       ) : projects.length === 0 ? (
@@ -120,12 +126,12 @@ export function Projects() {
       ) : (
         <div className="project-grid">
           {projects.map((p) => (
-            <div className="project-card" key={p.id}>
+            <div className={`project-card vis-${p.visibility}`} key={p.id}>
               <div className="project-card-head">
                 <Link to={`/projects/${p.id}`} className="project-card-title">
                   {p.name}
                 </Link>
-                <span className="badge">{VISIBILITY_LABELS[p.visibility]}</span>
+                <span className={`badge vis-${p.visibility}`}>{VISIBILITY_LABELS[p.visibility]}</span>
               </div>
               <div className="project-card-sub">
                 {[p.product, p.niche].filter(Boolean).join(' · ') || 'No details yet'}
@@ -136,24 +142,30 @@ export function Projects() {
                   Open workbench →
                 </Link>
                 {canEdit(p) && (
-                  <div className="row-actions" style={{ marginLeft: 'auto' }}>
-                    <select
-                      className="text-input select-sm"
-                      value={p.visibility}
-                      onChange={(e) => void changeVisibility(p, e.target.value as ProjectVisibility)}
-                    >
-                      {Object.values(ProjectVisibility).map((v) => (
-                        <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>
-                      ))}
-                    </select>
-                    <button className="btn-ghost" onClick={() => void remove(p)}>Delete</button>
-                  </div>
+                  <button className="btn-danger" style={{ marginLeft: 'auto' }} onClick={() => setToDelete(p)}>
+                    Delete
+                  </button>
                 )}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!toDelete}
+        title="Delete project?"
+        message={
+          <>
+            <strong>{toDelete?.name}</strong> and its runs will be permanently removed. This can’t be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setToDelete(null)}
+      />
     </div>
   );
 }

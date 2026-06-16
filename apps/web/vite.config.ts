@@ -17,6 +17,8 @@ export default defineConfig({
       '/auth': { target: API, changeOrigin: false },
       '/workspaces': { target: API, changeOrigin: false },
       '/invites': { target: API, changeOrigin: false },
+      '/projects': { target: API, changeOrigin: false },
+      '/runs': { target: API, changeOrigin: false },
       '/health': { target: API, changeOrigin: false },
     },
   },

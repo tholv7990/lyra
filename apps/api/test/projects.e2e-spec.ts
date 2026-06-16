@@ -122,7 +122,13 @@ describe('Projects (e2e)', () => {
     expect(memberProject.visibility).toBe('private');
     // owner can read it
     await http().get(`/projects/${memberProject.id}`).set(auth(ownerToken)).expect(200);
-    // owner can delete it (override)
+    // owner can delete it (override) — soft delete
     await http().delete(`/projects/${memberProject.id}`).set(auth(ownerToken)).expect(204);
+    // soft-deleted: no longer readable or listed
+    await http().get(`/projects/${memberProject.id}`).set(auth(ownerToken)).expect(404);
+    const list = (
+      await http().get(`/workspaces/${teamId}/projects`).set(auth(ownerToken)).expect(200)
+    ).body;
+    expect(list.find((p: { id: string }) => p.id === memberProject.id)).toBeUndefined();
   });
 });

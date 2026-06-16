@@ -41,6 +41,10 @@ export class Project {
   @Prop({ type: [String], default: [] })
   sharedWith!: string[];
 
+  // Soft delete: delete flips this to false rather than removing the document.
+  @Prop({ required: true, default: true, index: true })
+  active!: boolean;
+
   createdAt!: Date;
 }
 

@@ -84,6 +84,6 @@ export class ProjectsController {
   @RequireProjectEdit()
   @HttpCode(204)
   async remove(@Param('id') id: string): Promise<void> {
-    await this.projects.deleteById(id);
+    await this.projects.softDelete(id);
   }
 }

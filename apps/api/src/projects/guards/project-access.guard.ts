@@ -29,7 +29,7 @@ export class ProjectAccessGuard implements CanActivate {
     if (!user) throw new ForbiddenException();
 
     const id = req.params?.id as string;
-    const project = await this.projects.findById(id);
+    const project = await this.projects.findActiveById(id);
     if (!project) throw new NotFoundException('Project not found');
 
     const membership = await this.memberships.findFor(
