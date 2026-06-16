@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   PromptStatus,
-  StepKey,
   tagKey,
   type Prompt as PromptModel,
   type TagCount,
@@ -13,6 +12,18 @@ import type { PromptDocument } from './prompt.schema';
 import { BaseRepository } from '../common/database/base.repository';
 import { UsersService } from '../users/users.service';
 import { toPrompt, promptActorIds } from './prompt.views';
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export interface PromptListOptions {
+  status?: PromptStatus;
+  tag?: string;
+  q?: string;
+  page: number;
+  limit: number;
+}
 
 @Injectable()
 export class PromptsService extends BaseRepository<Prompt> {
@@ -38,26 +49,45 @@ export class PromptsService extends BaseRepository<Prompt> {
     return ps.map((p) => toPrompt(p, refs));
   }
 
-  // Prompts a member may see: every public prompt in the workspace, plus all of
-  // their own (including drafts). Optionally narrowed to one step type.
-  listForMember(
-    workspaceId: string,
-    userId: string,
-    type?: StepKey,
-  ) {
-    const filter: Record<string, unknown> = {
+  // Base visibility: every public prompt in the workspace, plus the caller's own
+  // (including drafts).
+  private visibleFilter(workspaceId: string, userId: string): Record<string, unknown> {
+    return {
       workspaceId,
       $or: [{ status: PromptStatus.Public }, { createdBy: userId }],
     };
-    if (type) filter.type = type;
-    return this.find(filter, { sort: { updatedAt: -1, createdAt: -1 } });
+  }
+
+  listVisible(workspaceId: string, userId: string) {
+    return this.find(this.visibleFilter(workspaceId, userId), {
+      sort: { updatedAt: -1, createdAt: -1 },
+    });
+  }
+
+  // Paginated + filtered list (by status, a single tag, and a title query).
+  async listPaged(
+    workspaceId: string,
+    userId: string,
+    opts: PromptListOptions,
+  ): Promise<{ items: PromptDocument[]; total: number }> {
+    const filter = this.visibleFilter(workspaceId, userId);
+    if (opts.status) filter.status = opts.status;
+    if (opts.tag) filter.tags = opts.tag;
+    if (opts.q) filter.title = { $regex: escapeRegex(opts.q), $options: 'i' };
+    const total = await this.count(filter);
+    const items = await this.find(filter, {
+      sort: { updatedAt: -1, createdAt: -1 },
+      skip: (opts.page - 1) * opts.limit,
+      limit: opts.limit,
+    });
+    return { items, total };
   }
 
   // The distinct tag vocabulary across prompts the member can see, with usage
   // counts. Dedup is case-insensitive (first-seen casing wins for display).
-  // Sorted by count desc, then alphabetically. Drives the picker on the web.
+  // Sorted by count desc, then alphabetically. Drives the tag filter on the web.
   async tagVocabulary(workspaceId: string, userId: string): Promise<TagCount[]> {
-    const prompts = await this.listForMember(workspaceId, userId);
+    const prompts = await this.listVisible(workspaceId, userId);
     const byKey = new Map<string, TagCount>();
     for (const p of prompts) {
       for (const raw of p.tags ?? []) {

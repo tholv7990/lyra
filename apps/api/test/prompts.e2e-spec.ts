@@ -44,7 +44,6 @@ describe('Prompts (e2e)', () => {
   const newPrompt = (over: Record<string, unknown> = {}) => ({
     title: 'Hero shot',
     content: 'A clean studio render of {product}',
-    type: 'images',
     ...over,
   });
 
@@ -82,7 +81,6 @@ describe('Prompts (e2e)', () => {
       )
       .expect(201);
     expect(res.body.status).toBe('draft');
-    expect(res.body.type).toBe('images');
     expect(res.body.active).toBe(true);
     expect(res.body.media).toHaveLength(1);
     expect(res.body.media[0]).toMatchObject({ type: 'image', url: 'https://cdn/x.png', name: 'ref' });
@@ -106,7 +104,7 @@ describe('Prompts (e2e)', () => {
       .get(`/workspaces/${teamId}/prompts`)
       .set(auth(memberToken))
       .expect(200);
-    expect(list.body.find((p: { id: string }) => p.id === ownerDraftId)).toBeUndefined();
+    expect(list.body.items.find((p: { id: string }) => p.id === ownerDraftId)).toBeUndefined();
     await http().get(`/prompts/${ownerDraftId}`).set(auth(memberToken)).expect(403);
   });
 
@@ -133,21 +131,43 @@ describe('Prompts (e2e)', () => {
       .get(`/workspaces/${teamId}/prompts`)
       .set(auth(memberToken))
       .expect(200);
-    expect(list.body.find((p: { id: string }) => p.id === ownerPublicId)).toBeDefined();
+    expect(list.body.items.find((p: { id: string }) => p.id === ownerPublicId)).toBeDefined();
   });
 
-  it('filters the list by type', async () => {
+  it('paginates and filters by status, tag, and name', async () => {
     await http()
       .post(`/workspaces/${teamId}/prompts`)
       .set(auth(ownerToken))
-      .send(newPrompt({ title: 'A brief', type: 'brief', status: 'public' }))
+      .send(newPrompt({ title: 'Filter Target', status: 'public', tags: ['filterme'] }))
       .expect(201);
-    const list = await http()
-      .get(`/workspaces/${teamId}/prompts?type=brief`)
-      .set(auth(ownerToken))
-      .expect(200);
-    expect(list.body.length).toBeGreaterThan(0);
-    expect(list.body.every((p: { type: string }) => p.type === 'brief')).toBe(true);
+
+    // by tag
+    const byTag = (
+      await http().get(`/workspaces/${teamId}/prompts?tag=filterme`).set(auth(ownerToken)).expect(200)
+    ).body;
+    expect(byTag.items.length).toBe(1);
+    expect(byTag.items[0].title).toBe('Filter Target');
+    expect(byTag.total).toBe(1);
+
+    // by name (case-insensitive substring)
+    const byName = (
+      await http().get(`/workspaces/${teamId}/prompts?q=filter`).set(auth(ownerToken)).expect(200)
+    ).body;
+    expect(byName.items.find((p: { title: string }) => p.title === 'Filter Target')).toBeTruthy();
+
+    // by status
+    const drafts = (
+      await http().get(`/workspaces/${teamId}/prompts?status=draft`).set(auth(ownerToken)).expect(200)
+    ).body;
+    expect(drafts.items.every((p: { status: string }) => p.status === 'draft')).toBe(true);
+
+    // pagination shape + limit honored
+    const paged = (
+      await http().get(`/workspaces/${teamId}/prompts?limit=1&page=1`).set(auth(ownerToken)).expect(200)
+    ).body;
+    expect(paged.items.length).toBe(1);
+    expect(paged.limit).toBe(1);
+    expect(paged.total).toBeGreaterThan(1);
   });
 
   it('lets the creator soft-delete their prompt', async () => {
@@ -163,7 +183,7 @@ describe('Prompts (e2e)', () => {
     const list = (
       await http().get(`/workspaces/${teamId}/prompts`).set(auth(ownerToken)).expect(200)
     ).body;
-    expect(list.find((p: { id: string }) => p.id === created.id)).toBeUndefined();
+    expect(list.items.find((p: { id: string }) => p.id === created.id)).toBeUndefined();
   });
 
   it('normalizes + dedupes tags on create (case-insensitive, trimmed)', async () => {

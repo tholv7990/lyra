@@ -136,13 +136,12 @@ export interface PromptMedia {
   size?: number;
 }
 
-// A reusable prompt in the workspace library. `type` maps to a pipeline step.
+// A reusable prompt in the workspace library.
 export interface Prompt extends Audited {
   id: string;
   workspaceId: string;
   title: string;
   content: string;
-  type: StepKey;
   status: PromptStatus;
   media: PromptMedia[];
   tags: string[];
@@ -152,6 +151,14 @@ export interface Prompt extends Audited {
 export interface TagCount {
   value: string;
   count: number;
+}
+
+// A page of results from a paginated list endpoint.
+export interface Paged<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 // One run of a prompt against a model — the unit of the testing playground's

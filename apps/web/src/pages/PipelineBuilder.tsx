@@ -6,6 +6,7 @@ import {
   Provider,
   StepMode,
   tagColor,
+  type Paged,
   type Pipeline,
   type PipelineStep,
   type Prompt,
@@ -59,8 +60,8 @@ export function PipelineBuilder() {
         setSteps(p.steps);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load pipeline'));
-    api<Prompt[]>(`/workspaces/${wsId}/prompts`)
-      .then(setPrompts)
+    api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?limit=200`)
+      .then((r) => setPrompts(r.items))
       .catch(() => setPrompts([]));
   }, [id, wsId]);
 

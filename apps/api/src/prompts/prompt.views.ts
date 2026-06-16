@@ -12,7 +12,6 @@ export function toPrompt(
     workspaceId: p.workspaceId,
     title: p.title,
     content: p.content,
-    type: p.type,
     status: p.status,
     media: (p.media ?? []).map(
       (m): PromptMedia => ({

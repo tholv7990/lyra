@@ -1,4 +1,4 @@
-import { Role, ProjectVisibility, StepKey, PromptStatus, Provider, StepMode } from '../enums';
+import { Role, ProjectVisibility, PromptStatus, Provider, StepMode } from '../enums';
 import type { PromptMedia } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -68,7 +68,6 @@ export interface UpsertKeyDto {
 export interface CreatePromptDto {
   title: string;
   content: string;
-  type: StepKey;
   status?: PromptStatus;
   media?: PromptMedia[];
   tags?: string[];
@@ -77,7 +76,6 @@ export interface CreatePromptDto {
 export interface UpdatePromptDto {
   title?: string;
   content?: string;
-  type?: StepKey;
   status?: PromptStatus;
   media?: PromptMedia[];
   tags?: string[];

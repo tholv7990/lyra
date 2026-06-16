@@ -10,8 +10,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { dedupeTags, PromptStatus, StepKey } from '@lyra/shared';
-import type { Prompt as PromptModel, TagCount, User } from '@lyra/shared';
+import { dedupeTags, PromptStatus } from '@lyra/shared';
+import type { Paged, Prompt as PromptModel, TagCount, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { PromptsService } from './prompts.service';
@@ -40,7 +40,6 @@ export class PromptsController {
       updatedBy: user.id,
       title: body.title,
       content: body.content,
-      type: body.type,
       status: body.status ?? PromptStatus.Draft,
       media: body.media ?? [],
       tags: dedupeTags(body.tags ?? []),
@@ -48,16 +47,32 @@ export class PromptsController {
     return this.prompts.toView(prompt);
   }
 
+  // Paginated, filterable list (status, a single tag, title query q).
   @Get('workspaces/:id/prompts')
   @UseGuards(WorkspaceGuard)
   async list(
     @Param('id') workspaceId: string,
     @CurrentUser() user: User,
-    @Query('type') type?: StepKey,
-  ): Promise<PromptModel[]> {
-    return this.prompts.toViews(
-      await this.prompts.listForMember(workspaceId, user.id, type),
-    );
+    @Query('status') status?: string,
+    @Query('tag') tag?: string,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<Paged<PromptModel>> {
+    const p = Math.max(1, parseInt(page ?? '1', 10) || 1);
+    const l = Math.min(50, Math.max(1, parseInt(limit ?? '12', 10) || 12));
+    const st =
+      status === PromptStatus.Draft || status === PromptStatus.Public
+        ? (status as PromptStatus)
+        : undefined;
+    const { items, total } = await this.prompts.listPaged(workspaceId, user.id, {
+      status: st,
+      tag: tag || undefined,
+      q: q || undefined,
+      page: p,
+      limit: l,
+    });
+    return { items: await this.prompts.toViews(items), total, page: p, limit: l };
   }
 
   // The workspace tag vocabulary (visible to the caller) for the picker.
