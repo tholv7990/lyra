@@ -13,6 +13,9 @@ const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
   { id: Provider.Image, label: 'Image', hint: 'Image generation' },
   { id: Provider.Video, label: 'Video', hint: 'Video / UGC' },
 ];
+const LABEL: Record<Provider, string> = Object.fromEntries(
+  PROVIDERS.map((p) => [p.id, p.label]),
+) as Record<Provider, string>;
 
 // Providers that expose a live /models listing we can fetch and save.
 const LISTABLE: Provider[] = [Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek];
@@ -26,7 +29,7 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [toRemove, setToRemove] = useState<Provider | null>(null);
   const [removing, setRemoving] = useState(false);
-  const [counts, setCounts] = useState<Partial<Record<Provider, number>>>({});
+  const [models, setModels] = useState<Partial<Record<Provider, ModelOption[]>>>({});
   const [refreshing, setRefreshing] = useState<Provider | null>(null);
   const [refreshMsg, setRefreshMsg] = useState<Partial<Record<Provider, string>>>({});
 
@@ -48,14 +51,9 @@ export function Settings() {
       .catch(() => !cancelled && setKeys({}))
       .finally(() => !cancelled && setLoading(false));
     api<Record<Provider, ModelOption[]>>(`/workspaces/${wsId}/models`)
-      .then((m) => {
-        if (cancelled) return;
-        const next: Partial<Record<Provider, number>> = {};
-        for (const p of LISTABLE) next[p] = m[p]?.length ?? 0;
-        setCounts(next);
-      })
+      .then((m) => !cancelled && setModels(m))
       .catch(() => {
-        /* counts are best-effort */
+        /* best-effort — section just shows "refresh to fetch" */
       });
     return () => {
       cancelled = true;
@@ -68,12 +66,12 @@ export function Settings() {
     setRefreshMsg((m) => ({ ...m, [provider]: '' }));
     setError(null);
     try {
-      const models = await api<ModelOption[]>(
+      const list = await api<ModelOption[]>(
         `/workspaces/${wsId}/keys/${provider}/models`,
         { method: 'POST' },
       );
-      setCounts((c) => ({ ...c, [provider]: models.length }));
-      setRefreshMsg((m) => ({ ...m, [provider]: `Updated · ${models.length} models` }));
+      setModels((m) => ({ ...m, [provider]: list }));
+      setRefreshMsg((m) => ({ ...m, [provider]: `Updated · ${list.length} models` }));
     } catch (err) {
       setRefreshMsg((m) => ({
         ...m,
@@ -122,89 +120,120 @@ export function Settings() {
   }
 
   return (
-    <div>
-      <div className="prompts-head">
-        <div className="titles">
+    <div className="settings">
+      {error && <p className="error">{error}</p>}
+
+      {/* ===== Section 1: Provider keys ===== */}
+      <section className="set-section">
+        <div className="set-section-head">
           <h2>Provider keys</h2>
           <p>
             Bring-your-own keys, encrypted at rest per workspace. Each pipeline step unlocks once its provider key is set.
             {!canManage && ' You need Owner or key-management permission to change these.'}
           </p>
         </div>
-      </div>
 
-      {error && <p className="error">{error}</p>}
-
-      {loading ? (
-        <p className="empty">Loading keys…</p>
-      ) : (
-        <div className="list">
-          {PROVIDERS.map((p) => {
-            const existing = keys[p.id];
-            const listable = LISTABLE.includes(p.id);
-            const count = counts[p.id];
-            const msg = refreshMsg[p.id];
-            return (
-              <div className="row" key={p.id}>
-                <div className="grow">
-                  <div className="title">
-                    {p.label}
-                    <span className="key-set">
-                      <span className={`key-dot ${existing ? 'on' : ''}`} />
-                      {existing ? `Key set ···· ${existing.last4}` : 'Not set'}
-                    </span>
+        {loading ? (
+          <p className="empty">Loading keys…</p>
+        ) : (
+          <div className="list">
+            {PROVIDERS.map((p) => {
+              const existing = keys[p.id];
+              return (
+                <div className="key-row" key={p.id}>
+                  <div className="key-row-info">
+                    <div className="title">
+                      {p.label}
+                      <span className="key-set">
+                        <span className={`key-dot ${existing ? 'on' : ''}`} />
+                        {existing ? `Key set ···· ${existing.last4}` : 'Not set'}
+                      </span>
+                    </div>
+                    <div className="sub">{p.hint}</div>
                   </div>
-                  <div className="sub">
-                    {p.hint}
-                    {listable && count !== undefined && (
-                      <span className="model-count"> · {count} models</span>
-                    )}
-                    {msg && <span className="model-msg"> · {msg}</span>}
-                  </div>
+                  {canManage && (
+                    <div className="key-row-form">
+                      <input
+                        className="text-input key-input"
+                        type="password"
+                        placeholder={existing ? '••••••••••  replace' : 'Paste key'}
+                        value={drafts[p.id] ?? ''}
+                        onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
+                      />
+                      <div className="key-row-btns">
+                        <button
+                          className="icon-btn-primary"
+                          title="Save key"
+                          disabled={!(drafts[p.id] ?? '').trim()}
+                          onClick={() => void save(p.id)}
+                        >
+                          <CheckIcon width={16} height={16} />
+                        </button>
+                        {existing && (
+                          <button className="icon-btn-danger" title="Remove key" onClick={() => setToRemove(p.id)}>
+                            <TrashIcon width={16} height={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {canManage && (
-                  <div className="row-actions">
-                    {listable && existing && (
-                      <button
-                        className="icon-btn"
-                        title="Fetch latest models from provider"
-                        disabled={refreshing === p.id}
-                        onClick={() => void refreshModels(p.id)}
-                      >
-                        <RefreshIcon
-                          width={16}
-                          height={16}
-                          className={refreshing === p.id ? 'icon spin' : 'icon'}
-                        />
-                      </button>
-                    )}
-                    <input
-                      className="text-input key-input"
-                      type="password"
-                      placeholder={existing ? '••••••••••  replace' : 'Paste key'}
-                      value={drafts[p.id] ?? ''}
-                      onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
-                    />
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ===== Section 2: Models, grouped by provider ===== */}
+      <section className="set-section">
+        <div className="set-section-head">
+          <h2>Models</h2>
+          <p>
+            Models available in the prompt playground and pipeline steps. Refresh to fetch the current list
+            from each provider — no code change needed.
+          </p>
+        </div>
+
+        <div className="model-groups">
+          {LISTABLE.map((p) => {
+            const existing = keys[p];
+            const list = models[p] ?? [];
+            const msg = refreshMsg[p];
+            return (
+              <div className="model-group" key={p}>
+                <div className="model-group-head">
+                  <span className="mg-title">{LABEL[p]}</span>
+                  <span className="mg-count">{list.length} models</span>
+                  {canManage && existing && (
                     <button
-                      className="icon-btn-primary"
-                      title="Save key"
-                      disabled={!(drafts[p.id] ?? '').trim()}
-                      onClick={() => void save(p.id)}
+                      className="icon-btn mg-refresh"
+                      title="Fetch latest models from provider"
+                      disabled={refreshing === p}
+                      onClick={() => void refreshModels(p)}
                     >
-                      <CheckIcon width={16} height={16} />
+                      <RefreshIcon width={16} height={16} className={refreshing === p ? 'icon spin' : 'icon'} />
                     </button>
-                    {existing && (
-                      <button className="icon-btn-danger" title="Remove key" onClick={() => setToRemove(p.id)}>
-                        <TrashIcon width={16} height={16} />
-                      </button>
-                    )}
+                  )}
+                </div>
+
+                {!existing ? (
+                  <p className="mg-hint">Add the {LABEL[p]} key above to fetch its models.</p>
+                ) : list.length === 0 ? (
+                  <p className="mg-hint">No models yet — refresh to fetch.</p>
+                ) : (
+                  <div className="mg-models">
+                    {list.map((m) => (
+                      <span className="model-tag" key={m.id} title={m.id}>{m.label}</span>
+                    ))}
                   </div>
                 )}
+
+                {msg && <p className="mg-msg">{msg}</p>}
               </div>
             );
           })}
         </div>
-      )}
+      </section>
 
       <ConfirmDialog
         open={!!toRemove}
