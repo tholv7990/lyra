@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   defaultModel,
@@ -25,7 +33,6 @@ function modelLabel(provider: Provider, model: string) {
   return MODEL_CATALOG[provider]?.find((m) => m.id === model)?.label ?? model;
 }
 
-// What the chat area is currently showing.
 interface View {
   input: string;
   result: string;
@@ -41,6 +48,7 @@ export function PromptPlayground() {
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [history, setHistory] = useState<PromptTest[]>([]);
   const [starredOnly, setStarredOnly] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const [provider, setProvider] = useState<Provider>(Provider.Anthropic);
   const [model, setModel] = useState<string>(defaultModel(Provider.Anthropic));
@@ -48,6 +56,10 @@ export function PromptPlayground() {
   const [view, setView] = useState<View | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const abortRef = useRef<AbortController | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const loadHistory = useCallback(() => {
     if (!wsId || !id) return;
@@ -67,6 +79,13 @@ export function PromptPlayground() {
     loadHistory();
   }, [id, loadHistory]);
 
+  // Autoscroll while streaming.
+  useEffect(() => {
+    if (streaming && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [view?.result, streaming]);
+
   const visibleHistory = useMemo(
     () => (starredOnly ? history.filter((t) => t.starred) : history),
     [history, starredOnly],
@@ -77,41 +96,73 @@ export function PromptPlayground() {
     setModel(defaultModel(p));
   }
 
-  async function send() {
-    if (!wsId || !id || !input.trim() || streaming) return;
+  const send = useCallback(
+    async (text: string) => {
+      if (!wsId || !id || !text.trim() || streaming) return;
+      setError(null);
+      setView({ input: text, result: '' });
+      setStreaming(true);
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      try {
+        await streamSSE(
+          `/workspaces/${wsId}/prompts/${id}/tests`,
+          { provider, model, input: text },
+          (evt) => {
+            if (evt.type === 'delta') {
+              setView((v) => (v ? { ...v, result: v.result + String(evt.text ?? '') } : v));
+            } else if (evt.type === 'done') {
+              const test = evt.test as PromptTest;
+              setView({ input: test.input, result: test.result, test });
+              setHistory((h) => [test, ...h]);
+            } else if (evt.type === 'error') {
+              const test = evt.test as PromptTest | undefined;
+              setView((v) => ({
+                input: text,
+                result: v?.result ?? '',
+                error: String(evt.message ?? 'Test failed'),
+                test,
+              }));
+              if (test) setHistory((h) => [test, ...h]);
+            }
+          },
+          ctrl.signal,
+        );
+      } catch (e) {
+        if ((e as Error)?.name !== 'AbortError') {
+          setView((v) => ({ input: text, result: v?.result ?? '', error: e instanceof Error ? e.message : 'Test failed' }));
+        }
+      } finally {
+        setStreaming(false);
+        abortRef.current = null;
+      }
+    },
+    [wsId, id, streaming, provider, model],
+  );
+
+  function stop() {
+    abortRef.current?.abort();
+  }
+
+  function newTest() {
+    if (streaming) abortRef.current?.abort();
+    setView(null);
+    setInput(prompt?.content ?? '');
     setError(null);
-    const sent = input;
-    setView({ input: sent, result: '' });
-    setStreaming(true);
-    try {
-      await streamSSE(
-        `/workspaces/${wsId}/prompts/${id}/tests`,
-        { provider, model, input: sent },
-        (evt) => {
-          if (evt.type === 'delta') {
-            setView((v) => (v ? { ...v, result: v.result + String(evt.text ?? '') } : v));
-          } else if (evt.type === 'done') {
-            const test = evt.test as PromptTest;
-            setView({ input: test.input, result: test.result, test });
-            setHistory((h) => [test, ...h]);
-          } else if (evt.type === 'error') {
-            const test = evt.test as PromptTest | undefined;
-            setView((v) => ({
-              input: sent,
-              result: v?.result ?? '',
-              error: String(evt.message ?? 'Test failed'),
-              test,
-            }));
-            if (test) setHistory((h) => [test, ...h]);
-          }
-        },
-      );
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Test failed';
-      setView({ input: sent, result: '', error: message });
-    } finally {
-      setStreaming(false);
+    setShowHistory(false);
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      void send(input);
     }
+  }
+
+  function copy(text: string) {
+    void navigator.clipboard?.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   }
 
   async function toggleStar(test: PromptTest) {
@@ -151,10 +202,12 @@ export function PromptPlayground() {
   }
 
   return (
-    <div className="pg">
-      <aside className="pg-history">
-        <div className="pg-history-head">
-          <span>History</span>
+    <div className={`chat ${showHistory ? 'history-open' : ''}`}>
+      {showHistory && <div className="chat-scrim" onClick={() => setShowHistory(false)} />}
+
+      <aside className="chat-history">
+        <div className="chat-history-head">
+          <button className="btn-ghost chat-new" onClick={newTest}>+ New test</button>
           <button
             className={`pg-filter ${starredOnly ? 'on' : ''}`}
             onClick={() => setStarredOnly((s) => !s)}
@@ -163,7 +216,7 @@ export function PromptPlayground() {
             ★
           </button>
         </div>
-        <div className="pg-history-list">
+        <div className="chat-history-list">
           {visibleHistory.length === 0 ? (
             <p className="pg-empty">No tests yet.</p>
           ) : (
@@ -171,7 +224,7 @@ export function PromptPlayground() {
               <button
                 key={t.id}
                 className={`pg-hist-item ${view?.test?.id === t.id ? 'active' : ''}`}
-                onClick={() => setView({ input: t.input, result: t.result, error: t.error, test: t })}
+                onClick={() => { setView({ input: t.input, result: t.result, error: t.error, test: t }); setShowHistory(false); }}
               >
                 <div className="pg-hist-top">
                   <span className="badge">{modelLabel(t.provider, t.model)}</span>
@@ -181,17 +234,7 @@ export function PromptPlayground() {
                 {t.tags.length > 0 && (
                   <div className="pg-hist-tags">
                     {t.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="tag-chip ro"
-                        style={
-                          {
-                            color: tagColor(tag),
-                            borderColor: `${tagColor(tag)}55`,
-                            background: `${tagColor(tag)}14`,
-                          } as CSSProperties
-                        }
-                      >
+                      <span key={tag} className="tag-chip ro" style={{ color: tagColor(tag), borderColor: `${tagColor(tag)}55`, background: `${tagColor(tag)}14` } as CSSProperties}>
                         {tag}
                       </span>
                     ))}
@@ -203,93 +246,91 @@ export function PromptPlayground() {
         </div>
       </aside>
 
-      <div className="pg-main">
-        <div className="pg-top">
+      <main className="chat-main">
+        <header className="chat-top">
           <Link to="/prompts" className="pg-back">← Prompts</Link>
-          <h2>{prompt ? `Test · ${prompt.title}` : 'Test'}</h2>
-        </div>
-
-        {error && <p className="error">{error}</p>}
-
-        <div className="pg-chat">
-          {!view ? (
-            <p className="pg-hint">Edit the prompt below, pick a model, and send to test it.</p>
-          ) : (
-            <>
-              <div className="pg-msg user">
-                <div className="pg-bubble">{view.input}</div>
-              </div>
-              <div className="pg-msg assistant">
-                <div className={`pg-bubble ${view.error ? 'err' : ''}`}>
-                  {view.error ? view.error : view.result || (streaming ? '…' : '')}
-                  {streaming && !view.error && <span className="pg-caret" />}
-                </div>
-              </div>
-              {view.test && !streaming && (
-                <div className="pg-result-actions">
-                  <button
-                    className={`txt-btn ${view.test.starred ? 'accent' : ''}`}
-                    onClick={() => void toggleStar(view.test!)}
-                  >
-                    {view.test.starred ? '★ Starred' : '☆ Star'}
-                  </button>
-                  <button className="txt-btn danger" onClick={() => void remove(view.test!)}>
-                    Delete
-                  </button>
-                  <div className="pg-result-tags">
-                    <TagInput
-                      value={view.test.tags}
-                      suggestions={[]}
-                      onChange={(tags) => void setTags(view.test!, tags)}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="pg-composer">
-          <div className="pg-composer-row">
-            <select
-              className="text-input select-sm"
-              value={provider}
-              onChange={(e) => pickProvider(e.target.value as Provider)}
-            >
-              {PROVIDERS.map((p) => (
-                <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
-              ))}
-            </select>
-            <select
-              className="text-input select-sm"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-            >
-              {(MODEL_CATALOG[provider] ?? []).map((m) => (
-                <option key={m.id} value={m.id}>{m.label}</option>
-              ))}
-            </select>
-          </div>
-          <textarea
-            className="text-input prompt-area"
-            rows={4}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Prompt to test…"
-          />
-          <div className="pg-send-row">
-            <span className="pg-send-hint">Editing here doesn't change the saved prompt.</span>
-            <button
-              className="btn-primary"
-              style={{ width: 'auto', marginTop: 0 }}
-              disabled={streaming || !input.trim()}
-              onClick={() => void send()}
-            >
-              {streaming ? 'Running…' : 'Send'}
+          <h2>{prompt ? prompt.title : 'Test'}</h2>
+          <div className="chat-top-actions">
+            <button className="btn-ghost chat-new-inline" onClick={newTest}>+ New</button>
+            <button className="btn-ghost chat-history-toggle" onClick={() => setShowHistory((s) => !s)}>
+              History
             </button>
           </div>
+        </header>
+
+        {error && <p className="error" style={{ margin: '0 16px' }}>{error}</p>}
+
+        <div className="chat-scroll" ref={scrollRef}>
+          <div className="chat-thread">
+            {!view ? (
+              <div className="chat-empty">
+                <h3>Test this prompt</h3>
+                <p>Pick a model, tweak the prompt below, and send. Every run is saved to history.</p>
+              </div>
+            ) : (
+              <>
+                <div className="msg user">
+                  <div className="bubble">{view.input}</div>
+                </div>
+                <div className="msg ai">
+                  <div className="ai-meta">{PROVIDER_LABELS[provider]} · {modelLabel(provider, model)}</div>
+                  <div className={`ai-text ${view.error ? 'err' : ''}`}>
+                    {view.error ? view.error : view.result || (streaming ? '' : '—')}
+                    {streaming && <span className="pg-caret" />}
+                  </div>
+                  {view.test && !streaming && (
+                    <>
+                      <div className="ai-actions">
+                        <button className="txt-btn" onClick={() => copy(view.result)}>{copied ? 'Copied' : 'Copy'}</button>
+                        <button className="txt-btn" onClick={() => void send(view.input)}>Regenerate</button>
+                        <button className={`txt-btn ${view.test.starred ? 'accent' : ''}`} onClick={() => void toggleStar(view.test!)}>
+                          {view.test.starred ? '★ Starred' : '☆ Star'}
+                        </button>
+                        <button className="txt-btn danger" onClick={() => void remove(view.test!)}>Delete</button>
+                      </div>
+                      <div className="ai-tags">
+                        <TagInput value={view.test.tags} suggestions={[]} onChange={(tags) => void setTags(view.test!, tags)} />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+
+        <div className="chat-composer">
+          <div className="composer-box">
+            <textarea
+              className="composer-input"
+              rows={3}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Prompt to test…  (⌘/Ctrl + Enter to send)"
+            />
+            <div className="composer-bar">
+              <div className="composer-models">
+                <select className="model-select" value={provider} onChange={(e) => pickProvider(e.target.value as Provider)}>
+                  {PROVIDERS.map((p) => (
+                    <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
+                  ))}
+                </select>
+                <select className="model-select" value={model} onChange={(e) => setModel(e.target.value)}>
+                  {(MODEL_CATALOG[provider] ?? []).map((m) => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+              {streaming ? (
+                <button className="send-btn stop" onClick={stop} title="Stop">■</button>
+              ) : (
+                <button className="send-btn" onClick={() => void send(input)} disabled={!input.trim()} title="Send">↑</button>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

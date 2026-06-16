@@ -134,10 +134,12 @@ export async function streamSSE(
   path: string,
   body: unknown,
   onEvent: (evt: Record<string, unknown>) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const res = await fetch(`${API_URL}${path}`, {
     method: 'POST',
     credentials: 'include',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
