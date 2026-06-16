@@ -5,6 +5,8 @@ import {
   StepStatus,
   StepMode,
   StepKey,
+  PromptStatus,
+  MediaType,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -115,6 +117,25 @@ export interface Run extends Audited {
   status: RunStatus;
   currentStep: number;
   steps: Step[];
+}
+
+// Media attached to a prompt (sent alongside the prompt to the AI provider).
+export interface PromptMedia {
+  type: MediaType;
+  url: string;
+  name?: string;
+  mime?: string;
+}
+
+// A reusable prompt in the workspace library. `type` maps to a pipeline step.
+export interface Prompt extends Audited {
+  id: string;
+  workspaceId: string;
+  title: string;
+  content: string;
+  type: StepKey;
+  status: PromptStatus;
+  media: PromptMedia[];
 }
 
 export interface Asset {

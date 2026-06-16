@@ -9,6 +9,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { ProjectsModule } from './projects/projects.module';
 import { KeysModule } from './keys/keys.module';
 import { RunsModule } from './runs/runs.module';
+import { PromptsModule } from './prompts/prompts.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -31,6 +32,7 @@ import { HealthController } from './health.controller';
     ProjectsModule,
     KeysModule,
     RunsModule,
+    PromptsModule,
     AuthModule,
   ],
   controllers: [HealthController],

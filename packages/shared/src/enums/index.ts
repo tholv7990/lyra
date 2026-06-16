@@ -49,3 +49,15 @@ export enum Provider {
   Image = 'image',
   Video = 'video',
 }
+
+export enum PromptStatus {
+  Draft = 'draft',
+  Public = 'public',
+}
+
+export enum MediaType {
+  Image = 'image',
+  Audio = 'audio',
+  Video = 'video',
+  File = 'file',
+}

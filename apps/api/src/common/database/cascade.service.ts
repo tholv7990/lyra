@@ -7,6 +7,7 @@ import { Invite } from '../../workspaces/invite.schema';
 import { ApiKey } from '../../keys/api-key.schema';
 import { Project } from '../../projects/project.schema';
 import { Run } from '../../runs/run.schema';
+import { Prompt } from '../../prompts/prompt.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
 // so there are no circular module dependencies.
@@ -19,6 +20,7 @@ export class CascadeService {
     @InjectModel(ApiKey.name) private readonly keys: Model<ApiKey>,
     @InjectModel(Project.name) private readonly proj: Model<Project>,
     @InjectModel(Run.name) private readonly runs: Model<Run>,
+    @InjectModel(Prompt.name) private readonly prompts: Model<Prompt>,
   ) {}
 
   async deleteWorkspace(workspaceId: string, actorId: string) {
@@ -30,6 +32,7 @@ export class CascadeService {
       this.keys.updateMany({ workspaceId }, patch),
       this.proj.updateMany({ workspaceId }, patch),
       this.runs.updateMany({ workspaceId }, patch),
+      this.prompts.updateMany({ workspaceId }, patch),
     ]);
   }
 

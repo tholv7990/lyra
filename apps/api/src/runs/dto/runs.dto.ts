@@ -1,7 +1,7 @@
 import { IsString } from 'class-validator';
-import type { UpdatePromptDto } from '@lyra/shared';
+import type { UpdateStepPromptDto } from '@lyra/shared';
 
-export class UpdatePromptBody implements UpdatePromptDto {
+export class UpdatePromptBody implements UpdateStepPromptDto {
   @IsString()
   prompt!: string;
 }

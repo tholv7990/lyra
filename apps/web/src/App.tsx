@@ -10,6 +10,7 @@ import { Signup } from './pages/Signup';
 import { Home } from './pages/Home';
 import { Projects } from './pages/Projects';
 import { ProjectDetail } from './pages/ProjectDetail';
+import { Prompts } from './pages/Prompts';
 import { Settings } from './pages/Settings';
 import { AppLayout } from './layout/AppLayout';
 
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/projects', element: <Projects /> },
       { path: '/projects/:id', element: <ProjectDetail /> },
+      { path: '/prompts', element: <Prompts /> },
       { path: '/settings', element: <Settings /> },
     ],
   },

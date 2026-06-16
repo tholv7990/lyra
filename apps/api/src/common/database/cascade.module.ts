@@ -6,6 +6,7 @@ import { Invite, InviteSchema } from '../../workspaces/invite.schema';
 import { ApiKey, ApiKeySchema } from '../../keys/api-key.schema';
 import { Project, ProjectSchema } from '../../projects/project.schema';
 import { Run, RunSchema } from '../../runs/run.schema';
+import { Prompt, PromptSchema } from '../../prompts/prompt.schema';
 import { CascadeService } from './cascade.service';
 
 // Standalone: depends only on schemas (not feature modules), so importing it
@@ -19,6 +20,7 @@ import { CascadeService } from './cascade.service';
       { name: ApiKey.name, schema: ApiKeySchema },
       { name: Project.name, schema: ProjectSchema },
       { name: Run.name, schema: RunSchema },
+      { name: Prompt.name, schema: PromptSchema },
     ]),
   ],
   providers: [CascadeService],

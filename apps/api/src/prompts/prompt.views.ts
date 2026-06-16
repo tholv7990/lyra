@@ -1,0 +1,36 @@
+import type { Prompt as PromptModel, PromptMedia, UserRef } from '@lyra/shared';
+import type { PromptDocument } from './prompt.schema';
+import { userRef } from '../common/refs';
+import { iso } from '../common/dates';
+
+export function toPrompt(
+  p: PromptDocument,
+  refs: Map<string, UserRef>,
+): PromptModel {
+  return {
+    id: p._id.toString(),
+    workspaceId: p.workspaceId,
+    title: p.title,
+    content: p.content,
+    type: p.type,
+    status: p.status,
+    media: (p.media ?? []).map(
+      (m): PromptMedia => ({
+        type: m.type,
+        url: m.url,
+        name: m.name,
+        mime: m.mime,
+      }),
+    ),
+    active: p.active ?? true,
+    createdBy: userRef(p.createdBy, refs),
+    updatedBy: userRef(p.updatedBy, refs),
+    createdAt: iso(p.createdAt),
+    updatedAt: iso(p.updatedAt ?? p.createdAt),
+  };
+}
+
+// Collect every user id a prompt references (for batch resolution).
+export function promptActorIds(p: PromptDocument): string[] {
+  return [p.createdBy, p.updatedBy];
+}

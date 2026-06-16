@@ -618,6 +618,248 @@
   text-decoration: none;
 }
 
+/* ===== Prompt library ===== */
+.type-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 980px;
+  border: 1px solid var(--hairline);
+  background: #fff;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease;
+}
+
+.type-chip:hover {
+  border-color: var(--hairline-strong);
+}
+
+.type-chip.active {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+  background: var(--surface-1);
+}
+
+.type-chip .dot,
+.badge.ptype .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.badge.ptype {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.badge.status-draft {
+  color: #8a6d1a;
+  background: rgba(212, 167, 44, 0.14);
+  border-color: rgba(212, 167, 44, 0.32);
+}
+.badge.status-public {
+  color: #1f9d57;
+  background: rgba(45, 164, 78, 0.12);
+  border-color: rgba(45, 164, 78, 0.28);
+}
+
+/* form: type + status side by side */
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 38px;
+}
+
+.seg button {
+  flex: 1;
+  border: none;
+  background: #fff;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.seg button + button {
+  border-left: 1px solid var(--hairline);
+}
+
+.seg button.on {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* media add row + chips */
+.media-add {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.media-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.media-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 4px 3px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  font-size: 12px;
+}
+
+.media-chip.ro {
+  padding: 3px 9px;
+}
+
+.media-chip .media-kind {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.media-chip .media-name {
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.media-x {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.media-x:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+/* prompt cards */
+.prompt-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.prompt-card {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--hairline-strong);
+  border-radius: 12px;
+  padding: 16px 18px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.prompt-card:hover {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.prompt-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.prompt-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-right: auto;
+}
+
+.prompt-body {
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prompt-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.prompt-by {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+}
+
+@media (max-width: 560px) {
+  .media-add {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ===== Run controls + status badges ===== */
 .run-controls {
   display: flex;

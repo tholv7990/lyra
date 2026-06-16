@@ -5,6 +5,7 @@ import { WorkspaceMenu } from './WorkspaceMenu';
 import {
   HomeIcon,
   ProjectsIcon,
+  PromptsIcon,
   MembersIcon,
   SettingsIcon,
   MenuIcon,
@@ -21,6 +22,7 @@ function initials(name?: string) {
 const TITLES: Record<string, string> = {
   '/': 'Home',
   '/projects': 'Projects',
+  '/prompts': 'Prompts',
   '/settings': 'Settings',
 };
 
@@ -55,6 +57,14 @@ export function AppLayout() {
           >
             <ProjectsIcon />
             Projects
+          </NavLink>
+          <NavLink
+            to="/prompts"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            onClick={close}
+          >
+            <PromptsIcon />
+            Prompts
           </NavLink>
           <div className="nav-item disabled">
             <MembersIcon />

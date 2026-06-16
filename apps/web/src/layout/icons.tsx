@@ -34,6 +34,13 @@ export const MembersIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const PromptsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)} className="icon">
+    <path d="M2.5 4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4v5A1.5 1.5 0 0 1 12 10.5H6.5L3.5 13V10.5H4A1.5 1.5 0 0 1 2.5 9V4Z" />
+    <path d="M5 5.5h6M5 7.5h3.5" />
+  </svg>
+);
+
 export const SettingsIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)} className="icon">
     <circle cx="8" cy="8" r="2" />

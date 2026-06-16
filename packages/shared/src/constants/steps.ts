@@ -14,6 +14,20 @@ export const STEP_PROVIDERS: Record<StepKey, Provider> = {
   [StepKey.QA]: Provider.Anthropic,
 };
 
+// One color per step type — used for prompt-type badges (and the workbench
+// later). Single source of truth so api/web agree. Brand orange (#FF6B1A) is
+// intentionally not used here; it's reserved for primary CTAs.
+export const STEP_COLORS: Record<StepKey, string> = {
+  [StepKey.Find]: '#0a84ff', // blue
+  [StepKey.Crawl]: '#14b8a6', // teal
+  [StepKey.Brief]: '#7c5cff', // violet
+  [StepKey.Insight]: '#a855f7', // purple
+  [StepKey.Prompts]: '#5e6ad2', // indigo
+  [StepKey.Images]: '#ec4899', // pink
+  [StepKey.Video]: '#ef4444', // red
+  [StepKey.QA]: '#22c55e', // green
+};
+
 export interface StepDef {
   index: number;
   key: StepKey;
