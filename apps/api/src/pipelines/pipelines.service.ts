@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
-import { isModelAllowed, type Pipeline as PipelineModel, type PipelineStepInput } from '@lyra/shared';
+import { type Pipeline as PipelineModel, type PipelineStepInput } from '@lyra/shared';
 import { Pipeline } from './pipeline.schema';
 import type { PipelineDocument } from './pipeline.schema';
 import { ProjectPipeline } from './project-pipeline.schema';
@@ -39,11 +39,13 @@ export class PipelinesService extends BaseRepository<Pipeline> {
     return this.find({ workspaceId }, { sort: { createdAt: -1 } });
   }
 
-  // Assign each step a stable id and validate its model against the catalog.
+  // Assign each step a stable id. Models are refreshed live from the provider,
+  // so we only require a non-empty model id (not a static-catalog match) — the
+  // step picker offers known ids and the provider rejects a bad one at run time.
   normalizeSteps(steps: PipelineStepInput[] = []) {
     return steps.map((s) => {
-      if (!isModelAllowed(s.provider, s.model)) {
-        throw new BadRequestException(`Unknown model "${s.model}" for ${s.provider}`);
+      if (!s.model?.trim()) {
+        throw new BadRequestException(`Step "${s.name}" needs a model.`);
       }
       return {
         id: s.id || randomUUID(),

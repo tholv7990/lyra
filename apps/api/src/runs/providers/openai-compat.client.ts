@@ -44,6 +44,21 @@ export class OpenAiCompatClient {
     return { 'content-type': 'application/json', authorization: `Bearer ${p.apiKey}` };
   }
 
+  // List available model ids (GET /models).
+  async listModels(baseUrl: string, apiKey: string): Promise<string[]> {
+    const res = await fetch(`${baseUrl}/models`, {
+      headers: { authorization: `Bearer ${apiKey}` },
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      data?: { id?: string }[];
+      error?: { message?: string };
+    };
+    if (!res.ok) {
+      throw new Error(body.error?.message ?? `Request failed (${res.status})`);
+    }
+    return (body.data ?? []).map((m) => m.id).filter((x): x is string => !!x);
+  }
+
   async complete(p: OpenAiParams): Promise<LlmCompletion> {
     const res = await fetch(`${p.baseUrl}/chat/completions`, {
       method: 'POST',

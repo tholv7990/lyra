@@ -13,6 +13,10 @@ import {
   ProjectPipeline,
   ProjectPipelineSchema,
 } from '../../pipelines/project-pipeline.schema';
+import {
+  ProviderModel,
+  ProviderModelSchema,
+} from '../../models/provider-model.schema';
 import { CascadeService } from './cascade.service';
 
 // Standalone: depends only on schemas (not feature modules), so importing it
@@ -30,6 +34,7 @@ import { CascadeService } from './cascade.service';
       { name: PromptTest.name, schema: PromptTestSchema },
       { name: Pipeline.name, schema: PipelineSchema },
       { name: ProjectPipeline.name, schema: ProjectPipelineSchema },
+      { name: ProviderModel.name, schema: ProviderModelSchema },
     ]),
   ],
   providers: [CascadeService],

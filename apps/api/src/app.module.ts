@@ -12,6 +12,7 @@ import { RunsModule } from './runs/runs.module';
 import { PromptsModule } from './prompts/prompts.module';
 import { PromptTestsModule } from './prompt-tests/prompt-tests.module';
 import { PipelinesModule } from './pipelines/pipelines.module';
+import { ModelsModule } from './models/models.module';
 import { FilesModule } from './files/files.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
@@ -38,6 +39,7 @@ import { HealthController } from './health.controller';
     PromptsModule,
     PromptTestsModule,
     PipelinesModule,
+    ModelsModule,
     FilesModule,
     AuthModule,
   ],

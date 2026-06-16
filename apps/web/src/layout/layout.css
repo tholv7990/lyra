@@ -485,7 +485,8 @@
 }
 
 .icon-btn-primary,
-.icon-btn-danger {
+.icon-btn-danger,
+.icon-btn {
   width: 34px;
   height: 34px;
   flex-shrink: 0;
@@ -495,6 +496,35 @@
   display: grid;
   place-items: center;
   transition: background 0.12s ease, color 0.12s ease;
+}
+
+.icon-btn {
+  background: var(--surface-2, rgba(120, 120, 128, 0.12));
+  color: var(--ink-muted);
+  border: 1px solid var(--hairline);
+}
+
+.icon-btn:hover {
+  background: var(--surface-3, rgba(120, 120, 128, 0.2));
+  color: var(--ink);
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon.spin {
+  animation: spin 0.7s linear infinite;
+}
+
+.model-count {
+  color: var(--ink-muted);
+}
+
+.model-msg {
+  color: var(--primary);
+  font-weight: 500;
 }
 
 .icon-btn-primary {

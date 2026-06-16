@@ -11,6 +11,7 @@ import { Prompt } from '../../prompts/prompt.schema';
 import { PromptTest } from '../../prompt-tests/prompt-test.schema';
 import { Pipeline } from '../../pipelines/pipeline.schema';
 import { ProjectPipeline } from '../../pipelines/project-pipeline.schema';
+import { ProviderModel } from '../../models/provider-model.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
 // so there are no circular module dependencies.
@@ -28,6 +29,8 @@ export class CascadeService {
     @InjectModel(Pipeline.name) private readonly pipelines: Model<Pipeline>,
     @InjectModel(ProjectPipeline.name)
     private readonly projectPipelines: Model<ProjectPipeline>,
+    @InjectModel(ProviderModel.name)
+    private readonly providerModels: Model<ProviderModel>,
   ) {}
 
   async deleteWorkspace(workspaceId: string, actorId: string) {
@@ -43,6 +46,7 @@ export class CascadeService {
       this.promptTests.updateMany({ workspaceId }, patch),
       this.pipelines.updateMany({ workspaceId }, patch),
       this.projectPipelines.updateMany({ workspaceId }, patch),
+      this.providerModels.updateMany({ workspaceId }, patch),
     ]);
   }
 

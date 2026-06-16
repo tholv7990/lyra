@@ -14,7 +14,6 @@ import {
   MEDIA_ACCEPT,
   MEDIA_MAX_BYTES,
   MediaType,
-  MODEL_CATALOG,
   Provider,
   tagColor,
   type Prompt,
@@ -22,6 +21,7 @@ import {
   type PromptTest,
 } from '@lyra/shared';
 import { api, streamSSE } from '../lib/api';
+import { useModels, type ModelCatalog } from '../lib/useModels';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 
@@ -34,8 +34,8 @@ const PROVIDER_LABELS: Record<Provider, string> = {
 };
 const PROVIDERS = Object.values(Provider);
 
-function modelLabel(provider: Provider, model: string) {
-  return MODEL_CATALOG[provider]?.find((m) => m.id === model)?.label ?? model;
+function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
+  return catalog[provider]?.find((m) => m.id === model)?.label ?? model;
 }
 function initials(name?: string) {
   if (!name) return '?';
@@ -84,6 +84,7 @@ export function PromptPlayground() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const wsId = current?.id;
+  const { catalog } = useModels(wsId);
 
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [history, setHistory] = useState<PromptTest[]>([]);
@@ -265,7 +266,7 @@ export function PromptPlayground() {
                 onClick={() => { setView({ input: t.input, media: t.media, result: t.result, error: t.error, provider: t.provider, model: t.model, test: t }); setShowHistory(false); }}
               >
                 <div className="pg-hist-top">
-                  <span className="badge">{modelLabel(t.provider, t.model)}</span>
+                  <span className="badge">{modelLabel(catalog, t.provider, t.model)}</span>
                   {t.starred && <span className="pg-star">★</span>}
                 </div>
                 <div className="pg-hist-snip">{t.error ? `⚠ ${t.error}` : t.result}</div>
@@ -313,7 +314,7 @@ export function PromptPlayground() {
                 <div className="cmsg">
                   <div className="cavatar ai"><Spark /></div>
                   <div className="cbody">
-                    <div className="cmodel">{PROVIDER_LABELS[aiProvider]} · {modelLabel(aiProvider, aiModel)}</div>
+                    <div className="cmodel">{PROVIDER_LABELS[aiProvider]} · {modelLabel(catalog, aiProvider, aiModel)}</div>
                     <div className={`ctext ${view.error ? 'err' : ''}`}>
                       {view.error ? view.error : view.result || (streaming ? '' : '—')}
                       {streaming && <span className="pg-caret" />}
@@ -362,7 +363,7 @@ export function PromptPlayground() {
               <div className="model-pick" ref={modelRef}>
                 <button type="button" className="model-pill" onClick={() => setModelMenu((s) => !s)}>
                   <span className="mp-provider">{PROVIDER_LABELS[provider]}</span>
-                  <span className="mp-model">{modelLabel(provider, model)}</span>
+                  <span className="mp-model">{modelLabel(catalog, provider, model)}</span>
                   <span className="mp-caret">⌄</span>
                 </button>
                 {modelMenu && (
@@ -370,7 +371,7 @@ export function PromptPlayground() {
                     {PROVIDERS.map((p) => (
                       <div key={p} className="model-menu-group">
                         <div className="mmg-label">{PROVIDER_LABELS[p]}</div>
-                        {(MODEL_CATALOG[p] ?? []).map((m) => {
+                        {(catalog[p] ?? []).map((m) => {
                           const active = provider === p && model === m.id;
                           return (
                             <button key={m.id} type="button" className={`model-menu-item ${active ? 'active' : ''}`} onClick={() => { setProvider(p); setModel(m.id); setModelMenu(false); }}>

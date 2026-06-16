@@ -13,7 +13,12 @@ import {
   type MemberCtx,
 } from './index';
 import { MediaType, Provider } from '../enums';
-import { MODEL_CATALOG, isModelAllowed, defaultModel } from '../constants/models';
+import {
+  MODEL_CATALOG,
+  isModelAllowed,
+  defaultModel,
+  looksLikeModelId,
+} from '../constants/models';
 import { Role, ProjectVisibility } from '../enums';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 
@@ -168,5 +173,17 @@ describe('model catalog', () => {
   it('defaultModel returns the first catalog entry', () => {
     expect(defaultModel(Provider.Anthropic)).toBe('claude-opus-4-8');
     expect(isModelAllowed(Provider.OpenAI, defaultModel(Provider.OpenAI))).toBe(true);
+  });
+  it('looksLikeModelId distinguishes real ids from display labels', () => {
+    // Real provider model ids (lowercase, hyphenated, may contain dots/digits).
+    expect(looksLikeModelId('claude-opus-4-8')).toBe(true);
+    expect(looksLikeModelId('gpt-5.5-pro')).toBe(true);
+    expect(looksLikeModelId('deepseek-chat')).toBe(true);
+    expect(looksLikeModelId('o1')).toBe(true);
+    // Fixed-step display labels — not ids.
+    expect(looksLikeModelId('Claude')).toBe(false);
+    expect(looksLikeModelId('GPT-5.5 Pro')).toBe(false);
+    expect(looksLikeModelId('DeepSeek')).toBe(false);
+    expect(looksLikeModelId('')).toBe(false);
   });
 });

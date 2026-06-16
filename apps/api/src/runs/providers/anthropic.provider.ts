@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { isModelAllowed, Provider, STEP_DEFS } from '@lyra/shared';
+import { looksLikeModelId, STEP_DEFS } from '@lyra/shared';
 import { AnthropicClient } from './anthropic.client';
 import type {
   StepProvider,
@@ -28,11 +28,12 @@ export class AnthropicStepProvider implements StepProvider {
     private readonly config: ConfigService,
   ) {}
 
-  // Prefer the step's chosen model (composable pipeline) when it's a real
-  // Anthropic model; otherwise fall back to the configured default (fixed runs
-  // carry a display label like "Claude" in step.model).
+  // Prefer the step's chosen model (composable pipeline) when it carries a real
+  // model id; otherwise fall back to the configured default (fixed runs carry a
+  // display label like "Claude" in step.model). We no longer gate on the static
+  // catalog so freshly refreshed model ids pass straight through.
   private resolveModel(stepModel: string): string {
-    if (isModelAllowed(Provider.Anthropic, stepModel)) return stepModel;
+    if (looksLikeModelId(stepModel)) return stepModel;
     return this.config.get<string>('ANTHROPIC_MODEL') ?? DEFAULT_MODEL;
   }
 

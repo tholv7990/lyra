@@ -33,3 +33,13 @@ export function isModelAllowed(provider: Provider, model: string): boolean {
 export function defaultModel(provider: Provider): string {
   return MODEL_CATALOG[provider]?.[0]?.id ?? '';
 }
+
+// Distinguishes a real provider model id (lowercase, hyphenated — e.g.
+// "claude-opus-4-8", "gpt-5.5-pro", "deepseek-chat") from a fixed-step display
+// label (Title Case / spaces — e.g. "Claude", "GPT-5.5 Pro"). Used so steps that
+// carry a live, refreshed model id pass it straight through, while legacy fixed
+// steps fall back to the provider default. We no longer gate on the static
+// catalog — models are refreshed from the provider's live API.
+export function looksLikeModelId(model: string): boolean {
+  return /^[a-z0-9][a-z0-9.\-]*$/.test(model.trim());
+}

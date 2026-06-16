@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   defaultModel,
-  MODEL_CATALOG,
   Provider,
   StepMode,
   tagColor,
@@ -12,6 +11,7 @@ import {
   type Prompt,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { useModels } from '../lib/useModels';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TagInput } from '../components/TagInput';
@@ -37,6 +37,12 @@ export function PipelineBuilder() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const wsId = current?.id;
+  const { catalog } = useModels(wsId);
+
+  // First refreshed/known model for a provider (falls back to the static default).
+  const catalogDefault = (p: Provider) => catalog[p]?.[0]?.id ?? defaultModel(p);
+  const modelLabel = (p: Provider, m: string) =>
+    catalog[p]?.find((o) => o.id === m)?.label ?? m;
 
   const [pipeline, setPipeline] = useState<Pipeline | null>(null);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -87,7 +93,7 @@ export function PipelineBuilder() {
         name: '',
         promptId: prompts[0]?.id ?? '',
         provider: Provider.Anthropic,
-        model: defaultModel(Provider.Anthropic),
+        model: catalogDefault(Provider.Anthropic),
         mode: StepMode.Auto,
       },
     });
@@ -222,7 +228,7 @@ export function PipelineBuilder() {
                   </span>
                 </div>
                 <div className="flow-node-sub">
-                  {promptTitle(s.promptId)} · {PROVIDER_LABELS[s.provider]} · {s.model}
+                  {promptTitle(s.promptId)} · {PROVIDER_LABELS[s.provider]} · {modelLabel(s.provider, s.model)}
                 </div>
               </div>
               {canEdit && (
@@ -277,7 +283,7 @@ export function PipelineBuilder() {
                   value={ed.provider}
                   onChange={(e) => {
                     const provider = e.target.value as Provider;
-                    setEditing({ ...editing!, step: { ...ed, provider, model: defaultModel(provider) } });
+                    setEditing({ ...editing!, step: { ...ed, provider, model: catalogDefault(provider) } });
                   }}
                 >
                   {PROVIDERS.map((p) => (
@@ -292,7 +298,7 @@ export function PipelineBuilder() {
                   value={ed.model}
                   onChange={(e) => setEditing({ ...editing!, step: { ...ed, model: e.target.value } })}
                 >
-                  {(MODEL_CATALOG[ed.provider] ?? []).map((m) => (
+                  {(catalog[ed.provider] ?? []).map((m) => (
                     <option key={m.id} value={m.id}>{m.label}</option>
                   ))}
                 </select>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Provider, canManageKeys, type ApiKeyInfo } from '@lyra/shared';
+import { Provider, canManageKeys, type ApiKeyInfo, type ModelOption } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { CheckIcon, TrashIcon } from '../layout/icons';
+import { CheckIcon, RefreshIcon, TrashIcon } from '../layout/icons';
 
 const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
   { id: Provider.OpenAI, label: 'OpenAI', hint: 'GPT-5.5 — Find sources' },
@@ -13,6 +13,9 @@ const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
   { id: Provider.Image, label: 'Image', hint: 'Image generation' },
   { id: Provider.Video, label: 'Video', hint: 'Video / UGC' },
 ];
+
+// Providers that expose a live /models listing we can fetch and save.
+const LISTABLE: Provider[] = [Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek];
 
 export function Settings() {
   const { user } = useAuth();
@@ -23,6 +26,9 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [toRemove, setToRemove] = useState<Provider | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [counts, setCounts] = useState<Partial<Record<Provider, number>>>({});
+  const [refreshing, setRefreshing] = useState<Provider | null>(null);
+  const [refreshMsg, setRefreshMsg] = useState<Partial<Record<Provider, string>>>({});
 
   const wsId = current?.id;
   const canManage =
@@ -41,10 +47,42 @@ export function Settings() {
       })
       .catch(() => !cancelled && setKeys({}))
       .finally(() => !cancelled && setLoading(false));
+    api<Record<Provider, ModelOption[]>>(`/workspaces/${wsId}/models`)
+      .then((m) => {
+        if (cancelled) return;
+        const next: Partial<Record<Provider, number>> = {};
+        for (const p of LISTABLE) next[p] = m[p]?.length ?? 0;
+        setCounts(next);
+      })
+      .catch(() => {
+        /* counts are best-effort */
+      });
     return () => {
       cancelled = true;
     };
   }, [wsId]);
+
+  async function refreshModels(provider: Provider) {
+    if (!wsId) return;
+    setRefreshing(provider);
+    setRefreshMsg((m) => ({ ...m, [provider]: '' }));
+    setError(null);
+    try {
+      const models = await api<ModelOption[]>(
+        `/workspaces/${wsId}/keys/${provider}/models`,
+        { method: 'POST' },
+      );
+      setCounts((c) => ({ ...c, [provider]: models.length }));
+      setRefreshMsg((m) => ({ ...m, [provider]: `Updated · ${models.length} models` }));
+    } catch (err) {
+      setRefreshMsg((m) => ({
+        ...m,
+        [provider]: err instanceof Error ? err.message : 'Could not fetch models',
+      }));
+    } finally {
+      setRefreshing(null);
+    }
+  }
 
   async function save(provider: Provider) {
     const key = (drafts[provider] ?? '').trim();
@@ -103,6 +141,9 @@ export function Settings() {
         <div className="list">
           {PROVIDERS.map((p) => {
             const existing = keys[p.id];
+            const listable = LISTABLE.includes(p.id);
+            const count = counts[p.id];
+            const msg = refreshMsg[p.id];
             return (
               <div className="row" key={p.id}>
                 <div className="grow">
@@ -113,10 +154,30 @@ export function Settings() {
                       {existing ? `Key set ···· ${existing.last4}` : 'Not set'}
                     </span>
                   </div>
-                  <div className="sub">{p.hint}</div>
+                  <div className="sub">
+                    {p.hint}
+                    {listable && count !== undefined && (
+                      <span className="model-count"> · {count} models</span>
+                    )}
+                    {msg && <span className="model-msg"> · {msg}</span>}
+                  </div>
                 </div>
                 {canManage && (
                   <div className="row-actions">
+                    {listable && existing && (
+                      <button
+                        className="icon-btn"
+                        title="Fetch latest models from provider"
+                        disabled={refreshing === p.id}
+                        onClick={() => void refreshModels(p.id)}
+                      >
+                        <RefreshIcon
+                          width={16}
+                          height={16}
+                          className={refreshing === p.id ? 'icon spin' : 'icon'}
+                        />
+                      </button>
+                    )}
                     <input
                       className="text-input key-input"
                       type="password"

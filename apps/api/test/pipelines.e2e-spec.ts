@@ -105,12 +105,22 @@ describe('Pipelines (e2e)', () => {
     pipelineId = res.body.id;
   });
 
-  it('rejects a step with a model not in the catalog', async () => {
+  it('rejects a step with an empty model', async () => {
     await http()
       .post(`/workspaces/${teamId}/pipelines`)
       .set(auth(ownerToken))
-      .send({ name: 'Bad', steps: [step({ promptId, model: 'gpt-5.5' })] })
+      .send({ name: 'Bad', steps: [step({ promptId, model: '' })] })
       .expect(400);
+  });
+
+  it('accepts a step with an arbitrary (non-catalog) model id', async () => {
+    // No static-catalog gating — refreshed model ids are saved as-is.
+    const res = await http()
+      .post(`/workspaces/${teamId}/pipelines`)
+      .set(auth(ownerToken))
+      .send({ name: 'Future', steps: [step({ promptId, model: 'claude-future-99' })] })
+      .expect(201);
+    expect(res.body.steps[0].model).toBe('claude-future-99');
   });
 
   it('lists library pipelines for any member', async () => {

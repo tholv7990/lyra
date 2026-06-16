@@ -96,23 +96,38 @@ describe('Prompt tests (e2e)', () => {
       .expect(400);
   });
 
-  it('rejects a model not in the catalog', async () => {
+  it('rejects an empty model', async () => {
     await http()
       .post(`/workspaces/${wsId}/prompts/${promptId}/tests`)
       .set(auth(token))
-      .send({ ...body, model: 'gpt-5.5' })
+      .send({ ...body, model: '' })
       .expect(400);
   });
 
   let testId: string;
 
-  it('streams a run and saves it to history', async () => {
+  it('accepts an arbitrary (non-catalog) model id once the key is set', async () => {
+    // Models are refreshed live from the provider, so we no longer gate on the
+    // static catalog — an unknown-but-plausible id runs (the provider would
+    // reject a truly bad one).
     await http()
       .put(`/workspaces/${wsId}/keys/anthropic`)
       .set(auth(token))
       .send({ key: 'sk-test' })
       .expect(200);
+    const res = await http()
+      .post(`/workspaces/${wsId}/prompts/${promptId}/tests`)
+      .set(auth(token))
+      .send({ ...body, model: 'claude-future-99' })
+      .expect(200);
+    const deltas = events(res.text)
+      .filter((e) => e.type === 'delta')
+      .map((e) => e.text)
+      .join('');
+    expect(deltas).toBe('Hello world');
+  });
 
+  it('streams a run and saves it to history', async () => {
     const res = await http()
       .post(`/workspaces/${wsId}/prompts/${promptId}/tests`)
       .set(auth(token))

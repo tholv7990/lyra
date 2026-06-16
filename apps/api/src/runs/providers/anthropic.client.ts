@@ -49,6 +49,23 @@ interface AnthropicResponse {
 // hermetic (no network, no spend). The api key is per call (per-workspace BYOK).
 @Injectable()
 export class AnthropicClient {
+  // List available models (GET /v1/models) -> {id, label}.
+  async listModels(apiKey: string): Promise<{ id: string; label: string }[]> {
+    const res = await fetch('https://api.anthropic.com/v1/models', {
+      headers: { 'x-api-key': apiKey, 'anthropic-version': ANTHROPIC_VERSION },
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      data?: { id?: string; display_name?: string }[];
+      error?: { message?: string };
+    };
+    if (!res.ok) {
+      throw new Error(body.error?.message ?? `Request failed (${res.status})`);
+    }
+    return (body.data ?? [])
+      .filter((m) => !!m.id)
+      .map((m) => ({ id: m.id as string, label: m.display_name ?? (m.id as string) }));
+  }
+
   async complete(params: LlmCompletionParams): Promise<LlmCompletion> {
     const res = await fetch(ANTHROPIC_URL, {
       method: 'POST',

@@ -7,7 +7,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
-  isModelAllowed,
   Provider,
   PromptStatus,
   type PromptMedia,
@@ -122,8 +121,11 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
     provider: Provider,
     model: string,
   ): Promise<string> {
-    if (!isModelAllowed(provider, model)) {
-      throw new BadRequestException(`Unknown model "${model}" for ${provider}`);
+    // Models are refreshed live from the provider, so we don't gate against a
+    // static catalog here — the picker only offers known ids and the provider
+    // rejects a bad one. We only require a non-empty model.
+    if (!model?.trim()) {
+      throw new BadRequestException('Choose a model to run.');
     }
     const apiKey = await this.keys.getDecrypted(workspaceId, provider);
     if (!apiKey) {
