@@ -11,8 +11,9 @@ import {
 } from '@lyra/shared';
 
 // Pure run state machine — no Nest, no Mongoose, no I/O. RunsService loads a
-// document into a RunState, applies these transitions, and persists. Keeping it
-// pure makes the orchestrator transitions trivially unit-testable.
+// document into a RunState, validates + transitions here, runs the provider
+// (the only async/I/O part, in the service), then persists. Keeping the
+// transitions pure makes them trivially unit-testable.
 
 export interface RunState {
   status: RunStatus;
@@ -65,41 +66,18 @@ export function buildSteps(p: ProjectInfo): Step[] {
   }));
 }
 
-// Deterministic mock output per step — no provider calls, no spend.
-function fakeResult(step: Step): string {
-  switch (step.key) {
-    case StepKey.Find:
-      return '[mock] 9 competitor sources found, each with URL, hook, format, and why it performs.';
-    case StepKey.Crawl:
-      return '[mock] Crawled sources → structured JSON: ad copy, hooks, specs, price points, visual patterns.';
-    case StepKey.Brief:
-      return '[mock] Brand brief: color story, product details, voice/tone, the Quiet Hero arc. (gate — review & approve)';
-    case StepKey.Insight:
-      return '[mock] Competitor insight: winning angles, repeated visual patterns, the gap to own, tropes to avoid.';
-    case StepKey.Prompts:
-      return '[mock] 9 image prompts + 3 UGC scripts generated. (gate — review & approve)';
-    case StepKey.Images:
-      return '[mock] Rendered 9 stills (hero, grip detail, lifestyle ×3, studio ×2, before/after, packaging).';
-    case StepKey.Video:
-      return '[mock] Produced 3 avatar UGC ads + 1 cinematic b-roll cut with brand-matched voiceover.';
-    case StepKey.QA:
-      return '[mock] Assembled batch: logo + grade + captions applied, brand fit & product accuracy checked. (gate — approve to ship)';
-    default:
-      return '[mock] step complete.';
-  }
-}
-
 function now() {
   return new Date().toISOString();
 }
 
-// Run the step at `index` (must be the current step). Auto steps advance; gate
-// steps produce their result then pause the run for approval.
-export function runStepAt(
+// Validate that `index` is the step to run right now. Throws (StepLockedError /
+// RunTransitionError) on anything invalid; returns the step otherwise. Pure —
+// no mutation, so the service can check before doing async work.
+export function assertRunnable(
   state: RunState,
   index: number,
   keysPresent: Set<string>,
-): void {
+): Step {
   if (state.status === RunStatus.AwaitingGate) {
     throw new RunTransitionError('Approve the current gate before running more steps');
   }
@@ -117,12 +95,28 @@ export function runStepAt(
   if (isLocked(step, keysPresent)) {
     throw new StepLockedError(providerForStep(step.key));
   }
+  return step;
+}
 
+// Mark the step running (before the provider call).
+export function beginStep(state: RunState, index: number): void {
+  const step = state.steps[index];
   step.status = StepStatus.Running;
   step.startedAt = now();
   step.error = undefined;
-  step.result = fakeResult(step);
-  step.usage = { tokens: 0, costUsd: 0 };
+  state.status = RunStatus.Running;
+}
+
+// Apply a successful provider result and advance: a gate pauses for approval;
+// an auto step advances (completing the run after the last step).
+export function completeStep(
+  state: RunState,
+  index: number,
+  out: { result: string; usage?: Step['usage'] },
+): void {
+  const step = state.steps[index];
+  step.result = out.result;
+  step.usage = out.usage ?? { tokens: 0 };
   step.finishedAt = now();
 
   if (step.mode === StepMode.Gate) {
@@ -134,6 +128,15 @@ export function runStepAt(
     state.status =
       state.currentStep >= TOTAL_STEPS ? RunStatus.Done : RunStatus.Idle;
   }
+}
+
+// Record a provider failure: the step errors and the run halts in error.
+export function failStep(state: RunState, index: number, message: string): void {
+  const step = state.steps[index];
+  step.status = StepStatus.Error;
+  step.error = message;
+  step.finishedAt = now();
+  state.status = RunStatus.Error;
 }
 
 export function approveGateAt(state: RunState, index: number): void {
@@ -148,16 +151,6 @@ export function approveGateAt(state: RunState, index: number): void {
   state.currentStep = index + 1;
   state.status =
     state.currentStep >= TOTAL_STEPS ? RunStatus.Done : RunStatus.Idle;
-}
-
-// Run consecutive steps until a gate pauses the run, a step is locked (missing
-// key), or the run completes.
-export function runAll(state: RunState, keysPresent: Set<string>): void {
-  while (state.status === RunStatus.Idle && state.currentStep < TOTAL_STEPS) {
-    const step = state.steps[state.currentStep];
-    if (isLocked(step, keysPresent)) break;
-    runStepAt(state, state.currentStep, keysPresent);
-  }
 }
 
 export function stopRun(state: RunState): void {

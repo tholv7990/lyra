@@ -1435,6 +1435,17 @@
   color: var(--ink);
 }
 
+.step-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--danger);
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid rgba(229, 72, 77, 0.25);
+}
+
 /* ===== Mobile: sidebar becomes a drawer ===== */
 .scrim {
   display: none;

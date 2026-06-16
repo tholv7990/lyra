@@ -2,9 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Current state: Phase 0 complete (monorepo + auth)
+## Current state: Phases 0–4 complete (brain steps run on Claude)
 
-The Turborepo monorepo is scaffolded and **Phase 0 (Monorepo + Auth) is built and verified**: `@lyra/shared` contracts, `apps/api` (signup/login/refresh/logout/me with argon2 + rotating refresh), and `apps/web` (AuthContext + auth pages). **Phase 1 (Workspaces) is next** — see the build-phase list below. The `docs/` remain the authoritative spec for everything not yet built; later phases have not been implemented.
+Built and verified: **Phase 0** (monorepo + auth), **Phase 1** (workspaces/memberships/invites), **Phase 2** (projects + encrypted per-workspace keys), **Phase 3** (run state machine + gates), and **Phase 4** (brain steps brief/insight/prompts execute on Claude via the `StepProvider` interface). Plus two out-of-band additions: a **Prompt library** (`apps/api/src/prompts`, `apps/web` Prompts page — draft/public, step-typed, media + tags) and the **brand kit** (favicon + auth-page logo). The web UI is **light/Linear-style** (the design-system doc's dark tokens are superseded for now).
+
+**Phase 5 (Source steps — GPT-5.5 find + DeepSeek crawl) is next.** Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` interface + `ProviderRegistry`); only Anthropic is real — openai/deepseek/image/video still use `MockStepProvider`. Wiring a real provider = add its impl + map it in the registry (one line). The `docs/` remain the authoritative spec for everything not yet built.
 
 **Read these before doing anything** (they are the source of truth, in priority order):
 - [docs/lyra-requirements.md](docs/lyra-requirements.md) — business + technical requirements, data model, API surface, all resolved decisions, and the **build-phase order (§B8)**.

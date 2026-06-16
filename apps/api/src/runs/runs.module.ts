@@ -8,16 +8,28 @@ import { Run, RunSchema } from './run.schema';
 import { RunsService } from './runs.service';
 import { RunsController } from './runs.controller';
 import { RunAccessGuard } from './guards/run-access.guard';
+import { AnthropicClient } from './providers/anthropic.client';
+import { AnthropicStepProvider } from './providers/anthropic.provider';
+import { MockStepProvider } from './providers/mock.provider';
+import { ProviderRegistry } from './providers/provider.registry';
 
 @Module({
   imports: [
     WorkspacesModule, // MembershipsService
     ProjectsModule, // ProjectsService + ProjectAccessGuard
-    KeysModule, // KeysService (per-step key gating)
+    KeysModule, // KeysService (per-step key gating + decryption)
     UsersModule, // UsersService (ref expansion)
     MongooseModule.forFeature([{ name: Run.name, schema: RunSchema }]),
   ],
   controllers: [RunsController],
-  providers: [RunsService, RunAccessGuard],
+  providers: [
+    RunsService,
+    RunAccessGuard,
+    // Step execution: one StepProvider per Provider, dispatched via the registry.
+    AnthropicClient,
+    AnthropicStepProvider,
+    MockStepProvider,
+    ProviderRegistry,
+  ],
 })
 export class RunsModule {}

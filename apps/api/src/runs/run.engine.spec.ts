@@ -1,9 +1,11 @@
 import { RunStatus, StepStatus } from '@lyra/shared';
 import {
   buildSteps,
-  runStepAt,
+  assertRunnable,
+  beginStep,
+  completeStep,
+  failStep,
   approveGateAt,
-  runAll,
   resetRun,
   StepLockedError,
   RunTransitionError,
@@ -20,6 +22,13 @@ function freshState(): RunState {
   };
 }
 
+// Mirror what the service does for one step: validate -> begin -> complete.
+function runStep(s: RunState, index: number, keys = ALL_KEYS, result = 'ok') {
+  assertRunnable(s, index, keys);
+  beginStep(s, index);
+  completeStep(s, index, { result });
+}
+
 describe('run engine', () => {
   it('builds 8 steps with filled prompts', () => {
     const steps = buildSteps({ product: 'Runner X', niche: 'shoes', homepageUrl: '' });
@@ -28,28 +37,34 @@ describe('run engine', () => {
     expect(steps.every((s) => s.status === StepStatus.Idle)).toBe(true);
   });
 
-  it('runs autos and pauses at the first gate (Brief = step 2)', () => {
+  it('advances on auto steps and pauses at the first gate (Brief = step 2)', () => {
     const s = freshState();
-    runAll(s, ALL_KEYS);
-    expect(s.currentStep).toBe(2);
-    expect(s.status).toBe(RunStatus.AwaitingGate);
+    runStep(s, 0); // Find (auto)
+    expect(s.currentStep).toBe(1);
     expect(s.steps[0].status).toBe(StepStatus.Done);
-    expect(s.steps[1].status).toBe(StepStatus.Done);
+    runStep(s, 1); // Crawl (auto)
+    expect(s.currentStep).toBe(2);
+    runStep(s, 2); // Brief (gate)
+    expect(s.status).toBe(RunStatus.AwaitingGate);
     expect(s.steps[2].status).toBe(StepStatus.Waiting);
-    expect(s.steps[2].result).toBeTruthy();
+    expect(s.steps[2].result).toBe('ok');
+    expect(s.currentStep).toBe(2);
   });
 
   it('walks the full pipeline through all three gates to done', () => {
     const s = freshState();
-    runAll(s, ALL_KEYS); // -> gate at 2
+    runStep(s, 0);
+    runStep(s, 1);
+    runStep(s, 2); // gate Brief
     approveGateAt(s, 2);
     expect(s.status).toBe(RunStatus.Idle);
-    runAll(s, ALL_KEYS); // insight(3), gate at prompts(4)
-    expect(s.currentStep).toBe(4);
+    runStep(s, 3); // Insight (auto)
+    runStep(s, 4); // gate Prompts
     expect(s.status).toBe(RunStatus.AwaitingGate);
     approveGateAt(s, 4);
-    runAll(s, ALL_KEYS); // images(5), video(6), gate at qa(7)
-    expect(s.currentStep).toBe(7);
+    runStep(s, 5); // Images
+    runStep(s, 6); // Video
+    runStep(s, 7); // gate QA
     expect(s.status).toBe(RunStatus.AwaitingGate);
     approveGateAt(s, 7);
     expect(s.currentStep).toBe(8);
@@ -57,25 +72,36 @@ describe('run engine', () => {
     expect(s.steps.every((st) => st.status === StepStatus.Done)).toBe(true);
   });
 
-  it('throws when a step provider key is missing', () => {
+  it('rejects running a step whose provider key is missing', () => {
     const s = freshState();
-    expect(() => runStepAt(s, 0, new Set())).toThrow(StepLockedError);
-    // run-all simply stops (no throw) when the next step is locked
-    runAll(s, new Set());
-    expect(s.currentStep).toBe(0);
-    expect(s.status).toBe(RunStatus.Idle);
+    expect(() => assertRunnable(s, 0, new Set())).toThrow(StepLockedError);
   });
 
   it('enforces in-order execution and gate approval', () => {
     const s = freshState();
-    expect(() => runStepAt(s, 1, ALL_KEYS)).toThrow(RunTransitionError);
-    runAll(s, ALL_KEYS); // awaiting gate at 2
-    expect(() => runStepAt(s, 2, ALL_KEYS)).toThrow(RunTransitionError);
+    expect(() => assertRunnable(s, 1, ALL_KEYS)).toThrow(RunTransitionError);
+    runStep(s, 0);
+    runStep(s, 1);
+    runStep(s, 2); // awaiting gate at 2
+    expect(() => assertRunnable(s, 2, ALL_KEYS)).toThrow(RunTransitionError);
+    expect(() => assertRunnable(s, 3, ALL_KEYS)).toThrow(RunTransitionError);
+  });
+
+  it('marks a step running, then records a provider failure', () => {
+    const s = freshState();
+    beginStep(s, 0);
+    expect(s.steps[0].status).toBe(StepStatus.Running);
+    expect(s.steps[0].startedAt).toBeTruthy();
+    failStep(s, 0, 'Claude returned an empty response');
+    expect(s.steps[0].status).toBe(StepStatus.Error);
+    expect(s.steps[0].error).toBe('Claude returned an empty response');
+    expect(s.status).toBe(RunStatus.Error);
   });
 
   it('resets back to a clean idle run', () => {
     const s = freshState();
-    runAll(s, ALL_KEYS);
+    runStep(s, 0);
+    runStep(s, 1);
     resetRun(s);
     expect(s.currentStep).toBe(0);
     expect(s.status).toBe(RunStatus.Idle);

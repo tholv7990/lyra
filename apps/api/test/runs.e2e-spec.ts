@@ -4,8 +4,10 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { AnthropicClient } from '../src/runs/providers/anthropic.client';
 
-// Phase 3: run state machine (fake results, no AI spend).
+// Phase 4: run state machine + real StepProvider dispatch. The Anthropic client
+// is stubbed so brain steps exercise the provider path without network/spend.
 describe('Runs (e2e)', () => {
   let app: INestApplication;
   let mongod: MongoMemoryReplSet;
@@ -17,7 +19,12 @@ describe('Runs (e2e)', () => {
     process.env.ENCRYPTION_KEY = 'd'.repeat(64);
     process.env.NODE_ENV = 'test';
 
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(AnthropicClient)
+      .useValue({
+        complete: async () => ({ text: '[stub] brain output', usage: { tokens: 5 } }),
+      })
+      .compile();
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

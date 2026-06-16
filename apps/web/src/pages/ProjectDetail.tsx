@@ -309,6 +309,7 @@ function StepCard(props: {
         ) : null}
       </div>
 
+      {step.error && <p className="step-error">{step.error}</p>}
       {step.result && <pre className="result-box">{step.result}</pre>}
     </div>
   );
