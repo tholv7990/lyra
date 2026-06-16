@@ -450,6 +450,7 @@
     left: 0;
     bottom: 0;
     width: 264px;
+    z-index: 65; /* above the scrim (60) so the menu is clickable */
     transform: translateX(-100%);
     transition: transform 0.2s ease;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.18);
