@@ -1,4 +1,4 @@
-import { Role, ProjectVisibility, StepKey, PromptStatus, Provider } from '../enums';
+import { Role, ProjectVisibility, StepKey, PromptStatus, Provider, StepMode } from '../enums';
 import type { PromptMedia } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -81,6 +81,30 @@ export interface UpdatePromptDto {
   status?: PromptStatus;
   media?: PromptMedia[];
   tags?: string[];
+}
+
+// ===== Pipelines =====
+export interface PipelineStepInput {
+  id?: string;
+  name: string;
+  promptId: string;
+  provider: Provider;
+  model: string;
+  mode: StepMode;
+}
+
+export interface CreatePipelineDto {
+  name: string;
+  description?: string;
+  tags?: string[];
+  steps?: PipelineStepInput[];
+}
+
+export interface UpdatePipelineDto {
+  name?: string;
+  description?: string;
+  tags?: string[];
+  steps?: PipelineStepInput[];
 }
 
 // ===== Prompt testing =====

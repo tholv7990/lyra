@@ -9,6 +9,8 @@ import { Project } from '../../projects/project.schema';
 import { Run } from '../../runs/run.schema';
 import { Prompt } from '../../prompts/prompt.schema';
 import { PromptTest } from '../../prompt-tests/prompt-test.schema';
+import { Pipeline } from '../../pipelines/pipeline.schema';
+import { ProjectPipeline } from '../../pipelines/project-pipeline.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
 // so there are no circular module dependencies.
@@ -23,6 +25,9 @@ export class CascadeService {
     @InjectModel(Run.name) private readonly runs: Model<Run>,
     @InjectModel(Prompt.name) private readonly prompts: Model<Prompt>,
     @InjectModel(PromptTest.name) private readonly promptTests: Model<PromptTest>,
+    @InjectModel(Pipeline.name) private readonly pipelines: Model<Pipeline>,
+    @InjectModel(ProjectPipeline.name)
+    private readonly projectPipelines: Model<ProjectPipeline>,
   ) {}
 
   async deleteWorkspace(workspaceId: string, actorId: string) {
@@ -36,12 +41,18 @@ export class CascadeService {
       this.runs.updateMany({ workspaceId }, patch),
       this.prompts.updateMany({ workspaceId }, patch),
       this.promptTests.updateMany({ workspaceId }, patch),
+      this.pipelines.updateMany({ workspaceId }, patch),
+      this.projectPipelines.updateMany({ workspaceId }, patch),
     ]);
   }
 
   async deleteProject(projectId: string, actorId: string) {
     const patch = { active: false, updatedBy: actorId };
     await this.proj.updateOne({ _id: projectId }, patch);
-    await this.runs.updateMany({ projectId }, patch);
+    await Promise.all([
+      this.runs.updateMany({ projectId }, patch),
+      // unassign the project's pipelines (the library pipelines themselves stay)
+      this.projectPipelines.updateMany({ projectId }, patch),
+    ]);
   }
 }

@@ -8,6 +8,11 @@ import { Project, ProjectSchema } from '../../projects/project.schema';
 import { Run, RunSchema } from '../../runs/run.schema';
 import { Prompt, PromptSchema } from '../../prompts/prompt.schema';
 import { PromptTest, PromptTestSchema } from '../../prompt-tests/prompt-test.schema';
+import { Pipeline, PipelineSchema } from '../../pipelines/pipeline.schema';
+import {
+  ProjectPipeline,
+  ProjectPipelineSchema,
+} from '../../pipelines/project-pipeline.schema';
 import { CascadeService } from './cascade.service';
 
 // Standalone: depends only on schemas (not feature modules), so importing it
@@ -23,6 +28,8 @@ import { CascadeService } from './cascade.service';
       { name: Run.name, schema: RunSchema },
       { name: Prompt.name, schema: PromptSchema },
       { name: PromptTest.name, schema: PromptTestSchema },
+      { name: Pipeline.name, schema: PipelineSchema },
+      { name: ProjectPipeline.name, schema: ProjectPipelineSchema },
     ]),
   ],
   providers: [CascadeService],

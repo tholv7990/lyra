@@ -164,6 +164,29 @@ export interface PromptTest extends Audited {
   error?: string;
 }
 
+// ===== Composable pipelines =====
+// One node in a pipeline: a library prompt run on a chosen provider·model, in
+// auto or gate (pause-for-approval) mode. Steps are inline in the pipeline.
+export interface PipelineStep {
+  id: string;
+  name: string;
+  promptId: string;
+  provider: Provider;
+  model: string;
+  mode: StepMode;
+}
+
+// A reusable workspace-library pipeline: an ordered, linear chain of steps.
+// Assigned to projects (many-to-many) and run in a project's context.
+export interface Pipeline extends Audited {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description: string;
+  tags: string[];
+  steps: PipelineStep[];
+}
+
 export interface Asset {
   id: string;
   runId: string;
