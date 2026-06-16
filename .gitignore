@@ -18,6 +18,10 @@ build/
 # test / coverage
 coverage/
 
+# local dev process logs
+*.out.log
+*.err.log
+
 # local dev scratch (mongod data, etc.)
 .devdata/
 
