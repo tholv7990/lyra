@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { WorkspaceMenu } from './WorkspaceMenu';
 import {
@@ -18,10 +18,18 @@ function initials(name?: string) {
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
 }
 
+const TITLES: Record<string, string> = {
+  '/': 'Home',
+  '/projects': 'Projects',
+  '/settings': 'Settings',
+};
+
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const title = TITLES[location.pathname] ?? 'Lyra';
 
   return (
     <div className="app">
@@ -40,21 +48,27 @@ export function AppLayout() {
             <HomeIcon />
             Home
           </NavLink>
-          <div className="nav-item disabled">
+          <NavLink
+            to="/projects"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            onClick={close}
+          >
             <ProjectsIcon />
             Projects
-            <span className="soon">Soon</span>
-          </div>
+          </NavLink>
           <div className="nav-item disabled">
             <MembersIcon />
             Members
             <span className="soon">Soon</span>
           </div>
-          <div className="nav-item disabled">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            onClick={close}
+          >
             <SettingsIcon />
             Settings
-            <span className="soon">Soon</span>
-          </div>
+          </NavLink>
         </nav>
 
         <div className="sidebar-spacer" />
@@ -81,7 +95,7 @@ export function AppLayout() {
           >
             <MenuIcon />
           </button>
-          <h1>Home</h1>
+          <h1>{title}</h1>
         </header>
         <div className="content">
           <Outlet />

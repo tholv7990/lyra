@@ -8,6 +8,8 @@ import { useAuth } from './auth/useAuth';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Home } from './pages/Home';
+import { Projects } from './pages/Projects';
+import { Settings } from './pages/Settings';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -40,7 +42,11 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedLayout />,
-    children: [{ path: '/', element: <Home /> }],
+    children: [
+      { path: '/', element: <Home /> },
+      { path: '/projects', element: <Projects /> },
+      { path: '/settings', element: <Settings /> },
+    ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);

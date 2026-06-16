@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { Role } from '@lyra/shared';
+import { Role, canManageKeys } from '@lyra/shared';
 import { MembershipsService } from '../memberships.service';
 import { REQUIRE_OWNER_KEY } from '../decorators/require-owner.decorator';
+import { REQUIRE_MANAGE_KEYS_KEY } from '../decorators/require-manage-keys.decorator';
 
 // Verifies the caller is a member of the targeted workspace, attaches the
 // membership to the request, and enforces @RequireOwner(). The workspace is
@@ -35,6 +36,12 @@ export class WorkspaceGuard implements CanActivate {
       throw new ForbiddenException('Not a member of this workspace');
     }
 
+    const ctx = {
+      userId: user.id,
+      role: membership.role,
+      canManageKeys: membership.canManageKeys,
+    };
+
     const requireOwner = this.reflector.getAllAndOverride<boolean>(
       REQUIRE_OWNER_KEY,
       [context.getHandler(), context.getClass()],
@@ -43,10 +50,16 @@ export class WorkspaceGuard implements CanActivate {
       throw new ForbiddenException('Owner only');
     }
 
+    const requireManageKeys = this.reflector.getAllAndOverride<boolean>(
+      REQUIRE_MANAGE_KEYS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (requireManageKeys && !canManageKeys(ctx)) {
+      throw new ForbiddenException('Key management requires Owner or canManageKeys');
+    }
+
     (req as unknown as { membership: unknown }).membership = {
-      userId: user.id,
-      role: membership.role,
-      canManageKeys: membership.canManageKeys,
+      ...ctx,
       workspaceId,
     };
     return true;

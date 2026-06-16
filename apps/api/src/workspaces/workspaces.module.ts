@@ -27,7 +27,8 @@ import { InvitesController } from './invites.controller';
     InvitesService,
     WorkspaceGuard,
   ],
-  // Exported so AuthModule can create the personal workspace on signup.
-  exports: [WorkspacesService, MembershipsService],
+  // Exported so AuthModule can onboard, and other feature modules (projects,
+  // keys) can reuse the membership service + WorkspaceGuard.
+  exports: [WorkspacesService, MembershipsService, WorkspaceGuard],
 })
 export class WorkspacesModule {}

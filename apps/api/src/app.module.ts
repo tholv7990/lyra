@@ -6,6 +6,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { ProjectsModule } from './projects/projects.module';
+import { KeysModule } from './keys/keys.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -25,6 +27,8 @@ import { HealthController } from './health.controller';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     UsersModule,
     WorkspacesModule,
+    ProjectsModule,
+    KeysModule,
     AuthModule,
   ],
   controllers: [HealthController],
