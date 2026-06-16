@@ -4,13 +4,16 @@ import {
   PromptStatus,
   STEP_COLORS,
   StepKey,
+  tagColor,
   type Prompt,
   type PromptMedia,
+  type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { TagInput } from '../components/TagInput';
 import { PromptsIcon } from '../layout/icons';
 
 const TYPE_LABELS: Record<StepKey, string> = {
@@ -50,6 +53,7 @@ interface FormState {
   type: StepKey;
   status: PromptStatus;
   media: PromptMedia[];
+  tags: string[];
 }
 const emptyForm: FormState = {
   title: '',
@@ -57,6 +61,7 @@ const emptyForm: FormState = {
   type: StepKey.Brief,
   status: PromptStatus.Draft,
   media: [],
+  tags: [],
 };
 
 type Editing = { kind: 'new' } | { kind: 'edit'; id: string } | null;
@@ -65,6 +70,7 @@ export function Prompts() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [vocab, setVocab] = useState<TagCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Editing>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -89,10 +95,20 @@ export function Prompts() {
       .then((list) => !cancelled && setPrompts(list))
       .catch(() => !cancelled && setPrompts([]))
       .finally(() => !cancelled && setLoading(false));
+    api<TagCount[]>(`/workspaces/${wsId}/prompts/tags`)
+      .then((v) => !cancelled && setVocab(v))
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [wsId]);
+
+  const refreshVocab = () => {
+    if (!wsId) return;
+    api<TagCount[]>(`/workspaces/${wsId}/prompts/tags`)
+      .then(setVocab)
+      .catch(() => undefined);
+  };
 
   const counts = useMemo(() => {
     const m = {} as Record<StepKey, number>;
@@ -121,6 +137,7 @@ export function Prompts() {
       type: p.type,
       status: p.status,
       media: [...p.media],
+      tags: [...p.tags],
     });
     setError(null);
     setEditing({ kind: 'edit', id: p.id });
@@ -168,6 +185,7 @@ export function Prompts() {
         });
         setPrompts((p) => p.map((x) => (x.id === updated.id ? updated : x)));
       }
+      refreshVocab();
       closeForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save prompt');
@@ -324,6 +342,15 @@ export function Prompts() {
             onChange={(e) => setForm({ ...form, content: e.target.value })}
           />
 
+          <div className="pf-field">
+            <span className="pf-label">Tags</span>
+            <TagInput
+              value={form.tags}
+              suggestions={vocab}
+              onChange={(tags) => setForm({ ...form, tags })}
+            />
+          </div>
+
           <div className="pf-label">Media — sent to the AI provider</div>
           {form.media.length > 0 && (
             <div className="media-chips">
@@ -449,6 +476,24 @@ export function Prompts() {
               </div>
 
               {p.content && <div className="prompt-body">{p.content}</div>}
+
+              {p.tags.length > 0 && (
+                <div className="prompt-tags">
+                  {p.tags.map((t) => {
+                    const c = tagColor(t);
+                    return (
+                      <span
+                        key={t}
+                        className="tag-chip ro"
+                        style={{ color: c, borderColor: `${c}55`, background: `${c}14` }}
+                      >
+                        <span className="tdot" style={{ background: c }} />
+                        {t}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {p.media.length > 0 && (
                 <div className="media-chips">

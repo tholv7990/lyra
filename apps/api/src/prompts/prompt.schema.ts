@@ -47,8 +47,13 @@ export class Prompt extends AuditedEntity {
   // Attachments sent to the AI provider alongside the prompt.
   @Prop({ type: [PromptMediaItemSchema], default: [] })
   media!: PromptMediaItem[];
+
+  // Free-form tags for filtering. Stored canonical (deduped via shared utils).
+  @Prop({ type: [String], default: [] })
+  tags!: string[];
 }
 
 export const PromptSchema = SchemaFactory.createForClass(Prompt);
 PromptSchema.index({ workspaceId: 1, status: 1, type: 1 });
 PromptSchema.index({ workspaceId: 1, createdBy: 1 });
+PromptSchema.index({ workspaceId: 1, tags: 1 });

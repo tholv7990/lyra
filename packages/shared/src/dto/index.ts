@@ -71,6 +71,7 @@ export interface CreatePromptDto {
   type: StepKey;
   status?: PromptStatus;
   media?: PromptMedia[];
+  tags?: string[];
 }
 
 export interface UpdatePromptDto {
@@ -79,4 +80,5 @@ export interface UpdatePromptDto {
   type?: StepKey;
   status?: PromptStatus;
   media?: PromptMedia[];
+  tags?: string[];
 }

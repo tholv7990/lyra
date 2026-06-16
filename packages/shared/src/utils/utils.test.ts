@@ -4,9 +4,14 @@ import {
   canEditProject,
   canManageKeys,
   fillPrompt,
+  normalizeTag,
+  tagKey,
+  dedupeTags,
+  tagColor,
   type MemberCtx,
 } from './index';
 import { Role, ProjectVisibility } from '../enums';
+import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 
 const owner: MemberCtx = { userId: 'u-owner', role: Role.Owner, canManageKeys: false };
 const member: MemberCtx = { userId: 'u-member', role: Role.Member, canManageKeys: false };
@@ -79,5 +84,46 @@ describe('fillPrompt', () => {
   });
   it('replaces all occurrences of a placeholder', () => {
     expect(fillPrompt('{product} {product}', { product: 'A' })).toBe('A A');
+  });
+});
+
+describe('normalizeTag', () => {
+  it('trims and collapses internal whitespace', () => {
+    expect(normalizeTag('  summer   sale ')).toBe('summer sale');
+  });
+  it('caps length', () => {
+    expect(normalizeTag('x'.repeat(50))).toHaveLength(TAG_MAX_LEN);
+  });
+  it('preserves casing for display', () => {
+    expect(normalizeTag('Hero Shot')).toBe('Hero Shot');
+  });
+});
+
+describe('tagKey', () => {
+  it('is the lowercased normalized form', () => {
+    expect(tagKey(' Hero ')).toBe('hero');
+    expect(tagKey('SUMMER  Sale')).toBe('summer sale');
+  });
+});
+
+describe('dedupeTags', () => {
+  it('dedupes case-insensitively, keeping first-seen casing', () => {
+    expect(dedupeTags(['Hero', 'hero', 'HERO'])).toEqual(['Hero']);
+  });
+  it('drops blanks and normalizes each', () => {
+    expect(dedupeTags(['  ', 'a ', ' a', 'b'])).toEqual(['a', 'b']);
+  });
+  it('caps the count', () => {
+    const many = Array.from({ length: TAG_MAX + 5 }, (_, i) => `t${i}`);
+    expect(dedupeTags(many)).toHaveLength(TAG_MAX);
+  });
+});
+
+describe('tagColor', () => {
+  it('is deterministic and case-insensitive', () => {
+    expect(tagColor('Hero')).toBe(tagColor('hero'));
+  });
+  it('returns a color from the palette', () => {
+    expect(TAG_PALETTE).toContain(tagColor('anything'));
   });
 });

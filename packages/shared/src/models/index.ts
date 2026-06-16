@@ -136,6 +136,13 @@ export interface Prompt extends Audited {
   type: StepKey;
   status: PromptStatus;
   media: PromptMedia[];
+  tags: string[];
+}
+
+// A tag in the workspace vocabulary plus how many visible prompts carry it.
+export interface TagCount {
+  value: string;
+  count: number;
 }
 
 export interface Asset {

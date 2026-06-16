@@ -1,13 +1,15 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsEnum,
   IsOptional,
   IsString,
+  MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MediaType, PromptStatus, StepKey } from '@lyra/shared';
+import { MediaType, PromptStatus, StepKey, TAG_MAX, TAG_MAX_LEN } from '@lyra/shared';
 import type {
   CreatePromptDto,
   PromptMedia,
@@ -52,6 +54,13 @@ export class CreatePromptBody implements CreatePromptDto {
   @ValidateNested({ each: true })
   @Type(() => PromptMediaBody)
   media?: PromptMediaBody[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(TAG_MAX)
+  @IsString({ each: true })
+  @MaxLength(TAG_MAX_LEN, { each: true })
+  tags?: string[];
 }
 
 export class UpdatePromptBody implements UpdatePromptDto {
@@ -77,4 +86,11 @@ export class UpdatePromptBody implements UpdatePromptDto {
   @ValidateNested({ each: true })
   @Type(() => PromptMediaBody)
   media?: PromptMediaBody[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(TAG_MAX)
+  @IsString({ each: true })
+  @MaxLength(TAG_MAX_LEN, { each: true })
+  tags?: string[];
 }

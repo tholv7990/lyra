@@ -10,8 +10,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { PromptStatus, StepKey } from '@lyra/shared';
-import type { Prompt as PromptModel, User } from '@lyra/shared';
+import { dedupeTags, PromptStatus, StepKey } from '@lyra/shared';
+import type { Prompt as PromptModel, TagCount, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { PromptsService } from './prompts.service';
@@ -43,6 +43,7 @@ export class PromptsController {
       type: body.type,
       status: body.status ?? PromptStatus.Draft,
       media: body.media ?? [],
+      tags: dedupeTags(body.tags ?? []),
     });
     return this.prompts.toView(prompt);
   }
@@ -59,6 +60,16 @@ export class PromptsController {
     );
   }
 
+  // The workspace tag vocabulary (visible to the caller) for the picker.
+  @Get('workspaces/:id/prompts/tags')
+  @UseGuards(WorkspaceGuard)
+  tags(
+    @Param('id') workspaceId: string,
+    @CurrentUser() user: User,
+  ): Promise<TagCount[]> {
+    return this.prompts.tagVocabulary(workspaceId, user.id);
+  }
+
   @Get('prompts/:id')
   @UseGuards(PromptAccessGuard)
   get(@CurrentPrompt() prompt: PromptDocument): Promise<PromptModel> {
@@ -73,10 +84,9 @@ export class PromptsController {
     @Body() body: UpdatePromptBody,
     @CurrentUser() user: User,
   ): Promise<PromptModel> {
-    const updated = await this.prompts.findByIdAndUpdate(id, {
-      ...body,
-      updatedBy: user.id,
-    });
+    const patch: Record<string, unknown> = { ...body, updatedBy: user.id };
+    if (body.tags !== undefined) patch.tags = dedupeTags(body.tags);
+    const updated = await this.prompts.findByIdAndUpdate(id, patch);
     return this.prompts.toView(updated!);
   }
 

@@ -166,6 +166,60 @@ describe('Prompts (e2e)', () => {
     expect(list.find((p: { id: string }) => p.id === created.id)).toBeUndefined();
   });
 
+  it('normalizes + dedupes tags on create (case-insensitive, trimmed)', async () => {
+    const res = await http()
+      .post(`/workspaces/${teamId}/prompts`)
+      .set(auth(ownerToken))
+      .send(
+        newPrompt({
+          title: 'Tagged',
+          status: 'public',
+          tags: ['Hero', 'hero', ' Summer Sale ', 'summer sale'],
+        }),
+      )
+      .expect(201);
+    expect(res.body.tags).toEqual(['Hero', 'Summer Sale']);
+  });
+
+  it('exposes the tag vocabulary scoped to what the member can see', async () => {
+    // a public tag the member should see, and a draft-only tag they should not
+    await http()
+      .post(`/workspaces/${teamId}/prompts`)
+      .set(auth(ownerToken))
+      .send(newPrompt({ title: 'Pub', status: 'public', tags: ['public-tag'] }))
+      .expect(201);
+    await http()
+      .post(`/workspaces/${teamId}/prompts`)
+      .set(auth(ownerToken))
+      .send(newPrompt({ title: 'Secret', status: 'draft', tags: ['secret-tag'] }))
+      .expect(201);
+
+    const vocab = (
+      await http().get(`/workspaces/${teamId}/prompts/tags`).set(auth(memberToken)).expect(200)
+    ).body as { value: string; count: number }[];
+    const values = vocab.map((t) => t.value);
+    expect(values).toContain('public-tag');
+    expect(values).not.toContain('secret-tag');
+  });
+
+  it('updates tags (deduped) on a prompt', async () => {
+    const created = (
+      await http()
+        .post(`/workspaces/${teamId}/prompts`)
+        .set(auth(ownerToken))
+        .send(newPrompt({ title: 'Retag', status: 'public', tags: ['a'] }))
+        .expect(201)
+    ).body;
+    const updated = (
+      await http()
+        .patch(`/prompts/${created.id}`)
+        .set(auth(ownerToken))
+        .send({ tags: ['b', 'B', 'c'] })
+        .expect(200)
+    ).body;
+    expect(updated.tags).toEqual(['b', 'c']);
+  });
+
   it('cascades soft delete from a workspace to its prompts', async () => {
     const tempWs = (
       await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Temp' }).expect(201)

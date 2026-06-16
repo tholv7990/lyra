@@ -22,6 +22,7 @@ export function toPrompt(
         mime: m.mime,
       }),
     ),
+    tags: p.tags ?? [],
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),
