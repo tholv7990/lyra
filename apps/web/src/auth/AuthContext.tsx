@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User, SignupDto, LoginDto } from '@lyra/shared';
-import { api, setAccessToken, refreshSession } from '../lib/api';
+import { api, setAccessToken, bootstrapSession } from '../lib/api';
 
 interface AuthContextValue {
   user: User | null;
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const ok = await refreshSession();
+      const ok = await bootstrapSession();
       if (ok && !cancelled) {
         try {
           const { user } = await api<{ user: User }>('/auth/me');

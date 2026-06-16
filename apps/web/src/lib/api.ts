@@ -62,6 +62,17 @@ export function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
+// Single-flight session restore for app load. Memoized for the whole page
+// lifetime (never reset) so StrictMode double-mounts / multiple providers can't
+// fire a second /auth/refresh that races the rotated cookie — which would 401
+// and sign the user out on every reload.
+let bootstrapPromise: Promise<boolean> | null = null;
+
+export function bootstrapSession(): Promise<boolean> {
+  if (!bootstrapPromise) bootstrapPromise = doRefresh();
+  return bootstrapPromise;
+}
+
 interface ApiOptions extends RequestInit {
   /** When false, do not attempt a silent refresh + retry on 401. */
   retry?: boolean;
