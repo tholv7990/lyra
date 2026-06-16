@@ -54,6 +54,8 @@ export function PipelineBuilder() {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id || !wsId) return;
@@ -147,6 +149,24 @@ export function PipelineBuilder() {
     setDirty(true);
   }
 
+  // Drag-to-reorder (desktop): drop the dragged step before the target step.
+  function reorder(from: number, to: number) {
+    if (from === to) return;
+    setSteps((list) => {
+      const next = [...list];
+      const [moved] = next.splice(from, 1);
+      next.splice(from < to ? to - 1 : to, 0, moved);
+      return next;
+    });
+    setDirty(true);
+  }
+
+  function onDrop(target: number) {
+    if (dragIndex !== null) reorder(dragIndex, target);
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
   async function save() {
     if (!id) return;
     setSaving(true);
@@ -218,7 +238,26 @@ export function PipelineBuilder() {
         {steps.map((s, i) => (
           <div key={s.id}>
             <Connector onAdd={canEdit ? () => openNew(i) : undefined} />
-            <div className="flow-node" style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}>
+            <div
+              className={`flow-node${dragIndex === i ? ' dragging' : ''}${
+                overIndex === i && dragIndex !== null && dragIndex !== i ? ' drag-over' : ''
+              }`}
+              style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}
+              onDragOver={canEdit ? (e) => { e.preventDefault(); if (overIndex !== i) setOverIndex(i); } : undefined}
+              onDrop={canEdit ? (e) => { e.preventDefault(); onDrop(i); } : undefined}
+            >
+              {canEdit && (
+                <div
+                  className="flow-grip"
+                  title="Drag to reorder"
+                  draggable
+                  onDragStart={() => setDragIndex(i)}
+                  onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
+                  aria-hidden
+                >
+                  ⠿
+                </div>
+              )}
               <div className="flow-node-main" onClick={() => canEdit && openEdit(i)}>
                 <div className="flow-node-head">
                   <span className="flow-num">{i + 1}</span>

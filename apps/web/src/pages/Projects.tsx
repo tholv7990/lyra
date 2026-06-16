@@ -19,12 +19,15 @@ function fmtDate(iso: string) {
 
 const emptyForm = { name: '', product: '', niche: '', homepageUrl: '' };
 
+const PAGE_SIZE = 10;
+
 export function Projects() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
@@ -49,6 +52,11 @@ export function Projects() {
     () => (q.trim() ? projects.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())) : projects),
     [projects, q],
   );
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => { setPage(1); }, [q]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
   function canEdit(p: Project) {
     if (!current || !user) return false;
@@ -122,6 +130,7 @@ export function Projects() {
       ) : visible.length === 0 ? (
         <p className="empty">No projects match your search.</p>
       ) : (
+        <>
         <div className="ptable t-project">
           <div className="ptable-head">
             <span>Name</span>
@@ -130,7 +139,7 @@ export function Projects() {
             <span>Updated</span>
             <span />
           </div>
-          {visible.map((p) => (
+          {pageItems.map((p) => (
             <div className="prow" key={p.id}>
               <Link className="prow-name" to={`/projects/${p.id}`}>
                 <span className="nm">{p.name}</span>
@@ -148,6 +157,14 @@ export function Projects() {
             </div>
           ))}
         </div>
+        {totalPages > 1 && (
+          <div className="pager">
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← Prev</button>
+            <span className="pager-info">Page {page} of {totalPages} · {visible.length} total</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
+          </div>
+        )}
+        </>
       )}
 
       {creating && (

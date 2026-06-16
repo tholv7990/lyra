@@ -11,6 +11,8 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+const PAGE_SIZE = 10;
+
 export function Pipelines() {
   const { user } = useAuth();
   const { current } = useWorkspace();
@@ -18,6 +20,7 @@ export function Pipelines() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -42,6 +45,11 @@ export function Pipelines() {
     () => (q.trim() ? pipelines.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())) : pipelines),
     [pipelines, q],
   );
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => { setPage(1); }, [q]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
   const canEdit = (p: Pipeline) => !!user && (p.createdBy.id === user.id || current?.role === 'owner');
 
@@ -107,6 +115,7 @@ export function Pipelines() {
       ) : visible.length === 0 ? (
         <p className="empty">No pipelines match your search.</p>
       ) : (
+        <>
         <div className="ptable t-pipeline">
           <div className="ptable-head">
             <span>Name</span>
@@ -115,7 +124,7 @@ export function Pipelines() {
             <span>Updated</span>
             <span />
           </div>
-          {visible.map((p) => (
+          {pageItems.map((p) => (
             <div className="prow" key={p.id}>
               <Link className="prow-name" to={`/pipelines/${p.id}`}>
                 <span className="nm">{p.name}</span>
@@ -139,6 +148,14 @@ export function Pipelines() {
             </div>
           ))}
         </div>
+        {totalPages > 1 && (
+          <div className="pager">
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← Prev</button>
+            <span className="pager-info">Page {page} of {totalPages} · {visible.length} total</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
+          </div>
+        )}
+        </>
       )}
 
       {creating && (

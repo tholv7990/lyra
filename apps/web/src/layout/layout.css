@@ -2279,6 +2279,39 @@
   box-shadow: var(--shadow-md);
 }
 
+/* drag-to-reorder */
+.flow-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--hairline);
+  color: var(--ink-tertiary);
+  font-size: 15px;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+}
+
+.flow-grip:hover {
+  background: var(--surface-1);
+  color: var(--ink-muted);
+}
+
+.flow-grip:active {
+  cursor: grabbing;
+}
+
+.flow-node.dragging {
+  opacity: 0.4;
+}
+
+.flow-node.drag-over {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
 .flow-node-main {
   flex: 1;
   min-width: 0;
