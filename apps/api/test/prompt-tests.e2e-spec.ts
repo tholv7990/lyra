@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
+import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
 
 // Prompt testing playground: streaming run (SSE) + history + star/tags.
 // The Anthropic client is stubbed so tests are hermetic (no network/spend).
@@ -23,13 +24,19 @@ describe('Prompt tests (e2e)', () => {
       .overrideProvider(AnthropicClient)
       .useValue({
         complete: async () => ({ text: 'ok', usage: { tokens: 3 } }),
-        stream: async (
-          _params: unknown,
-          onDelta: (t: string) => void,
-        ) => {
+        stream: async (_params: unknown, onDelta: (t: string) => void) => {
           onDelta('Hello ');
           onDelta('world');
           return { text: 'Hello world', usage: { tokens: 7 } };
+        },
+      })
+      .overrideProvider(OpenAiCompatClient)
+      .useValue({
+        complete: async () => ({ text: 'ds ok', usage: { tokens: 3 } }),
+        stream: async (_params: unknown, onDelta: (t: string) => void) => {
+          onDelta('Deep ');
+          onDelta('Seek');
+          return { text: 'Deep Seek', usage: { tokens: 4 } };
         },
       })
       .compile();
@@ -121,6 +128,21 @@ describe('Prompt tests (e2e)', () => {
     expect(test.result).toBe('Hello world');
     expect(test.starred).toBe(false);
     testId = test.id;
+  });
+
+  it('streams a DeepSeek run (OpenAI-compatible provider)', async () => {
+    await http()
+      .put(`/workspaces/${wsId}/keys/deepseek`)
+      .set(auth(token))
+      .send({ key: 'sk-ds' })
+      .expect(200);
+    const res = await http()
+      .post(`/workspaces/${wsId}/prompts/${promptId}/tests`)
+      .set(auth(token))
+      .send({ provider: 'deepseek', model: 'deepseek-chat', input: 'hi' })
+      .expect(200);
+    const deltas = events(res.text).filter((e) => e.type === 'delta').map((e) => e.text).join('');
+    expect(deltas).toBe('Deep Seek');
   });
 
   it('lists test history for the prompt', async () => {

@@ -12,6 +12,8 @@ import { RunsController } from './runs.controller';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { AnthropicClient } from './providers/anthropic.client';
 import { AnthropicStepProvider } from './providers/anthropic.provider';
+import { OpenAiCompatClient } from './providers/openai-compat.client';
+import { OpenAiCompatStepProvider } from './providers/openai-compat.provider';
 import { MockStepProvider } from './providers/mock.provider';
 import { ProviderRegistry } from './providers/provider.registry';
 
@@ -32,6 +34,8 @@ import { ProviderRegistry } from './providers/provider.registry';
     // Step execution: one StepProvider per Provider, dispatched via the registry.
     AnthropicClient,
     AnthropicStepProvider,
+    OpenAiCompatClient,
+    OpenAiCompatStepProvider,
     MockStepProvider,
     ProviderRegistry,
   ],

@@ -9,6 +9,7 @@ import { PromptTest, PromptTestSchema } from './prompt-test.schema';
 import { PromptTestsService } from './prompt-tests.service';
 import { PromptTestsController } from './prompt-tests.controller';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
+import { OpenAiCompatClient } from '../runs/providers/openai-compat.client';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { AnthropicClient } from '../runs/providers/anthropic.client';
     ]),
   ],
   controllers: [PromptTestsController],
-  providers: [PromptTestsService, AnthropicClient],
+  providers: [PromptTestsService, AnthropicClient, OpenAiCompatClient],
 })
 export class PromptTestsModule {}

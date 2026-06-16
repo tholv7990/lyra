@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
+import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
 
 // Running a composable pipeline in a project's context (chaining + gates).
 // The Anthropic client echoes the prompt it receives so chaining is observable.
@@ -21,6 +22,11 @@ describe('Pipeline runs (e2e)', () => {
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(AnthropicClient)
+      .useValue({
+        complete: async (p: { prompt: string }) => ({ text: p.prompt, usage: { tokens: 1 } }),
+        stream: async () => ({ text: 'x', usage: { tokens: 1 } }),
+      })
+      .overrideProvider(OpenAiCompatClient)
       .useValue({
         complete: async (p: { prompt: string }) => ({ text: p.prompt, usage: { tokens: 1 } }),
         stream: async () => ({ text: 'x', usage: { tokens: 1 } }),

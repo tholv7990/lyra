@@ -22,6 +22,10 @@ import { PromptsService } from '../prompts/prompts.service';
 import { FilesService } from '../files/files.service';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
 import type { LlmAttachment } from '../runs/providers/anthropic.client';
+import {
+  OpenAiCompatClient,
+  OPENAI_COMPAT_BASE,
+} from '../runs/providers/openai-compat.client';
 import { toPromptTest, promptTestActorIds } from './prompt-test.views';
 
 const SYSTEM_PROMPT =
@@ -42,6 +46,7 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
     private readonly prompts: PromptsService,
     private readonly files: FilesService,
     private readonly anthropic: AnthropicClient,
+    private readonly openai: OpenAiCompatClient,
   ) {
     super(model);
   }
@@ -148,6 +153,19 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
       if (!out.text) throw new Error('Claude returned an empty response');
       return { result: out.text, usage: out.usage };
     }
+
+    // OpenAI & DeepSeek (OpenAI-compatible). Text only for now.
+    const baseUrl = OPENAI_COMPAT_BASE[provider];
+    if (baseUrl) {
+      const out = await this.openai.stream(
+        { baseUrl, apiKey, model, system: SYSTEM_PROMPT, prompt: input },
+        onDelta,
+      );
+      if (!out.text) throw new Error(`No response from ${provider}`);
+      return { result: out.text, usage: out.usage };
+    }
+
+    // image/video — not yet callable
     const mock = `[mock ${provider}·${model}] response to your prompt.`;
     onDelta(mock);
     return { result: mock, usage: { tokens: 0, costUsd: 0 } };

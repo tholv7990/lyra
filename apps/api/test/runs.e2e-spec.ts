@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
+import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
 
 // Phase 4: run state machine + real StepProvider dispatch. The Anthropic client
 // is stubbed so brain steps exercise the provider path without network/spend.
@@ -23,6 +24,14 @@ describe('Runs (e2e)', () => {
       .overrideProvider(AnthropicClient)
       .useValue({
         complete: async () => ({ text: '[stub] brain output', usage: { tokens: 5 } }),
+      })
+      .overrideProvider(OpenAiCompatClient)
+      .useValue({
+        complete: async () => ({ text: '[stub] source output', usage: { tokens: 5 } }),
+        stream: async (_p: unknown, onDelta: (t: string) => void) => {
+          onDelta('[stub]');
+          return { text: '[stub] source output', usage: { tokens: 5 } };
+        },
       })
       .compile();
     app = moduleRef.createNestApplication();
