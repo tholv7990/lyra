@@ -125,11 +125,18 @@ export function Pipelines() {
             <span />
           </div>
           {pageItems.map((p) => (
-            <div className="prow" key={p.id}>
-              <Link className="prow-name" to={`/pipelines/${p.id}`}>
+            <div
+              className="prow"
+              key={p.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/pipelines/${p.id}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/pipelines/${p.id}`); }}
+            >
+              <div className="prow-name">
                 <span className="nm">{p.name}</span>
                 {p.description && <span className="snip">{p.description}</span>}
-              </Link>
+              </div>
               <span className="prow-tags">
                 {p.tags.slice(0, 3).map((t) => {
                   const c = tagColor(t);
@@ -141,7 +148,7 @@ export function Pipelines() {
               </span>
               <span className="prow-date">{p.steps.length}</span>
               <span className="prow-date">{fmtDate(p.updatedAt)}</span>
-              <span className="prow-actions">
+              <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
                 <Link className="txt-btn accent" to={`/pipelines/${p.id}`}>Open</Link>
                 {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
               </span>

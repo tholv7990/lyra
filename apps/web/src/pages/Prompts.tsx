@@ -5,7 +5,7 @@ import {
   type CSSProperties,
   type FormEvent,
 } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   isAllowedMedia,
   MEDIA_ACCEPT,
@@ -59,6 +59,7 @@ type Editing = { kind: 'new' } | { kind: 'edit'; id: string } | null;
 export function Prompts() {
   const { user } = useAuth();
   const { current } = useWorkspace();
+  const navigate = useNavigate();
   const wsId = current?.id;
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -309,12 +310,21 @@ export function Prompts() {
               <span>Updated</span>
               <span />
             </div>
-            {prompts.map((p) => (
-              <div className="prow" key={p.id}>
-                <button className="prow-name" onClick={() => (canEdit(p) ? openEdit(p) : undefined)}>
+            {prompts.map((p) => {
+              const open = () => (canEdit(p) ? openEdit(p) : navigate(`/prompts/${p.id}/test`));
+              return (
+              <div
+                className="prow"
+                key={p.id}
+                role="button"
+                tabIndex={0}
+                onClick={open}
+                onKeyDown={(e) => { if (e.key === 'Enter') open(); }}
+              >
+                <div className="prow-name">
                   <span className="nm">{p.title}</span>
                   {p.content && <span className="snip">{p.content}</span>}
-                </button>
+                </div>
                 <span>
                   <span className={`badge status-${p.status}`}>{STATUS_LABEL[p.status]}</span>
                 </span>
@@ -330,7 +340,7 @@ export function Prompts() {
                   {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
                 </span>
                 <span className="prow-date">{fmtDate(p.updatedAt)}</span>
-                <span className="prow-actions">
+                <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
                   <Link className="txt-btn accent" to={`/prompts/${p.id}/test`}>Test</Link>
                   {canEdit(p) && (
                     <>
@@ -343,7 +353,8 @@ export function Prompts() {
                   )}
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="pager">

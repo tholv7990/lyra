@@ -1277,8 +1277,17 @@
   border-top: none;
 }
 
+.prow {
+  cursor: pointer;
+}
+
 .prow:hover {
   background: var(--surface-1);
+}
+
+.prow:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 
 .prow-name {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { canEditProject, ProjectVisibility, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
@@ -24,6 +24,7 @@ const PAGE_SIZE = 10;
 export function Projects() {
   const { user } = useAuth();
   const { current } = useWorkspace();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -140,17 +141,24 @@ export function Projects() {
             <span />
           </div>
           {pageItems.map((p) => (
-            <div className="prow" key={p.id}>
-              <Link className="prow-name" to={`/projects/${p.id}`}>
+            <div
+              className="prow"
+              key={p.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/projects/${p.id}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/projects/${p.id}`); }}
+            >
+              <div className="prow-name">
                 <span className="nm">{p.name}</span>
                 {p.niche && <span className="snip">{p.niche}</span>}
-              </Link>
+              </div>
               <span>
                 <span className={`badge vis-${p.visibility}`}>{VISIBILITY_LABELS[p.visibility]}</span>
               </span>
               <span className="prow-date" style={{ whiteSpace: 'normal' }}>{p.product || '—'}</span>
               <span className="prow-date">{fmtDate(p.updatedAt)}</span>
-              <span className="prow-actions">
+              <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
                 <Link className="txt-btn accent" to={`/projects/${p.id}`}>Open</Link>
                 {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
               </span>

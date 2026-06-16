@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Provider } from '@lyra/shared';
-import type { LlmCompletion } from './anthropic.client';
+import type { LlmCompletion, LlmAttachment } from './anthropic.client';
 
 // Base URLs for the OpenAI-compatible chat-completions API.
 export const OPENAI_COMPAT_BASE: Partial<Record<Provider, string>> = {
@@ -15,6 +15,7 @@ export interface OpenAiParams {
   system: string;
   prompt: string;
   maxTokens?: number;
+  attachments?: LlmAttachment[];
 }
 
 interface ChatResponse {
@@ -27,6 +28,22 @@ interface ChatResponse {
 // fetch, injectable so tests can stub it (hermetic e2e). BYOK key per call.
 @Injectable()
 export class OpenAiCompatClient {
+  // The user message: a plain string, or (when images are attached) the
+  // OpenAI multimodal parts array — text plus image_url data-URIs. Non-image
+  // attachments (e.g. PDFs) aren't supported by chat completions, so they're
+  // dropped here.
+  private userContent(p: OpenAiParams): unknown {
+    const images = (p.attachments ?? []).filter((a) => a.kind === 'image');
+    if (!images.length) return p.prompt;
+    return [
+      { type: 'text', text: p.prompt },
+      ...images.map((a) => ({
+        type: 'image_url',
+        image_url: { url: `data:${a.mediaType};base64,${a.dataBase64}` },
+      })),
+    ];
+  }
+
   private body(p: OpenAiParams, stream: boolean) {
     return JSON.stringify({
       model: p.model,
@@ -35,7 +52,7 @@ export class OpenAiCompatClient {
       ...(stream ? { stream_options: { include_usage: true } } : {}),
       messages: [
         { role: 'system', content: p.system },
-        { role: 'user', content: p.prompt },
+        { role: 'user', content: this.userContent(p) },
       ],
     });
   }

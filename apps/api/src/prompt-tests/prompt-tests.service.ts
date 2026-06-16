@@ -156,11 +156,15 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
       return { result: out.text, usage: out.usage };
     }
 
-    // OpenAI & DeepSeek (OpenAI-compatible). Text only for now.
+    // OpenAI & DeepSeek (OpenAI-compatible). OpenAI accepts images (sent as
+    // image_url data-URIs); DeepSeek's chat models are text-only, so we don't
+    // attach media there.
     const baseUrl = OPENAI_COMPAT_BASE[provider];
     if (baseUrl) {
+      const attachments =
+        provider === Provider.OpenAI ? await this.buildAttachments(media) : [];
       const out = await this.openai.stream(
-        { baseUrl, apiKey, model, system: SYSTEM_PROMPT, prompt: input },
+        { baseUrl, apiKey, model, system: SYSTEM_PROMPT, prompt: input, attachments },
         onDelta,
       );
       if (!out.text) throw new Error(`No response from ${provider}`);
