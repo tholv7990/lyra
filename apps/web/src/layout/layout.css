@@ -2680,7 +2680,11 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: transparent;
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .chat-top {
@@ -2861,7 +2865,7 @@
 .cbubble {
   align-self: flex-start;
   max-width: 100%;
-  background: #fff;
+  background: var(--surface-1);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 9px 13px;
