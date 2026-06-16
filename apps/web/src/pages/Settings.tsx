@@ -84,13 +84,15 @@ export function Settings() {
 
   return (
     <div>
-      <div className="section-head">
-        <h2>Provider keys</h2>
+      <div className="prompts-head">
+        <div className="titles">
+          <h2>Provider keys</h2>
+          <p>
+            Bring-your-own keys, encrypted at rest per workspace. Each pipeline step unlocks once its provider key is set.
+            {!canManage && ' You need Owner or key-management permission to change these.'}
+          </p>
+        </div>
       </div>
-      <p className="empty" style={{ textAlign: 'left', padding: '0 0 16px' }}>
-        Bring-your-own keys, encrypted at rest per workspace. Each pipeline step unlocks once its provider key is set.
-        {!canManage && ' You need Owner or key-management permission to change these.'}
-      </p>
 
       {error && <p className="error">{error}</p>}
 
@@ -116,7 +118,7 @@ export function Settings() {
                 {canManage && (
                   <div className="row-actions">
                     <input
-                      className="text-input select-sm"
+                      className="text-input key-input"
                       type="password"
                       placeholder={existing ? 'Replace key' : 'Paste key'}
                       value={drafts[p.id] ?? ''}
@@ -126,7 +128,7 @@ export function Settings() {
                       Save
                     </button>
                     {existing && (
-                      <button className="btn-danger" onClick={() => setToRemove(p.id)}>Remove</button>
+                      <button className="btn-danger" style={{ marginTop: 0 }} onClick={() => setToRemove(p.id)}>Remove</button>
                     )}
                   </div>
                 )}

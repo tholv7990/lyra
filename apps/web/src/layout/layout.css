@@ -294,9 +294,11 @@
 }
 
 .content {
-  padding: 28px;
+  padding: 32px 28px 48px;
   width: 100%;
-  max-width: 960px;
+  max-width: 920px;
+  /* Center the content column in the main area (not left-stuck). */
+  margin: 0 auto;
 }
 
 /* ===== Home content ===== */
@@ -445,6 +447,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* bounded key input so the Save/Remove buttons never overflow the row */
+.key-input {
+  width: 200px;
+  max-width: 100%;
+  padding: 7px 11px;
+  font-size: 13px;
 }
 
 .badge {
