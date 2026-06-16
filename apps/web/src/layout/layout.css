@@ -596,6 +596,39 @@
 }
 .pe-editor::placeholder { color: var(--ink-subtle); }
 
+/* Write / Preview toggle */
+.pe-tabs {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 3px;
+  margin: 2px 0 4px;
+}
+.pe-tabs button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  padding: 5px 12px;
+  border-radius: 6px;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.pe-tabs button.on { background: #fff; color: var(--ink); box-shadow: var(--shadow-sm); }
+
+.pe-preview {
+  min-height: 200px;
+  padding: 4px 0 0;
+}
+.pe-preview-empty {
+  margin: 0;
+  color: var(--ink-subtle);
+  font-size: 13.5px;
+}
+
 .pe-bar { display: flex; align-items: center; gap: 8px; padding-top: 8px; }
 .pe-counter { margin-left: auto; font-size: 12px; color: var(--ink-subtle); font-variant-numeric: tabular-nums; }
 

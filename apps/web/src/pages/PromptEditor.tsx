@@ -14,6 +14,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TagInput } from '../components/TagInput';
 import { AttachmentPreviews } from '../components/AttachmentPreviews';
+import { Markdown } from '../components/Markdown';
 
 interface FormState {
   title: string;
@@ -45,6 +46,7 @@ export function PromptEditor() {
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
+  const [mode, setMode] = useState<'write' | 'preview'>('write');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -158,19 +160,34 @@ export function PromptEditor() {
           </label>
         </div>
 
+        <div className="pe-tabs">
+          <button type="button" className={mode === 'write' ? 'on' : ''} onClick={() => setMode('write')}>Write</button>
+          <button type="button" className={mode === 'preview' ? 'on' : ''} onClick={() => setMode('preview')}>Preview</button>
+        </div>
+
         <AttachmentPreviews
           media={form.media}
           uploading={uploading}
           onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
         />
 
-        <textarea
-          className="pe-editor"
-          placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-          rows={8}
-          value={form.content}
-          onChange={(e) => setForm({ ...form, content: e.target.value })}
-        />
+        {mode === 'write' ? (
+          <textarea
+            className="pe-editor"
+            placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+            rows={8}
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+          />
+        ) : (
+          <div className="pe-preview">
+            {form.content.trim() ? (
+              <Markdown>{form.content}</Markdown>
+            ) : (
+              <p className="pe-preview-empty">Nothing to preview yet.</p>
+            )}
+          </div>
+        )}
 
         <div className="pe-bar">
           <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
