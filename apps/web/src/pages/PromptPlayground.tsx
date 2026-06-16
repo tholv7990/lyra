@@ -23,6 +23,7 @@ import {
 import { api, streamSSE } from '../lib/api';
 import { useModels, type ModelCatalog } from '../lib/useModels';
 import { AttachmentPreviews } from '../components/AttachmentPreviews';
+import { Markdown } from '../components/Markdown';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 
@@ -99,8 +100,17 @@ export function PromptPlayground() {
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const atBottomRef = useRef(true);
   const modelRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Track whether the user is at the bottom so auto-scroll pauses when they
+  // scroll up to read (Claude-style).
+  function onThreadScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
 
   useEffect(() => {
     if (!modelMenu) return;
@@ -127,7 +137,9 @@ export function PromptPlayground() {
   }, [id, loadHistory]);
 
   useEffect(() => {
-    if (streaming && scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (streaming && atBottomRef.current && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [view?.result, streaming]);
 
   const visibleHistory = useMemo(
@@ -159,6 +171,7 @@ export function PromptPlayground() {
     async (text: string, media: PromptMedia[]) => {
       if (!wsId || !id || (!text.trim() && media.length === 0) || streaming) return;
       setError(null);
+      atBottomRef.current = true;
       setView({ input: text, media, result: '', provider, model });
       setStreaming(true);
       const ctrl = new AbortController();
@@ -274,7 +287,28 @@ export function PromptPlayground() {
       <main className="chat-main">
         <header className="chat-top">
           <Link to="/prompts" className="pg-back">← Prompts</Link>
-          <h2>{prompt ? prompt.title : 'Test'}</h2>
+          <div className="pg-headinfo">
+            <div className="pg-headtitle">
+              <span className="pg-name">{prompt ? prompt.title : 'Test'}</span>
+              {prompt && (
+                <span className={`badge status-${prompt.status}`}>
+                  {prompt.status === 'public' ? 'Public' : 'Draft'}
+                </span>
+              )}
+            </div>
+            {prompt && prompt.tags.length > 0 && (
+              <div className="pg-headtags">
+                {prompt.tags.slice(0, 6).map((t) => {
+                  const c = tagColor(t);
+                  return (
+                    <span key={t} className="tag-chip ro" style={{ color: c, borderColor: `${c}55`, background: `${c}14` } as CSSProperties}>
+                      {t}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <div className="chat-top-actions">
             <button className="btn-ghost chat-new-inline" onClick={newTest}>+ New</button>
             <button className="btn-ghost chat-history-toggle" onClick={() => setShowHistory((s) => !s)}>History</button>
@@ -283,7 +317,7 @@ export function PromptPlayground() {
 
         {error && <p className="error" style={{ margin: '0 16px' }}>{error}</p>}
 
-        <div className="chat-scroll" ref={scrollRef}>
+        <div className="chat-scroll" ref={scrollRef} onScroll={onThreadScroll}>
           <div className="chat-thread">
             {!view ? (
               <div className="chat-empty">
@@ -311,7 +345,15 @@ export function PromptPlayground() {
                   <div className="cbody">
                     <div className="cmodel">{PROVIDER_LABELS[aiProvider]} · {modelLabel(catalog, aiProvider, aiModel)}</div>
                     <div className={`ctext ${view.error ? 'err' : ''}`}>
-                      {view.error ? view.error : view.result || (streaming ? '' : '—')}
+                      {view.error ? (
+                        view.error
+                      ) : view.result ? (
+                        <Markdown>{view.result}</Markdown>
+                      ) : streaming ? (
+                        ''
+                      ) : (
+                        '—'
+                      )}
                       {streaming && <span className="pg-caret" />}
                     </div>
                     {view.test && !streaming && (

@@ -10,10 +10,11 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import {
   dedupeTags,
   Role,
@@ -48,6 +49,7 @@ export class PromptTestsController {
     @Param('promptId') promptId: string,
     @Body() body: CreatePromptTestBody,
     @CurrentUser() user: User,
+    @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
     // Validate before opening the stream (these surface as normal 4xx).
@@ -59,7 +61,17 @@ export class PromptTestsController {
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders?.();
-    const send = (obj: unknown) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+    const send = (obj: unknown) => {
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+    };
+
+    // If the client hits Stop, it drops the connection — abort the provider call
+    // so we stop generating (and billing) and keep whatever streamed so far.
+    let settled = false;
+    const ac = new AbortController();
+    req.on('close', () => {
+      if (!settled) ac.abort();
+    });
 
     const media = body.media ?? [];
     const base = {
@@ -83,7 +95,10 @@ export class PromptTestsController {
         body.input,
         media,
         (text) => send({ type: 'delta', text }),
+        ac.signal,
       );
+      // Stopped before any text streamed — nothing worth persisting.
+      if (out.aborted && !out.result) return;
       const saved = await this.tests.record({
         ...base,
         result: out.result,
@@ -99,6 +114,7 @@ export class PromptTestsController {
         send({ type: 'error', message });
       }
     } finally {
+      settled = true;
       res.end();
     }
   }

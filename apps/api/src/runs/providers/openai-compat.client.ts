@@ -16,6 +16,7 @@ export interface OpenAiParams {
   prompt: string;
   maxTokens?: number;
   attachments?: LlmAttachment[];
+  signal?: AbortSignal;
 }
 
 interface ChatResponse {
@@ -95,6 +96,7 @@ export class OpenAiCompatClient {
   async stream(p: OpenAiParams, onDelta: (text: string) => void): Promise<LlmCompletion> {
     const res = await fetch(`${p.baseUrl}/chat/completions`, {
       method: 'POST',
+      signal: p.signal,
       headers: this.headers(p),
       body: this.body(p, true),
     });
@@ -109,30 +111,36 @@ export class OpenAiCompatClient {
     let text = '';
     let tokens = 0;
 
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let nl: number;
-      while ((nl = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.slice(0, nl).trim();
-        buffer = buffer.slice(nl + 1);
-        if (!line.startsWith('data:')) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === '[DONE]') continue;
-        let evt: ChatResponse;
-        try {
-          evt = JSON.parse(payload);
-        } catch {
-          continue;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          let evt: ChatResponse;
+          try {
+            evt = JSON.parse(payload);
+          } catch {
+            continue;
+          }
+          const chunk = evt.choices?.[0]?.delta?.content;
+          if (chunk) {
+            text += chunk;
+            onDelta(chunk);
+          }
+          if (evt.usage?.total_tokens) tokens = evt.usage.total_tokens;
         }
-        const chunk = evt.choices?.[0]?.delta?.content;
-        if (chunk) {
-          text += chunk;
-          onDelta(chunk);
-        }
-        if (evt.usage?.total_tokens) tokens = evt.usage.total_tokens;
       }
+    } catch (err) {
+      // Client stopped the run -> abort the provider call, keep the partial text.
+      if ((err as Error)?.name !== 'AbortError') throw err;
+      return { text: text.trim(), usage: { tokens }, aborted: true };
     }
 
     return { text: text.trim(), usage: { tokens } };

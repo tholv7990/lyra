@@ -14,11 +14,13 @@ export interface LlmCompletionParams {
   prompt: string;
   maxTokens?: number;
   attachments?: LlmAttachment[];
+  signal?: AbortSignal;
 }
 
 export interface LlmCompletion {
   text: string;
   usage?: { tokens?: number };
+  aborted?: boolean;
 }
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
@@ -106,6 +108,7 @@ export class AnthropicClient {
   ): Promise<LlmCompletion> {
     const res = await fetch(ANTHROPIC_URL, {
       method: 'POST',
+      signal: params.signal,
       headers: {
         'content-type': 'application/json',
         'x-api-key': params.apiKey,
@@ -132,38 +135,44 @@ export class AnthropicClient {
     let inputTokens = 0;
     let outputTokens = 0;
 
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let nl: number;
-      while ((nl = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.slice(0, nl).trim();
-        buffer = buffer.slice(nl + 1);
-        if (!line.startsWith('data:')) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === '[DONE]') continue;
-        let evt: {
-          type?: string;
-          delta?: { type?: string; text?: string };
-          message?: { usage?: { input_tokens?: number } };
-          usage?: { output_tokens?: number };
-        };
-        try {
-          evt = JSON.parse(payload);
-        } catch {
-          continue;
-        }
-        if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-          const chunk = evt.delta.text ?? '';
-          text += chunk;
-          onDelta(chunk);
-        } else if (evt.type === 'message_start') {
-          inputTokens = evt.message?.usage?.input_tokens ?? 0;
-        } else if (evt.type === 'message_delta') {
-          outputTokens = evt.usage?.output_tokens ?? outputTokens;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          let evt: {
+            type?: string;
+            delta?: { type?: string; text?: string };
+            message?: { usage?: { input_tokens?: number } };
+            usage?: { output_tokens?: number };
+          };
+          try {
+            evt = JSON.parse(payload);
+          } catch {
+            continue;
+          }
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            const chunk = evt.delta.text ?? '';
+            text += chunk;
+            onDelta(chunk);
+          } else if (evt.type === 'message_start') {
+            inputTokens = evt.message?.usage?.input_tokens ?? 0;
+          } else if (evt.type === 'message_delta') {
+            outputTokens = evt.usage?.output_tokens ?? outputTokens;
+          }
         }
       }
+    } catch (err) {
+      // Client stopped the run -> abort the provider call, keep the partial text.
+      if ((err as Error)?.name !== 'AbortError') throw err;
+      return { text: text.trim(), usage: { tokens: inputTokens + outputTokens }, aborted: true };
     }
 
     return { text: text.trim(), usage: { tokens: inputTokens + outputTokens } };

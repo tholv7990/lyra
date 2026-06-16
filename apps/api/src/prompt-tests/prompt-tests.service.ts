@@ -34,6 +34,7 @@ const SYSTEM_PROMPT =
 interface RunOutput {
   result: string;
   usage?: { tokens?: number; costUsd?: number };
+  aborted?: boolean;
 }
 
 @Injectable()
@@ -145,15 +146,16 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
     input: string,
     media: PromptMedia[],
     onDelta: (text: string) => void,
+    signal?: AbortSignal,
   ): Promise<RunOutput> {
     if (provider === Provider.Anthropic) {
       const attachments = await this.buildAttachments(media);
       const out = await this.anthropic.stream(
-        { apiKey, model, system: SYSTEM_PROMPT, prompt: input, attachments },
+        { apiKey, model, system: SYSTEM_PROMPT, prompt: input, attachments, signal },
         onDelta,
       );
-      if (!out.text) throw new Error('Claude returned an empty response');
-      return { result: out.text, usage: out.usage };
+      if (!out.text && !out.aborted) throw new Error('Claude returned an empty response');
+      return { result: out.text, usage: out.usage, aborted: out.aborted };
     }
 
     // OpenAI & DeepSeek (OpenAI-compatible). OpenAI accepts images (sent as
@@ -164,11 +166,11 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
       const attachments =
         provider === Provider.OpenAI ? await this.buildAttachments(media) : [];
       const out = await this.openai.stream(
-        { baseUrl, apiKey, model, system: SYSTEM_PROMPT, prompt: input, attachments },
+        { baseUrl, apiKey, model, system: SYSTEM_PROMPT, prompt: input, attachments, signal },
         onDelta,
       );
-      if (!out.text) throw new Error(`No response from ${provider}`);
-      return { result: out.text, usage: out.usage };
+      if (!out.text && !out.aborted) throw new Error(`No response from ${provider}`);
+      return { result: out.text, usage: out.usage, aborted: out.aborted };
     }
 
     // image/video — not yet callable
