@@ -20,7 +20,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TagInput } from '../components/TagInput';
 import { FileUpload } from '../components/FileUpload';
-import { PromptsIcon } from '../layout/icons';
+import { PromptsIcon, PlusIcon } from '../layout/icons';
 
 const STATUS_COLOR: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: '#d4a72c',
@@ -208,9 +208,6 @@ export function Prompts() {
           <h2>Prompts</h2>
           <p>Reusable, on-brand prompts for your pipelines.</p>
         </div>
-        <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={openCreate}>
-          New prompt
-        </button>
       </div>
 
       {/* Linear-style filter toolbar */}
@@ -257,6 +254,9 @@ export function Prompts() {
         {hasFilters && (
           <button className="lin-clear" onClick={() => { setStatus(''); setTag(''); setQ(''); }}>Clear</button>
         )}
+        <button className="lin-add" onClick={openCreate} title="New prompt" aria-label="New prompt">
+          <PlusIcon />
+        </button>
       </div>
 
       {error && !editing && <p className="error">{error}</p>}

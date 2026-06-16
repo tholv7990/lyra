@@ -81,6 +81,12 @@ export const TrashIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const PlusIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base({ width: 17, height: 17, strokeWidth: 1.9, ...p })} className="icon">
+    <path d="M8.5 3.5v10M3.5 8.5h10" />
+  </svg>
+);
+
 export const RefreshIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)} className="icon">
     <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v2.5h-2.5" />

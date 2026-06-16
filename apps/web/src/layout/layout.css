@@ -1058,11 +1058,36 @@
   color: var(--ink-muted);
   font-size: 12.5px;
   cursor: pointer;
-  margin-left: auto;
 }
 
 .lin-clear:hover {
   color: var(--ink);
+}
+
+/* Primary "create" action — compact icon button at the far right of the
+   toolbar, on the same row as the search box (Linear-style). */
+.lin-add {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 33px;
+  height: 33px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(255, 107, 26, 0.35);
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.lin-add:hover {
+  background: var(--primary-hover);
+}
+
+.lin-add:active {
+  transform: scale(0.95);
 }
 
 /* dense table list */

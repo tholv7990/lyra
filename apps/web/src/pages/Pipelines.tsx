@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { PipelinesIcon } from '../layout/icons';
+import { PipelinesIcon, PlusIcon } from '../layout/icons';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -84,13 +84,13 @@ export function Pipelines() {
           <h2>Pipelines</h2>
           <p>Reusable, composable flows — assign them to projects and run them.</p>
         </div>
-        <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={() => { setName(''); setError(null); setCreating(true); }}>
-          New pipeline
-        </button>
       </div>
 
       <div className="lin-toolbar">
         <input className="lin-search" placeholder="Search pipelines…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button className="lin-add" onClick={() => { setName(''); setError(null); setCreating(true); }} title="New pipeline" aria-label="New pipeline">
+          <PlusIcon />
+        </button>
       </div>
 
       {error && !creating && <p className="error">{error}</p>}

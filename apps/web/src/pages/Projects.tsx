@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { ProjectsIcon } from '../layout/icons';
+import { ProjectsIcon, PlusIcon } from '../layout/icons';
 
 const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
   [ProjectVisibility.Private]: 'Private',
@@ -99,13 +99,13 @@ export function Projects() {
           <h2>Projects</h2>
           <p>A project per brand or product — assign pipelines and run them here.</p>
         </div>
-        <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={() => { setForm(emptyForm); setError(null); setCreating(true); }}>
-          New project
-        </button>
       </div>
 
       <div className="lin-toolbar">
         <input className="lin-search" placeholder="Search projects…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button className="lin-add" onClick={() => { setForm(emptyForm); setError(null); setCreating(true); }} title="New project" aria-label="New project">
+          <PlusIcon />
+        </button>
       </div>
 
       {error && !creating && <p className="error">{error}</p>}
