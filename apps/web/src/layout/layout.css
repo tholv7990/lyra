@@ -438,6 +438,80 @@
   text-align: center;
 }
 
+/* ===== Project cards (grid, one card per row) ===== */
+.project-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.project-card {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 16px 18px;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.project-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.project-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.project-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.project-card-title:hover {
+  color: var(--primary);
+}
+
+.project-card-head .badge {
+  margin-left: auto;
+}
+
+.project-card-sub {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.project-card-meta {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  margin-top: 3px;
+  word-break: break-all;
+}
+
+.project-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.card-open {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+}
+
 /* ===== Run controls + status badges ===== */
 .run-controls {
   display: flex;

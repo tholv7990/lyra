@@ -118,33 +118,38 @@ export function Projects() {
       ) : projects.length === 0 ? (
         <p className="empty">No projects yet. Create your first one.</p>
       ) : (
-        <div className="list">
+        <div className="project-grid">
           {projects.map((p) => (
-            <div className="row" key={p.id}>
-              <div className="grow">
-                <Link to={`/projects/${p.id}`} className="title" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+            <div className="project-card" key={p.id}>
+              <div className="project-card-head">
+                <Link to={`/projects/${p.id}`} className="project-card-title">
                   {p.name}
                 </Link>
-                <div className="sub">
-                  {[p.product, p.niche].filter(Boolean).join(' · ') || 'No details yet'}
-                </div>
-              </div>
-              {canEdit(p) ? (
-                <div className="row-actions">
-                  <select
-                    className="text-input select-sm"
-                    value={p.visibility}
-                    onChange={(e) => void changeVisibility(p, e.target.value as ProjectVisibility)}
-                  >
-                    {Object.values(ProjectVisibility).map((v) => (
-                      <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>
-                    ))}
-                  </select>
-                  <button className="btn-ghost" onClick={() => void remove(p)}>Delete</button>
-                </div>
-              ) : (
                 <span className="badge">{VISIBILITY_LABELS[p.visibility]}</span>
-              )}
+              </div>
+              <div className="project-card-sub">
+                {[p.product, p.niche].filter(Boolean).join(' · ') || 'No details yet'}
+              </div>
+              {p.homepageUrl && <div className="project-card-meta">{p.homepageUrl}</div>}
+              <div className="project-card-foot">
+                <Link to={`/projects/${p.id}`} className="card-open">
+                  Open workbench →
+                </Link>
+                {canEdit(p) && (
+                  <div className="row-actions" style={{ marginLeft: 'auto' }}>
+                    <select
+                      className="text-input select-sm"
+                      value={p.visibility}
+                      onChange={(e) => void changeVisibility(p, e.target.value as ProjectVisibility)}
+                    >
+                      {Object.values(ProjectVisibility).map((v) => (
+                        <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>
+                      ))}
+                    </select>
+                    <button className="btn-ghost" onClick={() => void remove(p)}>Delete</button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
