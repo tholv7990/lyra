@@ -165,29 +165,30 @@ export function PromptEditor() {
           <button type="button" className={mode === 'preview' ? 'on' : ''} onClick={() => setMode('preview')}>Preview</button>
         </div>
 
-        <AttachmentPreviews
-          media={form.media}
-          uploading={uploading}
-          onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
-        />
-
-        {mode === 'write' ? (
-          <textarea
-            className="pe-editor"
-            placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-            rows={8}
-            value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
+        <div className="pe-content">
+          <AttachmentPreviews
+            media={form.media}
+            uploading={uploading}
+            onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
           />
-        ) : (
-          <div className="pe-preview">
-            {form.content.trim() ? (
-              <Markdown>{form.content}</Markdown>
-            ) : (
-              <p className="pe-preview-empty">Nothing to preview yet.</p>
-            )}
-          </div>
-        )}
+
+          {mode === 'write' ? (
+            <textarea
+              className="pe-editor"
+              placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+            />
+          ) : (
+            <div className="pe-preview">
+              {form.content.trim() ? (
+                <Markdown>{form.content}</Markdown>
+              ) : (
+                <p className="pe-preview-empty">Nothing to preview yet.</p>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="pe-bar">
           <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
