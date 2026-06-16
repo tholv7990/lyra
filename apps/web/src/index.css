@@ -35,14 +35,16 @@ button {
 }
 
 /* iOS Safari zooms in (and breaks the layout) when a focused control has a
-   font-size below 16px. Use 16px on touch/small screens to prevent it. */
+   font-size below 16px. Force 16px on touch/small screens. !important so it
+   beats later, equal-specificity rules like `.text-input { font-size: 14px }`
+   and `.select-sm` in layout.css regardless of source order. */
 @media (max-width: 820px) {
   input,
   select,
   textarea,
   .text-input,
   .select-sm {
-    font-size: 16px;
+    font-size: 16px !important;
   }
 }
 
