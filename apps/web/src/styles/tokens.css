@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 /*
- * Lyra design tokens — single source of truth.
- * Values come ONLY from the YAML front matter of docs/lyra-design-system.md.
- * Dark by default (this is a dark system). No light theme.
+ * Lyra design tokens — LIGHT mode, Linear-style component language.
+ * (Overrides the dark spec in docs/lyra-design-system.md per current direction.)
+ * Orange remains the single brand accent; surfaces are a light ladder, borders
+ * are thin hairlines, shadows are subtle/flat. No glow, no pill radii in use.
  *
  * Usage:
- *   <button class="bg-primary text-on-primary rounded-pill shadow-glow font-sans">
- *   <h1 class="text-display-xl font-display text-ink">
+ *   <button class="bg-primary text-on-primary rounded-md font-sans">
+ *   <h1 class="text-headline font-display text-ink">
  *
  * Naming: tokens whose Tailwind v4 namespace matches the design name are defined
- * directly in @theme (which emits them to :root AND generates utilities). Tokens
- * with design-specific names (line-height / tracking / weight / spacing aliases /
- * shadows) live in :root below and are referenced from @theme — so each value is
- * defined exactly once.
+ * directly in @theme (emitted to :root + generate utilities). Design-specific
+ * names (line-height / tracking / weight / spacing aliases / shadows) live in
+ * :root and are referenced from @theme — each value defined once.
  */
 
 :root {
@@ -70,7 +70,7 @@
   --tracking-mono: 0;
   --weight-mono: 400;
 
-  /* ===== Spacing (4px base) — design names ===== */
+  /* ===== Spacing (4px base) ===== */
   --space-xxs: 4px;
   --space-xs: 8px;
   --space-sm: 12px;
@@ -80,53 +80,50 @@
   --space-xxl: 48px;
   --space-section: 96px;
 
-  /* ===== Shadows ===== */
-  /* From the Elevation table prose (not in front matter). shadow-2 has no
-   * defined value in the doc (level 2 = surface-2 + hairline-strong, no shadow),
-   * so it is intentionally omitted. */
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 22px rgba(0, 0, 0, 0.5);
-  --glow: 0 0 26px var(--color-primary-glow);
+  /* ===== Shadows (light, subtle — Linear-flat) ===== */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* `static` forces every theme variable into :root (no tree-shaking), so the
  * full palette is always available to plain CSS — not just the utilities used. */
 @theme static {
-  /* ===== Brand / Accent ===== */
+  /* ===== Brand / Accent (orange retained) ===== */
   --color-primary: #ff6b1a;
   --color-primary-hover: #ff7d35;
   --color-primary-pressed: #e25a0e;
-  --color-primary-tint: rgba(255, 107, 26, 0.12);
+  --color-primary-tint: rgba(255, 107, 26, 0.14);
   --color-primary-glow: rgba(255, 107, 26, 0.34);
   --color-on-primary: #ffffff;
-  --color-gold: #c9a060; /* secondary-gold */
+  --color-gold: #c9a060;
 
-  /* ===== Surface ===== */
-  --color-canvas: #000000;
-  --color-surface-1: #1c1c1e;
-  --color-surface-2: #2c2c2e;
-  --color-surface-3: #3a3a3c;
-  --color-surface-4: #48484a;
-  --color-field: #161618;
-  --color-hairline: rgba(255, 255, 255, 0.09);
-  --color-hairline-strong: rgba(255, 255, 255, 0.14);
-  --color-hairline-tertiary: rgba(255, 255, 255, 0.06);
+  /* ===== Surface (light ladder) ===== */
+  --color-canvas: #ffffff;
+  --color-surface-1: #f9f9fb;
+  --color-surface-2: #f1f1f4;
+  --color-surface-3: #e9e9ee;
+  --color-surface-4: #e1e1e6;
+  --color-field: #ffffff;
+  --color-hairline: rgba(0, 0, 0, 0.08);
+  --color-hairline-strong: rgba(0, 0, 0, 0.13);
+  --color-hairline-tertiary: rgba(0, 0, 0, 0.05);
 
-  /* ===== Text ===== */
-  --color-ink: #f5f5f7;
-  --color-ink-muted: rgba(235, 235, 245, 0.6);
-  --color-ink-subtle: rgba(235, 235, 245, 0.3);
-  --color-ink-tertiary: rgba(235, 235, 245, 0.18);
+  /* ===== Text (dark ink on light) ===== */
+  --color-ink: #1d1d1f;
+  --color-ink-muted: rgba(60, 60, 67, 0.62);
+  --color-ink-subtle: rgba(60, 60, 67, 0.4);
+  --color-ink-tertiary: rgba(60, 60, 67, 0.24);
 
   /* ===== Semantic ===== */
-  --color-success: #30d158;
-  --color-warning: #ff9f0a;
-  --color-danger: #ff453a;
+  --color-success: #2da44e;
+  --color-warning: #d98300;
+  --color-danger: #e5484d;
   --color-info: #0a84ff;
-  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-overlay: rgba(0, 0, 0, 0.4);
 
-  /* ===== Inverse (rare light sections) ===== */
-  --color-inverse-canvas: #ffffff;
-  --color-inverse-ink: #1d1d1f;
+  /* ===== Inverse (rare dark sections) ===== */
+  --color-inverse-canvas: #1d1d1f;
+  --color-inverse-ink: #f5f5f7;
 
   /* ===== Fonts ===== */
   --font-display: Inter, "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
@@ -189,7 +186,7 @@
   --text-button--letter-spacing: var(--tracking-button);
   --text-button--font-weight: var(--weight-button);
 
-  /* eyebrow is also uppercase in the design — apply `uppercase` alongside `text-eyebrow` */
+  /* eyebrow is also uppercase — apply `uppercase` alongside `text-eyebrow` */
   --text-eyebrow: 12px;
   --text-eyebrow--line-height: var(--leading-eyebrow);
   --text-eyebrow--letter-spacing: var(--tracking-eyebrow);
@@ -210,7 +207,7 @@
   --spacing-xxl: var(--space-xxl);
   --spacing-section: var(--space-section);
 
-  /* ===== Radii ===== */
+  /* ===== Radii (full scale kept; Linear UI uses sm/md) ===== */
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -222,5 +219,5 @@
 
   /* ===== Shadows ===== */
   --shadow-elevation-1: var(--shadow-1);
-  --shadow-glow: var(--glow);
+  --shadow-elevation-2: var(--shadow-2);
 }
