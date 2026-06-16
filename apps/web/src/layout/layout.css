@@ -1073,11 +1073,28 @@
   opacity: 1;
 }
 
+.prow-name {
+  text-decoration: none;
+}
+
+/* per-list column layouts */
+.ptable.t-pipeline .ptable-head,
+.ptable.t-pipeline .prow {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) 64px 84px auto;
+}
+
+.ptable.t-project .ptable-head,
+.ptable.t-project .prow {
+  grid-template-columns: minmax(0, 1.4fr) 108px minmax(0, 1.2fr) 84px auto;
+}
+
 @media (max-width: 760px) {
   .ptable-head {
     display: none;
   }
-  .prow {
+  .prow,
+  .ptable.t-pipeline .prow,
+  .ptable.t-project .prow {
     display: flex;
     flex-direction: column;
     align-items: flex-start;

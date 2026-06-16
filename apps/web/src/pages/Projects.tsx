@@ -1,10 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  canEditProject,
-  ProjectVisibility,
-  type Project,
-} from '@lyra/shared';
+import { canEditProject, ProjectVisibility, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -17,15 +13,20 @@ const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
   [ProjectVisibility.Workspace]: 'Workspace',
 };
 
-const empty = { name: '', product: '', niche: '', homepageUrl: '' };
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+const emptyForm = { name: '', product: '', niche: '', homepageUrl: '' };
 
 export function Projects() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState('');
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Project | null>(null);
@@ -41,10 +42,13 @@ export function Projects() {
       .then((list) => !cancelled && setProjects(list))
       .catch(() => !cancelled && setProjects([]))
       .finally(() => !cancelled && setLoading(false));
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [wsId]);
+
+  const visible = useMemo(
+    () => (q.trim() ? projects.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())) : projects),
+    [projects, q],
+  );
 
   function canEdit(p: Project) {
     if (!current || !user) return false;
@@ -65,7 +69,7 @@ export function Projects() {
         body: JSON.stringify(form),
       });
       setProjects((p) => [created, ...p]);
-      setForm(empty);
+      setForm(emptyForm);
       setCreating(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create project');
@@ -90,90 +94,88 @@ export function Projects() {
 
   return (
     <div>
-      <div className="section-head">
-        <h2>Projects</h2>
-        {!creating && (
-          <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={() => setCreating(true)}>
-            New project
-          </button>
-        )}
+      <div className="prompts-head">
+        <div className="titles">
+          <h2>Projects</h2>
+          <p>A project per brand or product — assign pipelines and run them here.</p>
+        </div>
+        <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={() => { setForm(emptyForm); setError(null); setCreating(true); }}>
+          New project
+        </button>
       </div>
 
-      {creating && (
-        <form className="form-inline" onSubmit={onCreate}>
-          {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
-          <input className="text-input" placeholder="Name" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="text-input" placeholder="Product" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
-          <input className="text-input" placeholder="Niche" value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
-          <input className="text-input" placeholder="Homepage URL" value={form.homepageUrl} onChange={(e) => setForm({ ...form, homepageUrl: e.target.value })} />
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn-primary" type="submit" disabled={busy} style={{ marginTop: 0 }}>
-              {busy ? 'Creating…' : 'Create project'}
-            </button>
-            <button className="btn-ghost" type="button" onClick={() => { setCreating(false); setError(null); }}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
+      <div className="lin-toolbar">
+        <input className="lin-search" placeholder="Search projects…" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
 
       {error && !creating && <p className="error">{error}</p>}
 
       {loading ? (
         <p className="empty">Loading projects…</p>
       ) : projects.length === 0 ? (
-        !creating && (
-          <div className="prompt-empty">
-            <div className="prompt-empty-art">
-              <ProjectsIcon width={26} height={26} />
-            </div>
-            <h3>Create your first project</h3>
-            <p>
-              A project holds a brand or product. Run the 8-step AI pipeline against
-              it to produce on-brand images and video.
-            </p>
-            <button className="btn-primary" onClick={() => setCreating(true)}>
-              New project
-            </button>
-          </div>
-        )
+        <div className="prompt-empty">
+          <div className="prompt-empty-art"><ProjectsIcon width={26} height={26} /></div>
+          <h3>Create your first project</h3>
+          <p>A project holds a brand or product. Assign pipelines and run them to produce on-brand content.</p>
+          <button className="btn-primary" onClick={() => { setForm(emptyForm); setCreating(true); }}>New project</button>
+        </div>
+      ) : visible.length === 0 ? (
+        <p className="empty">No projects match your search.</p>
       ) : (
-        <div className="project-grid">
-          {projects.map((p) => (
-            <div className={`project-card vis-${p.visibility}`} key={p.id}>
-              <div className="project-card-head">
-                <Link to={`/projects/${p.id}`} className="project-card-title">
-                  {p.name}
-                </Link>
+        <div className="ptable t-project">
+          <div className="ptable-head">
+            <span>Name</span>
+            <span>Visibility</span>
+            <span>Product</span>
+            <span>Updated</span>
+            <span />
+          </div>
+          {visible.map((p) => (
+            <div className="prow" key={p.id}>
+              <Link className="prow-name" to={`/projects/${p.id}`}>
+                <span className="nm">{p.name}</span>
+                {p.niche && <span className="snip">{p.niche}</span>}
+              </Link>
+              <span>
                 <span className={`badge vis-${p.visibility}`}>{VISIBILITY_LABELS[p.visibility]}</span>
-              </div>
-              <div className="project-card-sub">
-                {[p.product, p.niche].filter(Boolean).join(' · ') || 'No details yet'}
-              </div>
-              {p.homepageUrl && <div className="project-card-meta">{p.homepageUrl}</div>}
-              <div className="project-card-foot">
-                <Link to={`/projects/${p.id}`} className="card-open">
-                  Open workbench →
-                </Link>
-                {canEdit(p) && (
-                  <button className="btn-danger" style={{ marginLeft: 'auto' }} onClick={() => setToDelete(p)}>
-                    Delete
-                  </button>
-                )}
-              </div>
+              </span>
+              <span className="prow-date" style={{ whiteSpace: 'normal' }}>{p.product || '—'}</span>
+              <span className="prow-date">{fmtDate(p.updatedAt)}</span>
+              <span className="prow-actions">
+                <Link className="txt-btn accent" to={`/projects/${p.id}`}>Open</Link>
+                {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
+              </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {creating && (
+        <div className="modal-scrim" onClick={() => setCreating(false)}>
+          <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={onCreate}>
+            <div className="modal-head">
+              <h3>New project</h3>
+              <button type="button" className="modal-x" onClick={() => setCreating(false)} aria-label="Close">×</button>
+            </div>
+            {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
+            <input className="text-input" placeholder="Project name" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className="text-input" placeholder="Product" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
+            <input className="text-input" placeholder="Niche" value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
+            <input className="text-input" placeholder="Homepage URL" value={form.homepageUrl} onChange={(e) => setForm({ ...form, homepageUrl: e.target.value })} />
+            <div className="modal-actions">
+              <button className="btn-ghost" type="button" onClick={() => setCreating(false)}>Cancel</button>
+              <button className="btn-primary" type="submit" disabled={busy} style={{ width: 'auto', marginTop: 0 }}>
+                {busy ? 'Creating…' : 'Create project'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
       <ConfirmDialog
         open={!!toDelete}
         title="Delete project?"
-        message={
-          <>
-            <strong>{toDelete?.name}</strong> and its runs will be permanently removed. This can’t be undone.
-          </>
-        }
+        message={<><strong>{toDelete?.name}</strong> and its runs will be removed. This can’t be undone.</>}
         confirmLabel="Delete"
         danger
         busy={deleting}
