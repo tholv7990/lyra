@@ -145,6 +145,10 @@ export interface Prompt extends Audited {
   status: PromptStatus;
   media: PromptMedia[];
   tags: string[];
+  // Default provider + model for testing this prompt (pre-selected in the
+  // playground). Optional — older prompts have none.
+  provider?: Provider;
+  model?: string;
 }
 
 // A tag in the workspace vocabulary plus how many visible prompts carry it.

@@ -131,7 +131,13 @@ export function PromptPlayground() {
   useEffect(() => {
     if (!id) return;
     api<Prompt>(`/prompts/${id}`)
-      .then((p) => { setPrompt(p); setInput(p.content); setAttachments(p.media ?? []); })
+      .then((p) => {
+        setPrompt(p);
+        setInput(p.content);
+        setAttachments(p.media ?? []);
+        if (p.provider) setProvider(p.provider);
+        if (p.model) setModel(p.model);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load prompt'));
     loadHistory();
   }, [id, loadHistory]);

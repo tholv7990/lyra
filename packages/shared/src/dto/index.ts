@@ -71,6 +71,8 @@ export interface CreatePromptDto {
   status?: PromptStatus;
   media?: PromptMedia[];
   tags?: string[];
+  provider?: Provider;
+  model?: string;
 }
 
 export interface UpdatePromptDto {
@@ -79,6 +81,8 @@ export interface UpdatePromptDto {
   status?: PromptStatus;
   media?: PromptMedia[];
   tags?: string[];
+  provider?: Provider;
+  model?: string;
 }
 
 // ===== Pipelines =====

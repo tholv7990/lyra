@@ -1,19 +1,23 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
+  defaultModel,
   isAllowedMedia,
   MEDIA_ACCEPT,
   MEDIA_MAX_BYTES,
   PromptStatus,
+  Provider,
   type Prompt,
   type PromptMedia,
   type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { useModels } from '../lib/useModels';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TagInput } from '../components/TagInput';
 import { AttachmentPreviews } from '../components/AttachmentPreviews';
+import { ModelPicker } from '../components/ModelPicker';
 import { Markdown } from '../components/Markdown';
 
 interface FormState {
@@ -22,6 +26,8 @@ interface FormState {
   status: PromptStatus;
   media: PromptMedia[];
   tags: string[];
+  provider: Provider;
+  model: string;
 }
 const emptyForm: FormState = {
   title: '',
@@ -29,6 +35,8 @@ const emptyForm: FormState = {
   status: PromptStatus.Draft,
   media: [],
   tags: [],
+  provider: Provider.Anthropic,
+  model: defaultModel(Provider.Anthropic),
 };
 
 export function PromptEditor() {
@@ -38,6 +46,7 @@ export function PromptEditor() {
   const { current } = useWorkspace();
   const wsId = current?.id;
   const navigate = useNavigate();
+  const { catalog } = useModels(wsId);
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [vocab, setVocab] = useState<TagCount[]>([]);
@@ -63,7 +72,16 @@ export function PromptEditor() {
           setDenied(true);
           return;
         }
-        setForm({ title: p.title, content: p.content, status: p.status, media: [...p.media], tags: [...p.tags] });
+        const provider = p.provider ?? Provider.Anthropic;
+        setForm({
+          title: p.title,
+          content: p.content,
+          status: p.status,
+          media: [...p.media],
+          tags: [...p.tags],
+          provider,
+          model: p.model ?? defaultModel(provider),
+        });
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load prompt'))
       .finally(() => setLoading(false));
@@ -165,35 +183,44 @@ export function PromptEditor() {
           <button type="button" className={mode === 'preview' ? 'on' : ''} onClick={() => setMode('preview')}>Preview</button>
         </div>
 
-        <div className="pe-content">
-          <AttachmentPreviews
-            media={form.media}
-            uploading={uploading}
-            onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
-          />
-
-          {mode === 'write' ? (
-            <textarea
-              className="pe-editor"
-              placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
+        {/* bordered box for the input + result, with the model picker (matches the chat) */}
+        <div className="composer-box pe-composer">
+          <div className="pe-content">
+            <AttachmentPreviews
+              media={form.media}
+              uploading={uploading}
+              onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
             />
-          ) : (
-            <div className="pe-preview">
-              {form.content.trim() ? (
-                <Markdown>{form.content}</Markdown>
-              ) : (
-                <p className="pe-preview-empty">Nothing to preview yet.</p>
-              )}
-            </div>
-          )}
-        </div>
 
-        <div className="pe-bar">
-          <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
-          <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
-          <span className="pe-counter">{form.content.length.toLocaleString()} chars</span>
+            {mode === 'write' ? (
+              <textarea
+                className="pe-editor"
+                placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+                value={form.content}
+                onChange={(e) => setForm({ ...form, content: e.target.value })}
+              />
+            ) : (
+              <div className="pe-preview">
+                {form.content.trim() ? (
+                  <Markdown>{form.content}</Markdown>
+                ) : (
+                  <p className="pe-preview-empty">Nothing to preview yet.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="pe-bar">
+            <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
+            <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
+            <ModelPicker
+              catalog={catalog}
+              provider={form.provider}
+              model={form.model}
+              onChange={(provider, model) => setForm((f) => ({ ...f, provider, model }))}
+            />
+            <span className="pe-counter">{form.content.length.toLocaleString()} chars</span>
+          </div>
         </div>
       </div>
     </form>

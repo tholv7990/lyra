@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MediaType, PromptStatus, TAG_MAX, TAG_MAX_LEN } from '@lyra/shared';
+import { MediaType, PromptStatus, Provider, TAG_MAX, TAG_MAX_LEN } from '@lyra/shared';
 import type {
   CreatePromptDto,
   PromptMedia,
@@ -63,6 +63,14 @@ export class CreatePromptBody implements CreatePromptDto {
   @IsString({ each: true })
   @MaxLength(TAG_MAX_LEN, { each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsEnum(Provider)
+  provider?: Provider;
+
+  @IsOptional()
+  @IsString()
+  model?: string;
 }
 
 export class UpdatePromptBody implements UpdatePromptDto {
@@ -91,4 +99,12 @@ export class UpdatePromptBody implements UpdatePromptDto {
   @IsString({ each: true })
   @MaxLength(TAG_MAX_LEN, { each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsEnum(Provider)
+  provider?: Provider;
+
+  @IsOptional()
+  @IsString()
+  model?: string;
 }

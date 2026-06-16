@@ -594,6 +594,18 @@
 }
 .pe-title::placeholder { color: var(--ink-tertiary); }
 
+/* bordered input box (reuses .composer-box) that grows to fill the frame;
+   higher specificity so it overrides composer-box's width/margin/padding */
+.pe .pe-composer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  margin: 0;
+  padding: 10px 12px;
+}
+
 /* the scrollable content area between the meta rows and the bottom bar */
 .pe-content {
   flex: 1;

@@ -50,6 +50,14 @@ export class Prompt extends AuditedEntity {
   // Free-form tags for filtering. Stored canonical (deduped via shared utils).
   @Prop({ type: [String], default: [] })
   tags!: string[];
+
+  // Default provider + model for testing this prompt (pre-selected in the
+  // playground). Optional.
+  @Prop()
+  provider?: string;
+
+  @Prop()
+  model?: string;
 }
 
 export const PromptSchema = SchemaFactory.createForClass(Prompt);

@@ -43,6 +43,8 @@ export class PromptsController {
       status: body.status ?? PromptStatus.Draft,
       media: body.media ?? [],
       tags: dedupeTags(body.tags ?? []),
+      provider: body.provider,
+      model: body.model,
     });
     return this.prompts.toView(prompt);
   }

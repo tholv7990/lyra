@@ -1,4 +1,9 @@
-import type { Prompt as PromptModel, PromptMedia, UserRef } from '@lyra/shared';
+import type {
+  Prompt as PromptModel,
+  PromptMedia,
+  Provider,
+  UserRef,
+} from '@lyra/shared';
 import type { PromptDocument } from './prompt.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';
@@ -23,6 +28,8 @@ export function toPrompt(
       }),
     ),
     tags: p.tags ?? [],
+    provider: p.provider as Provider | undefined,
+    model: p.model,
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),
