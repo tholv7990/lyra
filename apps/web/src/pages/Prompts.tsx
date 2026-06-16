@@ -7,6 +7,9 @@ import {
 } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  isAllowedMedia,
+  MEDIA_ACCEPT,
+  MEDIA_MAX_BYTES,
   PromptStatus,
   tagColor,
   type Paged,
@@ -19,7 +22,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TagInput } from '../components/TagInput';
-import { FileUpload } from '../components/FileUpload';
+import { AttachmentPreviews } from '../components/AttachmentPreviews';
 import { PromptsIcon, PlusIcon } from '../layout/icons';
 
 const STATUS_COLOR: Record<PromptStatus, string> = {
@@ -76,6 +79,8 @@ export function Prompts() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [toDelete, setToDelete] = useState<Prompt | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -146,6 +151,26 @@ export function Prompts() {
     setEditing(null);
     setForm(emptyForm);
     setError(null);
+  }
+
+  async function uploadFiles(files: FileList | null) {
+    if (!files || !wsId) return;
+    setError(null);
+    for (const file of Array.from(files)) {
+      if (!isAllowedMedia(file.type, file.name)) { setError(`${file.name}: file type not allowed`); continue; }
+      if (file.size > MEDIA_MAX_BYTES) { setError(`${file.name}: exceeds 25 MB`); continue; }
+      setUploading((u) => u + 1);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const media = await api<PromptMedia>(`/workspaces/${wsId}/files`, { method: 'POST', body: fd });
+        setForm((f) => ({ ...f, media: [...f.media, media] }));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : `Could not upload ${file.name}`);
+      } finally {
+        setUploading((u) => u - 1);
+      }
+    }
   }
 
   function reload() {
@@ -360,29 +385,31 @@ export function Prompts() {
               </div>
             </div>
 
-            <textarea
-              className="text-input prompt-area"
-              placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-              rows={5}
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-            />
+            <div className="pf-field">
+              <span className="pf-label">Prompt</span>
+              <div className="composer-box modal-composer">
+                <AttachmentPreviews
+                  media={form.media}
+                  uploading={uploading}
+                  onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
+                />
+                <textarea
+                  className="composer-input"
+                  placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+                  rows={5}
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                />
+                <div className="composer-bar">
+                  <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
+                  <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
+                </div>
+              </div>
+            </div>
 
             <div className="pf-field">
               <span className="pf-label">Tags</span>
               <TagInput value={form.tags} suggestions={vocab} onChange={(tags) => setForm({ ...form, tags })} />
-            </div>
-
-            <div className="pf-field">
-              <span className="pf-label">Attachments</span>
-              {wsId && (
-                <FileUpload
-                  value={form.media}
-                  workspaceId={wsId}
-                  onAdd={(m) => setForm((f) => ({ ...f, media: [...f.media, m] }))}
-                  onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
-                />
-              )}
             </div>
 
             <div className="modal-actions">

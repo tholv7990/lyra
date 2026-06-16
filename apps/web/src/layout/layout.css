@@ -2870,6 +2870,44 @@
   text-decoration: none;
 }
 
+.att-thumb {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+}
+
+.att-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.att-x.on-thumb {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.att-x.on-thumb:hover {
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+}
+
+/* composer reused inside the create-prompt modal: fill the modal width */
+.modal-composer {
+  max-width: none;
+  margin: 0;
+}
+
 .att-chip {
   display: inline-flex;
   align-items: center;

@@ -22,6 +22,7 @@ import {
 } from '@lyra/shared';
 import { api, streamSSE } from '../lib/api';
 import { useModels, type ModelCatalog } from '../lib/useModels';
+import { AttachmentPreviews } from '../components/AttachmentPreviews';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 
@@ -42,12 +43,6 @@ function initials(name?: string) {
   const p = name.trim().split(/\s+/);
   return (p[0][0] + (p[1]?.[0] ?? '')).toUpperCase();
 }
-function extLabel(name?: string) {
-  if (!name) return 'FILE';
-  const i = name.lastIndexOf('.');
-  return (i >= 0 ? name.slice(i + 1) : 'file').toUpperCase().slice(0, 4);
-}
-
 const Spark = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
     <path d="M12 2l1.7 6.1a3 3 0 0 0 2.2 2.2L22 12l-6.1 1.7a3 3 0 0 0-2.2 2.2L12 22l-1.7-6.1a3 3 0 0 0-2.2-2.2L2 12l6.1-1.7a3 3 0 0 0 2.2-2.2z" />
@@ -126,7 +121,7 @@ export function PromptPlayground() {
   useEffect(() => {
     if (!id) return;
     api<Prompt>(`/prompts/${id}`)
-      .then((p) => { setPrompt(p); setInput(p.content); })
+      .then((p) => { setPrompt(p); setInput(p.content); setAttachments(p.media ?? []); })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load prompt'));
     loadHistory();
   }, [id, loadHistory]);
@@ -209,7 +204,7 @@ export function PromptPlayground() {
     if (streaming) abortRef.current?.abort();
     setView(null);
     setInput(prompt?.content ?? '');
-    setAttachments([]);
+    setAttachments(prompt?.media ?? []);
     setError(null);
     setShowHistory(false);
   }
@@ -336,18 +331,11 @@ export function PromptPlayground() {
 
         <div className="chat-composer">
           <div className="composer-box">
-            {(attachments.length > 0 || uploading > 0) && (
-              <div className="composer-attachments">
-                {attachments.map((m, i) => (
-                  <span className="att-chip" key={`${m.url}-${i}`}>
-                    <span className="att-kind">{extLabel(m.name)}</span>
-                    <span className="att-name">{m.name}</span>
-                    <button type="button" className="att-x" onClick={() => setAttachments((a) => a.filter((_, idx) => idx !== i))} aria-label="Remove">×</button>
-                  </span>
-                ))}
-                {uploading > 0 && <span className="att-chip"><span className="spinner" /> Uploading…</span>}
-              </div>
-            )}
+            <AttachmentPreviews
+              media={attachments}
+              uploading={uploading}
+              onRemove={(idx) => setAttachments((a) => a.filter((_, i) => i !== idx))}
+            />
             <textarea
               className="composer-input"
               rows={3}
