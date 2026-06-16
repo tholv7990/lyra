@@ -8,8 +8,11 @@ import {
   tagKey,
   dedupeTags,
   tagColor,
+  mediaTypeForMime,
+  isAllowedMedia,
   type MemberCtx,
 } from './index';
+import { MediaType } from '../enums';
 import { Role, ProjectVisibility } from '../enums';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 
@@ -125,5 +128,28 @@ describe('tagColor', () => {
   });
   it('returns a color from the palette', () => {
     expect(TAG_PALETTE).toContain(tagColor('anything'));
+  });
+});
+
+describe('mediaTypeForMime', () => {
+  it('buckets by MIME prefix, defaulting to File', () => {
+    expect(mediaTypeForMime('image/png')).toBe(MediaType.Image);
+    expect(mediaTypeForMime('audio/mpeg')).toBe(MediaType.Audio);
+    expect(mediaTypeForMime('video/mp4')).toBe(MediaType.Video);
+    expect(mediaTypeForMime('application/pdf')).toBe(MediaType.File);
+  });
+});
+
+describe('isAllowedMedia', () => {
+  it('allows known MIME types', () => {
+    expect(isAllowedMedia('application/pdf', 'spec.pdf')).toBe(true);
+    expect(isAllowedMedia('image/webp', 'a.webp')).toBe(true);
+  });
+  it('falls back to the extension for blank/odd MIMEs', () => {
+    expect(isAllowedMedia('', 'notes.md')).toBe(true);
+    expect(isAllowedMedia('application/octet-stream', 'data.csv')).toBe(true);
+  });
+  it('rejects disallowed files', () => {
+    expect(isAllowedMedia('application/x-msdownload', 'virus.exe')).toBe(false);
   });
 });

@@ -14,6 +14,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TagInput } from '../components/TagInput';
+import { FileUpload } from '../components/FileUpload';
 import { PromptsIcon } from '../layout/icons';
 
 const TYPE_LABELS: Record<StepKey, string> = {
@@ -34,7 +35,12 @@ const MEDIA_LABELS: Record<MediaType, string> = {
   [MediaType.Video]: 'Video',
   [MediaType.File]: 'File',
 };
-const MEDIA_TYPES = Object.values(MediaType);
+
+function extLabel(name?: string): string {
+  if (!name) return 'FILE';
+  const i = name.lastIndexOf('.');
+  return (i >= 0 ? name.slice(i + 1) : 'file').toUpperCase().slice(0, 4);
+}
 
 const STATUS_COLORS: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: '#d4a72c',
@@ -79,11 +85,6 @@ export function Prompts() {
   const [filter, setFilter] = useState<StepKey | 'all'>('all');
   const [toDelete, setToDelete] = useState<Prompt | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  // Add-media inputs (staged before being added to form.media).
-  const [mType, setMType] = useState<MediaType>(MediaType.Image);
-  const [mUrl, setMUrl] = useState('');
-  const [mName, setMName] = useState('');
 
   const wsId = current?.id;
 
@@ -146,24 +147,7 @@ export function Prompts() {
   function closeForm() {
     setEditing(null);
     setForm(emptyForm);
-    setMUrl('');
-    setMName('');
     setError(null);
-  }
-
-  function addMedia() {
-    const url = mUrl.trim();
-    if (!url) return;
-    setForm((f) => ({
-      ...f,
-      media: [...f.media, { type: mType, url, name: mName.trim() || undefined }],
-    }));
-    setMUrl('');
-    setMName('');
-  }
-
-  function removeMedia(idx: number) {
-    setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -351,52 +335,21 @@ export function Prompts() {
             />
           </div>
 
-          <div className="pf-label">Media — sent to the AI provider</div>
-          {form.media.length > 0 && (
-            <div className="media-chips">
-              {form.media.map((m, i) => (
-                <span className="media-chip" key={`${m.url}-${i}`}>
-                  <span className="media-kind">{MEDIA_LABELS[m.type]}</span>
-                  <span className="media-name">{m.name || m.url}</span>
-                  <button
-                    type="button"
-                    className="media-x"
-                    aria-label="Remove"
-                    onClick={() => removeMedia(i)}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="media-add">
-            <select
-              className="text-input select-sm"
-              value={mType}
-              onChange={(e) => setMType(e.target.value as MediaType)}
-            >
-              {MEDIA_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {MEDIA_LABELS[t]}
-                </option>
-              ))}
-            </select>
-            <input
-              className="text-input"
-              placeholder="https://… URL"
-              value={mUrl}
-              onChange={(e) => setMUrl(e.target.value)}
-            />
-            <input
-              className="text-input"
-              placeholder="Label (optional)"
-              value={mName}
-              onChange={(e) => setMName(e.target.value)}
-            />
-            <button className="btn-ghost" type="button" onClick={addMedia}>
-              Add
-            </button>
+          <div className="pf-field">
+            <span className="pf-label">Attachments — sent to the AI provider</span>
+            {wsId && (
+              <FileUpload
+                value={form.media}
+                workspaceId={wsId}
+                onAdd={(m) => setForm((f) => ({ ...f, media: [...f.media, m] }))}
+                onRemove={(i) =>
+                  setForm((f) => ({
+                    ...f,
+                    media: f.media.filter((_, idx) => idx !== i),
+                  }))
+                }
+              />
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
@@ -496,13 +449,33 @@ export function Prompts() {
               )}
 
               {p.media.length > 0 && (
-                <div className="media-chips">
-                  {p.media.map((m, idx) => (
-                    <span className="media-chip ro" key={`${m.url}-${idx}`}>
-                      <span className="media-kind">{MEDIA_LABELS[m.type]}</span>
-                      <span className="media-name">{m.name || m.url}</span>
-                    </span>
-                  ))}
+                <div className="card-media">
+                  {p.media.map((m, idx) =>
+                    m.type === MediaType.Image ? (
+                      <a
+                        key={`${m.url}-${idx}`}
+                        href={m.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="card-media-thumb"
+                        title={m.name}
+                      >
+                        <img src={m.url} alt={m.name ?? 'image'} />
+                      </a>
+                    ) : (
+                      <a
+                        key={`${m.url}-${idx}`}
+                        href={m.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="card-media-file"
+                        title={m.name}
+                      >
+                        <span className="ext">{extLabel(m.name)}</span>
+                        <span className="nm">{m.name || MEDIA_LABELS[m.type]}</span>
+                      </a>
+                    ),
+                  )}
                 </div>
               )}
 

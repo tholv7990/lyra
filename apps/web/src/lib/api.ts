@@ -84,11 +84,15 @@ export async function api<T = unknown>(
 ): Promise<T> {
   const { retry = true, headers, ...rest } = options;
 
+  // For multipart (file upload) let the browser set Content-Type (+ boundary);
+  // only default to JSON otherwise.
+  const isForm = rest.body instanceof FormData;
+
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(currentWorkspaceId ? { 'X-Workspace-Id': currentWorkspaceId } : {}),
       ...headers,

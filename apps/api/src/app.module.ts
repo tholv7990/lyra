@@ -10,6 +10,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { KeysModule } from './keys/keys.module';
 import { RunsModule } from './runs/runs.module';
 import { PromptsModule } from './prompts/prompts.module';
+import { FilesModule } from './files/files.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -33,6 +34,7 @@ import { HealthController } from './health.controller';
     KeysModule,
     RunsModule,
     PromptsModule,
+    FilesModule,
     AuthModule,
   ],
   controllers: [HealthController],

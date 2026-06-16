@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -32,6 +33,10 @@ export class PromptMediaBody implements PromptMedia {
   @IsOptional()
   @IsString()
   mime?: string;
+
+  @IsOptional()
+  @IsNumber()
+  size?: number;
 }
 
 export class CreatePromptBody implements CreatePromptDto {

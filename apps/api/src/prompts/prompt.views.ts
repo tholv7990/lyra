@@ -20,6 +20,7 @@ export function toPrompt(
         url: m.url,
         name: m.name,
         mime: m.mime,
+        size: m.size,
       }),
     ),
     tags: p.tags ?? [],

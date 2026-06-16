@@ -1,5 +1,6 @@
-import { Role, ProjectVisibility } from '../enums';
+import { MediaType, Role, ProjectVisibility } from '../enums';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
+import { MEDIA_ALLOWED_EXT, MEDIA_ALLOWED_MIME } from '../constants/media';
 
 export interface MemberCtx {
   userId: string;
@@ -86,4 +87,25 @@ export function tagColor(tag: string): string {
     hash = ((hash << 5) + hash + key.charCodeAt(i)) >>> 0;
   }
   return TAG_PALETTE[hash % TAG_PALETTE.length];
+}
+
+// ===== Prompt media =====
+// Bucket a MIME type into one of the four media categories.
+export function mediaTypeForMime(mime: string): MediaType {
+  if (mime.startsWith('image/')) return MediaType.Image;
+  if (mime.startsWith('audio/')) return MediaType.Audio;
+  if (mime.startsWith('video/')) return MediaType.Video;
+  return MediaType.File;
+}
+
+function extOf(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  return dot >= 0 ? filename.slice(dot).toLowerCase() : '';
+}
+
+// A file is allowed if its MIME is on the list, or (for blank/odd MIMEs) its
+// extension is. Used by the api to validate uploads and the web to pre-filter.
+export function isAllowedMedia(mime: string, filename: string): boolean {
+  if (mime && MEDIA_ALLOWED_MIME.includes(mime)) return true;
+  return MEDIA_ALLOWED_EXT.includes(extOf(filename));
 }

@@ -120,11 +120,13 @@ export interface Run extends Audited {
 }
 
 // Media attached to a prompt (sent alongside the prompt to the AI provider).
+// `url` references a file stored by the api; `size` is the byte length.
 export interface PromptMedia {
   type: MediaType;
   url: string;
   name?: string;
   mime?: string;
+  size?: number;
 }
 
 // A reusable prompt in the workspace library. `type` maps to a pipeline step.

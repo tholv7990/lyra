@@ -16,6 +16,9 @@ export class PromptMediaItem {
 
   @Prop()
   mime?: string;
+
+  @Prop()
+  size?: number;
 }
 const PromptMediaItemSchema = SchemaFactory.createForClass(PromptMediaItem);
 
