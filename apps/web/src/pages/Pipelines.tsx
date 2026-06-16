@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tagColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
@@ -21,9 +21,6 @@ export function Pipelines() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
-  const [creating, setCreating] = useState(false);
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Pipeline | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -53,24 +50,6 @@ export function Pipelines() {
 
   const canEdit = (p: Pipeline) => !!user && (p.createdBy.id === user.id || current?.role === 'owner');
 
-  async function onCreate(e: FormEvent) {
-    e.preventDefault();
-    if (!wsId || !name.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const created = await api<Pipeline>(`/workspaces/${wsId}/pipelines`, {
-        method: 'POST',
-        body: JSON.stringify({ name: name.trim() }),
-      });
-      navigate(`/pipelines/${created.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create pipeline');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function confirmDelete() {
     if (!toDelete) return;
     setDeleting(true);
@@ -96,12 +75,12 @@ export function Pipelines() {
 
       <div className="lin-toolbar">
         <input className="lin-search" placeholder="Search pipelines…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="lin-add" onClick={() => { setName(''); setError(null); setCreating(true); }} title="New pipeline" aria-label="New pipeline">
+        <button className="lin-add" onClick={() => navigate('/pipelines/new')} title="New pipeline" aria-label="New pipeline">
           <PlusIcon />
         </button>
       </div>
 
-      {error && !creating && <p className="error">{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {loading ? (
         <p className="empty">Loading pipelines…</p>
@@ -110,7 +89,7 @@ export function Pipelines() {
           <div className="prompt-empty-art"><PipelinesIcon width={26} height={26} /></div>
           <h3>Build your first pipeline</h3>
           <p>Chain prompts into a flow — each step runs a prompt on a model you pick, feeding its output to the next.</p>
-          <button className="btn-primary" onClick={() => { setName(''); setCreating(true); }}>New pipeline</button>
+          <button className="btn-primary" onClick={() => navigate('/pipelines/new')}>New pipeline</button>
         </div>
       ) : visible.length === 0 ? (
         <p className="empty">No pipelines match your search.</p>
@@ -163,26 +142,6 @@ export function Pipelines() {
           </div>
         )}
         </>
-      )}
-
-      {creating && (
-        <div className="modal-scrim" onClick={() => setCreating(false)}>
-          <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={onCreate}>
-            <div className="modal-head">
-              <h3>New pipeline</h3>
-              <button type="button" className="modal-x" onClick={() => setCreating(false)} aria-label="Close">×</button>
-            </div>
-            {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
-            <input className="text-input" placeholder="Pipeline name" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
-            <p className="empty" style={{ padding: 0, textAlign: 'left', fontSize: 13 }}>You'll add steps in the builder next.</p>
-            <div className="modal-actions">
-              <button className="btn-ghost" type="button" onClick={() => setCreating(false)}>Cancel</button>
-              <button className="btn-primary" type="submit" disabled={busy} style={{ width: 'auto', marginTop: 0 }}>
-                {busy ? 'Creating…' : 'Create & edit'}
-              </button>
-            </div>
-          </form>
-        </div>
       )}
 
       <ConfirmDialog

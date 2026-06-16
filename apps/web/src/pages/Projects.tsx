@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { canEditProject, ProjectVisibility, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
@@ -17,8 +17,6 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const emptyForm = { name: '', product: '', niche: '', homepageUrl: '' };
-
 const PAGE_SIZE = 10;
 
 export function Projects() {
@@ -29,9 +27,6 @@ export function Projects() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
-  const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -67,26 +62,6 @@ export function Projects() {
     );
   }
 
-  async function onCreate(e: FormEvent) {
-    e.preventDefault();
-    if (!wsId || !form.name.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const created = await api<Project>(`/workspaces/${wsId}/projects`, {
-        method: 'POST',
-        body: JSON.stringify(form),
-      });
-      setProjects((p) => [created, ...p]);
-      setForm(emptyForm);
-      setCreating(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create project');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function confirmDelete() {
     if (!toDelete) return;
     setDeleting(true);
@@ -112,12 +87,12 @@ export function Projects() {
 
       <div className="lin-toolbar">
         <input className="lin-search" placeholder="Search projects…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="lin-add" onClick={() => { setForm(emptyForm); setError(null); setCreating(true); }} title="New project" aria-label="New project">
+        <button className="lin-add" onClick={() => navigate('/projects/new')} title="New project" aria-label="New project">
           <PlusIcon />
         </button>
       </div>
 
-      {error && !creating && <p className="error">{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {loading ? (
         <p className="empty">Loading projects…</p>
@@ -126,7 +101,7 @@ export function Projects() {
           <div className="prompt-empty-art"><ProjectsIcon width={26} height={26} /></div>
           <h3>Create your first project</h3>
           <p>A project holds a brand or product. Assign pipelines and run them to produce on-brand content.</p>
-          <button className="btn-primary" onClick={() => { setForm(emptyForm); setCreating(true); }}>New project</button>
+          <button className="btn-primary" onClick={() => navigate('/projects/new')}>New project</button>
         </div>
       ) : visible.length === 0 ? (
         <p className="empty">No projects match your search.</p>
@@ -160,6 +135,7 @@ export function Projects() {
               <span className="prow-date">{fmtDate(p.updatedAt)}</span>
               <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
                 <Link className="txt-btn accent" to={`/projects/${p.id}`}>Open</Link>
+                {canEdit(p) && <Link className="txt-btn" to={`/projects/${p.id}/edit`}>Edit</Link>}
                 {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
               </span>
             </div>
@@ -173,28 +149,6 @@ export function Projects() {
           </div>
         )}
         </>
-      )}
-
-      {creating && (
-        <div className="modal-scrim" onClick={() => setCreating(false)}>
-          <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={onCreate}>
-            <div className="modal-head">
-              <h3>New project</h3>
-              <button type="button" className="modal-x" onClick={() => setCreating(false)} aria-label="Close">×</button>
-            </div>
-            {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
-            <input className="text-input" placeholder="Project name" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className="text-input" placeholder="Product" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
-            <input className="text-input" placeholder="Niche" value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
-            <input className="text-input" placeholder="Homepage URL" value={form.homepageUrl} onChange={(e) => setForm({ ...form, homepageUrl: e.target.value })} />
-            <div className="modal-actions">
-              <button className="btn-ghost" type="button" onClick={() => setCreating(false)}>Cancel</button>
-              <button className="btn-primary" type="submit" disabled={busy} style={{ width: 'auto', marginTop: 0 }}>
-                {busy ? 'Creating…' : 'Create project'}
-              </button>
-            </div>
-          </form>
-        </div>
       )}
 
       <ConfirmDialog
