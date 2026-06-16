@@ -12,7 +12,8 @@ export default defineConfig({
   server: {
     host: true, // listen on all interfaces (LAN / tunnel previews)
     port: 5173,
-    allowedHosts: true, // accept tunnel hostnames (e.g. *.trycloudflare.com)
+    // Hosts allowed to reach the dev server (custom domain + tunnels + local).
+    allowedHosts: ['localhost', '.getlyras.app', '.trycloudflare.com'],
     proxy: {
       '/auth': { target: API, changeOrigin: false },
       '/workspaces': { target: API, changeOrigin: false },
