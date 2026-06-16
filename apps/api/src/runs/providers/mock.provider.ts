@@ -16,7 +16,7 @@ export class MockStepProvider implements StepProvider {
   }
 }
 
-function mockResult(key: StepKey): string {
+function mockResult(key?: StepKey): string {
   switch (key) {
     case StepKey.Find:
       return '[mock] 9 competitor sources found, each with URL, hook, format, and why it performs.';

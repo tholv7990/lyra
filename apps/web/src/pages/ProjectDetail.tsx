@@ -231,20 +231,23 @@ export function ProjectDetail() {
         </div>
       ) : (
         <div className="steps">
-          {run.steps.map((step) => (
+          {run.steps.map((step) => {
+            const provider = step.provider ?? (step.key ? STEP_PROVIDERS[step.key] : '');
+            return (
             <StepCard
               key={step.index}
               step={step}
-              title={STEP_DEFS[step.index]?.title ?? step.key}
+              title={STEP_DEFS[step.index]?.title ?? step.name ?? step.key ?? `Step ${step.index + 1}`}
               isCurrent={step.index === run.currentStep && run.status !== 'done'}
-              locked={!keysSet.has(STEP_PROVIDERS[step.key])}
-              provider={STEP_PROVIDERS[step.key]}
+              locked={!keysSet.has(provider)}
+              provider={provider}
               busy={busy}
               onRun={() => runStep(step.index)}
               onApprove={() => approve(step.index)}
               onSavePrompt={(p) => savePrompt(step.index, p)}
             />
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

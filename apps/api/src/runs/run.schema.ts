@@ -7,8 +7,18 @@ export class RunStep {
   @Prop({ required: true })
   index!: number;
 
-  @Prop({ required: true })
-  key!: string;
+  // Fixed pipeline only; composable pipeline steps use name/promptId/provider.
+  @Prop()
+  key?: string;
+
+  @Prop()
+  name?: string;
+
+  @Prop()
+  promptId?: string;
+
+  @Prop()
+  provider?: string;
 
   @Prop({ required: true })
   mode!: string;
@@ -51,6 +61,15 @@ export class Run extends AuditedEntity {
 
   @Prop({ required: true, index: true })
   workspaceId!: string;
+
+  @Prop({ index: true })
+  pipelineId?: string;
+
+  @Prop()
+  pipelineName?: string;
+
+  @Prop({ type: Object })
+  context?: { product: string; niche: string; homepageUrl: string };
 
   @Prop({ required: true, default: 'idle' })
   status!: string;

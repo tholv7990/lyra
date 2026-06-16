@@ -98,7 +98,10 @@ export interface Project extends Audited {
 
 export interface Step {
   index: number;
-  key: StepKey;
+  key?: StepKey; // fixed pipeline only; composable pipeline steps omit it
+  name?: string; // composable pipeline step name
+  promptId?: string; // composable: the library prompt this step ran
+  provider?: Provider; // composable: per-step provider (else derived from key)
   mode: StepMode;
   status: StepStatus;
   model: string;
@@ -115,6 +118,9 @@ export interface Run extends Audited {
   id: string;
   projectId: string;
   workspaceId: string;
+  pipelineId?: string; // set when the run came from a composable pipeline
+  pipelineName?: string;
+  context?: { product: string; niche: string; homepageUrl: string };
   status: RunStatus;
   currentStep: number;
   steps: Step[];

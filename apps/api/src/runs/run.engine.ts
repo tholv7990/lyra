@@ -47,8 +47,14 @@ export function providerForStep(key: StepKey): Provider {
   return STEP_PROVIDERS[key];
 }
 
+// Resolve a step's provider: explicit (composable pipeline step) or derived
+// from its StepKey (fixed pipeline).
+export function providerOf(step: Step): Provider {
+  return step.provider ?? STEP_PROVIDERS[step.key as StepKey];
+}
+
 export function isLocked(step: Step, keysPresent: Set<string>): boolean {
-  return !keysPresent.has(STEP_PROVIDERS[step.key]);
+  return !keysPresent.has(providerOf(step));
 }
 
 export function buildSteps(p: ProjectInfo): Step[] {
@@ -93,7 +99,7 @@ export function assertRunnable(
     throw new RunTransitionError('Step is already done');
   }
   if (isLocked(step, keysPresent)) {
-    throw new StepLockedError(providerForStep(step.key));
+    throw new StepLockedError(providerOf(step));
   }
   return step;
 }
@@ -126,7 +132,7 @@ export function completeStep(
     step.status = StepStatus.Done;
     state.currentStep = index + 1;
     state.status =
-      state.currentStep >= TOTAL_STEPS ? RunStatus.Done : RunStatus.Idle;
+      state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
   }
 }
 
@@ -150,7 +156,7 @@ export function approveGateAt(state: RunState, index: number): void {
   step.status = StepStatus.Done;
   state.currentStep = index + 1;
   state.status =
-    state.currentStep >= TOTAL_STEPS ? RunStatus.Done : RunStatus.Idle;
+    state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
 }
 
 export function stopRun(state: RunState): void {

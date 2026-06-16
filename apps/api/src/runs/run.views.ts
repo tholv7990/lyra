@@ -15,7 +15,10 @@ import { iso } from '../common/dates';
 function toStep(s: RunStep): Step {
   return {
     index: s.index,
-    key: s.key as StepKey,
+    key: s.key as StepKey | undefined,
+    name: s.name,
+    promptId: s.promptId,
+    provider: s.provider as Step['provider'],
     mode: s.mode as StepMode,
     status: s.status as StepStatus,
     model: s.model,
@@ -34,6 +37,9 @@ export function toRun(doc: RunDocument, refs: Map<string, UserRef>): RunModel {
     id: doc._id.toString(),
     projectId: doc.projectId,
     workspaceId: doc.workspaceId,
+    pipelineId: doc.pipelineId,
+    pipelineName: doc.pipelineName,
+    context: doc.context,
     status: doc.status as RunStatus,
     currentStep: doc.currentStep,
     steps: doc.steps.map(toStep),

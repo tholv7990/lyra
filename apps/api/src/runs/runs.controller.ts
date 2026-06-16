@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
@@ -13,6 +14,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
 import type { ProjectDocument } from '../projects/project.schema';
+import { PipelinesService } from '../pipelines/pipelines.service';
 import { RunsService } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
@@ -21,7 +23,46 @@ import { UpdatePromptBody } from './dto/runs.dto';
 
 @Controller()
 export class RunsController {
-  constructor(private readonly runs: RunsService) {}
+  constructor(
+    private readonly runs: RunsService,
+    private readonly pipelines: PipelinesService,
+  ) {}
+
+  // Create a run by executing a composable pipeline in this project's context.
+  @Post('projects/:id/pipelines/:pipelineId/runs')
+  @UseGuards(ProjectAccessGuard)
+  async createFromPipeline(
+    @CurrentProject() project: ProjectDocument,
+    @Param('pipelineId') pipelineId: string,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    const pipeline = await this.pipelines.findActiveById(pipelineId);
+    if (!pipeline || pipeline.workspaceId !== project.workspaceId) {
+      throw new NotFoundException('Pipeline not found');
+    }
+    const run = await this.runs.createForPipeline(
+      {
+        projectId: project._id.toString(),
+        workspaceId: project.workspaceId,
+        pipelineId: pipeline._id.toString(),
+        pipelineName: pipeline.name,
+        context: {
+          product: project.product,
+          niche: project.niche,
+          homepageUrl: project.homepageUrl,
+        },
+        steps: pipeline.steps.map((s) => ({
+          name: s.name,
+          promptId: s.promptId,
+          provider: s.provider,
+          model: s.model,
+          mode: s.mode,
+        })),
+      },
+      user.id,
+    );
+    return this.runs.toView(run);
+  }
 
   @Post('projects/:id/runs')
   @UseGuards(ProjectAccessGuard)

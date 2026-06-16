@@ -2,7 +2,7 @@ import type { Step, StepKey } from '@lyra/shared';
 
 // A prior step's output, fed as context to the current step.
 export interface PriorStepResult {
-  key: StepKey;
+  key?: StepKey;
   title: string;
   result: string;
 }

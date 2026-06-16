@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { STEP_DEFS } from '@lyra/shared';
+import { isModelAllowed, Provider, STEP_DEFS } from '@lyra/shared';
 import { AnthropicClient } from './anthropic.client';
 import type {
   StepProvider,
@@ -28,12 +28,16 @@ export class AnthropicStepProvider implements StepProvider {
     private readonly config: ConfigService,
   ) {}
 
-  private get model(): string {
+  // Prefer the step's chosen model (composable pipeline) when it's a real
+  // Anthropic model; otherwise fall back to the configured default (fixed runs
+  // carry a display label like "Claude" in step.model).
+  private resolveModel(stepModel: string): string {
+    if (isModelAllowed(Provider.Anthropic, stepModel)) return stepModel;
     return this.config.get<string>('ANTHROPIC_MODEL') ?? DEFAULT_MODEL;
   }
 
   async execute(ctx: StepRunContext): Promise<StepRunOutput> {
-    const title = STEP_DEFS[ctx.step.index]?.title ?? ctx.step.key;
+    const title = STEP_DEFS[ctx.step.index]?.title ?? ctx.step.name ?? ctx.step.key;
 
     const parts = [`# Step: ${title}`, '', ctx.step.prompt.trim()];
     if (ctx.priorResults.length) {
@@ -45,7 +49,7 @@ export class AnthropicStepProvider implements StepProvider {
 
     const completion = await this.client.complete({
       apiKey: ctx.apiKey,
-      model: this.model,
+      model: this.resolveModel(ctx.step.model),
       system: SYSTEM_PROMPT,
       prompt: parts.join('\n'),
     });

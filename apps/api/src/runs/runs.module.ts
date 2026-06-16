@@ -4,6 +4,8 @@ import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { KeysModule } from '../keys/keys.module';
 import { UsersModule } from '../users/users.module';
+import { PromptsModule } from '../prompts/prompts.module';
+import { PipelinesModule } from '../pipelines/pipelines.module';
 import { Run, RunSchema } from './run.schema';
 import { RunsService } from './runs.service';
 import { RunsController } from './runs.controller';
@@ -19,6 +21,8 @@ import { ProviderRegistry } from './providers/provider.registry';
     ProjectsModule, // ProjectsService + ProjectAccessGuard
     KeysModule, // KeysService (per-step key gating + decryption)
     UsersModule, // UsersService (ref expansion)
+    PromptsModule, // load prompt content for pipeline runs
+    PipelinesModule, // load a pipeline to run it
     MongooseModule.forFeature([{ name: Run.name, schema: RunSchema }]),
   ],
   controllers: [RunsController],
