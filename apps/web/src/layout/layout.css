@@ -544,6 +544,69 @@
   margin-top: 6px;
 }
 
+/* prompt editor: borderless big title, full-width composer, tags+toggle row */
+.pe-title {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  padding: 2px 0 4px;
+}
+.pe-title::placeholder { color: var(--ink-tertiary); }
+
+.pe-composer { max-width: none; }
+
+.pe-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pe-tags { flex: 1; min-width: 0; }
+
+.pe-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.pe-toggle-text { font-size: 13px; font-weight: 500; color: var(--ink-muted); }
+.pe-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.pe-track {
+  position: relative;
+  display: block;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  transition: background 0.18s ease;
+  flex-shrink: 0;
+}
+.pe-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pe-toggle input:checked ~ .pe-track { background: var(--primary); }
+.pe-toggle input:checked ~ .pe-track .pe-knob { transform: translateX(16px); }
+
+@media (max-width: 560px) {
+  .pe-row { flex-wrap: wrap; }
+  .pe-tags { flex-basis: 100%; }
+}
+
 /* ===== Settings: sectioned layout (Provider keys + Models) ===== */
 .set-section {
   margin-bottom: 30px;

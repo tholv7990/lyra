@@ -15,11 +15,6 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { TagInput } from '../components/TagInput';
 import { AttachmentPreviews } from '../components/AttachmentPreviews';
 
-const STATUS_COLOR: Record<PromptStatus, string> = {
-  [PromptStatus.Draft]: '#d4a72c',
-  [PromptStatus.Public]: '#2da44e',
-};
-
 interface FormState {
   title: string;
   content: string;
@@ -130,50 +125,46 @@ export function PromptEditor() {
 
       <form onSubmit={onSubmit}>
         <input
-          className="text-input"
-          placeholder="Title"
+          className="pe-title"
+          placeholder="Prompt title"
           autoFocus
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
 
-        <div className="pf-field">
-          <span className="pf-label">Status</span>
-          <div className="seg">
-            <button type="button" className={form.status === PromptStatus.Draft ? 'on' : ''} onClick={() => setForm({ ...form, status: PromptStatus.Draft })}>
-              <span className="pip" style={{ background: STATUS_COLOR[PromptStatus.Draft] }} />Draft
-            </button>
-            <button type="button" className={form.status === PromptStatus.Public ? 'on' : ''} onClick={() => setForm({ ...form, status: PromptStatus.Public })}>
-              <span className="pip" style={{ background: STATUS_COLOR[PromptStatus.Public] }} />Public
-            </button>
+        <div className="composer-box pe-composer">
+          <AttachmentPreviews
+            media={form.media}
+            uploading={uploading}
+            onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
+          />
+          <textarea
+            className="composer-input"
+            placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
+            rows={8}
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+          />
+          <div className="composer-bar">
+            <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
+            <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
           </div>
         </div>
 
-        <div className="pf-field">
-          <span className="pf-label">Prompt</span>
-          <div className="composer-box modal-composer">
-            <AttachmentPreviews
-              media={form.media}
-              uploading={uploading}
-              onRemove={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
-            />
-            <textarea
-              className="composer-input"
-              placeholder="Prompt content. Use {product}, {niche}, {homepage} placeholders."
-              rows={8}
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-            />
-            <div className="composer-bar">
-              <button type="button" className="composer-add" onClick={() => fileRef.current?.click()} title="Attach files">+</button>
-              <input ref={fileRef} type="file" hidden multiple accept={MEDIA_ACCEPT} onChange={(e) => { void uploadFiles(e.target.files); e.target.value = ''; }} />
-            </div>
+        {/* tags (left) + visibility toggle (right) on one row, no labels */}
+        <div className="pe-row">
+          <div className="pe-tags">
+            <TagInput value={form.tags} suggestions={vocab} onChange={(tags) => setForm({ ...form, tags })} />
           </div>
-        </div>
-
-        <div className="pf-field">
-          <span className="pf-label">Tags</span>
-          <TagInput value={form.tags} suggestions={vocab} onChange={(tags) => setForm({ ...form, tags })} />
+          <label className="pe-toggle" title="Public prompts can be reused across the workspace">
+            <span className="pe-toggle-text">Public</span>
+            <input
+              type="checkbox"
+              checked={form.status === PromptStatus.Public}
+              onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
+            />
+            <span className="pe-track"><span className="pe-knob" /></span>
+          </label>
         </div>
 
         <div className="editor-actions">
