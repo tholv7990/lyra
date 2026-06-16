@@ -32,7 +32,13 @@ export function Signup() {
   return (
     <div className="center">
       <form className="auth-card" onSubmit={onSubmit}>
-        <div className="logo-mark">Ly</div>
+        <img
+          className="auth-logo"
+          src="/lyra-logo-horizontal-light.svg"
+          alt="Lyra"
+          width={159}
+          height={64}
+        />
         <h1>Create your account</h1>
         <p className="sub muted">Start running the Lyra pipeline</p>
 

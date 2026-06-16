@@ -27,7 +27,13 @@ export function Login() {
   return (
     <div className="center">
       <form className="auth-card" onSubmit={onSubmit}>
-        <div className="logo-mark">Ly</div>
+        <img
+          className="auth-logo"
+          src="/lyra-logo-horizontal-light.svg"
+          alt="Lyra"
+          width={159}
+          height={64}
+        />
         <h1>Welcome back</h1>
         <p className="sub muted">Sign in to your Lyra workspace</p>
 

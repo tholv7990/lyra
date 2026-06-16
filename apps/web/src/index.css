@@ -78,17 +78,11 @@ body {
   color: var(--ink-muted);
 }
 
-/* Compact brand mark — small radius, no glow (Linear style) */
-.logo-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(160deg, #ff8a3d, var(--primary));
-  color: #fff;
-  font-weight: 700;
-  font-size: 15px;
-  display: grid;
-  place-items: center;
+/* Brand lockup on the auth cards (horizontal logo, light variant) */
+.auth-logo {
+  display: block;
+  height: 64px;
+  width: auto;
   margin: 0 auto 18px;
 }
 
