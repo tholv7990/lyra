@@ -10,6 +10,15 @@ import {
   OPENAI_COMPAT_BASE,
 } from '../runs/providers/openai-compat.client';
 
+// A text chat/reasoning model from OpenAI's catalog (excludes image, audio,
+// tts, transcribe, realtime, whisper, embeddings, moderation, dall-e).
+const OPENAI_CHAT_PREFIX = /^(gpt-\d|o\d|chatgpt)/i;
+const OPENAI_NON_TEXT =
+  /(image|audio|tts|transcribe|realtime|whisper|embedding|moderation|dall-e)/i;
+function isOpenAiChatModel(id: string): boolean {
+  return OPENAI_CHAT_PREFIX.test(id) && !OPENAI_NON_TEXT.test(id);
+}
+
 @Injectable()
 export class ModelsService {
   constructor(
@@ -54,11 +63,11 @@ export class ModelsService {
     const base = OPENAI_COMPAT_BASE[provider];
     if (base) {
       const ids = await this.openai.listModels(base, key);
-      // OpenAI returns many non-chat models; keep the chat-capable ones.
+      // OpenAI's /models lists every modality. Keep text chat/reasoning models
+      // (gpt-*, o1/o3/o4, chatgpt-*) and drop image/audio/tts/transcribe/etc.,
+      // which aren't usable in a text prompt picker. DeepSeek is already clean.
       const filtered =
-        provider === Provider.OpenAI
-          ? ids.filter((id) => /^(gpt|o\d|chatgpt)/i.test(id))
-          : ids;
+        provider === Provider.OpenAI ? ids.filter(isOpenAiChatModel) : ids;
       return [...filtered].sort().map((id) => ({ id, label: id }));
     }
     throw new BadRequestException(`Model listing isn't supported for ${provider}.`);

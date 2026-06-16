@@ -31,8 +31,16 @@ describe('Models (e2e)', () => {
       })
       .overrideProvider(OpenAiCompatClient)
       .useValue({
-        // GET /models returns ids; the service filters/sorts them.
-        listModels: async () => ['gpt-next', 'text-embedding-3', 'gpt-mini'],
+        // GET /models returns ids; the service keeps text chat models, drops
+        // embeddings/tts/image, then sorts.
+        listModels: async () => [
+          'gpt-5.5',
+          'text-embedding-3',
+          'gpt-4o-mini',
+          'gpt-4o-mini-tts',
+          'o3-mini',
+          'dall-e-3',
+        ],
       })
       .compile();
     app = moduleRef.createNestApplication();
@@ -133,8 +141,8 @@ describe('Models (e2e)', () => {
         .set(auth(ownerToken))
         .expect(201)
     ).body as { id: string }[];
-    // text-embedding-3 is dropped; remaining are sorted.
-    expect(models.map((m) => m.id)).toEqual(['gpt-mini', 'gpt-next']);
+    // embeddings/tts/image dropped; text chat models kept and sorted.
+    expect(models.map((m) => m.id)).toEqual(['gpt-4o-mini', 'gpt-5.5', 'o3-mini']);
   });
 
   it('rejects model listing for image/video providers', async () => {
