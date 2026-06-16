@@ -10,6 +10,7 @@ import {
   isModelAllowed,
   Provider,
   PromptStatus,
+  type PromptMedia,
   type PromptTest as PromptTestModel,
 } from '@lyra/shared';
 import { PromptTest } from './prompt-test.schema';
@@ -18,7 +19,9 @@ import { BaseRepository } from '../common/database/base.repository';
 import { UsersService } from '../users/users.service';
 import { KeysService } from '../keys/keys.service';
 import { PromptsService } from '../prompts/prompts.service';
+import { FilesService } from '../files/files.service';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
+import type { LlmAttachment } from '../runs/providers/anthropic.client';
 import { toPromptTest, promptTestActorIds } from './prompt-test.views';
 
 const SYSTEM_PROMPT =
@@ -37,9 +40,36 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
     private readonly users: UsersService,
     private readonly keys: KeysService,
     private readonly prompts: PromptsService,
+    private readonly files: FilesService,
     private readonly anthropic: AnthropicClient,
   ) {
     super(model);
+  }
+
+  // Turn stored media into model attachments (images + PDFs, base64). Other file
+  // types are kept on the test record but not sent to the model. Capped to keep
+  // payloads sane.
+  private async buildAttachments(media: PromptMedia[]): Promise<LlmAttachment[]> {
+    const out: LlmAttachment[] = [];
+    for (const m of media.slice(0, 5)) {
+      const mime = m.mime ?? '';
+      const isImage = mime.startsWith('image/');
+      const isPdf = mime === 'application/pdf';
+      if (!isImage && !isPdf) continue;
+      const id = m.url.split('/').pop();
+      if (!id) continue;
+      try {
+        const buf = await this.files.readBuffer(id);
+        out.push({
+          kind: isImage ? 'image' : 'document',
+          mediaType: mime,
+          dataBase64: buf.toString('base64'),
+        });
+      } catch {
+        // skip unreadable attachments
+      }
+    }
+    return out;
   }
 
   async toView(doc: PromptTestDocument): Promise<PromptTestModel> {
@@ -106,11 +136,13 @@ export class PromptTestsService extends BaseRepository<PromptTest> {
     model: string,
     apiKey: string,
     input: string,
+    media: PromptMedia[],
     onDelta: (text: string) => void,
   ): Promise<RunOutput> {
     if (provider === Provider.Anthropic) {
+      const attachments = await this.buildAttachments(media);
       const out = await this.anthropic.stream(
-        { apiKey, model, system: SYSTEM_PROMPT, prompt: input },
+        { apiKey, model, system: SYSTEM_PROMPT, prompt: input, attachments },
         onDelta,
       );
       if (!out.text) throw new Error('Claude returned an empty response');

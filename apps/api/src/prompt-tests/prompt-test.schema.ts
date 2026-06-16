@@ -1,7 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { Provider } from '@lyra/shared';
+import { MediaType, Provider } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
+
+@Schema({ _id: false })
+export class PtMediaItem {
+  @Prop({ required: true, enum: Object.values(MediaType) }) type!: MediaType;
+  @Prop({ required: true }) url!: string;
+  @Prop() name?: string;
+  @Prop() mime?: string;
+  @Prop() size?: number;
+}
+const PtMediaItemSchema = SchemaFactory.createForClass(PtMediaItem);
 
 export type PromptTestDocument = HydratedDocument<PromptTest>;
 
@@ -21,6 +31,9 @@ export class PromptTest extends AuditedEntity {
 
   @Prop({ required: true })
   input!: string;
+
+  @Prop({ type: [PtMediaItemSchema], default: [] })
+  media!: PtMediaItem[];
 
   @Prop({ required: true, default: '' })
   result!: string;

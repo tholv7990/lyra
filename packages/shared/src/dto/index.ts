@@ -110,6 +110,7 @@ export interface CreatePromptTestDto {
   provider: Provider;
   model: string;
   input: string;
+  media?: PromptMedia[];
 }
 
 export interface UpdatePromptTestDto {

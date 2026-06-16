@@ -7,7 +7,9 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import {
   Provider,
   TAG_MAX,
@@ -15,6 +17,7 @@ import {
   type CreatePromptTestDto,
   type UpdatePromptTestDto,
 } from '@lyra/shared';
+import { PromptMediaBody } from '../../prompts/dto/prompts.dto';
 
 export class CreatePromptTestBody implements CreatePromptTestDto {
   @IsEnum(Provider)
@@ -27,6 +30,12 @@ export class CreatePromptTestBody implements CreatePromptTestDto {
   @IsString()
   @MinLength(1)
   input!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PromptMediaBody)
+  media?: PromptMediaBody[];
 }
 
 export class UpdatePromptTestBody implements UpdatePromptTestDto {

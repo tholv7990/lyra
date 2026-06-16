@@ -1,11 +1,19 @@
 import { Injectable } from '@nestjs/common';
 
+// A file attachment sent to the model as a content block (base64).
+export interface LlmAttachment {
+  kind: 'image' | 'document';
+  mediaType: string;
+  dataBase64: string;
+}
+
 export interface LlmCompletionParams {
   apiKey: string;
   model: string;
   system: string;
   prompt: string;
   maxTokens?: number;
+  attachments?: LlmAttachment[];
 }
 
 export interface LlmCompletion {
@@ -15,6 +23,20 @@ export interface LlmCompletion {
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
+
+// Build the user message content: a string when there are no attachments, else
+// a content-block array (text + image/document blocks).
+function userContent(params: LlmCompletionParams): unknown {
+  if (!params.attachments?.length) return params.prompt;
+  const blocks: unknown[] = [{ type: 'text', text: params.prompt }];
+  for (const a of params.attachments) {
+    blocks.push({
+      type: a.kind,
+      source: { type: 'base64', media_type: a.mediaType, data: a.dataBase64 },
+    });
+  }
+  return blocks;
+}
 
 interface AnthropicResponse {
   content?: { type: string; text?: string }[];
@@ -39,7 +61,7 @@ export class AnthropicClient {
         model: params.model,
         max_tokens: params.maxTokens ?? 2048,
         system: params.system,
-        messages: [{ role: 'user', content: params.prompt }],
+        messages: [{ role: 'user', content: userContent(params) }],
       }),
     });
 
@@ -76,7 +98,7 @@ export class AnthropicClient {
         model: params.model,
         max_tokens: params.maxTokens ?? 2048,
         system: params.system,
-        messages: [{ role: 'user', content: params.prompt }],
+        messages: [{ role: 'user', content: userContent(params) }],
         stream: true,
       }),
     });

@@ -70,6 +70,16 @@ export class FilesService {
     };
   }
 
+  // Read a stored file fully into a Buffer (e.g. to base64-encode for the model).
+  async readBuffer(id: string): Promise<Buffer> {
+    const { stream } = await this.open(id);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
+
   async open(id: string): Promise<{
     file: mongo.GridFSFile;
     stream: NodeJS.ReadableStream;

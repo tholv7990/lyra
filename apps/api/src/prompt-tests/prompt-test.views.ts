@@ -1,4 +1,4 @@
-import type { PromptTest as PromptTestModel, UserRef } from '@lyra/shared';
+import type { PromptTest as PromptTestModel, PromptMedia, UserRef } from '@lyra/shared';
 import type { PromptTestDocument } from './prompt-test.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';
@@ -14,6 +14,9 @@ export function toPromptTest(
     provider: t.provider,
     model: t.model,
     input: t.input,
+    media: (t.media ?? []).map(
+      (m): PromptMedia => ({ type: m.type, url: m.url, name: m.name, mime: m.mime, size: m.size }),
+    ),
     result: t.result,
     usage: t.usage,
     starred: t.starred ?? false,

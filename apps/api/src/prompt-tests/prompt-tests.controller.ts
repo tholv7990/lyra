@@ -61,6 +61,7 @@ export class PromptTestsController {
     res.flushHeaders?.();
     const send = (obj: unknown) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
+    const media = body.media ?? [];
     const base = {
       workspaceId,
       promptId,
@@ -69,6 +70,7 @@ export class PromptTestsController {
       provider: body.provider,
       model: body.model,
       input: body.input,
+      media,
       starred: false,
       tags: [] as string[],
     };
@@ -79,6 +81,7 @@ export class PromptTestsController {
         body.model,
         apiKey,
         body.input,
+        media,
         (text) => send({ type: 'delta', text }),
       );
       const saved = await this.tests.record({

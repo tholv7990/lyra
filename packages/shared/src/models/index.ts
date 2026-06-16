@@ -170,6 +170,7 @@ export interface PromptTest extends Audited {
   provider: Provider;
   model: string;
   input: string;
+  media: PromptMedia[];
   result: string;
   usage?: { tokens?: number; costUsd?: number };
   starred: boolean;
