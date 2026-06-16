@@ -8,6 +8,7 @@ import {
   StepMode,
   StepStatus,
   type ApiKeyInfo,
+  type Pipeline,
   type Project,
   type Run,
   type Step,
@@ -21,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
   queued: 'Queued',
   running: 'Running',
   waiting: 'Awaiting approval',
+  awaiting_gate: 'Awaiting approval',
   done: 'Done',
   error: 'Error',
 };
@@ -36,8 +38,12 @@ export function ProjectDetail() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
+  const [assigned, setAssigned] = useState<Pipeline[]>([]);
+  const [library, setLibrary] = useState<Pipeline[]>([]);
+  const [runs, setRuns] = useState<Run[]>([]);
   const [run, setRun] = useState<Run | null>(null);
   const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
+  const [addId, setAddId] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,11 +54,16 @@ export function ProjectDetail() {
     try {
       const p = await api<Project>(`/projects/${id}`);
       setProject(p);
-      const [runs, keys] = await Promise.all([
+      const [asgn, lib, rs, keys] = await Promise.all([
+        api<Pipeline[]>(`/projects/${id}/pipelines`),
+        api<Pipeline[]>(`/workspaces/${p.workspaceId}/pipelines`),
         api<Run[]>(`/projects/${id}/runs`),
         api<ApiKeyInfo[]>(`/workspaces/${p.workspaceId}/keys`),
       ]);
-      setRun(runs[0] ?? null);
+      setAssigned(asgn);
+      setLibrary(lib);
+      setRuns(rs);
+      setRun(rs[0] ?? null);
       setKeysSet(new Set(keys.map((k) => k.provider)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load project');
@@ -77,8 +88,38 @@ export function ProjectDetail() {
     }
   }
 
-  const startRun = () =>
-    act(async () => setRun(await api<Run>(`/projects/${id}/runs`, { method: 'POST' })));
+  const canEdit =
+    !!user &&
+    !!current &&
+    !!project &&
+    project.workspaceId === current.id &&
+    canEditProject(
+      { createdBy: project.createdBy.id },
+      { userId: user.id, role: current.role, canManageKeys: current.canManageKeys },
+    );
+
+  const assign = (pipelineId: string) =>
+    act(async () => {
+      await api(`/projects/${id}/pipelines/${pipelineId}`, { method: 'POST' });
+      setAssigned(await api<Pipeline[]>(`/projects/${id}/pipelines`));
+      setAddId('');
+    });
+
+  const unassign = (pipelineId: string) =>
+    act(async () => {
+      await api(`/projects/${id}/pipelines/${pipelineId}`, { method: 'DELETE' });
+      setAssigned((a) => a.filter((p) => p.id !== pipelineId));
+    });
+
+  const runPipeline = (pipelineId: string) =>
+    act(async () => {
+      const created = await api<Run>(`/projects/${id}/pipelines/${pipelineId}/runs`, {
+        method: 'POST',
+      });
+      setRun(created);
+      setRuns((r) => [created, ...r]);
+    });
+
   const runAll = () =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/run-all`, { method: 'POST' })));
   const stop = () =>
@@ -116,14 +157,7 @@ export function ProjectDetail() {
   if (loading) return <p className="empty">Loading…</p>;
   if (!project) return <p className="empty">{error ?? 'Project not found.'}</p>;
 
-  const canEdit =
-    !!user &&
-    !!current &&
-    project.workspaceId === current.id &&
-    canEditProject(
-      { createdBy: project.createdBy.id },
-      { userId: user.id, role: current.role, canManageKeys: current.canManageKeys },
-    );
+  const unassignedLibrary = library.filter((p) => !assigned.some((a) => a.id === p.id));
 
   return (
     <div>
@@ -136,25 +170,6 @@ export function ProjectDetail() {
           <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
             <Link to="/projects" style={{ color: 'var(--primary)' }}>← Back to projects</Link>
           </p>
-        </div>
-        <div className="run-controls">
-          {!run ? (
-            <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={startRun}>
-              Start run
-            </button>
-          ) : (
-            <>
-              <span className={`badge status-${run.status}`}>{STATUS_LABEL[run.status] ?? run.status}</span>
-              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status === 'done'} onClick={runAll}>
-                Run all
-              </button>
-              <button className="btn-ghost" disabled={busy || run.status !== 'running'} onClick={stop}>Stop</button>
-              <button className="btn-ghost" disabled={busy} onClick={reset}>Reset</button>
-              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={startRun}>
-                New run
-              </button>
-            </>
-          )}
         </div>
       </div>
 
@@ -173,9 +188,7 @@ export function ProjectDetail() {
             <div className="value">
               {project.homepageUrl ? (
                 <a href={project.homepageUrl} target="_blank" rel="noreferrer">{project.homepageUrl}</a>
-              ) : (
-                '—'
-              )}
+              ) : '—'}
             </div>
           </div>
           <div className="detail-field">
@@ -208,47 +221,123 @@ export function ProjectDetail() {
 
       {error && <p className="error">{error}</p>}
 
-      {!run ? (
-        <div className="prompt-empty">
-          <div className="prompt-empty-art">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 3.5 19 12 5 20.5z" />
-            </svg>
+      {/* Pipelines hub */}
+      <div className="section-head" style={{ marginTop: 8 }}>
+        <h2 style={{ fontSize: 18 }}>Pipelines</h2>
+        {canEdit && unassignedLibrary.length > 0 && (
+          <div className="run-controls">
+            <select
+              className="text-input select-sm"
+              value={addId}
+              onChange={(e) => setAddId(e.target.value)}
+            >
+              <option value="">Add from library…</option>
+              {unassignedLibrary.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <button
+              className="btn-ghost"
+              disabled={!addId || busy}
+              onClick={() => addId && void assign(addId)}
+            >
+              Add
+            </button>
           </div>
-          <h3>Ready to run the pipeline</h3>
+        )}
+      </div>
+
+      {assigned.length === 0 ? (
+        <div className="prompt-empty">
+          <h3>No pipelines assigned</h3>
           <p>
-            Start a run to populate the 8-step workbench — find, crawl, brief,
-            insight, prompts, images, video, and assemble — each step editable and
-            gated for approval.
+            Assign a pipeline from your{' '}
+            <Link to="/pipelines" style={{ color: 'var(--primary)' }}>library</Link>{' '}
+            to run it against this project, or build a new one.
           </p>
-          <button
-            className="btn-primary"
-            disabled={busy}
-            onClick={startRun}
-          >
-            Start run
-          </button>
+          <Link className="btn-primary" to="/pipelines" style={{ width: 'auto' }}>
+            Go to Pipelines
+          </Link>
         </div>
       ) : (
-        <div className="steps">
-          {run.steps.map((step) => {
-            const provider = step.provider ?? (step.key ? STEP_PROVIDERS[step.key] : '');
-            return (
-            <StepCard
-              key={step.index}
-              step={step}
-              title={STEP_DEFS[step.index]?.title ?? step.name ?? step.key ?? `Step ${step.index + 1}`}
-              isCurrent={step.index === run.currentStep && run.status !== 'done'}
-              locked={!keysSet.has(provider)}
-              provider={provider}
-              busy={busy}
-              onRun={() => runStep(step.index)}
-              onApprove={() => approve(step.index)}
-              onSavePrompt={(p) => savePrompt(step.index, p)}
-            />
-            );
-          })}
+        <div className="list">
+          {assigned.map((p) => (
+            <div className="row" key={p.id}>
+              <div className="grow">
+                <div className="title">{p.name}</div>
+                <div className="sub">{p.steps.length} step{p.steps.length === 1 ? '' : 's'}{p.description ? ` · ${p.description}` : ''}</div>
+              </div>
+              <div className="row-actions">
+                <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={() => void runPipeline(p.id)}>
+                  Run
+                </button>
+                <Link className="btn-ghost" to={`/pipelines/${p.id}`}>Builder</Link>
+                {canEdit && (
+                  <button className="txt-btn danger" disabled={busy} onClick={() => void unassign(p.id)}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
+      )}
+
+      {/* Run workbench */}
+      {run && (
+        <>
+          <div className="section-head" style={{ marginTop: 28 }}>
+            <div>
+              <h2 style={{ fontSize: 18 }}>{run.pipelineName ?? 'Run'}</h2>
+              {runs.length > 1 && (
+                <select
+                  className="text-input select-sm"
+                  style={{ width: 'auto', marginTop: 6 }}
+                  value={run.id}
+                  onChange={(e) => setRun(runs.find((r) => r.id === e.target.value) ?? run)}
+                >
+                  {runs.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.pipelineName ?? 'Run'} · {new Date(r.createdAt).toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="run-controls">
+              <span className={`badge status-${run.status}`}>{STATUS_LABEL[run.status] ?? run.status}</span>
+              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status === 'done'} onClick={runAll}>
+                Run all
+              </button>
+              <button className="btn-ghost" disabled={busy || run.status !== 'running'} onClick={stop}>Stop</button>
+              <button className="btn-ghost" disabled={busy} onClick={reset}>Reset</button>
+            </div>
+          </div>
+
+          {run.steps.length === 0 ? (
+            <p className="empty">This pipeline has no steps yet. Add steps in the builder.</p>
+          ) : (
+            <div className="steps">
+              {run.steps.map((step) => {
+                const provider = step.provider ?? (step.key ? STEP_PROVIDERS[step.key] : '');
+                return (
+                  <StepCard
+                    key={step.index}
+                    step={step}
+                    title={STEP_DEFS[step.index]?.title ?? step.name ?? step.key ?? `Step ${step.index + 1}`}
+                    isCurrent={step.index === run.currentStep && run.status !== 'done'}
+                    locked={!keysSet.has(provider)}
+                    provider={provider}
+                    busy={busy}
+                    onRun={() => runStep(step.index)}
+                    onApprove={() => approve(step.index)}
+                    onSavePrompt={(pr) => savePrompt(step.index, pr)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
