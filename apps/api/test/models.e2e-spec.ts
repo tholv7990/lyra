@@ -24,21 +24,27 @@ describe('Models (e2e)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(AnthropicClient)
       .useValue({
+        // Curated to the latest model per tier (opus/sonnet/haiku).
         listModels: async () => [
-          { id: 'claude-next-1', label: 'Claude Next 1' },
-          { id: 'claude-next-2', label: 'Claude Next 2' },
+          { id: 'claude-opus-4-5', label: 'Claude Opus 4.5' },
+          { id: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
+          { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+          { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
         ],
       })
       .overrideProvider(OpenAiCompatClient)
       .useValue({
-        // GET /models returns ids; the service keeps text chat models, drops
-        // embeddings/tts/image, then sorts.
+        // Curated to the newest GPT family + newest reasoning model.
         listModels: async () => [
+          'gpt-4o',
+          'gpt-5',
           'gpt-5.5',
-          'text-embedding-3',
-          'gpt-4o-mini',
-          'gpt-4o-mini-tts',
+          'gpt-5.5-pro',
+          'gpt-5.5-2026-04-23',
+          'gpt-5.5-codex',
           'o3-mini',
+          'o4-mini',
+          'text-embedding-3',
           'dall-e-3',
         ],
       })
@@ -116,9 +122,11 @@ describe('Models (e2e)', () => {
         .set(auth(ownerToken))
         .expect(201)
     ).body as { id: string; label: string }[];
-    expect(models).toEqual([
-      { id: 'claude-next-1', label: 'Claude Next 1' },
-      { id: 'claude-next-2', label: 'Claude Next 2' },
+    // Only the latest per tier; older opus dropped.
+    expect(models.map((m) => m.id)).toEqual([
+      'claude-opus-4-8',
+      'claude-sonnet-4-6',
+      'claude-haiku-4-5-20251001',
     ]);
   });
 
@@ -126,10 +134,14 @@ describe('Models (e2e)', () => {
     const cat = (
       await http().get(`/workspaces/${wsId}/models`).set(auth(ownerToken)).expect(200)
     ).body as Record<string, { id: string }[]>;
-    expect(cat.anthropic.map((m) => m.id)).toEqual(['claude-next-1', 'claude-next-2']);
+    expect(cat.anthropic.map((m) => m.id)).toEqual([
+      'claude-opus-4-8',
+      'claude-sonnet-4-6',
+      'claude-haiku-4-5-20251001',
+    ]);
   });
 
-  it('filters OpenAI listing to chat models and sorts them', async () => {
+  it('curates OpenAI to the newest GPT family + newest reasoning model', async () => {
     await http()
       .put(`/workspaces/${wsId}/keys/openai`)
       .set(auth(ownerToken))
@@ -141,8 +153,8 @@ describe('Models (e2e)', () => {
         .set(auth(ownerToken))
         .expect(201)
     ).body as { id: string }[];
-    // embeddings/tts/image dropped; text chat models kept and sorted.
-    expect(models.map((m) => m.id)).toEqual(['gpt-4o-mini', 'gpt-5.5', 'o3-mini']);
+    // gpt-4o/gpt-5 (older), dated snapshot, codex, embeddings/image all dropped.
+    expect(models.map((m) => m.id)).toEqual(['gpt-5.5', 'gpt-5.5-pro', 'o4-mini']);
   });
 
   it('rejects model listing for image/video providers', async () => {

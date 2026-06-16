@@ -9,15 +9,11 @@ import {
   OpenAiCompatClient,
   OPENAI_COMPAT_BASE,
 } from '../runs/providers/openai-compat.client';
-
-// A text chat/reasoning model from OpenAI's catalog (excludes image, audio,
-// tts, transcribe, realtime, whisper, embeddings, moderation, dall-e).
-const OPENAI_CHAT_PREFIX = /^(gpt-\d|o\d|chatgpt)/i;
-const OPENAI_NON_TEXT =
-  /(image|audio|tts|transcribe|realtime|whisper|embedding|moderation|dall-e)/i;
-function isOpenAiChatModel(id: string): boolean {
-  return OPENAI_CHAT_PREFIX.test(id) && !OPENAI_NON_TEXT.test(id);
-}
+import {
+  curateAnthropic,
+  curateDeepSeek,
+  curateOpenAi,
+} from './model-curation';
 
 @Injectable()
 export class ModelsService {
@@ -56,19 +52,18 @@ export class ModelsService {
     return models;
   }
 
+  // Fetch the provider's live models and curate them down to a short list of
+  // current flagship chat models (see model-curation.ts).
   private async fetch(provider: Provider, key: string): Promise<ModelOption[]> {
     if (provider === Provider.Anthropic) {
-      return this.anthropic.listModels(key);
+      return curateAnthropic(await this.anthropic.listModels(key));
     }
     const base = OPENAI_COMPAT_BASE[provider];
     if (base) {
       const ids = await this.openai.listModels(base, key);
-      // OpenAI's /models lists every modality. Keep text chat/reasoning models
-      // (gpt-*, o1/o3/o4, chatgpt-*) and drop image/audio/tts/transcribe/etc.,
-      // which aren't usable in a text prompt picker. DeepSeek is already clean.
-      const filtered =
-        provider === Provider.OpenAI ? ids.filter(isOpenAiChatModel) : ids;
-      return [...filtered].sort().map((id) => ({ id, label: id }));
+      return provider === Provider.OpenAI
+        ? curateOpenAi(ids)
+        : curateDeepSeek(ids);
     }
     throw new BadRequestException(`Model listing isn't supported for ${provider}.`);
   }
