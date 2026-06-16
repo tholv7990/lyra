@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { AuditedEntity } from '../common/database/audited.entity';
 
 @Schema({ _id: false })
 export class RunStep {
@@ -44,15 +45,12 @@ const RunStepSchema = SchemaFactory.createForClass(RunStep);
 export type RunDocument = HydratedDocument<Run>;
 
 @Schema({ timestamps: true })
-export class Run {
+export class Run extends AuditedEntity {
   @Prop({ required: true, index: true })
   projectId!: string;
 
   @Prop({ required: true, index: true })
   workspaceId!: string;
-
-  @Prop({ required: true })
-  createdBy!: string;
 
   @Prop({ required: true, default: 'idle' })
   status!: string;
@@ -62,9 +60,6 @@ export class Run {
 
   @Prop({ type: [RunStepSchema], default: [] })
   steps!: RunStep[];
-
-  createdAt!: Date;
-  updatedAt!: Date;
 }
 
 export const RunSchema = SchemaFactory.createForClass(Run);

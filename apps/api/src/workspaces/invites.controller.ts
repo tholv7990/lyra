@@ -11,7 +11,6 @@ import { InvitesService } from './invites.service';
 import { WorkspacesService } from './workspaces.service';
 import { MembershipsService } from './memberships.service';
 import { AcceptInviteBody } from './dto/workspaces.dto';
-import { toWorkspaceView } from './views';
 
 // Invite acceptance is not workspace-scoped (the caller isn't a member yet),
 // so it lives outside /workspaces/:id and behind the global JwtAuthGuard only.
@@ -36,6 +35,6 @@ export class InvitesController {
     const ws = await this.workspaces.findById(workspaceId);
     const membership = await this.memberships.findFor(workspaceId, user.id);
     if (!ws || !membership) throw new NotFoundException('Workspace not found');
-    return toWorkspaceView(ws, membership.role, membership.canManageKeys);
+    return this.workspaces.toView(ws, membership.role, membership.canManageKeys);
   }
 }

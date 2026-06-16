@@ -27,19 +27,20 @@ export class MembershipsService extends BaseRepository<Membership> {
     workspaceId: string,
     userId: string,
     patch: { role?: Role; canManageKeys?: boolean },
+    updatedBy: string,
   ) {
-    return this.findOneAndUpdate({ workspaceId, userId }, patch);
+    return this.findOneAndUpdate({ workspaceId, userId }, { ...patch, updatedBy });
   }
 
-  removeFor(workspaceId: string, userId: string) {
-    return this.deleteOne({ workspaceId, userId });
+  // Soft remove (active:false) so the member can be re-added later.
+  removeFor(workspaceId: string, userId: string, updatedBy: string) {
+    return this.findOneAndUpdate(
+      { workspaceId, userId, active: { $ne: false } },
+      { active: false, updatedBy },
+    );
   }
 
   countOwners(workspaceId: string) {
     return this.count({ workspaceId, role: Role.Owner });
-  }
-
-  removeAllForWorkspace(workspaceId: string) {
-    return this.deleteMany({ workspaceId });
   }
 }

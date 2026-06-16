@@ -7,23 +7,46 @@ import {
   StepKey,
 } from '../enums';
 
+// A populated actor reference — what createdBy/updatedBy expand to in responses.
+export interface UserRef {
+  id: string;
+  name: string;
+}
+
+// Standard audit envelope present on every persisted collection (transport form).
+export interface Audited {
+  active: boolean;
+  createdBy: UserRef;
+  updatedBy: UserRef;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  active: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
-export interface Workspace {
+export interface Workspace extends Audited {
   id: string;
   name: string;
   type: 'personal' | 'team';
-  createdBy: string;
-  createdAt: string;
 }
 
 // A workspace plus the requesting user's role in it — what GET /workspaces returns.
 export interface WorkspaceView extends Workspace {
+  role: Role;
+  canManageKeys: boolean;
+}
+
+export interface Membership extends Audited {
+  id: string;
+  workspaceId: string;
+  userId: string;
   role: Role;
   canManageKeys: boolean;
 }
@@ -40,38 +63,26 @@ export interface MemberView {
   createdAt: string;
 }
 
-export interface Membership {
-  id: string;
-  workspaceId: string;
-  userId: string;
-  role: Role;
-  canManageKeys: boolean;
-  createdAt: string;
-}
-
-export interface Invite {
+export interface Invite extends Audited {
   id: string;
   workspaceId: string;
   email: string;
   role: Role;
   status: 'pending' | 'accepted' | 'revoked';
   expiresAt: string;
-  createdAt: string;
 }
 
 // Safe transport shape — never carries the encryptedKey.
-export interface ApiKeyInfo {
+export interface ApiKeyInfo extends Audited {
   id: string;
   workspaceId: string;
   provider: string;
   last4: string;
-  updatedAt: string;
 }
 
-export interface Project {
+export interface Project extends Audited {
   id: string;
   workspaceId: string;
-  createdBy: string;
   name: string;
   product: string;
   niche: string;
@@ -79,8 +90,7 @@ export interface Project {
   brandBrief?: Record<string, unknown>;
   learnings?: string[];
   visibility: ProjectVisibility;
-  sharedWith: string[]; // used only when visibility === 'shared'
-  createdAt: string;
+  sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto
 }
 
 export interface Step {
@@ -98,16 +108,13 @@ export interface Step {
   finishedAt?: string;
 }
 
-export interface Run {
+export interface Run extends Audited {
   id: string;
   projectId: string;
   workspaceId: string;
-  createdBy: string;
   status: RunStatus;
   currentStep: number;
   steps: Step[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface Asset {

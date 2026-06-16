@@ -14,7 +14,7 @@ import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireManageKeys } from '../workspaces/decorators/require-manage-keys.decorator';
 import { KeysService } from './keys.service';
 import { UpsertKeyBody } from './dto/keys.dto';
-import { toApiKeyInfo, parseProvider } from './key.views';
+import { parseProvider } from './key.views';
 
 // Read = any member; write/delete = Owner or canManageKeys (per-workspace).
 @Controller('workspaces/:id/keys')
@@ -24,8 +24,7 @@ export class KeysController {
 
   @Get()
   async list(@Param('id') workspaceId: string): Promise<ApiKeyInfo[]> {
-    const keys = await this.keys.list(workspaceId);
-    return keys.map(toApiKeyInfo);
+    return this.keys.toViews(await this.keys.list(workspaceId));
   }
 
   @Put(':provider')
@@ -38,7 +37,7 @@ export class KeysController {
   ): Promise<ApiKeyInfo> {
     const provider = parseProvider(providerParam);
     const doc = await this.keys.upsert(workspaceId, provider, body.key, user.id);
-    return toApiKeyInfo(doc);
+    return this.keys.toView(doc);
   }
 
   @Delete(':provider')
@@ -47,7 +46,8 @@ export class KeysController {
   async remove(
     @Param('id') workspaceId: string,
     @Param('provider') providerParam: string,
+    @CurrentUser() user: User,
   ): Promise<void> {
-    await this.keys.removeKey(workspaceId, parseProvider(providerParam));
+    await this.keys.removeKey(workspaceId, parseProvider(providerParam), user.id);
   }
 }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from '../users/users.module';
+import { CascadeModule } from '../common/database/cascade.module';
 import { Workspace, WorkspaceSchema } from './workspace.schema';
 import { Membership, MembershipSchema } from './membership.schema';
 import { Invite, InviteSchema } from './invite.schema';
@@ -14,6 +15,7 @@ import { InvitesController } from './invites.controller';
 @Module({
   imports: [
     UsersModule,
+    CascadeModule,
     MongooseModule.forFeature([
       { name: Workspace.name, schema: WorkspaceSchema },
       { name: Membership.name, schema: MembershipSchema },

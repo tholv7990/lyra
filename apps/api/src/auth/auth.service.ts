@@ -87,6 +87,8 @@ export class AuthService {
           userId: created._id.toString(),
           role: Role.Owner,
           canManageKeys: false,
+          createdBy: created._id.toString(),
+          updatedBy: created._id.toString(),
         },
         session,
       );

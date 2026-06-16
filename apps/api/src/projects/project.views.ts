@@ -1,11 +1,14 @@
-import type { Project as ProjectModel } from '@lyra/shared';
+import type { Project as ProjectModel, UserRef } from '@lyra/shared';
 import type { ProjectDocument } from './project.schema';
+import { userRef, userRefs } from '../common/refs';
 
-export function toProject(p: ProjectDocument): ProjectModel {
+export function toProject(
+  p: ProjectDocument,
+  refs: Map<string, UserRef>,
+): ProjectModel {
   return {
     id: p._id.toString(),
     workspaceId: p.workspaceId,
-    createdBy: p.createdBy,
     name: p.name,
     product: p.product,
     niche: p.niche,
@@ -13,7 +16,16 @@ export function toProject(p: ProjectDocument): ProjectModel {
     brandBrief: p.brandBrief,
     learnings: p.learnings,
     visibility: p.visibility,
-    sharedWith: p.sharedWith,
+    sharedWith: userRefs(p.sharedWith, refs),
+    active: p.active,
+    createdBy: userRef(p.createdBy, refs),
+    updatedBy: userRef(p.updatedBy, refs),
     createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
   };
+}
+
+// Collect every user id a project references (for batch resolution).
+export function projectActorIds(p: ProjectDocument): string[] {
+  return [p.createdBy, p.updatedBy, ...p.sharedWith];
 }

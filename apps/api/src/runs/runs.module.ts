@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { KeysModule } from '../keys/keys.module';
+import { UsersModule } from '../users/users.module';
 import { Run, RunSchema } from './run.schema';
 import { RunsService } from './runs.service';
 import { RunsController } from './runs.controller';
@@ -13,6 +14,7 @@ import { RunAccessGuard } from './guards/run-access.guard';
     WorkspacesModule, // MembershipsService
     ProjectsModule, // ProjectsService + ProjectAccessGuard
     KeysModule, // KeysService (per-step key gating)
+    UsersModule, // UsersService (ref expansion)
     MongooseModule.forFeature([{ name: Run.name, schema: RunSchema }]),
   ],
   controllers: [RunsController],

@@ -5,9 +5,11 @@ import type {
   StepStatus,
   StepMode,
   StepKey,
+  UserRef,
 } from '@lyra/shared';
 import type { RunDocument, RunStep } from './run.schema';
 import type { RunState } from './run.engine';
+import { userRef } from '../common/refs';
 
 function toStep(s: RunStep): Step {
   return {
@@ -26,15 +28,17 @@ function toStep(s: RunStep): Step {
   };
 }
 
-export function toRun(doc: RunDocument): RunModel {
+export function toRun(doc: RunDocument, refs: Map<string, UserRef>): RunModel {
   return {
     id: doc._id.toString(),
     projectId: doc.projectId,
     workspaceId: doc.workspaceId,
-    createdBy: doc.createdBy,
     status: doc.status as RunStatus,
     currentStep: doc.currentStep,
     steps: doc.steps.map(toStep),
+    active: doc.active,
+    createdBy: userRef(doc.createdBy, refs),
+    updatedBy: userRef(doc.updatedBy, refs),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };

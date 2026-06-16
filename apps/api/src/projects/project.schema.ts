@@ -1,16 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { ProjectVisibility } from '@lyra/shared';
+import { AuditedEntity } from '../common/database/audited.entity';
 
 export type ProjectDocument = HydratedDocument<Project>;
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false } })
-export class Project {
+@Schema({ timestamps: true })
+export class Project extends AuditedEntity {
   @Prop({ required: true, index: true })
   workspaceId!: string;
-
-  @Prop({ required: true })
-  createdBy!: string;
 
   @Prop({ required: true, trim: true })
   name!: string;
@@ -37,15 +35,9 @@ export class Project {
   })
   visibility!: ProjectVisibility;
 
-  // Used only when visibility === 'shared'.
+  // User ids; expanded to UserRef[] in responses.
   @Prop({ type: [String], default: [] })
   sharedWith!: string[];
-
-  // Soft delete: delete flips this to false rather than removing the document.
-  @Prop({ required: true, default: true, index: true })
-  active!: boolean;
-
-  createdAt!: Date;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

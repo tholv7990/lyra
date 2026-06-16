@@ -1,5 +1,4 @@
 import { Role, ProjectVisibility } from '../enums';
-import type { Project } from '../models';
 
 export interface MemberCtx {
   userId: string;
@@ -7,10 +6,16 @@ export interface MemberCtx {
   canManageKeys: boolean;
 }
 
-export function canViewProject(
-  p: Pick<Project, 'createdBy' | 'visibility' | 'sharedWith'>,
-  ctx: MemberCtx,
-): boolean {
+// Access helpers take the owner's user id (a string), not the transport Project
+// — whose createdBy is a populated UserRef. Server-side passes the stored id;
+// client-side passes project.createdBy.id.
+export interface ProjectAccess {
+  createdBy: string;
+  visibility: ProjectVisibility;
+  sharedWith: string[];
+}
+
+export function canViewProject(p: ProjectAccess, ctx: MemberCtx): boolean {
   if (ctx.role === Role.Owner) return true; // owner override
   if (p.createdBy === ctx.userId) return true;
   if (p.visibility === ProjectVisibility.Workspace) return true;
@@ -21,7 +26,7 @@ export function canViewProject(
 }
 
 export function canEditProject(
-  p: Pick<Project, 'createdBy'>,
+  p: { createdBy: string },
   ctx: MemberCtx,
 ): boolean {
   return ctx.role === Role.Owner || p.createdBy === ctx.userId;

@@ -120,11 +120,10 @@ export function ProjectDetail() {
     !!user &&
     !!current &&
     project.workspaceId === current.id &&
-    canEditProject(project, {
-      userId: user.id,
-      role: current.role,
-      canManageKeys: current.canManageKeys,
-    });
+    canEditProject(
+      { createdBy: project.createdBy.id },
+      { userId: user.id, role: current.role, canManageKeys: current.canManageKeys },
+    );
 
   return (
     <div>
@@ -199,7 +198,9 @@ export function ProjectDetail() {
           </div>
           <div className="detail-field">
             <div className="label">Created</div>
-            <div className="value">{new Date(project.createdAt).toLocaleDateString()}</div>
+            <div className="value">
+              {new Date(project.createdAt).toLocaleDateString()} · by {project.createdBy.name}
+            </div>
           </div>
         </div>
       </div>

@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { Role } from '@lyra/shared';
+import { AuditedEntity } from '../common/database/audited.entity';
 
 export type MembershipDocument = HydratedDocument<Membership>;
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false } })
-export class Membership {
+@Schema({ timestamps: true })
+export class Membership extends AuditedEntity {
   @Prop({ required: true, index: true })
   workspaceId!: string;
 
@@ -17,11 +18,13 @@ export class Membership {
 
   @Prop({ required: true, default: false })
   canManageKeys!: boolean;
-
-  createdAt!: Date;
 }
 
 export const MembershipSchema = SchemaFactory.createForClass(Membership);
 
-// One membership per (workspace, user).
-MembershipSchema.index({ workspaceId: 1, userId: 1 }, { unique: true });
+// One ACTIVE membership per (workspace, user) — partial so a soft-removed
+// member can be re-added (the inactive row stays as history).
+MembershipSchema.index(
+  { workspaceId: 1, userId: 1 },
+  { unique: true, partialFilterExpression: { active: true } },
+);

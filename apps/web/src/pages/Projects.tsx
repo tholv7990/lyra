@@ -47,11 +47,10 @@ export function Projects() {
 
   function canEdit(p: Project) {
     if (!current || !user) return false;
-    return canEditProject(p, {
-      userId: user.id,
-      role: current.role,
-      canManageKeys: current.canManageKeys,
-    });
+    return canEditProject(
+      { createdBy: p.createdBy.id },
+      { userId: user.id, role: current.role, canManageKeys: current.canManageKeys },
+    );
   }
 
   async function onCreate(e: FormEvent) {

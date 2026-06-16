@@ -15,9 +15,8 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@lyra/shared';
-import type { MemberView, WorkspaceView } from '@lyra/shared';
+import type { Invite, MemberView, WorkspaceView, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import type { User } from '@lyra/shared';
 import { WorkspacesService } from './workspaces.service';
 import { MembershipsService } from './memberships.service';
 import { InvitesService } from './invites.service';
@@ -34,7 +33,8 @@ import {
   InviteBody,
   UpdateMemberBody,
 } from './dto/workspaces.dto';
-import { toInviteView, toMemberView, toWorkspaceView } from './views';
+import { toMemberView } from './views';
+import { CascadeService } from '../common/database/cascade.service';
 
 @Controller('workspaces')
 export class WorkspacesController {
@@ -44,10 +44,10 @@ export class WorkspacesController {
     private readonly invites: InvitesService,
     private readonly users: UsersService,
     private readonly config: ConfigService,
+    private readonly cascade: CascadeService,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  // Create a team workspace; the creator becomes its owner (atomic).
   @Post()
   async create(
     @Body() body: CreateWorkspaceBody,
@@ -55,7 +55,7 @@ export class WorkspacesController {
   ): Promise<WorkspaceView> {
     const workspace = await this.connection.transaction(async (session) => {
       const ws = await this.workspaces.create(
-        { name: body.name, type: 'team', createdBy: user.id },
+        { name: body.name, type: 'team', createdBy: user.id, updatedBy: user.id },
         session,
       );
       await this.memberships.create(
@@ -64,12 +64,14 @@ export class WorkspacesController {
           userId: user.id,
           role: Role.Owner,
           canManageKeys: false,
+          createdBy: user.id,
+          updatedBy: user.id,
         },
         session,
       );
       return ws;
     });
-    return toWorkspaceView(workspace, Role.Owner, false);
+    return this.workspaces.toView(workspace, Role.Owner, false);
   }
 
   @Get()
@@ -85,7 +87,7 @@ export class WorkspacesController {
   ): Promise<WorkspaceView> {
     const ws = await this.workspaces.findById(id);
     if (!ws) throw new NotFoundException('Workspace not found');
-    return toWorkspaceView(ws, m.role, m.canManageKeys);
+    return this.workspaces.toView(ws, m.role, m.canManageKeys);
   }
 
   @Patch(':id')
@@ -96,24 +98,25 @@ export class WorkspacesController {
     @Body() body: UpdateWorkspaceBody,
     @CurrentMembership() m: RequestMembership,
   ): Promise<WorkspaceView> {
-    const ws = await this.workspaces.rename(id, body.name);
+    const ws = await this.workspaces.rename(id, body.name, m.userId);
     if (!ws) throw new NotFoundException('Workspace not found');
-    return toWorkspaceView(ws, m.role, m.canManageKeys);
+    return this.workspaces.toView(ws, m.role, m.canManageKeys);
   }
 
   @Delete(':id')
   @UseGuards(WorkspaceGuard)
   @RequireOwner()
   @HttpCode(204)
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(
+    @Param('id') id: string,
+    @CurrentMembership() m: RequestMembership,
+  ): Promise<void> {
     const ws = await this.workspaces.findById(id);
     if (!ws) throw new NotFoundException('Workspace not found');
     if (ws.type === 'personal') {
       throw new BadRequestException('Cannot delete your personal workspace');
     }
-    await this.memberships.removeAllForWorkspace(id);
-    await this.invites.removeAllForWorkspace(id);
-    await this.workspaces.deleteById(id);
+    await this.cascade.deleteWorkspace(id, m.userId);
   }
 
   @Get(':id/members')
@@ -138,6 +141,7 @@ export class WorkspacesController {
     @Param('id') id: string,
     @Param('uid') uid: string,
     @Body() body: UpdateMemberBody,
+    @CurrentMembership() m: RequestMembership,
   ): Promise<MemberView> {
     if (body.role && body.role !== Role.Owner) {
       const target = await this.memberships.findFor(id, uid);
@@ -145,7 +149,7 @@ export class WorkspacesController {
         throw new BadRequestException('Cannot demote the last owner');
       }
     }
-    const updated = await this.memberships.updateMembership(id, uid, body);
+    const updated = await this.memberships.updateMembership(id, uid, body, m.userId);
     if (!updated) throw new NotFoundException('Member not found');
     const u = await this.users.findById(uid);
     return toMemberView(updated, {
@@ -161,21 +165,21 @@ export class WorkspacesController {
   async removeMember(
     @Param('id') id: string,
     @Param('uid') uid: string,
+    @CurrentMembership() m: RequestMembership,
   ): Promise<void> {
     const target = await this.memberships.findFor(id, uid);
     if (!target) throw new NotFoundException('Member not found');
     if (target.role === Role.Owner && (await this.memberships.countOwners(id)) <= 1) {
       throw new BadRequestException('Cannot remove the last owner');
     }
-    await this.memberships.removeFor(id, uid);
+    await this.memberships.removeFor(id, uid, m.userId);
   }
 
   @Get(':id/invites')
   @UseGuards(WorkspaceGuard)
   @RequireOwner()
-  async listInvites(@Param('id') id: string) {
-    const invites = await this.invites.listPending(id);
-    return invites.map(toInviteView);
+  async listInvites(@Param('id') id: string): Promise<Invite[]> {
+    return this.invites.toViews(await this.invites.listPending(id));
   }
 
   @Post(':id/invites')
@@ -194,10 +198,8 @@ export class WorkspacesController {
     });
     const webOrigin =
       this.config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
-    // No email service yet (Phase 1 dev): return the token + accept link so the
-    // flow is testable. Resend delivery lands when invites are productionized.
     return {
-      invite: toInviteView(invite),
+      invite: await this.invites.toView(invite),
       token,
       acceptUrl: `${webOrigin}/invite?token=${token}`,
     };
@@ -210,11 +212,12 @@ export class WorkspacesController {
   async revokeInvite(
     @Param('id') id: string,
     @Param('iid') iid: string,
+    @CurrentMembership() m: RequestMembership,
   ): Promise<void> {
     const inv = await this.invites.findById(iid);
     if (!inv || inv.workspaceId !== id) {
       throw new NotFoundException('Invite not found');
     }
-    await this.invites.revoke(iid);
+    await this.invites.revoke(iid, m.userId);
   }
 }

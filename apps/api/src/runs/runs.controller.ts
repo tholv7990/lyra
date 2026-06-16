@@ -18,7 +18,6 @@ import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
 import type { RunDocument } from './run.schema';
 import { UpdatePromptBody } from './dto/runs.dto';
-import { toRun } from './run.views';
 
 @Controller()
 export class RunsController {
@@ -40,65 +39,67 @@ export class RunsController {
         homepageUrl: project.homepageUrl,
       },
     );
-    return toRun(run);
+    return this.runs.toView(run);
   }
 
   @Get('projects/:id/runs')
   @UseGuards(ProjectAccessGuard)
   async list(@CurrentProject() project: ProjectDocument): Promise<RunModel[]> {
-    const runs = await this.runs.listForProject(project._id.toString());
-    return runs.map(toRun);
+    return this.runs.toViews(await this.runs.listForProject(project._id.toString()));
   }
 
   @Get('runs/:id')
   @UseGuards(RunAccessGuard)
-  get(@CurrentRun() run: RunDocument): RunModel {
-    return toRun(run);
+  get(@CurrentRun() run: RunDocument): Promise<RunModel> {
+    return this.runs.toView(run);
   }
 
   @Patch('runs/:id/steps/:i/prompt')
   @UseGuards(RunAccessGuard)
-  async setPrompt(
+  setPrompt(
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
     @Body() body: UpdatePromptBody,
+    @CurrentUser() user: User,
   ): Promise<RunModel> {
-    return toRun(await this.runs.updatePrompt(run, i, body.prompt));
+    return this.runs.updatePrompt(run, i, body.prompt, user.id);
   }
 
   @Post('runs/:id/steps/:i/run')
   @UseGuards(RunAccessGuard)
-  async runStep(
+  runStep(
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
+    @CurrentUser() user: User,
   ): Promise<RunModel> {
-    return toRun(await this.runs.runStep(run, i));
+    return this.runs.runStep(run, i, user.id);
   }
 
   @Post('runs/:id/steps/:i/approve')
   @UseGuards(RunAccessGuard)
-  async approve(
+  approve(
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
+    @CurrentUser() user: User,
   ): Promise<RunModel> {
-    return toRun(await this.runs.approveGate(run, i));
+    return this.runs.approveGate(run, i, user.id);
   }
 
   @Post('runs/:id/run-all')
   @UseGuards(RunAccessGuard)
-  async runAll(@CurrentRun() run: RunDocument): Promise<RunModel> {
-    return toRun(await this.runs.runAll(run));
+  runAll(@CurrentRun() run: RunDocument, @CurrentUser() user: User): Promise<RunModel> {
+    return this.runs.runAll(run, user.id);
   }
 
   @Post('runs/:id/stop')
   @UseGuards(RunAccessGuard)
-  async stop(@CurrentRun() run: RunDocument): Promise<RunModel> {
-    return toRun(await this.runs.stop(run));
+  stop(@CurrentRun() run: RunDocument, @CurrentUser() user: User): Promise<RunModel> {
+    return this.runs.stop(run, user.id);
   }
 
   @Post('runs/:id/reset')
   @UseGuards(RunAccessGuard)
-  async reset(@CurrentRun() run: RunDocument): Promise<RunModel> {
-    return toRun(await this.runs.reset(run));
+  reset(@CurrentRun() run: RunDocument, @CurrentUser() user: User): Promise<RunModel> {
+    return this.runs.reset(run, user.id);
   }
 }

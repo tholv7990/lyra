@@ -12,23 +12,17 @@ import {
  * Generic Mongoose repository. Feature services extend it (over the raw schema
  * class) to inherit common CRUD against their model, and add domain methods.
  *
- *   @Injectable()
- *   export class UsersService extends BaseRepository<User> {
- *     constructor(@InjectModel(User.name) model: Model<User>) {
- *       super(model);
- *     }
- *     // ...domain methods
- *   }
- *
- * Every write takes an optional ClientSession so callers can run inside a
- * transaction (see AuthService onboarding). Duplicate-key errors (11000)
- * surface as 409 ConflictException.
- *
- * Pattern adapted from the common NestJS "abstract repository" approach — see
- * Sources in the conversation.
+ * Soft delete is built in: reads exclude `active:false` by default, and
+ * `softDelete()` flips the flag instead of removing the document. Writes take an
+ * optional ClientSession for transactions. Duplicate-key (11000) -> 409.
  */
 export abstract class BaseRepository<T> {
   protected constructor(protected readonly model: Model<T>) {}
+
+  // Adds the soft-delete guard (active !== false) to a filter.
+  protected active(filter: QueryFilter<T> = {}): QueryFilter<T> {
+    return { ...filter, active: { $ne: false } } as QueryFilter<T>;
+  }
 
   async create(
     doc: Partial<T>,
@@ -46,15 +40,17 @@ export abstract class BaseRepository<T> {
   }
 
   findById(id: string, session?: ClientSession) {
-    return this.model.findById(id, null, { session }).exec();
+    return this.model
+      .findOne(this.active({ _id: id } as QueryFilter<T>), null, { session })
+      .exec();
   }
 
   findOne(filter: QueryFilter<T>, session?: ClientSession) {
-    return this.model.findOne(filter, null, { session }).exec();
+    return this.model.findOne(this.active(filter), null, { session }).exec();
   }
 
   find(filter: QueryFilter<T> = {}, options?: QueryOptions<T>) {
-    return this.model.find(filter, null, options).exec();
+    return this.model.find(this.active(filter), null, options).exec();
   }
 
   findByIdAndUpdate(
@@ -85,8 +81,14 @@ export abstract class BaseRepository<T> {
     return this.model.updateOne(filter, update, { session }).exec();
   }
 
-  deleteById(id: string, session?: ClientSession) {
-    return this.model.findByIdAndDelete(id, { session }).exec();
+  // Soft delete: flip active to false (and record who, if provided).
+  softDelete(id: string, updatedBy?: string, session?: ClientSession) {
+    const update = (
+      updatedBy ? { active: false, updatedBy } : { active: false }
+    ) as UpdateQuery<T>;
+    return this.model
+      .findByIdAndUpdate(id, update, { returnDocument: 'after', session })
+      .exec();
   }
 
   deleteOne(filter: QueryFilter<T>, session?: ClientSession) {
@@ -98,10 +100,10 @@ export abstract class BaseRepository<T> {
   }
 
   count(filter: QueryFilter<T> = {}) {
-    return this.model.countDocuments(filter).exec();
+    return this.model.countDocuments(this.active(filter)).exec();
   }
 
   async exists(filter: QueryFilter<T>): Promise<boolean> {
-    return (await this.model.exists(filter)) !== null;
+    return (await this.model.exists(this.active(filter))) !== null;
   }
 }

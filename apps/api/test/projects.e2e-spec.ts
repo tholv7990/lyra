@@ -76,8 +76,28 @@ describe('Projects (e2e)', () => {
       .send(newProject({ name: 'Owner Private' }))
       .expect(201);
     expect(res.body.visibility).toBe('private');
-    expect(res.body.createdBy).toBeTruthy();
+    expect(res.body.active).toBe(true);
+    // audit envelope: createdBy/updatedBy expanded to { id, name }
+    expect(res.body.createdBy.name).toBe('Owner');
+    expect(res.body.createdBy.id).toBeTruthy();
+    expect(res.body.updatedBy.name).toBe('Owner');
     ownerPrivateId = res.body.id;
+  });
+
+  it('cascades soft delete from a workspace to its projects', async () => {
+    const tempWs = (
+      await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Temp' }).expect(201)
+    ).body.id;
+    const proj = (
+      await http()
+        .post(`/workspaces/${tempWs}/projects`)
+        .set(auth(ownerToken))
+        .send(newProject({ name: 'Doomed' }))
+        .expect(201)
+    ).body;
+    await http().delete(`/workspaces/${tempWs}`).set(auth(ownerToken)).expect(204);
+    // child project is no longer reachable (cascaded to active:false)
+    await http().get(`/projects/${proj.id}`).set(auth(ownerToken)).expect(404);
   });
 
   it('hides a private project from other members in the list', async () => {
