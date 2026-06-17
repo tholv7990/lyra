@@ -29,7 +29,9 @@ export class RunStep {
   @Prop({ required: true })
   model!: string;
 
-  @Prop({ required: true, default: '' })
+  // NOT `required` — Mongoose's String `required` rejects '', and a step prompt
+  // can legitimately be empty (an empty-content prompt, or an unbound step).
+  @Prop({ default: '' })
   prompt!: string;
 
   // When set, the step maps its prompt over a named run collection (parallel).
