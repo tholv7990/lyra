@@ -40,6 +40,7 @@ export class OpenAiCompatStepProvider implements StepProvider {
 
     const out = await this.client.complete({
       baseUrl,
+      provider,
       apiKey: ctx.apiKey,
       model,
       system: SYSTEM_PROMPT,

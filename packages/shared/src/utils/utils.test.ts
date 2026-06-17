@@ -23,43 +23,52 @@ import {
   defaultModel,
   looksLikeModelId,
 } from '../constants/models';
-import { Role, ProjectVisibility } from '../enums';
+import { Role, ProjectStatus, ProjectShare } from '../enums';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 
 const owner: MemberCtx = { userId: 'u-owner', role: Role.Owner, canManageKeys: false };
 const member: MemberCtx = { userId: 'u-member', role: Role.Member, canManageKeys: false };
 const other: MemberCtx = { userId: 'u-other', role: Role.Member, canManageKeys: false };
 
-function project(overrides: Partial<{ createdBy: string; visibility: ProjectVisibility; sharedWith: string[] }>) {
+function project(
+  overrides: Partial<{ createdBy: string; status: ProjectStatus; shared: ProjectShare; sharedWith: string[] }>,
+) {
   return {
     createdBy: 'u-member',
-    visibility: ProjectVisibility.Private,
+    status: ProjectStatus.Draft,
+    shared: ProjectShare.All,
     sharedWith: [] as string[],
     ...overrides,
   };
 }
 
 describe('canViewProject', () => {
-  it('owner sees everything (override), even other members private projects', () => {
-    expect(canViewProject(project({ createdBy: 'u-member', visibility: ProjectVisibility.Private }), owner)).toBe(true);
+  it('owner sees everything (override), even other members draft projects', () => {
+    expect(canViewProject(project({ createdBy: 'u-member', status: ProjectStatus.Draft }), owner)).toBe(true);
   });
 
-  it('creator sees their own private project', () => {
-    expect(canViewProject(project({ createdBy: 'u-member', visibility: ProjectVisibility.Private }), member)).toBe(true);
+  it('creator sees their own draft project', () => {
+    expect(canViewProject(project({ createdBy: 'u-member', status: ProjectStatus.Draft }), member)).toBe(true);
   });
 
-  it('non-creator cannot see a private project', () => {
-    expect(canViewProject(project({ createdBy: 'u-member', visibility: ProjectVisibility.Private }), other)).toBe(false);
+  it('non-creator cannot see a draft project', () => {
+    expect(canViewProject(project({ createdBy: 'u-member', status: ProjectStatus.Draft }), other)).toBe(false);
   });
 
-  it('any member sees a workspace-visible project', () => {
-    expect(canViewProject(project({ createdBy: 'u-member', visibility: ProjectVisibility.Workspace }), other)).toBe(true);
-  });
-
-  it('shared project is visible only to named users', () => {
-    const p = project({ createdBy: 'u-member', visibility: ProjectVisibility.Shared, sharedWith: ['u-other'] });
+  it('any member sees a public project shared with all', () => {
+    const p = project({ createdBy: 'u-member', status: ProjectStatus.Public, shared: ProjectShare.All });
     expect(canViewProject(p, other)).toBe(true);
-    expect(canViewProject(project({ createdBy: 'u-member', visibility: ProjectVisibility.Shared, sharedWith: ['someone-else'] }), other)).toBe(false);
+  });
+
+  it('public + people is visible only to named users', () => {
+    const p = project({ createdBy: 'u-member', status: ProjectStatus.Public, shared: ProjectShare.People, sharedWith: ['u-other'] });
+    expect(canViewProject(p, other)).toBe(true);
+    expect(
+      canViewProject(
+        project({ createdBy: 'u-member', status: ProjectStatus.Public, shared: ProjectShare.People, sharedWith: ['someone-else'] }),
+        other,
+      ),
+    ).toBe(false);
   });
 });
 

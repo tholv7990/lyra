@@ -3,10 +3,18 @@ export enum Role {
   Member = 'member',
 }
 
-export enum ProjectVisibility {
-  Private = 'private',
-  Shared = 'shared',
-  Workspace = 'workspace',
+// A project is a draft (private to its creator + workspace owners) until it's
+// published; a public project's reach is set by `ProjectShare`.
+export enum ProjectStatus {
+  Draft = 'draft',
+  Public = 'public',
+}
+
+// Who a published (public) project reaches: everyone in the workspace, or a
+// chosen set of members (`sharedWith`).
+export enum ProjectShare {
+  All = 'all',
+  People = 'people',
 }
 
 export enum RunStatus {

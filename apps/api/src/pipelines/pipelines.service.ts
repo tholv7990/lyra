@@ -9,7 +9,6 @@ import {
 } from '@lyra/shared';
 import { Pipeline } from './pipeline.schema';
 import type { PipelineDocument } from './pipeline.schema';
-import { ProjectPipeline } from './project-pipeline.schema';
 import { BaseRepository } from '../common/database/base.repository';
 import { UsersService } from '../users/users.service';
 import { toPipeline, pipelineActorIds } from './pipeline.views';
@@ -18,8 +17,6 @@ import { toPipeline, pipelineActorIds } from './pipeline.views';
 export class PipelinesService extends BaseRepository<Pipeline> {
   constructor(
     @InjectModel(Pipeline.name) model: Model<Pipeline>,
-    @InjectModel(ProjectPipeline.name)
-    private readonly links: Model<ProjectPipeline>,
     private readonly users: UsersService,
   ) {
     super(model);
@@ -74,43 +71,5 @@ export class PipelinesService extends BaseRepository<Pipeline> {
       out.push({ key, label: v.label?.trim() || undefined, default: v.default ?? undefined });
     }
     return out;
-  }
-
-  // ===== Project assignment (many-to-many link) =====
-  async assign(
-    workspaceId: string,
-    projectId: string,
-    pipelineId: string,
-    actorId: string,
-  ) {
-    await this.links
-      .findOneAndUpdate(
-        { projectId, pipelineId },
-        {
-          $set: { active: true, updatedBy: actorId },
-          $setOnInsert: { workspaceId, projectId, pipelineId, createdBy: actorId },
-        },
-        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
-      )
-      .exec();
-  }
-
-  unassign(projectId: string, pipelineId: string, actorId: string) {
-    return this.links
-      .findOneAndUpdate(
-        { projectId, pipelineId, active: { $ne: false } },
-        { active: false, updatedBy: actorId },
-      )
-      .exec();
-  }
-
-  // The pipelines assigned to a project (active links → active pipelines).
-  async listAssigned(projectId: string): Promise<PipelineDocument[]> {
-    const links = await this.links
-      .find({ projectId, active: { $ne: false } })
-      .exec();
-    const ids = links.map((l) => l.pipelineId);
-    if (!ids.length) return [];
-    return this.find({ _id: { $in: ids } }, { sort: { createdAt: -1 } });
   }
 }

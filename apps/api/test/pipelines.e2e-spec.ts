@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
-// Pipeline library + project assignment.
+// Pipeline library + project.pipelines references (project-model-v2).
 describe('Pipelines (e2e)', () => {
   let app: INestApplication;
   let mongod: MongoMemoryReplSet;
@@ -82,7 +82,7 @@ describe('Pipelines (e2e)', () => {
       await http()
         .post(`/workspaces/${teamId}/projects`)
         .set(auth(ownerToken))
-        .send({ name: 'Launch', product: 'Runner X', niche: 'shoes', homepageUrl: '' })
+        .send({ name: 'Launch', variables: [{ key: 'product', value: 'Runner X' }] })
         .expect(201)
     ).body.id;
   });
@@ -149,26 +149,53 @@ describe('Pipelines (e2e)', () => {
     expect(res.body.steps).toHaveLength(1);
   });
 
-  it('assigns + lists + unassigns a pipeline on a project', async () => {
-    await http()
-      .post(`/projects/${projectId}/pipelines/${pipelineId}`)
-      .set(auth(ownerToken))
-      .expect(201);
-
-    let assigned = (
-      await http().get(`/projects/${projectId}/pipelines`).set(auth(ownerToken)).expect(200)
-    ).body as { id: string }[];
-    expect(assigned.find((p) => p.id === pipelineId)).toBeTruthy();
-
-    await http()
-      .delete(`/projects/${projectId}/pipelines/${pipelineId}`)
-      .set(auth(ownerToken))
-      .expect(204);
-
-    assigned = (
-      await http().get(`/projects/${projectId}/pipelines`).set(auth(ownerToken)).expect(200)
+  it('attaches + detaches a pipeline via project.pipelines', async () => {
+    // attach by editing the project's pipeline-reference array
+    let proj = (
+      await http()
+        .patch(`/projects/${projectId}`)
+        .set(auth(ownerToken))
+        .send({ pipelines: [pipelineId] })
+        .expect(200)
     ).body;
-    expect(assigned.find((p) => p.id === pipelineId)).toBeUndefined();
+    expect(proj.pipelines).toEqual([pipelineId]);
+
+    // round-trips on read
+    proj = (await http().get(`/projects/${projectId}`).set(auth(ownerToken)).expect(200)).body;
+    expect(proj.pipelines).toEqual([pipelineId]);
+
+    // detach
+    proj = (
+      await http()
+        .patch(`/projects/${projectId}`)
+        .set(auth(ownerToken))
+        .send({ pipelines: [] })
+        .expect(200)
+    ).body;
+    expect(proj.pipelines).toEqual([]);
+  });
+
+  it('drops a soft-deleted pipeline ref from project.pipelines on read', async () => {
+    // a disposable pipeline attached to the project
+    const tempPipeline = (
+      await http()
+        .post(`/workspaces/${teamId}/pipelines`)
+        .set(auth(ownerToken))
+        .send({ name: 'Temp', steps: [step({ promptId })] })
+        .expect(201)
+    ).body.id as string;
+    await http()
+      .patch(`/projects/${projectId}`)
+      .set(auth(ownerToken))
+      .send({ pipelines: [tempPipeline] })
+      .expect(200);
+
+    // soft-delete the pipeline → its ref must no longer surface on the project
+    await http().delete(`/pipelines/${tempPipeline}`).set(auth(ownerToken)).expect(204);
+    const proj = (
+      await http().get(`/projects/${projectId}`).set(auth(ownerToken)).expect(200)
+    ).body;
+    expect(proj.pipelines).not.toContain(tempPipeline);
   });
 
   it('cascades soft delete from a workspace to its pipelines', async () => {

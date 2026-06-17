@@ -21,7 +21,10 @@ export class ChatMessage {
   @Prop({ required: true, enum: ['user', 'assistant'] })
   role!: 'user' | 'assistant';
 
-  @Prop({ required: true, default: '' })
+  // Not `required`: Mongoose's String `required` validator rejects '', but an
+  // empty content is valid for error turns (the text lives in `error`) and turns
+  // aborted before any text. Defaults to '' so it's never undefined.
+  @Prop({ default: '' })
   content!: string;
 
   @Prop({ type: [ConvMediaItemSchema], default: [] })

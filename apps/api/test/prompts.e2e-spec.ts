@@ -222,6 +222,34 @@ describe('Prompts (e2e)', () => {
     expect(values).not.toContain('secret-tag');
   });
 
+  it('exposes the provider vocabulary scoped to what the member can see', async () => {
+    await http()
+      .post(`/workspaces/${teamId}/prompts`)
+      .set(auth(ownerToken))
+      .send(newPrompt({ title: 'P-openai-1', status: 'public', provider: 'openai', model: 'gpt-5.5' }))
+      .expect(201);
+    await http()
+      .post(`/workspaces/${teamId}/prompts`)
+      .set(auth(ownerToken))
+      .send(newPrompt({ title: 'P-openai-2', status: 'public', provider: 'openai', model: 'gpt-5.5' }))
+      .expect(201);
+    // a draft-only provider by the owner — the member must not see/count it
+    await http()
+      .post(`/workspaces/${teamId}/prompts`)
+      .set(auth(ownerToken))
+      .send(newPrompt({ title: 'P-ds-draft', status: 'draft', provider: 'deepseek', model: 'deepseek-chat' }))
+      .expect(201);
+
+    const vocab = (
+      await http().get(`/workspaces/${teamId}/prompts/providers`).set(auth(memberToken)).expect(200)
+    ).body as { provider: string; count: number }[];
+    const openai = vocab.find((v) => v.provider === 'openai');
+    expect(openai).toBeDefined();
+    // full-library count, not a single page
+    expect(openai!.count).toBeGreaterThanOrEqual(2);
+    expect(vocab.find((v) => v.provider === 'deepseek')).toBeUndefined();
+  });
+
   it('updates tags (deduped) on a prompt', async () => {
     const created = (
       await http()

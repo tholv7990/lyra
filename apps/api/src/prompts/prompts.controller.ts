@@ -10,8 +10,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { dedupeTags, PromptStatus } from '@lyra/shared';
-import type { Paged, Prompt as PromptModel, TagCount, User } from '@lyra/shared';
+import { dedupeTags, PromptStatus, Provider } from '@lyra/shared';
+import type {
+  Paged,
+  ProviderCount,
+  PromptAuthorCount,
+  Prompt as PromptModel,
+  TagCount,
+  User,
+} from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { PromptsService } from './prompts.service';
@@ -22,6 +29,12 @@ import {
 } from './decorators/prompt.decorators';
 import type { PromptDocument } from './prompt.schema';
 import { CreatePromptBody, UpdatePromptBody } from './dto/prompts.dto';
+
+function listQuery(value?: string | string[]): string[] {
+  if (!value) return [];
+  const values = Array.isArray(value) ? value : [value];
+  return values.flatMap((v) => v.split(',')).map((v) => v.trim()).filter(Boolean);
+}
 
 @Controller()
 export class PromptsController {
@@ -49,27 +62,33 @@ export class PromptsController {
     return this.prompts.toView(prompt);
   }
 
-  // Paginated, filterable list (status, a single tag, title query q).
+  // Paginated, filterable list (multi status/tag/provider/createdBy, title query q).
   @Get('workspaces/:id/prompts')
   @UseGuards(WorkspaceGuard)
   async list(
     @Param('id') workspaceId: string,
     @CurrentUser() user: User,
-    @Query('status') status?: string,
-    @Query('tag') tag?: string,
+    @Query('status') status?: string | string[],
+    @Query('tag') tag?: string | string[],
+    @Query('provider') provider?: string | string[],
+    @Query('createdBy') createdBy?: string | string[],
     @Query('q') q?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ): Promise<Paged<PromptModel>> {
     const p = Math.max(1, parseInt(page ?? '1', 10) || 1);
     const l = Math.min(50, Math.max(1, parseInt(limit ?? '12', 10) || 12));
-    const st =
-      status === PromptStatus.Draft || status === PromptStatus.Public
-        ? (status as PromptStatus)
-        : undefined;
+    const statuses = listQuery(status).filter(
+      (s): s is PromptStatus => s === PromptStatus.Draft || s === PromptStatus.Public,
+    );
+    const providers = listQuery(provider).filter(
+      (p): p is Provider => Object.values(Provider).includes(p as Provider),
+    );
     const { items, total } = await this.prompts.listPaged(workspaceId, user.id, {
-      status: st,
-      tag: tag || undefined,
+      statuses,
+      tags: listQuery(tag),
+      createdBy: listQuery(createdBy),
+      providers,
       q: q || undefined,
       page: p,
       limit: l,
@@ -85,6 +104,26 @@ export class PromptsController {
     @CurrentUser() user: User,
   ): Promise<TagCount[]> {
     return this.prompts.tagVocabulary(workspaceId, user.id);
+  }
+
+  @Get('workspaces/:id/prompts/creators')
+  @UseGuards(WorkspaceGuard)
+  creators(
+    @Param('id') workspaceId: string,
+    @CurrentUser() user: User,
+  ): Promise<PromptAuthorCount[]> {
+    return this.prompts.authorVocabulary(workspaceId, user.id);
+  }
+
+  // The provider vocabulary (visible to the caller) — drives the stable,
+  // full-library provider filter on the Prompts page.
+  @Get('workspaces/:id/prompts/providers')
+  @UseGuards(WorkspaceGuard)
+  providers(
+    @Param('id') workspaceId: string,
+    @CurrentUser() user: User,
+  ): Promise<ProviderCount[]> {
+    return this.prompts.providerVocabulary(workspaceId, user.id);
   }
 
   @Get('prompts/:id')

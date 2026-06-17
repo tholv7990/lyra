@@ -231,7 +231,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
       const attachments =
         provider === Provider.OpenAI ? await this.buildAttachments(media) : [];
       const out = await this.openai.stream(
-        { baseUrl, apiKey, model, system: CHAT_SYSTEM, prompt: input, history, attachments, signal },
+        { baseUrl, provider, apiKey, model, system: CHAT_SYSTEM, prompt: input, history, attachments, signal },
         onDelta,
       );
       if (!out.text && !out.aborted) throw new Error(`No response from ${provider}`);

@@ -13,10 +13,6 @@ import {
 } from '../../conversations/conversation.schema';
 import { Pipeline, PipelineSchema } from '../../pipelines/pipeline.schema';
 import {
-  ProjectPipeline,
-  ProjectPipelineSchema,
-} from '../../pipelines/project-pipeline.schema';
-import {
   ProviderModel,
   ProviderModelSchema,
 } from '../../models/provider-model.schema';
@@ -36,7 +32,6 @@ import { CascadeService } from './cascade.service';
       { name: Prompt.name, schema: PromptSchema },
       { name: Conversation.name, schema: ConversationSchema },
       { name: Pipeline.name, schema: PipelineSchema },
-      { name: ProjectPipeline.name, schema: ProjectPipelineSchema },
       { name: ProviderModel.name, schema: ProviderModelSchema },
     ]),
   ],

@@ -9,7 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ProjectVisibility } from '@lyra/shared';
+import { ProjectStatus, ProjectShare } from '@lyra/shared';
 import type { Project as ProjectModel, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
@@ -46,12 +46,12 @@ export class ProjectsController {
       createdBy: user.id,
       updatedBy: user.id,
       name: body.name,
-      product: body.product,
-      niche: body.niche,
-      homepageUrl: body.homepageUrl,
-      visibility: ProjectVisibility.Private,
-      sharedWith: [],
-      learnings: [],
+      description: body.description ?? '',
+      variables: body.variables ?? [],
+      status: body.status ?? ProjectStatus.Draft,
+      shared: body.shared ?? ProjectShare.All,
+      sharedWith: body.sharedWith ?? [],
+      pipelines: body.pipelines ?? [],
     });
     return this.projects.toView(project);
   }

@@ -20,7 +20,6 @@ import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
 import type { StepRunOutput } from './providers/step-provider.interface';
 import {
-  buildSteps,
   assertRunnable,
   beginStep,
   completeStep,
@@ -32,18 +31,20 @@ import {
   providerOf,
   StepLockedError,
   RunTransitionError,
-  type ProjectInfo,
   type RunState,
 } from './run.engine';
 
 // Composable-pipeline run creation input. projectId is omitted for a builder
-// "test run" (no project — placeholders come from the supplied context).
+// "test run" (no project — projectVariables is then empty).
 export interface PipelineRunInput {
   projectId?: string;
   workspaceId: string;
   pipelineId: string;
   pipelineName: string;
-  context: { product: string; niche: string; homepageUrl: string; note?: string };
+  // The project's key→value variables (token-keyed); empty for a test run.
+  projectVariables: Record<string, string>;
+  // The pipeline note — the first step's default input (also exposed as {note}).
+  note?: string;
   // Custom variable values entered at run start (already merged with defaults).
   variables?: Record<string, string>;
   steps: {
@@ -88,13 +89,12 @@ export class RunsService extends BaseRepository<Run> {
         prompt: prompt?.content ?? '',
       });
     }
-    // Variable snapshot: project vars (token-keyed) + pipeline custom values +
-    // system {date}. Frozen here so later pipeline/project edits don't leak in.
+    // Variable snapshot: the project's variables (token-keyed) + system {note}/
+    // {date} + pipeline custom values (which override). Frozen here so later
+    // pipeline/project edits don't leak in.
     const variables: Record<string, string> = {
-      product: input.context.product,
-      niche: input.context.niche,
-      homepage: input.context.homepageUrl,
-      note: input.context.note ?? '',
+      ...input.projectVariables,
+      note: input.note ?? '',
       date: new Date().toISOString().slice(0, 10),
       ...(input.variables ?? {}),
     };
@@ -103,30 +103,13 @@ export class RunsService extends BaseRepository<Run> {
       workspaceId: input.workspaceId,
       pipelineId: input.pipelineId,
       pipelineName: input.pipelineName,
-      context: input.context,
+      context: { note: input.note ?? '' },
       variables,
       createdBy: actorId,
       updatedBy: actorId,
       status: 'idle',
       currentStep: 0,
       steps: steps as unknown as RunDocument['steps'],
-    });
-  }
-
-  createForProject(
-    projectId: string,
-    workspaceId: string,
-    actorId: string,
-    project: ProjectInfo,
-  ) {
-    return this.create({
-      projectId,
-      workspaceId,
-      createdBy: actorId,
-      updatedBy: actorId,
-      status: 'idle',
-      currentStep: 0,
-      steps: buildSteps(project),
     });
   }
 

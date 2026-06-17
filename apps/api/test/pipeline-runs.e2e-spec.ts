@@ -80,7 +80,13 @@ describe('Pipeline runs (e2e)', () => {
       await http()
         .post(`/workspaces/${wsId}/projects`)
         .set(auth(token))
-        .send({ name: 'Launch', product: 'Runner X', niche: 'shoes', homepageUrl: '' })
+        .send({
+          name: 'Launch',
+          variables: [
+            { key: 'product', value: 'Runner X' },
+            { key: 'niche', value: 'shoes' },
+          ],
+        })
         .expect(201)
     ).body.id;
     prompt1 = (

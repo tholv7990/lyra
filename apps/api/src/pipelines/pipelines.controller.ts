@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -13,12 +12,6 @@ import {
 import { dedupeTags, type Pipeline as PipelineModel, type User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
-import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
-import {
-  CurrentProject,
-  RequireProjectEdit,
-} from '../projects/decorators/project.decorators';
-import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from './pipelines.service';
 import { PipelineAccessGuard } from './guards/pipeline-access.guard';
 import {
@@ -27,10 +20,14 @@ import {
 } from './decorators/pipeline.decorators';
 import type { PipelineDocument } from './pipeline.schema';
 import { CreatePipelineBody, UpdatePipelineBody } from './dto/pipelines.dto';
+import { CascadeService } from '../common/database/cascade.service';
 
 @Controller()
 export class PipelinesController {
-  constructor(private readonly pipelines: PipelinesService) {}
+  constructor(
+    private readonly pipelines: PipelinesService,
+    private readonly cascade: CascadeService,
+  ) {}
 
   // ===== Library =====
   @Post('workspaces/:id/pipelines')
@@ -92,50 +89,6 @@ export class PipelinesController {
     @Param('id') id: string,
     @CurrentUser() user: User,
   ): Promise<void> {
-    await this.pipelines.softDelete(id, user.id);
-  }
-
-  // ===== Project assignment =====
-  @Get('projects/:id/pipelines')
-  @UseGuards(ProjectAccessGuard)
-  async assigned(
-    @CurrentProject() project: ProjectDocument,
-  ): Promise<PipelineModel[]> {
-    return this.pipelines.toViews(
-      await this.pipelines.listAssigned(project._id.toString()),
-    );
-  }
-
-  @Post('projects/:id/pipelines/:pipelineId')
-  @UseGuards(ProjectAccessGuard)
-  @RequireProjectEdit()
-  async assign(
-    @CurrentProject() project: ProjectDocument,
-    @Param('pipelineId') pipelineId: string,
-    @CurrentUser() user: User,
-  ): Promise<PipelineModel> {
-    const pipeline = await this.pipelines.findActiveById(pipelineId);
-    if (!pipeline || pipeline.workspaceId !== project.workspaceId) {
-      throw new NotFoundException('Pipeline not found');
-    }
-    await this.pipelines.assign(
-      project.workspaceId,
-      project._id.toString(),
-      pipelineId,
-      user.id,
-    );
-    return this.pipelines.toView(pipeline);
-  }
-
-  @Delete('projects/:id/pipelines/:pipelineId')
-  @UseGuards(ProjectAccessGuard)
-  @RequireProjectEdit()
-  @HttpCode(204)
-  async unassign(
-    @CurrentProject() project: ProjectDocument,
-    @Param('pipelineId') pipelineId: string,
-    @CurrentUser() user: User,
-  ): Promise<void> {
-    await this.pipelines.unassign(project._id.toString(), pipelineId, user.id);
+    await this.cascade.deletePipeline(id, user.id);
   }
 }

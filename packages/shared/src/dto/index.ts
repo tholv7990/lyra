@@ -1,4 +1,4 @@
-import { Role, ProjectVisibility, PromptStatus, Provider, StepMode } from '../enums';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, Provider, StepMode } from '../enums';
 import type { PromptMedia } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -31,21 +31,29 @@ export interface ResetPasswordDto {
   newPassword: string;
 }
 
+export interface ProjectVariableInput {
+  key: string;
+  value: string;
+}
+
 export interface CreateProjectDto {
   name: string;
-  product: string;
-  niche: string;
-  homepageUrl: string;
+  description?: string;
+  variables?: ProjectVariableInput[];
+  status?: ProjectStatus;
+  shared?: ProjectShare;
+  sharedWith?: string[];
+  pipelines?: string[];
 }
 
 export interface UpdateProjectDto {
   name?: string;
-  product?: string;
-  niche?: string;
-  homepageUrl?: string;
-  brandBrief?: Record<string, unknown>;
-  visibility?: ProjectVisibility;
+  description?: string;
+  variables?: ProjectVariableInput[];
+  status?: ProjectStatus;
+  shared?: ProjectShare;
   sharedWith?: string[];
+  pipelines?: string[];
 }
 
 export interface CreateWorkspaceDto {

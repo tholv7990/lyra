@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ProjectVisibility, Role, type Project as ProjectModel } from '@lyra/shared';
+import { ProjectStatus, ProjectShare, Role, type Project as ProjectModel } from '@lyra/shared';
 import { Project } from './project.schema';
 import type { ProjectDocument } from './project.schema';
 import { BaseRepository } from '../common/database/base.repository';
@@ -41,9 +41,9 @@ export class ProjectsService extends BaseRepository<Project> {
       {
         workspaceId,
         $or: [
-          { visibility: ProjectVisibility.Workspace },
           { createdBy: ctx.userId },
-          { visibility: ProjectVisibility.Shared, sharedWith: ctx.userId },
+          { status: ProjectStatus.Public, shared: ProjectShare.All },
+          { status: ProjectStatus.Public, shared: ProjectShare.People, sharedWith: ctx.userId },
         ],
       },
       { sort: { createdAt: -1 } },

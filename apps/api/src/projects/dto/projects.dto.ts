@@ -1,27 +1,65 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsEnum,
-  IsObject,
   IsOptional,
   IsString,
+  MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
-import { ProjectVisibility } from '@lyra/shared';
-import type { CreateProjectDto, UpdateProjectDto } from '@lyra/shared';
+import { Type } from 'class-transformer';
+import { ProjectStatus, ProjectShare } from '@lyra/shared';
+import type {
+  CreateProjectDto,
+  ProjectVariableInput,
+  UpdateProjectDto,
+} from '@lyra/shared';
+
+export class ProjectVariableBody implements ProjectVariableInput {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(60)
+  key!: string;
+
+  @IsString()
+  @MaxLength(4000)
+  value!: string;
+}
 
 export class CreateProjectBody implements CreateProjectDto {
   @IsString()
   @MinLength(1)
   name!: string;
 
+  @IsOptional()
   @IsString()
-  product!: string;
+  description?: string;
 
-  @IsString()
-  niche!: string;
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => ProjectVariableBody)
+  variables?: ProjectVariableBody[];
 
-  @IsString()
-  homepageUrl!: string;
+  @IsOptional()
+  @IsEnum(ProjectStatus)
+  status?: ProjectStatus;
+
+  @IsOptional()
+  @IsEnum(ProjectShare)
+  shared?: ProjectShare;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  sharedWith?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  pipelines?: string[];
 }
 
 export class UpdateProjectBody implements UpdateProjectDto {
@@ -32,26 +70,30 @@ export class UpdateProjectBody implements UpdateProjectDto {
 
   @IsOptional()
   @IsString()
-  product?: string;
+  description?: string;
 
   @IsOptional()
-  @IsString()
-  niche?: string;
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => ProjectVariableBody)
+  variables?: ProjectVariableBody[];
 
   @IsOptional()
-  @IsString()
-  homepageUrl?: string;
+  @IsEnum(ProjectStatus)
+  status?: ProjectStatus;
 
   @IsOptional()
-  @IsObject()
-  brandBrief?: Record<string, unknown>;
-
-  @IsOptional()
-  @IsEnum(ProjectVisibility)
-  visibility?: ProjectVisibility;
+  @IsEnum(ProjectShare)
+  shared?: ProjectShare;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   sharedWith?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  pipelines?: string[];
 }

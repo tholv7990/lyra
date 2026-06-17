@@ -62,12 +62,10 @@ export class RunsController {
         workspaceId: project.workspaceId,
         pipelineId: pipeline._id.toString(),
         pipelineName: pipeline.name,
-        context: {
-          product: project.product,
-          niche: project.niche,
-          homepageUrl: project.homepageUrl,
-          note: pipeline.description ?? '',
-        },
+        projectVariables: Object.fromEntries(
+          (project.variables ?? []).map((v) => [v.key, v.value]),
+        ),
+        note: pipeline.description ?? '',
         variables: mergeCustomVars(pipeline.variables, body.variables),
         steps: pipeline.steps.map((s) => ({
           name: s.name,
@@ -101,12 +99,8 @@ export class RunsController {
         workspaceId,
         pipelineId: pipeline._id.toString(),
         pipelineName: pipeline.name,
-        context: {
-          product: '',
-          niche: '',
-          homepageUrl: '',
-          note: pipeline.description ?? '',
-        },
+        projectVariables: {},
+        note: pipeline.description ?? '',
         variables: mergeCustomVars(pipeline.variables, body.variables),
         steps: pipeline.steps.map((s) => ({
           name: s.name,
@@ -117,25 +111,6 @@ export class RunsController {
         })),
       },
       user.id,
-    );
-    return this.runs.toView(run);
-  }
-
-  @Post('projects/:id/runs')
-  @UseGuards(ProjectAccessGuard)
-  async create(
-    @CurrentProject() project: ProjectDocument,
-    @CurrentUser() user: User,
-  ): Promise<RunModel> {
-    const run = await this.runs.createForProject(
-      project._id.toString(),
-      project.workspaceId,
-      user.id,
-      {
-        product: project.product,
-        niche: project.niche,
-        homepageUrl: project.homepageUrl,
-      },
     );
     return this.runs.toView(run);
   }

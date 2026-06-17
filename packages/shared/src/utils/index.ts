@@ -1,4 +1,4 @@
-import { MediaType, Role, ProjectVisibility } from '../enums';
+import { MediaType, Role, ProjectStatus, ProjectShare } from '../enums';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 import { MEDIA_ALLOWED_EXT, MEDIA_ALLOWED_MIME } from '../constants/media';
 
@@ -13,18 +13,17 @@ export interface MemberCtx {
 // client-side passes project.createdBy.id.
 export interface ProjectAccess {
   createdBy: string;
-  visibility: ProjectVisibility;
+  status: ProjectStatus;
+  shared: ProjectShare;
   sharedWith: string[];
 }
 
 export function canViewProject(p: ProjectAccess, ctx: MemberCtx): boolean {
   if (ctx.role === Role.Owner) return true; // owner override
   if (p.createdBy === ctx.userId) return true;
-  if (p.visibility === ProjectVisibility.Workspace) return true;
-  if (p.visibility === ProjectVisibility.Shared) {
-    return p.sharedWith.includes(ctx.userId);
-  }
-  return false; // private, not creator
+  if (p.status !== ProjectStatus.Public) return false; // draft: creator/owner only
+  if (p.shared === ProjectShare.All) return true; // public to the whole workspace
+  return p.sharedWith.includes(ctx.userId); // public to chosen people
 }
 
 export function canEditProject(

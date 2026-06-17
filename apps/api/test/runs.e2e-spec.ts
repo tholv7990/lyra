@@ -7,8 +7,8 @@ import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
 import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
 
-// Phase 4: run state machine + real StepProvider dispatch. The Anthropic client
-// is stubbed so brain steps exercise the provider path without network/spend.
+// Run state machine + real StepProvider dispatch over a composable pipeline. The
+// Anthropic client is stubbed so steps exercise the provider path without spend.
 describe('Runs (e2e)', () => {
   let app: INestApplication;
   let mongod: MongoMemoryReplSet;
@@ -51,6 +51,14 @@ describe('Runs (e2e)', () => {
   let token: string;
   let wsId: string;
   let projectId: string;
+  let pipelineId: string;
+
+  // Create a run by executing the test pipeline in the project's context.
+  const createRun = () =>
+    http()
+      .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+      .set(auth(token))
+      .expect(201);
 
   beforeAll(async () => {
     token = (
@@ -66,63 +74,62 @@ describe('Runs (e2e)', () => {
       await http()
         .post(`/workspaces/${wsId}/projects`)
         .set(auth(token))
-        .send({ name: 'Launch', product: 'Runner X', niche: 'footwear', homepageUrl: '' })
+        .send({ name: 'Launch', variables: [{ key: 'product', value: 'Runner X' }] })
+        .expect(201)
+    ).body.id;
+    const promptId = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Brief', content: 'Brief for {product}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    pipelineId = (
+      await http()
+        .post(`/workspaces/${wsId}/pipelines`)
+        .set(auth(token))
+        .send({
+          name: 'Flow',
+          steps: [
+            {
+              name: 'Brief',
+              promptId,
+              provider: 'anthropic',
+              model: 'claude-sonnet-4-6',
+              mode: 'auto',
+            },
+          ],
+        })
         .expect(201)
     ).body.id;
   });
 
-  it('creates a run with 8 idle steps', async () => {
-    const res = await http().post(`/projects/${projectId}/runs`).set(auth(token)).expect(201);
-    expect(res.body.steps).toHaveLength(8);
+  it('creates a run snapshotting the pipeline steps (idle)', async () => {
+    const res = await createRun();
+    expect(res.body.steps).toHaveLength(1);
     expect(res.body.status).toBe('idle');
     expect(res.body.currentStep).toBe(0);
+    expect(res.body.steps[0].prompt).toBe('Brief for {product}');
   });
 
   it('blocks running a step whose provider key is missing', async () => {
-    const run = (await http().post(`/projects/${projectId}/runs`).set(auth(token)).expect(201))
-      .body;
+    const run = (await createRun()).body;
     await http().post(`/runs/${run.id}/steps/0/run`).set(auth(token)).expect(400);
   });
 
-  it('runs the pipeline through gates once keys are set', async () => {
-    // Unlock every provider with placeholder keys (no real spend).
-    for (const p of ['openai', 'deepseek', 'anthropic', 'image', 'video']) {
-      await http()
-        .put(`/workspaces/${wsId}/keys/${p}`)
-        .set(auth(token))
-        .send({ key: `test-${p}-key` })
-        .expect(200);
-    }
+  it('runs the step once the provider key is set; reset returns it to idle', async () => {
+    await http()
+      .put(`/workspaces/${wsId}/keys/anthropic`)
+      .set(auth(token))
+      .send({ key: 'sk-test' })
+      .expect(200);
 
-    const run = (await http().post(`/projects/${projectId}/runs`).set(auth(token)).expect(201))
-      .body;
+    const run = (await createRun()).body;
+    const state = (await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)).body;
+    expect(state.status).toBe('done');
+    expect(state.steps[0].status).toBe('done');
+    expect(state.steps[0].result).toContain('[stub] brain output');
 
-    // run-all pauses at the first gate (Brief, step 2)
-    let state = (await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)).body;
-    expect(state.status).toBe('awaiting_gate');
-    expect(state.currentStep).toBe(2);
-    expect(state.steps[2].result).toBeTruthy();
-
-    // cannot run while awaiting a gate
-    await http().post(`/runs/${run.id}/steps/2/run`).set(auth(token)).expect(400);
-
-    // approve gate, continue to the next gate (Prompts, step 4)
-    await http().post(`/runs/${run.id}/steps/2/approve`).set(auth(token)).expect(201);
-    state = (await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)).body;
-    expect(state.currentStep).toBe(4);
-    expect(state.status).toBe('awaiting_gate');
-
-    // approve through the rest to done
-    await http().post(`/runs/${run.id}/steps/4/approve`).set(auth(token)).expect(201);
-    state = (await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)).body;
-    expect(state.currentStep).toBe(7);
-    await http().post(`/runs/${run.id}/steps/7/approve`).set(auth(token)).expect(201);
-
-    const done = (await http().get(`/runs/${run.id}`).set(auth(token)).expect(200)).body;
-    expect(done.status).toBe('done');
-    expect(done.steps.every((s: { status: string }) => s.status === 'done')).toBe(true);
-
-    // reset returns it to idle
     const reset = (await http().post(`/runs/${run.id}/reset`).set(auth(token)).expect(201)).body;
     expect(reset.status).toBe('idle');
     expect(reset.currentStep).toBe(0);
@@ -130,8 +137,7 @@ describe('Runs (e2e)', () => {
   });
 
   it('edits a step prompt', async () => {
-    const run = (await http().post(`/projects/${projectId}/runs`).set(auth(token)).expect(201))
-      .body;
+    const run = (await createRun()).body;
     const res = await http()
       .patch(`/runs/${run.id}/steps/0/prompt`)
       .set(auth(token))
@@ -141,8 +147,7 @@ describe('Runs (e2e)', () => {
   });
 
   it('denies access to a non-member', async () => {
-    const run = (await http().post(`/projects/${projectId}/runs`).set(auth(token)).expect(201))
-      .body;
+    const run = (await createRun()).body;
     const outsider = (
       await http()
         .post('/auth/signup')

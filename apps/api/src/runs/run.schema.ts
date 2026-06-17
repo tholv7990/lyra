@@ -69,8 +69,10 @@ export class Run extends AuditedEntity {
   @Prop()
   pipelineName?: string;
 
+  // The pipeline note — the first step's default input. Product/niche/homepage
+  // now live in `variables` (project-model-v2).
   @Prop({ type: Object })
-  context?: { product: string; niche: string; homepageUrl: string };
+  context?: { note?: string };
 
   // token→value snapshot resolved into step prompts at run time (project +
   // pipeline custom + system vars). Frozen at creation.

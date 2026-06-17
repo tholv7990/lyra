@@ -10,7 +10,6 @@ import { Run } from '../../runs/run.schema';
 import { Prompt } from '../../prompts/prompt.schema';
 import { Conversation } from '../../conversations/conversation.schema';
 import { Pipeline } from '../../pipelines/pipeline.schema';
-import { ProjectPipeline } from '../../pipelines/project-pipeline.schema';
 import { ProviderModel } from '../../models/provider-model.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
@@ -28,8 +27,6 @@ export class CascadeService {
     @InjectModel(Conversation.name)
     private readonly conversations: Model<Conversation>,
     @InjectModel(Pipeline.name) private readonly pipelines: Model<Pipeline>,
-    @InjectModel(ProjectPipeline.name)
-    private readonly projectPipelines: Model<ProjectPipeline>,
     @InjectModel(ProviderModel.name)
     private readonly providerModels: Model<ProviderModel>,
   ) {}
@@ -46,7 +43,6 @@ export class CascadeService {
       this.prompts.updateMany({ workspaceId }, patch),
       this.conversations.updateMany({ workspaceId }, patch),
       this.pipelines.updateMany({ workspaceId }, patch),
-      this.projectPipelines.updateMany({ workspaceId }, patch),
       this.providerModels.updateMany({ workspaceId }, patch),
     ]);
   }
@@ -54,10 +50,21 @@ export class CascadeService {
   async deleteProject(projectId: string, actorId: string) {
     const patch = { active: false, updatedBy: actorId };
     await this.proj.updateOne({ _id: projectId }, patch);
-    await Promise.all([
-      this.runs.updateMany({ projectId }, patch),
-      // unassign the project's pipelines (the library pipelines themselves stay)
-      this.projectPipelines.updateMany({ projectId }, patch),
-    ]);
+    // The project's pipeline references live on the project doc; the library
+    // pipelines themselves stay. Runs for this project are soft-deleted.
+    await this.runs.updateMany({ projectId }, patch);
+  }
+
+  // Soft-delete a library pipeline and pull its id out of every project that
+  // referenced it, so no dangling pipeline ref surfaces on a project read.
+  async deletePipeline(pipelineId: string, actorId: string) {
+    await this.pipelines.updateOne(
+      { _id: pipelineId },
+      { active: false, updatedBy: actorId },
+    );
+    await this.proj.updateMany(
+      { pipelines: pipelineId },
+      { $pull: { pipelines: pipelineId }, $set: { updatedBy: actorId } },
+    );
   }
 }

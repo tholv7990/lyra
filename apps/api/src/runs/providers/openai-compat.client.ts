@@ -23,6 +23,7 @@ export function compatBaseUrl(provider: Provider): string | undefined {
 
 export interface OpenAiParams {
   baseUrl: string;
+  provider: Provider;
   apiKey: string;
   model: string;
   system: string;
@@ -60,9 +61,12 @@ export class OpenAiCompatClient {
   }
 
   private body(p: OpenAiParams, stream: boolean) {
+    // OpenAI's GPT-5 / o-series reject `max_tokens` and require
+    // `max_completion_tokens`; DeepSeek (older OpenAI-compat spec) uses `max_tokens`.
+    const tokenKey = p.provider === Provider.OpenAI ? 'max_completion_tokens' : 'max_tokens';
     return JSON.stringify({
       model: p.model,
-      max_tokens: p.maxTokens ?? 2048,
+      [tokenKey]: p.maxTokens ?? 2048,
       stream,
       ...(stream ? { stream_options: { include_usage: true } } : {}),
       messages: [

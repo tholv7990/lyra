@@ -1,6 +1,7 @@
 import {
   Role,
-  ProjectVisibility,
+  ProjectStatus,
+  ProjectShare,
   RunStatus,
   StepStatus,
   StepMode,
@@ -83,17 +84,23 @@ export interface ApiKeyInfo extends Audited {
   last4: string;
 }
 
+// A named value a project carries; fills {key} placeholders in step prompts at
+// run time. e.g. { key: 'product', value: 'Cozy Plush Pet Sofa' }.
+export interface ProjectVariable {
+  key: string;
+  value: string;
+}
+
 export interface Project extends Audited {
   id: string;
   workspaceId: string;
   name: string;
-  product: string;
-  niche: string;
-  homepageUrl: string;
-  brandBrief?: Record<string, unknown>;
-  learnings?: string[];
-  visibility: ProjectVisibility;
-  sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto
+  description: string;
+  variables: ProjectVariable[];
+  status: ProjectStatus;
+  shared: ProjectShare; // who a public project reaches
+  sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto (when shared='people')
+  pipelines: string[]; // referenced pipeline ids (workspace library)
 }
 
 export interface Step {
@@ -120,10 +127,10 @@ export interface Run extends Audited {
   workspaceId: string;
   pipelineId?: string; // set when the run came from a composable pipeline
   pipelineName?: string;
-  context?: { product: string; niche: string; homepageUrl: string; note?: string };
-  // Snapshot of token→value resolved into step prompts at run time: project vars
-  // ({product}/{niche}/{homepage}/{note}), pipeline custom vars, and system vars
-  // ({date}). Frozen at run creation so later pipeline/project edits don't leak in.
+  context?: { note?: string }; // the pipeline note — the first step's default input
+  // Snapshot of token→value resolved into step prompts at run time: the project's
+  // variables, pipeline custom vars, and system vars ({note}/{date}). Frozen at run
+  // creation so later pipeline/project edits don't leak in.
   variables?: Record<string, string>;
   status: RunStatus;
   currentStep: number;
@@ -158,6 +165,20 @@ export interface Prompt extends Audited {
 // A tag in the workspace vocabulary plus how many visible prompts carry it.
 export interface TagCount {
   value: string;
+  count: number;
+}
+
+// A prompt author in the visible prompt vocabulary plus prompt count.
+export interface PromptAuthorCount {
+  id: string;
+  name: string;
+  count: number;
+}
+
+// A provider in the visible prompt vocabulary plus how many prompts use it.
+// Drives the (stable, full-library) provider filter on the Prompts page.
+export interface ProviderCount {
+  provider: Provider;
   count: number;
 }
 

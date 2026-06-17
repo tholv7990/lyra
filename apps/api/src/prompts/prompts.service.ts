@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
+  Provider,
   PromptStatus,
   tagKey,
+  type ProviderCount,
+  type PromptAuthorCount,
   type Prompt as PromptModel,
   type TagCount,
 } from '@lyra/shared';
@@ -18,11 +21,32 @@ function escapeRegex(s: string): string {
 }
 
 export interface PromptListOptions {
-  status?: PromptStatus;
-  tag?: string;
+  statuses?: PromptStatus[];
+  tags?: string[];
+  createdBy?: string[];
+  providers?: Provider[];
   q?: string;
   page: number;
   limit: number;
+}
+
+export function buildPromptListFilter(
+  workspaceId: string,
+  userId: string,
+  opts: Pick<PromptListOptions, 'statuses' | 'tags' | 'createdBy' | 'providers' | 'q'>,
+): Record<string, unknown> {
+  const filter: Record<string, unknown> = {
+    workspaceId,
+    $or: [{ status: PromptStatus.Public }, { createdBy: userId }],
+  };
+  if (opts.statuses?.length) filter.status = { $in: opts.statuses };
+  if (opts.tags?.length) {
+    filter.tags = { $in: opts.tags.map((tag) => new RegExp(`^${escapeRegex(tag)}$`, 'i')) };
+  }
+  if (opts.createdBy?.length) filter.createdBy = { $in: opts.createdBy };
+  if (opts.providers?.length) filter.provider = { $in: opts.providers };
+  if (opts.q) filter.title = { $regex: escapeRegex(opts.q), $options: 'i' };
+  return filter;
 }
 
 @Injectable()
@@ -64,16 +88,14 @@ export class PromptsService extends BaseRepository<Prompt> {
     });
   }
 
-  // Paginated + filtered list (by status, a single tag, and a title query).
+  // Paginated + filtered list. Multi-select filters use OR within each group
+  // and AND between groups.
   async listPaged(
     workspaceId: string,
     userId: string,
     opts: PromptListOptions,
   ): Promise<{ items: PromptDocument[]; total: number }> {
-    const filter = this.visibleFilter(workspaceId, userId);
-    if (opts.status) filter.status = opts.status;
-    if (opts.tag) filter.tags = opts.tag;
-    if (opts.q) filter.title = { $regex: escapeRegex(opts.q), $options: 'i' };
+    const filter = buildPromptListFilter(workspaceId, userId, opts);
     const total = await this.count(filter);
     const items = await this.find(filter, {
       sort: { updatedAt: -1, createdAt: -1 },
@@ -100,6 +122,40 @@ export class PromptsService extends BaseRepository<Prompt> {
     }
     return [...byKey.values()].sort(
       (a, b) => b.count - a.count || a.value.localeCompare(b.value),
+    );
+  }
+
+  // The distinct provider vocabulary across prompts the member can see, with
+  // usage counts (sorted by count desc, then provider). Derived from the full
+  // visible library — NOT a paginated/filtered page — so the Prompts provider
+  // filter stays stable as other filters are applied.
+  async providerVocabulary(workspaceId: string, userId: string): Promise<ProviderCount[]> {
+    const prompts = await this.listVisible(workspaceId, userId);
+    const counts = new Map<Provider, number>();
+    for (const p of prompts) {
+      if (!p.provider) continue;
+      const provider = p.provider as Provider;
+      counts.set(provider, (counts.get(provider) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([provider, count]) => ({ provider, count }))
+      .sort((a, b) => b.count - a.count || a.provider.localeCompare(b.provider));
+  }
+
+  async authorVocabulary(workspaceId: string, userId: string): Promise<PromptAuthorCount[]> {
+    const prompts = await this.listVisible(workspaceId, userId);
+    const refs = await this.users.refMap([...new Set(prompts.map((p) => p.createdBy))]);
+    const byId = new Map<string, PromptAuthorCount>();
+    for (const p of prompts) {
+      const existing = byId.get(p.createdBy);
+      if (existing) existing.count += 1;
+      else {
+        const ref = refs.get(p.createdBy) ?? { id: p.createdBy, name: 'Unknown' };
+        byId.set(p.createdBy, { ...ref, count: 1 });
+      }
+    }
+    return [...byId.values()].sort(
+      (a, b) => b.count - a.count || a.name.localeCompare(b.name),
     );
   }
 }

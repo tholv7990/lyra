@@ -10,7 +10,8 @@
     "lint": "eslint src",
     "type-check": "tsc --noEmit -p tsconfig.json",
     "test": "jest",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migrate-mongo": "migrate-mongo"
   },
   "dependencies": {
     "@lyra/shared": "workspace:*",
@@ -46,6 +47,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "jest": "^30.4.2",
+    "migrate-mongo": "^11.0.0",
     "mongodb-memory-server": "^11.2.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.11",
