@@ -40,6 +40,11 @@ function shareLabel(p: Project): string {
   return p.shared === ProjectShare.All ? 'Public · Everyone' : 'Public · Chosen people';
 }
 
+// Distinct collection names the pipeline's fan-out steps map over.
+function fanOutNames(p: Pipeline): string[] {
+  return [...new Set(p.steps.filter((s) => s.fanOut?.over).map((s) => s.fanOut!.over))];
+}
+
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -166,11 +171,15 @@ export function ProjectDetail() {
     savePipelines((project?.pipelines ?? []).filter((x) => x !== pid));
 
   // Start a run and jump into the focused run view.
-  const startRun = (pipelineId: string, values: Record<string, string>) =>
+  const startRun = (
+    pipelineId: string,
+    values: Record<string, string>,
+    collections: Record<string, string[]> = {},
+  ) =>
     act(async () => {
       const created = await api<Run>(`/projects/${id}/pipelines/${pipelineId}/runs`, {
         method: 'POST',
-        body: JSON.stringify({ variables: values }),
+        body: JSON.stringify({ variables: values, collections }),
       });
       setRun(created);
       setRuns((r) => [created, ...r]);
@@ -178,9 +187,10 @@ export function ProjectDetail() {
       setAskVarsFor(null);
     });
 
-  // Ask for variable values first when the pipeline declares any; else run.
+  // Ask for values first when the pipeline declares variables OR fans out over a
+  // collection; otherwise run straight away.
   const runPipeline = (pipeline: Pipeline) => {
-    if (pipeline.variables.length > 0) setAskVarsFor(pipeline);
+    if (pipeline.variables.length > 0 || fanOutNames(pipeline).length > 0) setAskVarsFor(pipeline);
     else void startRun(pipeline.id, {});
   };
 
@@ -252,10 +262,11 @@ export function ProjectDetail() {
         <RunVariablesModal
           title={`Run “${askVarsFor.name}”`}
           variables={askVarsFor.variables}
+          collections={fanOutNames(askVarsFor)}
           prefill={projectVars}
           busy={busy}
           onCancel={() => setAskVarsFor(null)}
-          onRun={(values) => void startRun(askVarsFor.id, values)}
+          onRun={(values, collections) => void startRun(askVarsFor.id, values, collections)}
         />
       )}
 

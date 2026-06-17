@@ -47,6 +47,11 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
             </span>
           )}
+          {s.fanOut?.over && (
+            <span className="mode-tag fanout" title={`Fan out over the "${s.fanOut.over}" collection`}>
+              FAN-OUT
+            </span>
+          )}
           {p && (
             <span
               className="flow-eye"

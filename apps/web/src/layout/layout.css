@@ -6387,6 +6387,43 @@
   border-color: var(--primary-tint);
   background: var(--primary-tint);
 }
+.mode-tag.fanout {
+  color: #0a6ed1;
+  border-color: rgba(10, 132, 255, 0.3);
+  background: rgba(10, 132, 255, 0.1);
+}
+
+/* Fan-out config in the add/edit-step drawer */
+.addstep-fanout {
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+  flex-shrink: 0;
+}
+.addstep-fanout-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.addstep-fanout-row input { margin-top: 2px; }
+.addstep-fanout-fields {
+  margin-top: 10px;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.addstep-fanout-field { display: flex; flex-direction: column; gap: 4px; }
+.addstep-fanout-field > span { font-size: 12.5px; color: var(--ink-muted); font-weight: 600; }
+.addstep-fanout-help { margin: 0; font-size: 12px; }
+.addstep-fanout-help code {
+  color: var(--primary-pressed, #e25a0e);
+  background: var(--primary-tint);
+  border-radius: 4px;
+  padding: 0 3px;
+  font-size: 11.5px;
+}
 
 .prompt-area {
   resize: vertical;

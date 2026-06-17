@@ -167,6 +167,13 @@ Lands value early and isolates the queue work.
 ---
 
 ## Status log
+- 2026-06-18 — Claude — **Pass 1b web** landed: the builder step drawer has a
+  **Fan-out toggle** (collection name + `{item}` hint); fan-out steps show a
+  **FAN-OUT** badge on the node; the run-start modal (`RunVariablesModal`) now
+  collects fan-out **collection items** (one per line) in both the project run and
+  the builder Test, posting `collections` with the run. Fan-out is now fully usable
+  from the UI (over the mock provider). Gates green. Remaining: real provider + R2 +
+  BullMQ (D1/D4/D5).
 - 2026-06-18 — Claude — **Pass 1b engine** landed (decision-independent, over the
   mock provider): `fanOut` config on a pipeline step (`{ over, itemVar }`), a run
   `collections: Record<string,string[]>` (arbitrary N), and a fan-out executor —

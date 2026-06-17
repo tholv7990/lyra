@@ -25,6 +25,7 @@ import { RunFlow } from '../components/RunFlow';
 import { useFlowPager } from '../components/FlowPager';
 import { PromptPicker } from '../components/PromptPicker';
 import { PromptDetails } from '../components/PromptDetails';
+import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
 import { StepTestModal } from '../components/StepTestModal';
@@ -85,6 +86,7 @@ export function PipelineBuilder() {
   const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
   const [run, setRun] = useState<Run | null>(null);
   const [runMode, setRunMode] = useState(false);
+  const [askRunVars, setAskRunVars] = useState(false); // collect vars/collections before a test run
   const [creatingRun, setCreatingRun] = useState(false);
   const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null); // full-prompt viewer
   const runActions = useRunActions(run, setRun);
@@ -188,6 +190,9 @@ export function PipelineBuilder() {
       provider: s.provider,
       model: s.model,
       mode: s.mode,
+      fanOut: s.fanOut?.over?.trim()
+        ? { over: s.fanOut.over.trim(), itemVar: s.fanOut.itemVar?.trim() || undefined }
+        : undefined,
     };
     setSteps((list) => {
       if (editing.isNew) {
@@ -274,16 +279,29 @@ export function PipelineBuilder() {
     }
   }
 
-  // Open the variables form first when the pipeline declares any; otherwise run.
+  // Distinct collection names the fan-out steps map over.
+  const runFanOutNames = useMemo(
+    () => [...new Set(steps.filter((s) => s.fanOut?.over).map((s) => s.fanOut!.over))],
+    [steps],
+  );
+
+  // Open the values form first when the pipeline declares variables or fans out;
+  // otherwise run straight away.
   function triggerTest() {
     if (isNew || !id || !wsId || steps.length === 0 || creatingRun) return;
-    void startTest({});
+    if (variables.length > 0 || runFanOutNames.length > 0) setAskRunVars(true);
+    else void startTest({}, {});
   }
 
   // Test-run this pipeline with no project (typed/blank context) + the entered
-  // variable values, then light up the same flow. Auto-saves unsaved edits first.
-  async function startTest(values: Record<string, string>) {
+  // variable values and fan-out items, then light up the same flow. Auto-saves
+  // unsaved edits first.
+  async function startTest(
+    values: Record<string, string>,
+    collections: Record<string, string[]>,
+  ) {
     if (isNew || !id || !wsId || steps.length === 0 || creatingRun) return;
+    setAskRunVars(false);
     setCreatingRun(true);
     setError(null);
     try {
@@ -299,7 +317,7 @@ export function PipelineBuilder() {
       }
       const created = await api<Run>(`/workspaces/${wsId}/pipelines/${id}/test-runs`, {
         method: 'POST',
-        body: JSON.stringify({ variables: values }),
+        body: JSON.stringify({ variables: values, collections }),
       });
       setRun(created);
       setRunMode(true);
@@ -532,6 +550,44 @@ export function PipelineBuilder() {
                 });
               }}
             />
+
+            {/* Fan-out: run this step once per item in a run collection (parallel). */}
+            <div className="addstep-fanout">
+              <label className="addstep-fanout-row">
+                <input
+                  type="checkbox"
+                  checked={!!ed.fanOut}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing!,
+                      step: { ...ed, fanOut: e.target.checked ? { over: ed.fanOut?.over ?? '' } : undefined },
+                    })
+                  }
+                />
+                <span><strong>Fan out</strong> — run this step once per item in a collection, in parallel</span>
+              </label>
+              {ed.fanOut && (
+                <div className="addstep-fanout-fields">
+                  <label className="addstep-fanout-field">
+                    <span>Collection name</span>
+                    <input
+                      className="text-input"
+                      placeholder="e.g. images"
+                      value={ed.fanOut.over}
+                      onChange={(e) =>
+                        setEditing({
+                          ...editing!,
+                          step: { ...ed, fanOut: { ...ed.fanOut!, over: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') } },
+                        })
+                      }
+                    />
+                  </label>
+                  <p className="muted addstep-fanout-help">
+                    Each item fills <code>{'{item}'}</code> (and <code>{'{input}'}</code>) in the prompt. You enter the items when you run.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -542,6 +598,17 @@ export function PipelineBuilder() {
 
       {detailPrompt && (
         <PromptDetails prompt={detailPrompt} labels={labels} onClose={() => setDetailPrompt(null)} />
+      )}
+
+      {askRunVars && (
+        <RunVariablesModal
+          title="Test run"
+          variables={variables}
+          collections={runFanOutNames}
+          busy={creatingRun}
+          onCancel={() => setAskRunVars(false)}
+          onRun={(values, collections) => void startTest(values, collections)}
+        />
       )}
 
       {testingStep !== null && steps[testingStep] && (
