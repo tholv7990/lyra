@@ -15,14 +15,18 @@ created: 2026-06-18
 > [dropshipping-autopilot-northstar](2026-06-18-dropshipping-autopilot-northstar.md).
 > This is **sub-project #1** — the first real build of "B". It de-risks the
 > hardest new engine pieces (real media generation, asset storage, the job
-> queue, collections + fan-out) on one concrete outcome: **"brand 10 images at
-> once."**
+> queue, collections + fan-out) on one concrete outcome: **brand a whole set of
+> images at once.**
+>
+> **N is arbitrary.** "10" anywhere in this doc is an example, never a limit. The
+> primitive is *map a step over a collection of N items* — N may be 1, a dozen,
+> or hundreds. Nothing may assume a fixed count.
 
 ## Goal
 Make a Generate·Image step produce **real, stored images**, and support
 **fan-out** — one branding prompt mapped over a collection of N source images,
-run in parallel — so a run can turn 10 product photos into 10 on-brand images,
-shown as assets and gated for approval.
+run in parallel — so a run turns a set of product photos (however many) into the
+same number of on-brand images, shown as assets and gated for approval.
 
 ## Context & reuse
 - **Run engine:** `apps/api/src/runs/` — `run.engine.ts` (state machine),
@@ -67,7 +71,11 @@ shown as assets and gated for approval.
 ## Requirements
 1. **Collection data on a run.** Introduce a minimal list-valued input a fan-out
    step maps over — here, a list of source image refs. Keep it minimal (image
-   list only; general collections come later).
+   list only; general collections come later). **Size is arbitrary** — the
+   collection, the per-item dispatch, the asset count, and the run/asset listing
+   must all hold for large N (paginate/stream rather than load-all; never hard-code
+   a count). The **concurrency cap** (D6) — not a fixed N — is what keeps large
+   batches safe against provider limits and cost.
 2. **Fan-out step config.** A pipeline step can be marked `fanOut` with the input
    collection it maps and the per-item token (e.g. `{item}`); a non-fan-out step
    behaves exactly as today.

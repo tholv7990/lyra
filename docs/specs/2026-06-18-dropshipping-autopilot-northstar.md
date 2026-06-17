@@ -75,7 +75,7 @@ the roadmap). What changes: a Step now declares a **category**.
 ## The funnel as five stage-pipelines
 1. **Discover** — Source (crawl) → Generate (rank candidates) → Gate (pick winner)
 2. **Store** — Action (Shopify: create theme + product) + Generate (copy)
-3. **Brand** — Source (import 10 imgs) → **fan-out** Generate (brand each) → Gate
+3. **Brand** — Source (import N imgs) → **fan-out** Generate (brand each) → Gate
 4. **UGC** — Generate (script, **branch** by product type) → Generate video → Gate
 5. **Distribute** — **fan-out** Action (publish to N channels, scheduled)
 
@@ -138,8 +138,8 @@ prompts.
 1. **Brand stage — image gen + fan-out** *(first; spec drafted:
    `2026-06-18-brand-stage-image-fanout.md`)* — real image provider, asset store
    (R2), job queue (BullMQ), collections + fan-out + multi-asset step output. The
-   concrete outcome "10 branded images in parallel" de-risks the hardest new
-   engine pieces; everything below reuses them.
+   concrete outcome (an **arbitrary-N** branded image set, in parallel — not a
+   fixed count) de-risks the hardest new engine pieces; everything below reuses them.
 2. **UGC video (single case)** — real video provider; assemble script→scenes→clip.
 3. **Branching / conditions** — the "many cases" primitive (video + routing).
 4. **Composition** — pipelines that seed/launch other pipelines (one product →
