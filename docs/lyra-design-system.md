@@ -2,10 +2,11 @@
 name: Lyra
 version: 1.0
 description: >-
-  Dark Apple-style product & commerce design system built around a single warm
-  orange accent. Pure-black canvas, Inter display with negative tracking, an
-  Apple elevation ladder, large 18px card radii, and fully-rounded pill CTAs
-  carrying a signature orange glow.
+  Linear-style, LIGHT-mode design system built around a single warm orange
+  accent. White canvas with a light surface ladder, thin hairline borders,
+  subtle flat shadows, modest 8–12px radii, and Inter throughout. Live source of
+  truth: apps/web/src/styles/tokens.css. (The dark, Apple-style spec further down
+  is archived for reference only.)
 
 colors:
   # Brand & Accent
@@ -64,6 +65,48 @@ typography:
 spacing: { xxs: 4, xs: 8, sm: 12, md: 16, lg: 24, xl: 32, xxl: 48, section: 96 }
 rounded: { xs: 6, sm: 8, md: 12, lg: 18, xl: 22, xxl: 28, pill: 980, full: 9999 }
 ---
+
+> **⚠️ Superseded — read this first.** Lyra's UI is a **Linear-style, LIGHT-mode**
+> system, not the dark Apple style described from "## Overview" down. The **live
+> source of truth is [apps/web/src/styles/tokens.css](../apps/web/src/styles/tokens.css)**
+> (plus `apps/web/src/index.css`). The marketing landing
+> (`apps/web/src/pages/Landing.tsx` + `landing.css`) follows the system below.
+> The dark spec is kept only as a reference archive.
+
+## Current system (Linear, light)
+
+**Philosophy.** Calm, flat, content-first — Linear's restraint, not Apple's
+cinematic dark. A white canvas, a light surface ladder for hierarchy, thin
+hairline borders, and subtle/flat shadows. Orange stays the single brand accent,
+used scarcely (eyebrow, primary action, focus/active, link emphasis).
+
+**Palette** (from `tokens.css`):
+- Canvas `#FFFFFF`; surfaces `#F9F9FB` → `#F1F1F4` → `#E9E9EE` → `#E1E1E6`; field `#FFFFFF`.
+- Hairlines `rgba(0,0,0,.08)` · `.13` strong · `.05` faint.
+- Ink `#1D1D1F`; muted `rgba(60,60,67,.62)`; subtle `.40`; tertiary `.24`.
+- Brand orange `#FF6B1A` (hover `#FF7D35`, pressed `#E25A0E`, tint `rgba(255,107,26,.14)`).
+- Semantic: success `#2DA44E` · warning `#D98300` · danger `#E5484D` · info `#0A84FF`.
+
+**Type.** Inter throughout (display/text with `SF Pro`/system fallbacks);
+`JetBrains Mono` for IDs, status tokens, and code. Negative tracking on display,
+near-neutral on body.
+
+**Shape & depth.**
+- Radii in use: **8px** (controls) and **12px** (cards/inputs); larger radii exist but are rarely used.
+- Shadows are subtle and flat (`--shadow-1` / `--shadow-2`). **No glow.**
+- Buttons are **not pills** — modest-radius solids and ghosts. The orange CTA is a flat solid (no halo).
+
+**Reversals from the archived dark spec (below):**
+- Canvas is **white**, not pure black; surfaces are a **light** ladder; ink is dark on light.
+- A light marketing page **is** the norm — the old "don't ship a light-mode marketing page" rule no longer applies.
+- **No** signature orange glow and **no** fully-rounded pill CTAs.
+
+> A full line-by-line rewrite of the component specs below is still pending. Until
+> then, defer to `tokens.css` for any conflict.
+
+---
+
+> **Archived below — dark, Apple-style spec. Reference only; not the current system.**
 
 ## Overview
 

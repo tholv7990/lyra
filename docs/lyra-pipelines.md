@@ -265,3 +265,20 @@ workspace stack.
   drives both the project run and the builder run; both render the same `RunFlow`.
 - **Files:** `apps/web/src/components/{RunFlow,FlowPager,PromptPicker,EditorShell}.tsx`,
   `apps/web/src/lib/useRunActions.ts`.
+- **Library/list UI polish (June 17, 2026).** The Prompts, Pipelines, and
+  Projects library pages now share a compact Linear-style toolbar and row/card
+  pattern:
+  - Filter popovers stay inside the viewport, include a disabled/enabled
+    **Clear** action, and collapse long groups (tags, created by) behind
+    dropdown sections.
+  - Multi-select filters use **OR within a group** and **AND between groups**.
+    Prompt tag filtering is explicitly `any selected tag` and case-insensitive.
+  - Prompt rows show four mobile rows: title/actions, clipped description + eye,
+    labels/status, then updated-by/date + provider/model. The eye opens a
+    full prompt editor modal; prompt descriptions clamp to two lines.
+  - Pipeline rows do **not** use a detail popup. They show name/description,
+    editable tags, step count, creator/date, open, and delete. Editable users can
+    inline-rename pipelines and edit tags directly from the list.
+  - Project create/edit was rebuilt around `EditorShell`: project name in the
+    header, grouped context fields (`product`, `niche`, `homepageUrl`), and
+    visibility as selectable cards.

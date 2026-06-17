@@ -10,6 +10,26 @@ Built and verified: **Phase 0** (monorepo + auth), **Phase 1** (workspaces/membe
 
 Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` interface + `ProviderRegistry`); only Anthropic is real — openai/deepseek/image/video still use `MockStepProvider`. Wiring a real provider = add its impl + map it in the registry (one line).
 
+## Recent UI/API updates (June 17, 2026)
+
+- Library pages (`/prompts`, `/pipelines`, `/projects`) now share a compact
+  Linear-style list/card treatment. Filter popovers are viewport-clamped, have a
+  disabled/enabled **Clear** action, and collapse long groups such as tags and
+  created-by into dropdown sections.
+- Prompt filters are multi-select. Semantics are **OR within a filter group** and
+  **AND between groups**; prompt tag filtering is explicitly "any selected tag"
+  and case-insensitive in `apps/api/src/prompts/prompts.service.ts`.
+- Prompt rows: mobile is four rows (title/actions, description + eye, labels/status,
+  updated-by/date + provider/model). The eye opens `PromptDetails`, a full prompt
+  modal that can edit the prompt body. Description text is clamped to two lines.
+- Pipeline rows intentionally have **no detail popup**. Editable users can inline
+  rename a pipeline and edit tags directly from the list using `LabelPicker`;
+  rows show step count, creator/date, open, and delete.
+- Project create/edit (`apps/web/src/pages/ProjectEditor.tsx`) was redesigned on
+  `EditorShell`: name in the header, grouped context fields (`product`, `niche`,
+  `homepageUrl`), and visibility as selectable cards. These fields feed pipeline
+  placeholders such as `{product}`, `{niche}`, and `{homepage}`.
+
 **Read these before doing anything** (source of truth, in priority order):
 - [docs/lyra-pipelines.md](docs/lyra-pipelines.md) — **composable Pipelines (business model v2)**: entities, full decision log, UI spec, build phases. Supersedes the fixed-pipeline model.
 - [docs/lyra-prompt-testing.md](docs/lyra-prompt-testing.md) — **superseded.** The per-prompt testing playground it describes was replaced by **Chats** (top-level, multi-turn, auto-persisted conversations in `apps/api/src/conversations` + `apps/web/src/pages/Chats.tsx`); good prompts are promoted to the library via **Save as prompt**. Read the doc only for historical context.

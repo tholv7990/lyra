@@ -1,3 +1,15 @@
+# Lyra - Prompt Testing (superseded by Chats)
+
+> **CURRENT STATUS: SUPERSEDED.** The per-prompt testing playground and
+> `prompt-tests` module described in this historical document were removed.
+> Current Lyra uses **Chats** instead: `apps/api/src/conversations` and
+> `apps/web/src/pages/Chats.tsx`. Chats are top-level, multi-turn, per-user,
+> stream over SSE, auto-persist every turn, stamp each message with
+> provider/model, and bridge back to the prompt library through **Save as
+> prompt**. Library prompts use **Open in chat** with the composer prefilled.
+> Do not rebuild `/prompts/:id/try` or `prompt-tests`.
+
+---
 # Lyra — Prompt Testing (Playground + history)
 
 > **Status: BUILT** (`apps/api/src/prompt-tests`, `apps/web` Try page). A Prompt-module

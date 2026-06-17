@@ -1,3 +1,31 @@
+# Latest session handoff - June 17, 2026
+
+Open this file first in the next session. Branch: **dev**. There is a large amount of uncommitted work in this repo; do not reset or discard unrelated files.
+
+There is **no active blocked implementation task** from the latest session. Continue from the user's next request.
+
+Recent changes on disk:
+- `/prompts`, `/pipelines`, and `/projects` now share a compact Linear-style list/card UI. The shared filter popover is viewport-clamped, has a Clear button that enables only when menu filters are selected, and uses collapsible sections for long groups (`Tags`, `Created by`).
+- Prompt filtering is multi-select. Semantics are OR within a filter group and AND between groups. Prompt tag filtering was fixed in `apps/api/src/prompts/prompts.service.ts` with exported `buildPromptListFilter()` and regression test `apps/api/src/prompts/prompts.service.spec.ts`; selected tags mean "has any selected tag" and are case-insensitive.
+- Prompt rows were redesigned: two-line description clamp, eye button opens `PromptDetails`, prompt details can edit body, colored updated-by avatar, provider icon/model, chat icon action, danger X delete.
+- Pipeline rows now have no detail popup and no eye icon. Editable users can inline rename and edit tags from the list; rows show description, tags, step count, creator/date, open, and delete.
+- Project create/edit (`apps/web/src/pages/ProjectEditor.tsx`) was redesigned on `EditorShell`: project name in the header; grouped context fields for `product`, `niche`, `homepageUrl`; visibility uses selectable cards and is available on create and edit.
+
+Focused checks run after the latest edits:
+```bash
+pnpm.cmd --filter @lyra/api test -- prompts.service
+pnpm.cmd --filter @lyra/api type-check
+pnpm.cmd --filter @lyra/api lint
+pnpm.cmd --filter @lyra/web type-check
+pnpm.cmd --filter @lyra/web lint
+```
+
+Before a final handoff or commit, run the full gate:
+```bash
+pnpm turbo run lint type-check test build
+```
+
+---
 # Session handoff — continue here
 
 > New session: open this file first (`docs/SESSION-HANDOFF.md`), then say what you want to continue.
