@@ -234,4 +234,26 @@ describe('Pipeline runs (e2e)', () => {
     expect(done.status).toBe('done');
     expect(done.steps[0].result).toContain('empty');
   });
+
+  it('creates a run even when a step prompt was deleted (no 500)', async () => {
+    const tempPrompt = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Doomed', content: 'hello', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const pipelineId = await makePipeline([newStep({ name: 'Orphan', promptId: tempPrompt })]);
+    // delete the prompt the step is bound to → the step ref is now dangling
+    await http().delete(`/prompts/${tempPrompt}`).set(auth(token)).expect(204);
+
+    // run creation must not 500 — the step just gets an empty prompt
+    const run = (
+      await http()
+        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+        .set(auth(token))
+        .expect(201)
+    ).body;
+    expect(run.steps[0].prompt).toBe('');
+  });
 });
