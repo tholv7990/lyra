@@ -5,7 +5,7 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   defaultModel,
   isAllowedMedia,
@@ -39,6 +39,10 @@ function initials(name?: string) {
   return (p[0][0] + (p[1]?.[0] ?? '')).toUpperCase();
 }
 
+// Where this chat was opened from (e.g. a library prompt). Drives the breadcrumb
+// "‹ Prompts / <title>" and the in-chat back link, so there's a one-tap way back.
+type ChatOrigin = { label: string; to: string; record: string };
+
 const IconCopy = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" />
@@ -64,7 +68,14 @@ export function Chats() {
   const [list, setList] = useState<ConversationSummary[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [title, setTitle] = useState('New chat');
-  useBreadcrumb(id ? title : 'Chats');
+  const [origin, setOrigin] = useState<ChatOrigin | null>(null);
+  // Mirror origin in a ref so `send` can carry it through its post-stream navigate
+  // without needing the latest value baked into its closure.
+  const originRef = useRef<ChatOrigin | null>(null);
+  useBreadcrumb(
+    origin ? origin.record : id ? title : 'Chats',
+    origin ? { label: origin.label, to: origin.to } : null,
+  );
 
   const [provider, setProvider] = useState<Provider>(Provider.Anthropic);
   const [model, setModel] = useState<string>(defaultModel(Provider.Anthropic));
@@ -81,8 +92,16 @@ export function Chats() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef(true);
   const idRef = useRef(0);
-  const skipLoadRef = useRef<string | null>(null);
+  // The conversation whose messages we already hold locally (we just created it),
+  // so the load effect won't refetch it — idempotent, so StrictMode's double effect
+  // invocation can't issue a stray GET the way a one-shot "skip" flag would.
+  const ownIdRef = useRef<string | null>(null);
   const seedUsedRef = useRef(false);
+  const pendingSeedRef = useRef<{ text: string; provider: Provider; model: string } | null>(null);
+  // True while a seeded ("Open in chat") send owns the still-id-less canvas, so the
+  // load effect won't blank the thread out from under it — notably under StrictMode's
+  // double effect invocation in dev, which would otherwise re-run setMessages([]).
+  const seedActiveRef = useRef(false);
 
   const loadList = useCallback(() => {
     if (!wsId) return;
@@ -96,14 +115,19 @@ export function Chats() {
   // Load the selected conversation (skip the one we just created locally).
   useEffect(() => {
     if (!id) {
-      setMessages([]);
-      setTitle('New chat');
+      ownIdRef.current = null;
+      // Don't reset while a seeded send is mid-flight on this canvas.
+      if (!seedActiveRef.current) {
+        setMessages([]);
+        setTitle('New chat');
+      }
       return;
     }
-    if (skipLoadRef.current === id) {
-      skipLoadRef.current = null;
-      return;
-    }
+    // We have an id now — the seed flow (if any) is committed; allow future resets.
+    seedActiveRef.current = false;
+    // Already holding this chat's messages locally (we just created it) — don't refetch.
+    if (ownIdRef.current === id) return;
+    ownIdRef.current = null;
     let cancelled = false;
     api<Conversation>(`/conversations/${id}`)
       .then((c) => {
@@ -119,14 +143,39 @@ export function Chats() {
     };
   }, [id]);
 
-  // "Open in chat" passes the prompt body as navigation state — prefill once.
+  // "Open in chat" passes the prompt body + provider·model as navigation state.
+  // Stash it (with the prompt's own provider·model) so the auto-run below sends it
+  // as the first message — the prompt + its answer land in the thread, no manual send.
+  // Also select the model in the picker for any follow-up turns.
   useEffect(() => {
-    const seed = (location.state as { seed?: string } | null)?.seed;
-    if (seed && !seedUsedRef.current) {
+    const st = location.state as { seed?: string; provider?: Provider; model?: string } | null;
+    if (st?.seed && !seedUsedRef.current) {
       seedUsedRef.current = true;
-      setInput(seed);
+      const prov = st.provider ?? provider;
+      const mdl = st.model ?? defaultModel(prov);
+      pendingSeedRef.current = { text: st.seed, provider: prov, model: mdl };
+      seedActiveRef.current = true;
+      setProvider(prov);
+      setModel(mdl);
     }
-  }, [location.state]);
+  }, [location.state, provider]);
+
+  // Track the chat's origin (e.g. the prompt it was opened from) so the breadcrumb
+  // reads "Prompts / <title>". `send` re-passes it through its replace-navigate, so
+  // it survives the /chats → /chats/:id transition; a plain history nav clears it.
+  useEffect(() => {
+    const st = location.state as { from?: ChatOrigin } | null;
+    let from = st?.from ?? null;
+    if (!from && id) {
+      // Reopened from history within this session — recover the saved origin.
+      try {
+        const saved = sessionStorage.getItem(`lyra.chat.origin.${id}`);
+        if (saved) from = JSON.parse(saved) as ChatOrigin;
+      } catch { /* ignore */ }
+    }
+    originRef.current = from;
+    setOrigin(from);
+  }, [location.state, id]);
 
   function onThreadScroll() {
     const el = scrollRef.current;
@@ -161,6 +210,7 @@ export function Chats() {
 
   function newChat() {
     setShowHistory(false);
+    seedActiveRef.current = false;
     if (!id) {
       // already on a fresh canvas
       setMessages([]);
@@ -173,16 +223,20 @@ export function Chats() {
   }
 
   const send = useCallback(
-    async (text: string, media: PromptMedia[]) => {
+    async (text: string, media: PromptMedia[], opts?: { provider?: Provider; model?: string }) => {
       if ((!text.trim() && media.length === 0) || streaming || !wsId) return;
+      // Allow an explicit provider·model (used by "Open in chat" so the run uses the
+      // prompt's stored model regardless of whether the picker state has settled yet).
+      const sendProvider = opts?.provider ?? provider;
+      const sendModel = opts?.model ?? model;
       setError(null);
       atBottomRef.current = true;
       const now = new Date().toISOString();
       const userMsg: ConversationMessage = {
-        id: `tmp-u-${++idRef.current}`, role: 'user', content: text, media, provider, model, createdAt: now,
+        id: `tmp-u-${++idRef.current}`, role: 'user', content: text, media, provider: sendProvider, model: sendModel, createdAt: now,
       };
       const aiMsg: ConversationMessage = {
-        id: `tmp-a-${++idRef.current}`, role: 'assistant', content: '', provider, model, createdAt: now,
+        id: `tmp-a-${++idRef.current}`, role: 'assistant', content: '', provider: sendProvider, model: sendModel, createdAt: now,
       };
       setMessages((m) => [...m, userMsg, aiMsg]);
       setInput('');
@@ -201,7 +255,7 @@ export function Chats() {
         try {
           const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
             method: 'POST',
-            body: JSON.stringify({ provider, model }),
+            body: JSON.stringify({ provider: sendProvider, model: sendModel }),
           });
           cid = convo.id;
           createdNow = true;
@@ -218,7 +272,7 @@ export function Chats() {
       try {
         await streamSSE(
           `/conversations/${cid}/messages`,
-          { provider, model, content: text, media },
+          { provider: sendProvider, model: sendModel, content: text, media },
           (evt) => {
             streamOpened = true;
             if (evt.type === 'delta') {
@@ -252,9 +306,20 @@ export function Chats() {
           // as a blank entry in history.
           try { await api(`/conversations/${cid}`, { method: 'DELETE' }); } catch { /* ignore */ }
         } else if (createdNow && cid) {
-          // Commit the new chat to its own URL now that it has content.
-          skipLoadRef.current = cid;
-          navigate(`/chats/${cid}`, { replace: true });
+          // Commit the new chat to its own URL now that it has content. We already
+          // hold its messages, so mark it owned (no refetch). Re-pass the origin via
+          // nav state, and stash it by id so reopening from history recovers the
+          // "Prompts / <title>" breadcrumb too.
+          ownIdRef.current = cid;
+          if (originRef.current) {
+            try {
+              sessionStorage.setItem(`lyra.chat.origin.${cid}`, JSON.stringify(originRef.current));
+            } catch { /* ignore */ }
+          }
+          navigate(`/chats/${cid}`, {
+            replace: true,
+            state: originRef.current ? { from: originRef.current } : undefined,
+          });
         }
         loadList();
       }
@@ -263,6 +328,18 @@ export function Chats() {
   );
 
   function stop() { abortRef.current?.abort(); }
+
+  // Fire a seeded ("Open in chat") prompt once, on a fresh canvas. We pass the
+  // prompt's own provider·model explicitly to `send`, so this doesn't depend on the
+  // picker state having propagated — it just turns the prompt into the first user
+  // message and streams the answer. Defined after `send` so it can reference it.
+  useEffect(() => {
+    const seed = pendingSeedRef.current;
+    if (seed && wsId && !id && !streaming) {
+      pendingSeedRef.current = null;
+      void send(seed.text, [], { provider: seed.provider, model: seed.model });
+    }
+  }, [wsId, id, streaming, send]);
 
   function copy(text: string) {
     void navigator.clipboard?.writeText(text);
@@ -323,7 +400,13 @@ export function Chats() {
           </button>
           <div className="pg-headinfo">
             <div className="pg-headtitle">
-              <span className="pg-name">{id ? title : 'New chat'}</span>
+              {origin && (
+                <>
+                  <Link to={origin.to} className="chat-crumb">{origin.label}</Link>
+                  <span className="chat-crumb-sep">/</span>
+                </>
+              )}
+              <span className="pg-name">{origin ? origin.record : id ? title : 'New chat'}</span>
             </div>
           </div>
           <div className="chat-top-actions">

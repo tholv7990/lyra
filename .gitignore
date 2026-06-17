@@ -29,6 +29,7 @@ coverage/
 # Shared, non-secret config in .claude/ (agents, per-package CLAUDE.md) IS committed.
 .claude/settings.json
 .claude/settings.local.json
+.claude/worktrees/
 .mcp.json
 
 # editor / os

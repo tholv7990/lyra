@@ -48,6 +48,7 @@ export class PipelinesController {
       description: body.description ?? '',
       tags: dedupeTags(body.tags ?? []),
       steps: this.pipelines.normalizeSteps(body.steps ?? []),
+      variables: this.pipelines.normalizeVariables(body.variables ?? []),
     });
     return this.pipelines.toView(pipeline);
   }
@@ -77,6 +78,8 @@ export class PipelinesController {
     if (body.description !== undefined) patch.description = body.description;
     if (body.tags !== undefined) patch.tags = dedupeTags(body.tags);
     if (body.steps !== undefined) patch.steps = this.pipelines.normalizeSteps(body.steps);
+    if (body.variables !== undefined)
+      patch.variables = this.pipelines.normalizeVariables(body.variables);
     const updated = await this.pipelines.findByIdAndUpdate(id, patch);
     return this.pipelines.toView(updated!);
   }

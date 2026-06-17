@@ -38,15 +38,112 @@ export function canManageKeys(ctx: MemberCtx): boolean {
   return ctx.role === Role.Owner || ctx.canManageKeys;
 }
 
+// Substitute {key} tokens with values. Each key in `vars` whose value is
+// non-blank replaces every {key} occurrence; missing/blank keys leave the token
+// in place. {step:Name} is never touched (its colon isn't part of a {key}). Used
+// at run time over the run's variable snapshot (project + custom + system vars).
 export function fillPrompt(
   tmpl: string,
-  vars: { product?: string; niche?: string; homepage?: string; note?: string },
+  vars: Record<string, string | undefined>,
 ): string {
-  return tmpl
-    .replace(/{product}/g, vars.product?.trim() || '{product}')
-    .replace(/{niche}/g, vars.niche?.trim() || '{niche}')
-    .replace(/{homepage}/g, vars.homepage?.trim() || '{homepage}')
-    .replace(/{note}/g, vars.note?.trim() || '{note}');
+  let out = tmpl;
+  for (const [key, val] of Object.entries(vars)) {
+    const v = val?.trim();
+    if (v) out = out.split(`{${key}}`).join(v);
+  }
+  return out;
+}
+
+// Resolve a step's run-time chaining placeholders: {input} = the previous step's
+// output (the most recent earlier step that has a result), {step:Name} = a named
+// earlier step's output. Returns the filled prompt and whether any placeholder
+// was used (callers auto-append prior context only when none was). Lifted from
+// the api so it's pure and unit-tested in one place.
+export function resolveStepRefs(
+  prompt: string,
+  steps: { name?: string; result?: string }[],
+  index: number,
+): { prompt: string; used: boolean } {
+  let used = false;
+  let text = prompt;
+  if (text.includes('{input}')) {
+    used = true;
+    const prev = steps.slice(0, index).reverse().find((s) => s.result);
+    text = text.split('{input}').join(prev?.result ?? '');
+  }
+  text = text.replace(/\{step:([^}]+)\}/g, (_m, nm: string) => {
+    used = true;
+    const match = steps.find(
+      (s) => (s.name ?? '').toLowerCase() === nm.trim().toLowerCase() && s.result,
+    );
+    return match?.result ?? '';
+  });
+  return { prompt: text, used };
+}
+
+// ===== Prompt variables (composer affordance) =====
+// What a step's prompt can reference, surfaced as insertable chips in the run
+// composer. Mirrors the run engine's chaining: {input} = the previous step,
+// {step:Name} = any earlier named step, plus the project/context vars that are
+// actually set. Pure — the web computes chips from this; no engine change.
+
+export interface PromptVar {
+  token: string;
+  label: string;
+  kind: 'input' | 'step' | 'project';
+}
+
+// Friendly labels for the built-in project/system var tokens (custom vars fall
+// back to their key). Used to label composer chips.
+export const BUILTIN_VAR_LABELS: Record<string, string> = {
+  product: 'Product',
+  niche: 'Niche',
+  homepage: 'Homepage',
+  note: 'Note',
+  date: 'Date',
+};
+
+// Variables a given step can reference, surfaced as insertable composer chips:
+// {input} (after the first step), any earlier named {step:Name}, and every
+// run variable in `variables` that has a non-blank value (project + custom +
+// system). `labels` maps a var key to its display label (else the key).
+export function promptVarsForStep(
+  steps: { index: number; name?: string }[],
+  index: number,
+  variables: Record<string, string> = {},
+  labels: Record<string, string> = {},
+): PromptVar[] {
+  const out: PromptVar[] = [];
+  if (index > 0) out.push({ token: '{input}', label: 'Previous step', kind: 'input' });
+  for (const s of steps) {
+    const nm = s.name?.trim();
+    if (s.index < index && nm) out.push({ token: `{step:${nm}}`, label: nm, kind: 'step' });
+  }
+  for (const [key, val] of Object.entries(variables)) {
+    if (val?.trim()) out.push({ token: `{${key}}`, label: labels[key] ?? key, kind: 'project' });
+  }
+  return out;
+}
+
+// {step:X} references whose name matches no step (case-insensitive), de-duped —
+// lets the composer warn about dangling references before a run.
+export function unknownStepRefs(prompt: string, stepNames: string[]): string[] {
+  const known = new Set(
+    stepNames.map((n) => n.trim().toLowerCase()).filter(Boolean),
+  );
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const re = /\{step:([^}]+)\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(prompt)) !== null) {
+    const nm = m[1].trim();
+    const key = nm.toLowerCase();
+    if (nm && !known.has(key) && !seen.has(key)) {
+      seen.add(key);
+      out.push(nm);
+    }
+  }
+  return out;
 }
 
 // ===== Prompt tags =====

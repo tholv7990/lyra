@@ -207,6 +207,35 @@ h4 {
   color: rgba(60, 60, 67, 0.4);
 }
 
+/* Password field with a reveal (eye) toggle. */
+.pw-wrap {
+  position: relative;
+}
+.pw-wrap .text-input {
+  padding-right: 40px;
+}
+.pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.pw-toggle:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
 .text-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-tint);

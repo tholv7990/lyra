@@ -40,6 +40,7 @@ export function toRun(doc: RunDocument, refs: Map<string, UserRef>): RunModel {
     pipelineId: doc.pipelineId,
     pipelineName: doc.pipelineName,
     context: doc.context,
+    variables: doc.variables,
     status: doc.status as RunStatus,
     currentStep: doc.currentStep,
     steps: doc.steps.map(toStep),

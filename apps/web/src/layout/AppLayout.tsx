@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { WorkspaceMenu } from './WorkspaceMenu';
-import { BreadcrumbContext, AppNavContext } from './breadcrumb';
+import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadcrumb';
 import {
   HomeIcon,
   ProjectsIcon,
@@ -48,7 +48,7 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_KEY) === '1',
   );
-  const [record, setRecord] = useState<string | null>(null); // breadcrumb record
+  const [crumb, setCrumb] = useState<BreadcrumbState>({ record: null, parent: null });
 
   const close = () => setOpen(false);
   const toggleCollapsed = () =>
@@ -59,10 +59,13 @@ export function AppLayout() {
     });
 
   const mod = moduleFor(location.pathname);
-  const isDetail = mod.path !== '/' && location.pathname !== mod.path;
+  // A path under a module is a detail view; so is any page that set a parent
+  // override (e.g. a chat opened from a prompt, before it gets its own /chats/:id).
+  const isDetail =
+    (mod.path !== '/' && location.pathname !== mod.path) || !!crumb.parent;
 
   return (
-    <BreadcrumbContext.Provider value={setRecord}>
+    <BreadcrumbContext.Provider value={setCrumb}>
      <AppNavContext.Provider value={() => setOpen(true)}>
       <div className={`app ${collapsed ? 'nav-collapsed' : ''}`}>
         {open && <div className="scrim" onClick={close} />}
@@ -144,14 +147,14 @@ export function AppLayout() {
             <nav className="breadcrumb">
               {isDetail ? (
                 <>
-                  <Link to={mod.path} className="bc-back" aria-label={`Back to ${mod.name}`}>
+                  <Link to={crumb.parent?.to ?? mod.path} className="bc-back" aria-label={`Back to ${crumb.parent?.label ?? mod.name}`}>
                     ‹
                   </Link>
-                  <Link to={mod.path} className="bc-module">
-                    {mod.name}
+                  <Link to={crumb.parent?.to ?? mod.path} className="bc-module">
+                    {crumb.parent?.label ?? mod.name}
                   </Link>
                   <span className="bc-sep">/</span>
-                  <span className="bc-record">{record ?? '…'}</span>
+                  <span className="bc-record">{crumb.record ?? '…'}</span>
                 </>
               ) : (
                 <span className="bc-current">{mod.name}</span>

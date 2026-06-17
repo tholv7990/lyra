@@ -109,7 +109,7 @@ describe('Pipeline runs (e2e)', () => {
     ).body.id as string;
   }
 
-  it('creates a run from a pipeline: steps snapshotted, placeholders filled', async () => {
+  it('creates a run from a pipeline: steps snapshotted raw, variables captured', async () => {
     const pipelineId = await makePipeline([
       newStep({ name: 'Brief', promptId: prompt1 }),
       newStep({ name: 'Refine', promptId: prompt2 }),
@@ -124,7 +124,10 @@ describe('Pipeline runs (e2e)', () => {
     expect(run.steps).toHaveLength(2);
     expect(run.steps[0].name).toBe('Brief');
     expect(run.steps[0].provider).toBe('anthropic');
-    expect(run.steps[0].prompt).toContain('Runner X'); // {product} filled
+    // Phase 2: prompts are snapshotted raw — project/custom/system vars resolve at
+    // run time from the run's variable snapshot, not at creation.
+    expect(run.steps[0].prompt).toBe('Brief for {product}');
+    expect(run.variables.product).toBe('Runner X');
     expect(run.steps[0].key).toBeUndefined(); // composable step, no StepKey
   });
 

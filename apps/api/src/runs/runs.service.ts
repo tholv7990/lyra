@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   fillPrompt,
+  resolveStepRefs,
   STEP_DEFS,
   StepStatus,
   type Provider,
@@ -43,6 +44,8 @@ export interface PipelineRunInput {
   pipelineId: string;
   pipelineName: string;
   context: { product: string; niche: string; homepageUrl: string; note?: string };
+  // Custom variable values entered at run start (already merged with defaults).
+  variables?: Record<string, string>;
   steps: {
     name: string;
     promptId: string;
@@ -50,31 +53,6 @@ export interface PipelineRunInput {
     model: string;
     mode: StepMode;
   }[];
-}
-
-// Resolve chaining placeholders in a step's prompt: {input} = the previous
-// step's output, {step:Name} = a named earlier step's output. Returns whether
-// any placeholder was used (if so, the caller skips auto-appending context).
-function resolveChaining(
-  prompt: string,
-  steps: Step[],
-  index: number,
-): { prompt: string; used: boolean } {
-  let used = false;
-  let text = prompt;
-  if (text.includes('{input}')) {
-    used = true;
-    const prev = [...steps].slice(0, index).reverse().find((s) => s.result);
-    text = text.split('{input}').join(prev?.result ?? '');
-  }
-  text = text.replace(/\{step:([^}]+)\}/g, (_m, nm: string) => {
-    used = true;
-    const match = steps.find(
-      (s) => (s.name ?? '').toLowerCase() === nm.trim().toLowerCase() && s.result,
-    );
-    return match?.result ?? '';
-  });
-  return { prompt: text, used };
 }
 
 @Injectable()
@@ -105,20 +83,28 @@ export class RunsService extends BaseRepository<Run> {
         model: ps.model,
         mode: ps.mode,
         status: StepStatus.Idle,
-        prompt: fillPrompt(prompt?.content ?? '', {
-          product: input.context.product,
-          niche: input.context.niche,
-          homepage: input.context.homepageUrl,
-          note: input.context.note,
-        }),
+        // Store the raw template — project/custom/system vars and {input}/{step:Name}
+        // resolve at run time from the run's variable snapshot + prior outputs.
+        prompt: prompt?.content ?? '',
       });
     }
+    // Variable snapshot: project vars (token-keyed) + pipeline custom values +
+    // system {date}. Frozen here so later pipeline/project edits don't leak in.
+    const variables: Record<string, string> = {
+      product: input.context.product,
+      niche: input.context.niche,
+      homepage: input.context.homepageUrl,
+      note: input.context.note ?? '',
+      date: new Date().toISOString().slice(0, 10),
+      ...(input.variables ?? {}),
+    };
     return this.create({
       projectId: input.projectId,
       workspaceId: input.workspaceId,
       pipelineId: input.pipelineId,
       pipelineName: input.pipelineName,
       context: input.context,
+      variables,
       createdBy: actorId,
       updatedBy: actorId,
       status: 'idle',
@@ -206,10 +192,12 @@ export class RunsService extends BaseRepository<Run> {
     const provider = providerOf(step);
     const apiKey = (await this.keys.getDecrypted(doc.workspaceId, provider)) ?? '';
 
-    // Chaining: inject {input}/{step:Name} if present, else auto-append prior
-    // results as context.
-    const { prompt, used } = resolveChaining(step.prompt, state.steps, index);
-    const stepForRun = used ? { ...step, prompt } : step;
+    // Resolve the prompt at run time: first variables ({product}/{tone}/{date}…)
+    // from the run snapshot, then chaining ({input}/{step:Name}). When a chaining
+    // placeholder is used we skip auto-appending prior context.
+    const filled = fillPrompt(step.prompt, doc.variables ?? {});
+    const { prompt, used } = resolveStepRefs(filled, state.steps, index);
+    const stepForRun = { ...step, prompt };
     const priorResults = used
       ? []
       : state.steps

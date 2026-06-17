@@ -72,6 +72,11 @@ export class Run extends AuditedEntity {
   @Prop({ type: Object })
   context?: { product: string; niche: string; homepageUrl: string };
 
+  // token→value snapshot resolved into step prompts at run time (project +
+  // pipeline custom + system vars). Frozen at creation.
+  @Prop({ type: Object })
+  variables?: Record<string, string>;
+
   @Prop({ required: true, default: 'idle' })
   status!: string;
 

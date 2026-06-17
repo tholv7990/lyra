@@ -1,32 +1,10 @@
-import { useEffect, useState, type CSSProperties } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  STEP_DEFS,
-  STEP_PROVIDERS,
-  StepMode,
-  StepStatus,
-  tagColor,
-  type Run,
-  type Step,
-} from '@lyra/shared';
+import { lazy, Suspense, useEffect } from 'react';
+import { promptVarsForStep, BUILTIN_VAR_LABELS, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
+import { RunStepCard, providerOf } from './RunStepCard';
+import { buildRunGraph } from './flow/buildGraph';
 
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  running: 'Running',
-  waiting: 'Awaiting approval',
-  done: 'Done',
-  error: 'Error',
-};
-
-function stepTitle(step: Step) {
-  return step.name?.trim() || STEP_DEFS[step.index]?.title || `Step ${step.index + 1}`;
-}
-
-function providerOf(step: Step): string {
-  return step.provider ?? (step.key ? STEP_PROVIDERS[step.key] : '') ?? '';
-}
+const FlowCanvas = lazy(() => import('./FlowCanvas'));
 
 interface RunFlowProps {
   run: Run;
@@ -52,8 +30,9 @@ export function RunFlow({ run, busy, hasKey, onRunStep, onApprove, onSavePrompt 
     }
   }, [isMobile, run.status, run.currentStep, setPage]);
 
+  const stepNames = run.steps.map((s) => s.name).filter((n): n is string => !!n);
   const node = (step: Step) => (
-    <RunNode
+    <RunStepCard
       key={step.index}
       step={step}
       // each node's input = the previous step's output (the {note} seeds step 1)
@@ -65,6 +44,8 @@ export function RunFlow({ run, busy, hasKey, onRunStep, onApprove, onSavePrompt 
       onRun={() => onRunStep(step.index)}
       onApprove={() => onApprove(step.index)}
       onSavePrompt={(p) => onSavePrompt(step.index, p)}
+      vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
+      stepNames={stepNames}
     />
   );
 
@@ -81,110 +62,10 @@ export function RunFlow({ run, busy, hasKey, onRunStep, onApprove, onSavePrompt 
     );
   }
 
+  const graph = buildRunGraph({ run, hasKey });
   return (
-    <div className="flow run-flow">
-      <div className="flow-cap">● Start</div>
-      {run.steps.map((step) => (
-        <div key={step.index}>
-          <div className="flow-connector" />
-          {node(step)}
-        </div>
-      ))}
-      <div className="flow-connector" />
-      <div className="flow-cap end">◉ End</div>
-    </div>
-  );
-}
-
-function RunNode(props: {
-  step: Step;
-  input: string;
-  inputLabel: string;
-  locked: boolean;
-  isCurrent: boolean;
-  busy: boolean;
-  onRun: () => void;
-  onApprove: () => void;
-  onSavePrompt: (prompt: string) => void;
-}) {
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove } = props;
-  const isGate = step.mode === StepMode.Gate;
-  const provider = providerOf(step);
-
-  // Auto-open the node that needs attention (current / gate / errored).
-  const wantsAttention =
-    isCurrent || step.status === StepStatus.Waiting || step.status === StepStatus.Error;
-  const [expanded, setExpanded] = useState(wantsAttention);
-  const [draft, setDraft] = useState(step.prompt);
-  useEffect(() => setDraft(step.prompt), [step.prompt]);
-  const dirty = draft !== step.prompt;
-
-  const runnable = isCurrent && step.status !== StepStatus.Done && step.status !== StepStatus.Waiting;
-  const accent = tagColor(step.name || step.promptId || String(step.index));
-
-  return (
-    <div
-      className={`flow-node run status-${step.status}${isCurrent ? ' current' : ''}${expanded ? ' open' : ''}`}
-      style={{ '--accent': accent } as CSSProperties}
-    >
-      <div className="rn-row">
-        <div className="rn-status"><span className={`rn-dot status-${step.status}`} aria-hidden /></div>
-        <button type="button" className="flow-node-main" onClick={() => setExpanded((v) => !v)}>
-          <div className="flow-node-head">
-            <span className="flow-num">{step.index + 1}</span>
-            <span className="flow-name">{stepTitle(step)}</span>
-            <span className={`mode-tag ${isGate ? 'gate' : 'auto'}`}>{isGate ? 'GATE' : 'AUTO'}</span>
-            <span className={`badge status-${step.status}`}>{STATUS_LABEL[step.status] ?? step.status}</span>
-          </div>
-          <div className="flow-node-sub">{step.model}</div>
-        </button>
-        {/* primary inline action — visible even when collapsed */}
-        {!locked && step.status === StepStatus.Waiting ? (
-          <div className="rn-action">
-            <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onApprove}>
-              Approve
-            </button>
-          </div>
-        ) : !locked && runnable ? (
-          <div className="rn-action">
-            <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onRun}>
-              Run
-            </button>
-          </div>
-        ) : null}
-      </div>
-
-      {expanded && (
-        <div className="rn-body">
-          {input.trim() && (
-            <div className="rn-input">
-              <div className="rn-input-label">{inputLabel}</div>
-              <pre className="result-box rn-input-box">{input}</pre>
-            </div>
-          )}
-          <textarea
-            className="text-input prompt-area"
-            rows={3}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          <div className="rn-body-actions">
-            {dirty && (
-              <button className="btn-ghost" disabled={busy} onClick={() => props.onSavePrompt(draft)}>
-                Save prompt
-              </button>
-            )}
-            {locked && (
-              <span className="muted" style={{ fontSize: 13 }}>
-                Locked — set the <strong>{provider}</strong> key in{' '}
-                <Link to="/settings" style={{ color: 'var(--primary)' }}>Settings</Link>
-              </span>
-            )}
-          </div>
-          {step.error && <p className="step-error">{step.error}</p>}
-          {step.result && <pre className="result-box">{step.result}</pre>}
-        </div>
-      )}
-    </div>
+    <Suspense fallback={<div className="flow-canvas loading">Loading canvas…</div>}>
+      <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt }} />
+    </Suspense>
   );
 }

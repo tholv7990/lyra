@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   defaultModel,
-  labelColor,
   Provider,
   PromptStatus,
   StepMode,
-  tagColor,
   type ApiKeyInfo,
   type Paged,
   type Pipeline,
   type PipelineStep,
+  type PipelineVariable,
   type Prompt,
   type Run,
 } from '@lyra/shared';
@@ -23,12 +22,18 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
 import { EditorShell } from '../components/EditorShell';
 import { RunFlow } from '../components/RunFlow';
-import { FlowPagerControls, useFlowPager } from '../components/FlowPager';
+import { useFlowPager } from '../components/FlowPager';
 import { PromptPicker } from '../components/PromptPicker';
 import { PromptDetails } from '../components/PromptDetails';
 import { EditorActions } from '../components/EditorActions';
-import { EyeIcon } from '../layout/icons';
+import { StepCard } from '../components/StepCard';
+import { RunVariablesModal } from '../components/RunVariablesModal';
+import { PipelineVarsEditor } from '../components/PipelineVarsEditor';
+import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
+import { buildEditGraph } from '../components/flow/buildGraph';
 import { useBreadcrumb } from '../layout/breadcrumb';
+
+const FlowCanvas = lazy(() => import('../components/FlowCanvas'));
 
 const RUN_STATUS_LABEL: Record<string, string> = {
   idle: 'Idle',
@@ -38,14 +43,6 @@ const RUN_STATUS_LABEL: Record<string, string> = {
   awaiting_gate: 'Awaiting approval',
   done: 'Done',
   error: 'Error',
-};
-
-const PROVIDER_LABELS: Record<Provider, string> = {
-  [Provider.OpenAI]: 'OpenAI',
-  [Provider.Anthropic]: 'Anthropic',
-  [Provider.DeepSeek]: 'DeepSeek',
-  [Provider.Image]: 'Image',
-  [Provider.Video]: 'Video',
 };
 
 function uuid() {
@@ -77,12 +74,12 @@ export function PipelineBuilder() {
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
+  const [variables, setVariables] = useState<PipelineVariable[]>([]);
+  const [askVars, setAskVars] = useState(false); // run-start values form open?
   const [editing, setEditing] = useState<Editing>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
 
   // Test-from-builder (no project): run the sequence; {note} fills from the
   // pipeline note. Project-context runs live on the project page.
@@ -93,8 +90,6 @@ export function PipelineBuilder() {
   const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null); // full-prompt viewer
   const runActions = useRunActions(run, setRun);
   const pager = useFlowPager(steps.length); // mobile one-step pager (build mode)
-  const dragFrom = useRef<number | null>(null);
-  const dragTo = useRef<number | null>(null);
 
   useEffect(() => {
     if (!wsId) return;
@@ -106,6 +101,7 @@ export function PipelineBuilder() {
           setDescription(p.description);
           setTags(p.tags);
           setSteps(p.steps);
+          setVariables(p.variables ?? []);
         })
         .catch((e) => setError(e instanceof Error ? e.message : 'Could not load pipeline'));
     }
@@ -208,57 +204,6 @@ export function PipelineBuilder() {
     setDirty(true);
   }
 
-  // Drag-to-reorder: drop the dragged step before the target step.
-  function reorder(from: number, to: number) {
-    if (from === to) return;
-    setSteps((list) => {
-      const next = [...list];
-      const [moved] = next.splice(from, 1);
-      next.splice(from < to ? to - 1 : to, 0, moved);
-      return next;
-    });
-    setDirty(true);
-  }
-
-  // Pointer-based drag — works with mouse AND touch (native HTML5 DnD doesn't
-  // fire on touchscreens). Grab the grip, drag over another step, release to drop.
-  function startDrag(e: ReactPointerEvent, index: number) {
-    if (!canEdit) return;
-    e.preventDefault();
-    dragFrom.current = index;
-    dragTo.current = index;
-    setDragIndex(index);
-    setOverIndex(index);
-
-    const move = (ev: PointerEvent) => {
-      ev.preventDefault(); // stop the page scrolling under the finger
-      const el = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
-      const node = el?.closest('[data-step-index]') as HTMLElement | null;
-      if (!node) return;
-      const idx = Number(node.dataset.stepIndex);
-      if (!Number.isNaN(idx) && idx !== dragTo.current) {
-        dragTo.current = idx;
-        setOverIndex(idx);
-      }
-    };
-    const end = () => {
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', end);
-      document.removeEventListener('pointercancel', end);
-      const from = dragFrom.current;
-      const to = dragTo.current;
-      dragFrom.current = null;
-      dragTo.current = null;
-      setDragIndex(null);
-      setOverIndex(null);
-      if (from !== null && to !== null) reorder(from, to);
-    };
-
-    document.addEventListener('pointermove', move, { passive: false });
-    document.addEventListener('pointerup', end);
-    document.addEventListener('pointercancel', end);
-  }
-
   async function save() {
     if (saving) return;
     // New pipeline: create it (with whatever steps were added), then switch to
@@ -270,13 +215,14 @@ export function PipelineBuilder() {
       try {
         const created = await api<Pipeline>(`/workspaces/${wsId}/pipelines`, {
           method: 'POST',
-          body: JSON.stringify({ name: name.trim(), description, tags, steps }),
+          body: JSON.stringify({ name: name.trim(), description, tags, steps, variables }),
         });
         setPipeline(created);
         setName(created.name);
         setDescription(created.description);
         setTags(created.tags);
         setSteps(created.steps);
+        setVariables(created.variables ?? []);
         setDirty(false);
         navigate(`/pipelines/${created.id}`, { replace: true });
       } catch (e) {
@@ -292,10 +238,11 @@ export function PipelineBuilder() {
     try {
       const updated = await api<Pipeline>(`/pipelines/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ name, description, tags, steps }),
+        body: JSON.stringify({ name, description, tags, steps, variables }),
       });
       setPipeline(updated);
       setSteps(updated.steps);
+      setVariables(updated.variables ?? []);
       setDirty(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save pipeline');
@@ -304,9 +251,16 @@ export function PipelineBuilder() {
     }
   }
 
-  // Test-run this pipeline with no project (typed/blank context), then light up
-  // the same flow. Auto-saves unsaved edits first so the test reflects them.
-  async function startTest() {
+  // Open the variables form first when the pipeline declares any; otherwise run.
+  function triggerTest() {
+    if (isNew || !id || !wsId || steps.length === 0 || creatingRun) return;
+    if (variables.length > 0) setAskVars(true);
+    else void startTest({});
+  }
+
+  // Test-run this pipeline with no project (typed/blank context) + the entered
+  // variable values, then light up the same flow. Auto-saves unsaved edits first.
+  async function startTest(values: Record<string, string>) {
     if (isNew || !id || !wsId || steps.length === 0 || creatingRun) return;
     setCreatingRun(true);
     setError(null);
@@ -314,17 +268,20 @@ export function PipelineBuilder() {
       if (dirty) {
         const updated = await api<Pipeline>(`/pipelines/${id}`, {
           method: 'PATCH',
-          body: JSON.stringify({ name, description, tags, steps }),
+          body: JSON.stringify({ name, description, tags, steps, variables }),
         });
         setPipeline(updated);
         setSteps(updated.steps);
+        setVariables(updated.variables ?? []);
         setDirty(false);
       }
       const created = await api<Run>(`/workspaces/${wsId}/pipelines/${id}/test-runs`, {
         method: 'POST',
+        body: JSON.stringify({ variables: values }),
       });
       setRun(created);
       setRunMode(true);
+      setAskVars(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start test');
     } finally {
@@ -337,147 +294,121 @@ export function PipelineBuilder() {
   }
 
   const ed = editing?.step;
+  // Desktop existing pipeline: name shows in the breadcrumb, so merge the note +
+  // tags into the header row. On mobile the app top bar (breadcrumb) is hidden, so
+  // keep the name in the header there and leave note + tags in the body.
+  const compactHead = !isNew && !pager.isMobile;
 
-  // One editable step node — reused by the full flow (desktop) and the pager
-  // (mobile). Shows the bound prompt's name, snippet, tags, creator + an eye to
-  // open the full prompt.
-  const renderNode = (s: PipelineStep, i: number) => {
-    const p = prompts.find((x) => x.id === s.promptId);
-    return (
-      <div
-        data-step-index={i}
-        className={`flow-node${dragIndex === i ? ' dragging' : ''}${
-          overIndex === i && dragIndex !== null && dragIndex !== i ? ' drag-over' : ''
-        }`}
-        style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}
-      >
-        {canEdit && (
-          <div className="flow-grip" title="Drag to reorder" onPointerDown={(e) => startDrag(e, i)} aria-hidden>
-            ⠿
-          </div>
-        )}
-        <div className="flow-node-main" onClick={() => canEdit && openEdit(i)}>
-          <div className="flow-node-head">
-            <span className="flow-num">{i + 1}</span>
-            <span className="flow-name">{s.name}</span>
-            {canEdit ? (
-              <button
-                type="button"
-                className={`mode-tag mode-toggle ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}
-                title="Toggle gate / auto"
-                onClick={(e) => { e.stopPropagation(); toggleMode(i); }}
-              >
-                {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
-              </button>
-            ) : (
-              <span className={`mode-tag ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
-                {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
-              </span>
-            )}
-            {p && (
-              <span
-                className="flow-eye"
-                role="button"
-                tabIndex={0}
-                title="View full prompt"
-                onClick={(e) => { e.stopPropagation(); setDetailPrompt(p); }}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setDetailPrompt(p); } }}
-              >
-                <EyeIcon width={15} height={15} />
-              </span>
-            )}
-          </div>
-          {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
-          <div className="flow-node-sub">
-            {PROVIDER_LABELS[s.provider]} · {modelLabel(s.provider, s.model)}
-          </div>
-          {p && (p.tags.length > 0 || p.createdBy?.name) && (
-            <div className="flow-node-foot">
-              {p.tags.slice(0, 4).map((t) => (
-                <span key={t} className="tag-chip ro">
-                  <span className="tdot" style={{ background: labelColor(t, labels) }} />
-                  {t}
-                </span>
-              ))}
-              {p.createdBy?.name && (
-                <span className="flow-by">
-                  <span className="flow-avatar">{p.createdBy.name.charAt(0).toUpperCase()}</span>
-                  {p.createdBy.name}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        {canEdit && (
-          <div className="flow-node-actions">
-            <button className="icon-mini" title="Move up" onClick={() => move(i, -1)}>↑</button>
-            <button className="icon-mini" title="Move down" onClick={() => move(i, 1)}>↓</button>
-            <button className="icon-mini danger" title="Remove" onClick={() => removeStep(i)}>×</button>
-          </div>
-        )}
-      </div>
-    );
+  // Actions flow out of the step cards (canvas + pager) through this context, so
+  // StepCard stays a pure presentational component with no closure over builder state.
+  const flowCbs: FlowCallbacks = {
+    busy: false,
+    onEdit: openEdit,
+    onToggleMode: toggleMode,
+    onMove: move,
+    onRemove: removeStep,
+    onInsert: openNew,
+    onViewPrompt: (id) => {
+      const pr = prompts.find((x) => x.id === id);
+      if (pr) setDetailPrompt(pr);
+    },
   };
+
+  // One editable step node — reused by the desktop canvas (Task 9) and the mobile pager.
+  const renderNode = (s: PipelineStep, i: number) => (
+    <FlowCallbacksProvider value={flowCbs}>
+      <StepCard
+        step={s}
+        index={i}
+        canEdit={canEdit}
+        prompt={prompts.find((x) => x.id === s.promptId)}
+        labels={labels}
+        modelLabel={modelLabel}
+      />
+    </FlowCallbacksProvider>
+  );
 
   return (
     <EditorShell
       wide
       onBack={() => navigate('/pipelines')}
       title={
-        <input
-          className="eshell-name"
-          value={name}
-          disabled={!canEdit || runMode}
-          onChange={(e) => mark(setName)(e.target.value)}
-          placeholder="Pipeline name"
-        />
+        !compactHead ? (
+          <input
+            className="eshell-name"
+            value={name}
+            disabled={!canEdit || runMode}
+            onChange={(e) => mark(setName)(e.target.value)}
+            placeholder="Pipeline name"
+          />
+        ) : (
+          // Desktop existing: name lives in the breadcrumb, so reuse the header
+          // row for the note + tags — no separate strip, less wasted top space.
+          <div className="pb-headrow">
+            <input
+              className="pb-note"
+              value={description}
+              disabled={!canEdit || runMode}
+              onChange={(e) => mark(setDescription)(e.target.value)}
+              placeholder="Note (optional) — available to prompts as {note}"
+            />
+            {!runMode && (
+              <div className="pb-tags">
+                <LabelPicker value={tags} labels={labels} onChange={mark(setTags)} onCreate={createLabel} />
+              </div>
+            )}
+          </div>
+        )
       }
       actions={
         runMode ? undefined : (
-          <EditorActions
-            onConfirm={() => void save()}
-            onCancel={() => navigate('/pipelines')}
-            confirmDisabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
-            confirmTitle={isNew ? 'Create pipeline' : 'Save changes'}
-          />
+          <>
+            {!isNew && (
+              <button
+                className="btn-primary"
+                style={{ width: 'auto', marginTop: 0 }}
+                disabled={steps.length === 0 || creatingRun || saving}
+                onClick={triggerTest}
+                title="Runs with no project · {note} fills from the note"
+              >
+                {creatingRun ? 'Testing…' : 'Test ▶'}
+              </button>
+            )}
+            <EditorActions
+              onConfirm={() => void save()}
+              onCancel={() => navigate('/pipelines')}
+              confirmDisabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
+              confirmTitle={isNew ? 'Create pipeline' : 'Save changes'}
+            />
+          </>
         )
       }
     >
-      {/* test trigger (build) / run controls (testing) — no project here */}
+      {/* run controls only while testing — the Test ▶ trigger lives in the header */}
       {runMode && run ? (
-        <div className="run-bar">
-          <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} onClick={() => setRunMode(false)}>
-            ‹ Builder
-          </button>
-          <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL[run.status] ?? run.status}</span>
-          <span className="run-bar-proj">Test run</span>
-          <div className="run-bar-actions">
-            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
-              Run all
+        <>
+          <div className="run-bar">
+            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} onClick={() => setRunMode(false)}>
+              ← Back to editing
             </button>
-            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
-              Stop
-            </button>
-            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy} onClick={runActions.reset}>
-              Reset
-            </button>
+            <span className="run-bar-proj"><strong>Test run</strong></span>
+            <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL[run.status] ?? run.status}</span>
+            <div className="run-bar-actions">
+              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
+                ▶ Run all
+              </button>
+              <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
+                Stop
+              </button>
+              <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy} onClick={runActions.reset}>
+                Reset
+              </button>
+            </div>
           </div>
-        </div>
-      ) : !isNew ? (
-        <div className="run-bar">
-          <span className="run-bar-label">Test</span>
-          <button
-            className="btn-primary"
-            style={{ width: 'auto', marginTop: 0 }}
-            disabled={steps.length === 0 || creatingRun || saving}
-            onClick={() => void startTest()}
-          >
-            {creatingRun ? 'Testing…' : 'Test ▶'}
-          </button>
-          <span className="muted" style={{ fontSize: 12 }}>
-            {steps.length === 0 ? 'Add a step to test' : 'Runs with no project · {note} fills from the note'}
-          </span>
-        </div>
+          <p className="run-hint">
+            Preview run — no project attached. Each step calls its AI model; click <strong>▶ Run all</strong> (or a single step’s <strong>Run</strong>), and the answer appears inside that step and feeds the next. <strong>← Back to editing</strong> returns to the builder.
+          </p>
+        </>
       ) : null}
 
       {runMode && run ? (
@@ -491,63 +422,66 @@ export function PipelineBuilder() {
         />
       ) : (
       <>
-      <div className="pb-top">
-        <input
-          className="text-input pb-desc"
-          value={description}
+      <div className="pb-meta">
+        {!compactHead && (
+          <div className="pb-top">
+            <input
+              className="text-input pb-desc"
+              value={description}
+              disabled={!canEdit}
+              onChange={(e) => mark(setDescription)(e.target.value)}
+              placeholder="Note (optional) — available to prompts as {note}"
+            />
+            <div className="pb-tags">
+              <LabelPicker
+                value={tags}
+                labels={labels}
+                onChange={mark(setTags)}
+                onCreate={createLabel}
+              />
+            </div>
+          </div>
+        )}
+
+        <PipelineVarsEditor
+          variables={variables}
           disabled={!canEdit}
-          onChange={(e) => mark(setDescription)(e.target.value)}
-          placeholder="Note (optional) — available to prompts as {note}"
+          onChange={(v) => {
+            setVariables(v);
+            setDirty(true);
+          }}
         />
-        <div className="pb-tags">
-          <LabelPicker
-            value={tags}
-            labels={labels}
-            onChange={mark(setTags)}
-            onCreate={createLabel}
-          />
-        </div>
+
+        {error && <p className="error">{error}</p>}
+        {prompts.length === 0 && (
+          <p className="empty">
+            No prompts yet — <Link to="/prompts" style={{ color: 'var(--primary)' }}>create a prompt</Link> first to add steps.
+          </p>
+        )}
       </div>
 
-      {error && <p className="error">{error}</p>}
-      {prompts.length === 0 && (
-        <p className="empty">
-          No prompts yet — <Link to="/prompts" style={{ color: 'var(--primary)' }}>create a prompt</Link> first to add steps.
-        </p>
-      )}
-
       {pager.isMobile ? (
-        <div className="flow flow-edit pager">
-          {pager.page === 0 && (
-            <>
-              <div className="flow-cap">● Start</div>
-              {canEdit && steps.length === 0 && <Connector onAdd={() => openNew(0)} />}
-            </>
-          )}
-          {pager.page >= 1 && pager.page <= steps.length && (
-            <>
-              {canEdit && <Connector onAdd={() => openNew(pager.page - 1)} />}
-              {renderNode(steps[pager.page - 1], pager.page - 1)}
-              {canEdit && pager.page === steps.length && <Connector onAdd={() => openNew(steps.length)} />}
-            </>
-          )}
-          {pager.page === steps.length + 1 && <div className="flow-cap end">◉ End</div>}
-          <FlowPagerControls pager={pager} stepCount={steps.length} />
-        </div>
-      ) : (
-        <div className="flow">
+        // Mobile: the whole pipeline as a scrollable vertical overview (every step
+        // visible at once, tap a card to edit, + between cards to insert).
+        <div className="flow flow-edit">
           <div className="flow-cap">● Start</div>
-
+          {canEdit && <Connector onAdd={() => openNew(0)} />}
           {steps.map((s, i) => (
-            <div key={s.id}>
-              <Connector onAdd={canEdit ? () => openNew(i) : undefined} />
+            <Fragment key={s.id}>
               {renderNode(s, i)}
-            </div>
+              {canEdit && <Connector onAdd={() => openNew(i + 1)} />}
+            </Fragment>
           ))}
-
-          <Connector onAdd={canEdit ? () => openNew(steps.length) : undefined} />
           <div className="flow-cap end">◉ End</div>
         </div>
+      ) : (
+        <Suspense fallback={<div className="flow-canvas loading">Loading canvas…</div>}>
+          <FlowCanvas
+            graph={buildEditGraph({ steps, canEdit })}
+            callbacks={flowCbs}
+            editData={{ prompts, labels, modelLabel }}
+          />
+        </Suspense>
       )}
 
       {ed && (
@@ -594,6 +528,16 @@ export function PipelineBuilder() {
       )}
 
       {runActions.error && <p className="error">{runActions.error}</p>}
+
+      {askVars && (
+        <RunVariablesModal
+          title="Test run"
+          variables={variables}
+          busy={creatingRun}
+          onCancel={() => setAskVars(false)}
+          onRun={(values) => void startTest(values)}
+        />
+      )}
 
       {detailPrompt && (
         <PromptDetails prompt={detailPrompt} labels={labels} onClose={() => setDetailPrompt(null)} />

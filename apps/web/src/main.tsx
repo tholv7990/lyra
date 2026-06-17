@@ -5,6 +5,8 @@ import { AuthProvider } from './auth/AuthContext';
 import { WorkspaceProvider } from './workspace/WorkspaceContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { App } from './App';
+// React Flow stylesheet (base styles before app overrides)
+import '@xyflow/react/dist/style.css';
 // Design tokens (CSS vars + Tailwind @theme) — single source of truth.
 // Usage: <button className="bg-primary text-on-primary rounded-pill shadow-glow font-sans">
 //        <h1 className="text-display-xl font-display text-ink">

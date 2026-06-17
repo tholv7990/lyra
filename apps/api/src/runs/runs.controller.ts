@@ -20,7 +20,21 @@ import { RunsService } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
 import type { RunDocument } from './run.schema';
-import { UpdatePromptBody } from './dto/runs.dto';
+import { RunPipelineBody, UpdatePromptBody } from './dto/runs.dto';
+
+// Merge entered values with the pipeline's variable definitions: only keys the
+// pipeline declares are kept; a missing value falls back to the variable default.
+function mergeCustomVars(
+  defs: { key: string; default?: string }[] = [],
+  supplied?: Record<string, string>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const d of defs) {
+    const v = supplied?.[d.key];
+    out[d.key] = typeof v === 'string' ? v : d.default ?? '';
+  }
+  return out;
+}
 
 @Controller()
 export class RunsController {
@@ -35,6 +49,7 @@ export class RunsController {
   async createFromPipeline(
     @CurrentProject() project: ProjectDocument,
     @Param('pipelineId') pipelineId: string,
+    @Body() body: RunPipelineBody,
     @CurrentUser() user: User,
   ): Promise<RunModel> {
     const pipeline = await this.pipelines.findActiveById(pipelineId);
@@ -53,6 +68,7 @@ export class RunsController {
           homepageUrl: project.homepageUrl,
           note: pipeline.description ?? '',
         },
+        variables: mergeCustomVars(pipeline.variables, body.variables),
         steps: pipeline.steps.map((s) => ({
           name: s.name,
           promptId: s.promptId,
@@ -73,6 +89,7 @@ export class RunsController {
   async createTestRun(
     @Param('id') workspaceId: string,
     @Param('pipelineId') pipelineId: string,
+    @Body() body: RunPipelineBody,
     @CurrentUser() user: User,
   ): Promise<RunModel> {
     const pipeline = await this.pipelines.findActiveById(pipelineId);
@@ -90,6 +107,7 @@ export class RunsController {
           homepageUrl: '',
           note: pipeline.description ?? '',
         },
+        variables: mergeCustomVars(pipeline.variables, body.variables),
         steps: pipeline.steps.map((s) => ({
           name: s.name,
           promptId: s.promptId,

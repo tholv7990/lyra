@@ -16,8 +16,26 @@ import {
   TAG_MAX_LEN,
   type CreatePipelineDto,
   type PipelineStepInput,
+  type PipelineVariableInput,
   type UpdatePipelineDto,
 } from '@lyra/shared';
+
+export class PipelineVariableBody implements PipelineVariableInput {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(60)
+  key!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  label?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  default?: string;
+}
 
 export class PipelineStepBody implements PipelineStepInput {
   @IsOptional()
@@ -64,6 +82,13 @@ export class CreatePipelineBody implements CreatePipelineDto {
   @ValidateNested({ each: true })
   @Type(() => PipelineStepBody)
   steps?: PipelineStepBody[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => PipelineVariableBody)
+  variables?: PipelineVariableBody[];
 }
 
 export class UpdatePipelineBody implements UpdatePipelineDto {
@@ -88,4 +113,11 @@ export class UpdatePipelineBody implements UpdatePipelineDto {
   @ValidateNested({ each: true })
   @Type(() => PipelineStepBody)
   steps?: PipelineStepBody[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => PipelineVariableBody)
+  variables?: PipelineVariableBody[];
 }

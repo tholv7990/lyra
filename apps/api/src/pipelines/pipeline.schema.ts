@@ -15,6 +15,14 @@ export class PipelineStepItem {
 }
 const PipelineStepItemSchema = SchemaFactory.createForClass(PipelineStepItem);
 
+@Schema({ _id: false })
+export class PipelineVariableItem {
+  @Prop({ required: true, trim: true }) key!: string;
+  @Prop() label?: string;
+  @Prop() default?: string;
+}
+const PipelineVariableItemSchema = SchemaFactory.createForClass(PipelineVariableItem);
+
 export type PipelineDocument = HydratedDocument<Pipeline>;
 
 @Schema({ timestamps: true })
@@ -33,6 +41,9 @@ export class Pipeline extends AuditedEntity {
 
   @Prop({ type: [PipelineStepItemSchema], default: [] })
   steps!: PipelineStepItem[];
+
+  @Prop({ type: [PipelineVariableItemSchema], default: [] })
+  variables!: PipelineVariableItem[];
 }
 
 export const PipelineSchema = SchemaFactory.createForClass(Pipeline);

@@ -2,7 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
-import { type Pipeline as PipelineModel, type PipelineStepInput } from '@lyra/shared';
+import {
+  type Pipeline as PipelineModel,
+  type PipelineStepInput,
+  type PipelineVariableInput,
+} from '@lyra/shared';
 import { Pipeline } from './pipeline.schema';
 import type { PipelineDocument } from './pipeline.schema';
 import { ProjectPipeline } from './project-pipeline.schema';
@@ -56,6 +60,20 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         mode: s.mode,
       };
     });
+  }
+
+  // Normalize pipeline variable definitions: trim keys, drop blanks, dedupe by
+  // key (first wins). Keys are the {token} names referenced in step prompts.
+  normalizeVariables(variables: PipelineVariableInput[] = []) {
+    const seen = new Set<string>();
+    const out: { key: string; label?: string; default?: string }[] = [];
+    for (const v of variables) {
+      const key = v.key?.trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push({ key, label: v.label?.trim() || undefined, default: v.default ?? undefined });
+    }
+    return out;
   }
 
   // ===== Project assignment (many-to-many link) =====

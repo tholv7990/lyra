@@ -1,0 +1,13 @@
+[mcp_servers.figma-dev]
+url = "http://127.0.0.1:3845/mcp"
+
+[mcp_servers.mongodb]
+command = "npx"
+args = [
+    "-y",
+    "mongodb-mcp-server@latest",
+    "--readOnly",
+]
+
+[mcp_servers.mongodb.env]
+MDB_MCP_CONNECTION_STRING = "mongodb://localhost:27017/lyra?replicaSet=rs0"

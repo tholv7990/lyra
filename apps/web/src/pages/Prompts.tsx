@@ -5,7 +5,6 @@ import {
   Provider,
   defaultModel,
   labelColor,
-  type Conversation,
   type Paged,
   type Prompt,
   type TagCount,
@@ -136,25 +135,21 @@ export function Prompts() {
     if (val && val !== p.title) void patchPrompt(p, { title: val });
   }
 
-  // Open a prompt in a new chat: create a conversation seeded with the prompt's
-  // provider·model, then prefill the composer with its content (via nav state).
-  async function openInChat(p: Prompt) {
-    if (!wsId) return;
+  // Open a prompt in a new chat: go to the chat page with the prompt's content +
+  // provider·model carried in nav state. The conversation is created lazily on the
+  // first send — so tapping a prompt doesn't litter history with empty chats, and
+  // Back returns cleanly to the prompt list (no double-create on a slow mobile tap).
+  function openInChat(p: Prompt) {
     const prov = p.provider ?? Provider.Anthropic;
-    try {
-      const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
-        method: 'POST',
-        body: JSON.stringify({
-          provider: prov,
-          model: p.model ?? defaultModel(prov),
-          title: p.title,
-          originPromptId: p.id,
-        }),
-      });
-      navigate(`/chats/${convo.id}`, { state: { seed: p.content } });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not open chat');
-    }
+    navigate('/chats', {
+      state: {
+        seed: p.content,
+        provider: prov,
+        model: p.model ?? defaultModel(prov),
+        // origin breadcrumb: the chat shows "Prompts / <title>" and links back here
+        from: { label: 'Prompts', to: '/prompts', record: p.title },
+      },
+    });
   }
 
   async function confirmDelete() {
@@ -268,7 +263,7 @@ export function Prompts() {
                       type="button"
                       className="prow-name"
                       title={editable ? 'Click to rename' : p.title}
-                      onClick={() => (editable ? setEditing({ id: p.id, val: p.title }) : void openInChat(p))}
+                      onClick={() => (editable ? setEditing({ id: p.id, val: p.title }) : openInChat(p))}
                     >
                       <span className="nm">{p.title}</span>
                       {p.content && <span className="snip">{p.content}</span>}
@@ -314,7 +309,7 @@ export function Prompts() {
                   <span className="prow-date">{fmtDate(p.updatedAt)}</span>
 
                   <span className="prow-actions">
-                    <button className="txt-btn" onClick={() => void openInChat(p)}>Open in chat</button>
+                    <button className="txt-btn" onClick={() => openInChat(p)}>Open in chat</button>
                     {editable && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
                   </span>
                 </div>

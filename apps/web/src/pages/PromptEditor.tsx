@@ -272,7 +272,11 @@ export function PromptEditor() {
         ) : (
           <div className="pe-preview-hint">
             <h3>Write your prompt</h3>
-            <p>Type below — a live preview renders here. Use {'{product}'}, {'{niche}'}, {'{homepage}'} placeholders.</p>
+            <p>Type below — a live preview renders here.</p>
+            <p className="pe-preview-vars">
+              Variables: <code>{'{product}'}</code> <code>{'{niche}'}</code> <code>{'{homepage}'}</code> <code>{'{note}'}</code>{' '}
+              — and in a pipeline, <code>{'{input}'}</code> (previous step) or <code>{'{step:Name}'}</code> (any earlier step).
+            </p>
           </div>
         )}
       </div>

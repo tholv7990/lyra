@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { canEditProject, type Project } from '@lyra/shared';
+import { canEditProject, ProjectVisibility, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -8,7 +8,19 @@ import { EditorShell } from '../components/EditorShell';
 import { CheckIcon, XIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
-const empty = { name: '', product: '', niche: '', homepageUrl: '' };
+const VIS_LABEL: Record<ProjectVisibility, string> = {
+  [ProjectVisibility.Private]: 'Private — only you',
+  [ProjectVisibility.Shared]: 'Shared — chosen members',
+  [ProjectVisibility.Workspace]: 'Workspace — all members',
+};
+
+const empty = {
+  name: '',
+  product: '',
+  niche: '',
+  homepageUrl: '',
+  visibility: ProjectVisibility.Private,
+};
 
 export function ProjectEditor() {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +52,7 @@ export function ProjectEditor() {
           setDenied(true);
           return;
         }
-        setForm({ name: p.name, product: p.product, niche: p.niche, homepageUrl: p.homepageUrl });
+        setForm({ name: p.name, product: p.product, niche: p.niche, homepageUrl: p.homepageUrl, visibility: p.visibility });
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load project'))
       .finally(() => setLoading(false));
@@ -112,6 +124,20 @@ export function ProjectEditor() {
           <span className="pf-label">Homepage URL</span>
           <input className="text-input" placeholder="https://…" value={form.homepageUrl} onChange={(e) => setForm({ ...form, homepageUrl: e.target.value })} />
         </div>
+        {isEdit && (
+          <div className="pf-field">
+            <span className="pf-label">Visibility</span>
+            <select
+              className="text-input"
+              value={form.visibility}
+              onChange={(e) => setForm({ ...form, visibility: e.target.value as ProjectVisibility })}
+            >
+              {Object.values(ProjectVisibility).map((v) => (
+                <option key={v} value={v}>{VIS_LABEL[v]}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </EditorShell>
   );

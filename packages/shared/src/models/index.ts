@@ -121,6 +121,10 @@ export interface Run extends Audited {
   pipelineId?: string; // set when the run came from a composable pipeline
   pipelineName?: string;
   context?: { product: string; niche: string; homepageUrl: string; note?: string };
+  // Snapshot of token→value resolved into step prompts at run time: project vars
+  // ({product}/{niche}/{homepage}/{note}), pipeline custom vars, and system vars
+  // ({date}). Frozen at run creation so later pipeline/project edits don't leak in.
+  variables?: Record<string, string>;
   status: RunStatus;
   currentStep: number;
   steps: Step[];
@@ -229,6 +233,15 @@ export interface PipelineStep {
   mode: StepMode;
 }
 
+// A user-defined variable for a pipeline. Any step prompt can reference it as
+// {key}; its value is entered when a run starts (prefilled from `default`), then
+// resolved into the prompts at run time alongside project + system vars.
+export interface PipelineVariable {
+  key: string; // token name, e.g. "tone" → referenced as {tone}
+  label?: string; // human label for the run-start form / composer chip
+  default?: string; // prefilled value
+}
+
 // A reusable workspace-library pipeline: an ordered, linear chain of steps.
 // Assigned to projects (many-to-many) and run in a project's context.
 export interface Pipeline extends Audited {
@@ -238,6 +251,7 @@ export interface Pipeline extends Audited {
   description: string;
   tags: string[];
   steps: PipelineStep[];
+  variables: PipelineVariable[];
 }
 
 export interface Asset {

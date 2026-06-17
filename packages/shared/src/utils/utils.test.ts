@@ -4,6 +4,9 @@ import {
   canEditProject,
   canManageKeys,
   fillPrompt,
+  resolveStepRefs,
+  promptVarsForStep,
+  unknownStepRefs,
   normalizeTag,
   tagKey,
   dedupeTags,
@@ -94,6 +97,98 @@ describe('fillPrompt', () => {
   });
   it('replaces all occurrences of a placeholder', () => {
     expect(fillPrompt('{product} {product}', { product: 'A' })).toBe('A A');
+  });
+  it('substitutes arbitrary custom keys', () => {
+    expect(fillPrompt('Tone: {tone}', { tone: 'bold' })).toBe('Tone: bold');
+  });
+  it('leaves {step:Name} untouched (its colon is not part of a {key})', () => {
+    expect(fillPrompt('Use {step:Brief} and {product}', { product: 'A', step: 'X' })).toBe(
+      'Use {step:Brief} and A',
+    );
+  });
+});
+
+describe('promptVarsForStep', () => {
+  const steps = [
+    { index: 0, name: 'Brief' },
+    { index: 1, name: 'Insight' },
+    { index: 2, name: 'Prompts' },
+  ];
+
+  it('offers {input} only after the first step', () => {
+    expect(promptVarsForStep(steps, 0, {}).some((v) => v.token === '{input}')).toBe(false);
+    expect(promptVarsForStep(steps, 1, {}).some((v) => v.token === '{input}')).toBe(true);
+  });
+
+  it('offers {step:Name} for earlier named steps only (not self or later)', () => {
+    const tokens = promptVarsForStep(steps, 2, {}).map((v) => v.token);
+    expect(tokens).toContain('{step:Brief}');
+    expect(tokens).toContain('{step:Insight}');
+    expect(tokens).not.toContain('{step:Prompts}');
+  });
+
+  it('offers only project vars present in the context (blank omitted)', () => {
+    const tokens = promptVarsForStep(steps, 1, { product: 'Runner X', niche: '   ' }).map((v) => v.token);
+    expect(tokens).toContain('{product}');
+    expect(tokens).not.toContain('{niche}');
+    expect(tokens).not.toContain('{homepage}');
+  });
+
+  it('lists run variables present in the map, labelled (blank values skipped)', () => {
+    const out = promptVarsForStep(
+      steps,
+      1,
+      { homepage: 'https://x.com', tone: 'bold', blank: '  ' },
+      { homepage: 'Homepage', tone: 'Tone' },
+    );
+    const tokens = out.map((v) => v.token);
+    expect(tokens).toContain('{homepage}');
+    expect(tokens).toContain('{tone}');
+    expect(tokens).not.toContain('{blank}');
+    expect(out.find((v) => v.token === '{tone}')?.label).toBe('Tone');
+    expect(out.find((v) => v.token === '{homepage}')?.label).toBe('Homepage');
+  });
+});
+
+describe('unknownStepRefs', () => {
+  it('flags {step:X} names matching no step (case-insensitive), de-duped', () => {
+    expect(
+      unknownStepRefs('Use {step:Brief} and {step:Ghost} and {step:ghost}', ['Brief', 'Insight']),
+    ).toEqual(['Ghost']);
+  });
+  it('returns nothing when every reference resolves', () => {
+    expect(unknownStepRefs('{step:Brief} {input} {product}', ['Brief'])).toEqual([]);
+  });
+});
+
+describe('resolveStepRefs', () => {
+  const steps = [
+    { name: 'Brief', result: 'BRIEF-OUT' },
+    { name: 'Insight', result: 'INSIGHT-OUT' },
+    { name: 'Prompts', result: '' },
+  ];
+
+  it('{input} = the most recent earlier step with a result', () => {
+    const r = resolveStepRefs('From input: {input}', steps, 2);
+    expect(r.used).toBe(true);
+    expect(r.prompt).toBe('From input: INSIGHT-OUT');
+  });
+
+  it('{step:Name} pulls a named earlier step (case-insensitive)', () => {
+    const r = resolveStepRefs('Brief was: {step:brief}', steps, 2);
+    expect(r.used).toBe(true);
+    expect(r.prompt).toBe('Brief was: BRIEF-OUT');
+  });
+
+  it('used=false and prompt unchanged when no placeholder is present', () => {
+    const r = resolveStepRefs('No placeholders here', steps, 2);
+    expect(r.used).toBe(false);
+    expect(r.prompt).toBe('No placeholders here');
+  });
+
+  it('unresolved {step:X} (no result or no match) becomes empty', () => {
+    const r = resolveStepRefs('X={step:Prompts} Y={step:Ghost}', steps, 2);
+    expect(r.prompt).toBe('X= Y=');
   });
 });
 

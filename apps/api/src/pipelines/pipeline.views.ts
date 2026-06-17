@@ -1,4 +1,9 @@
-import type { Pipeline as PipelineModel, PipelineStep, UserRef } from '@lyra/shared';
+import type {
+  Pipeline as PipelineModel,
+  PipelineStep,
+  PipelineVariable,
+  UserRef,
+} from '@lyra/shared';
 import type { PipelineDocument } from './pipeline.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';
@@ -22,6 +27,9 @@ export function toPipeline(
         model: s.model,
         mode: s.mode,
       }),
+    ),
+    variables: (p.variables ?? []).map(
+      (v): PipelineVariable => ({ key: v.key, label: v.label, default: v.default }),
     ),
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),

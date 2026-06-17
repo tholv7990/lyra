@@ -470,6 +470,11 @@
      the left edge on wide screens. */
   margin: 0 auto;
 }
+/* Wide editor/workbench pages (builders, the pipeline canvas) go full-bleed —
+   no reading column, no top/bottom page padding; the canvas spans the viewport. */
+.content:has(.eshell.wide) { max-width: none; padding: 0; }
+/* Chats: full-bleed and blended with the page (no narrow centered card column). */
+.content:has(.chat) { max-width: none; padding: 12px 24px; }
 
 /* ===== Home content ===== */
 .home-head h2 {
@@ -622,6 +627,184 @@
   justify-content: flex-end;
 }
 
+/* a whole row that's clickable (e.g. a recent run → opens it) */
+.row.clickable {
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.row.clickable:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Project dashboard: section spacing + focused run-view header */
+.proj-page .section-head.proj-sec {
+  margin-top: 28px;
+}
+.run-view-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.run-view-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.run-view-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.run-view-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.run-back {
+  flex-shrink: 0;
+}
+
+/* Project header: product description + an inline meta line (matches the app's
+   prompt-details meta — no label-on-top grid). */
+.proj-head {
+  margin-bottom: 22px;
+}
+.proj-head-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.proj-product {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.proj-edit {
+  flex-shrink: 0;
+}
+.proj-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.proj-meta a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.proj-meta a:hover {
+  text-decoration: underline;
+}
+.proj-meta .dot {
+  color: var(--ink-tertiary);
+}
+/* Collapsible pipeline card (project dashboard) — header + vertical step list */
+.pipe-card {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.pipe-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+}
+.pipe-head:hover {
+  background: var(--surface-1);
+}
+.pipe-chev {
+  flex-shrink: 0;
+  width: 14px;
+  color: var(--ink-tertiary);
+  font-size: 11px;
+}
+.pipe-head .grow {
+  flex: 1;
+  min-width: 0;
+}
+.pipe-head .title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.pipe-head .sub {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 2px;
+}
+.pipe-steps {
+  padding: 2px 16px 12px 42px;
+  border-top: 1px solid var(--hairline);
+}
+.pipe-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13px;
+}
+.pipe-step:last-of-type {
+  border-bottom: none;
+}
+.pipe-step-n {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.pipe-step-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pipe-step-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.pipe-edit {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+}
+.pipe-empty {
+  margin: 8px 0;
+}
+
 /* bounded key input so the Save/Remove buttons never overflow the row */
 .key-input {
   width: 200px;
@@ -727,7 +910,8 @@
   flex-direction: column;
   padding: 16px 0 4px;
 }
-.eshell.wide { max-width: 1040px; }
+.eshell.wide { max-width: none; padding: 0; }
+.eshell-spacer { flex: 1; }
 
 .eshell-head {
   display: flex;
@@ -803,6 +987,81 @@
   }
   .eshell-name { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
   .eshell-body { padding: 14px; }
+}
+
+/* Desktop full-width builder/workbench: edge-to-edge canvas that fills the height,
+   a compact header (no big title), and a padded meta strip above the canvas. */
+@media (min-width: 821px) {
+  .eshell.wide .eshell-head {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  /* Builder + builder test-run: the canvas is the whole job, so fill the height. */
+  .eshell.wide .eshell-body:has(.pb-meta),
+  .eshell.wide .eshell-body:has(.run-bar) {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+  .eshell.wide .eshell-body:has(.pb-meta) .flow-canvas,
+  .eshell.wide .eshell-body:has(.run-bar) .flow-canvas {
+    flex: 1;
+    height: auto;
+    min-height: 360px;
+  }
+  .eshell.wide .pb-meta {
+    flex-shrink: 0;
+    padding: 12px 24px 4px;
+  }
+  /* note + tags share one compact row */
+  .eshell.wide .pb-top {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .eshell.wide .pb-desc { flex: 1; margin-bottom: 0; }
+  .eshell.wide .pb-tags { flex-shrink: 0; max-width: 340px; }
+  .eshell.wide .eshell-body:has(.run-bar) .run-bar { margin: 12px 24px 6px; }
+  .eshell.wide .eshell-body:has(.run-bar) .run-hint { margin: 0 24px 12px; }
+
+  /* Project detail: a comfortable, readable scrolling document (Linear-style) —
+     centered content column, a contained (card) canvas, summary flowing below. */
+  .eshell.wide .eshell-body:has(.proj-page) {
+    padding: 18px max(24px, calc((100% - 1120px) / 2)) 48px;
+  }
+  .eshell.wide .eshell-body:has(.proj-page) .flow-canvas {
+    height: 440px;
+    min-height: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--surface-1);
+  }
+  /* The in-project run view matches the pipeline builder: full-bleed, edge-to-edge
+     canvas that fills the viewport (not a boxed card); the summary scrolls below. */
+  .eshell.wide .eshell-body:has(.run-view) {
+    padding: 0;
+  }
+  .eshell.wide .eshell-body:has(.run-view) .run-view-head {
+    padding: 14px 24px;
+    margin-bottom: 0;
+  }
+  .eshell.wide .eshell-body:has(.run-view) .flow-canvas {
+    height: calc(100vh - 116px);
+    min-height: 360px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+  .eshell.wide .eshell-body:has(.run-view) .run-summary {
+    padding: 0 24px 40px;
+    margin-top: 18px;
+  }
+  /* the name is in the breadcrumb on desktop — drop the otherwise-empty header bar */
+  .eshell.wide:has(.proj-page) > .eshell-head {
+    display: none;
+  }
 }
 
 /* prompt editor: a flat surface on the SAME page background as everything else —
@@ -1938,7 +2197,8 @@
   align-items: center;
   gap: 5px;
   flex-wrap: wrap;
-  overflow: hidden;
+  /* visible so the label-picker dropdown isn't clipped inside the cell */
+  overflow: visible;
 }
 
 .prow-tags .more {
@@ -3024,6 +3284,34 @@
   max-width: 520px;
 }
 
+/* Desktop: note + tags merged into the header row (the title slot). The note is a
+   borderless inline field; the breadcrumb already carries the pipeline name. */
+.pb-headrow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pb-headrow .pb-tags {
+  flex-shrink: 0;
+  max-width: 300px;
+}
+.pb-note {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  padding: 0;
+}
+.pb-note::placeholder {
+  color: var(--ink-tertiary);
+}
+
 .flow {
   display: flex;
   flex-direction: column;
@@ -3270,6 +3558,21 @@
 .flow-node.run.status-waiting { border-left-color: #d4a72c; }
 .flow-node.run.current { box-shadow: 0 0 0 3px var(--primary-tint); border-color: var(--primary); }
 
+/* ===== n8n-style React Flow canvas ===== */
+.flow-canvas { width: 100%; height: 70vh; min-height: 480px; }
+.flow-canvas.loading { display: grid; place-items: center; color: var(--ink-muted); }
+.react-flow__attribution { display: none; }
+/* let our card styles show through React Flow's node chrome */
+.react-flow__node { background: transparent; border: 0; padding: 0; box-shadow: none; width: 280px; }
+.flow-rf-node { width: 100%; }
+.react-flow__node .flow-node,
+.react-flow__node .flow-cap { margin: 0; }
+.react-flow__node .flow-node { max-width: none; }
+.react-flow__handle { width: 8px; height: 8px; background: var(--hairline); border: 0; }
+.react-flow__edge-path { stroke: var(--hairline); stroke-width: 1.5; }
+.react-flow__edge.animated .react-flow__edge-path { stroke: var(--primary); }
+.flow-tidy { width: auto; margin: 0; padding: 4px 10px; font-size: 13px; }
+
 .rn-body {
   padding: 12px 15px 14px;
   border-top: 1px solid var(--hairline);
@@ -3303,6 +3606,78 @@
   background: var(--surface-1);
 }
 
+/* insert-on-click variable chips above the step prompt */
+.rn-vars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.rn-vars-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.var-chip {
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+.var-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.rn-var-warn {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #b54708;
+}
+
+/* pipeline variables editor (builder) */
+.pvars {
+  margin: 4px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--surface-1);
+}
+.pvars-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.pvars-title { font-size: 13px; font-weight: 600; }
+.pvars-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.pvars-add { padding: 4px 10px; font-size: 13px; }
+@media (max-width: 640px) {
+  .pvars-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* run-start variable values modal */
+.drawer.runvars { max-width: 460px; }
+.runvars-fields { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; }
+.runvars-field { display: flex; flex-direction: column; gap: 4px; }
+.runvars-flabel { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.runvars-flabel code { font-size: 12px; color: var(--ink-muted); }
+.runvars-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
 /* run trigger / control bar at the top of the builder body */
 .run-bar {
   display: flex;
@@ -3310,14 +3685,124 @@
   gap: 10px;
   flex-wrap: wrap;
   padding: 10px 12px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   background: var(--surface-1);
   border: 1px solid var(--hairline);
   border-radius: 12px;
 }
 .run-bar-label { font-size: 13px; font-weight: 500; color: var(--ink-muted); }
 .run-bar-proj { font-size: 13px; color: var(--ink-muted); }
+.run-bar-proj strong { color: var(--ink); font-weight: 600; font-size: 14px; }
 .run-bar-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+/* one-line explanation of what the test/run workbench does */
+.run-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+.run-hint strong { color: var(--ink); font-weight: 600; }
+
+/* ===== Run summary — final result + run log (project run view) ===== */
+.run-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+/* a step failed */
+.run-error {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #f1c9c9;
+  border-left: 3px solid #e5484d;
+  border-radius: 12px;
+  background: #fdf1f1;
+}
+.run-error-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.run-error-main strong { color: #b42318; font-size: 14px; }
+.run-error-main span { color: #912018; font-size: 13px; word-break: break-word; }
+.run-error-retry { flex-shrink: 0; }
+
+/* the deliverable — the last step's output */
+.run-final {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.run-final-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+}
+.run-final-head h3 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.run-final-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.run-final-body {
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+/* run log / timeline */
+.run-timeline {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.run-timeline-head {
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+}
+.run-tl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--hairline);
+}
+.run-tl-row:last-child { border-bottom: none; }
+.run-tl-row.err { background: #fef6f6; }
+.run-tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.run-tl-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.run-tl-status { font-size: 12px; color: var(--ink-muted); flex-shrink: 0; }
+.run-tl-status.st-error { color: #e5484d; font-weight: 500; }
+.run-tl-status.st-done { color: #2da44e; }
+.run-tl-status.st-running,
+.run-tl-status.st-waiting { color: #b58a0c; }
+.run-tl-meta {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  color: var(--ink-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
 
 /* mobile one-step pager (decision 15): show a single page, page through steps */
 .flow.pager .flow-node {
@@ -3628,7 +4113,7 @@
   grid-template-columns: 240px 1fr;
   gap: 16px;
   align-items: stretch;
-  height: calc(100vh - 128px);
+  height: calc(100vh - 84px);
 }
 
 .chat-scrim {
@@ -3637,10 +4122,11 @@
 
 /* history sidebar */
 .chat-history {
-  background: #fff;
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--hairline);
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -3724,10 +4210,10 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #fff;
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -3775,6 +4261,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+}
+
+/* In-chat origin crumb ("Prompts /"). The desktop app top bar already shows the
+   breadcrumb, so this only appears on mobile, where that top bar is hidden. */
+.chat-crumb,
+.chat-crumb-sep {
+  display: none;
 }
 
 .pg-back {
@@ -4582,6 +5075,21 @@
     background: var(--app-bg);
   }
   .pg-headtags { display: none; }
+  /* mobile has no app top bar — surface the origin crumb here so there's a
+     one-tap way back (e.g. to the prompt list) instead of via the menu drawer */
+  .chat-crumb {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--primary);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .chat-crumb-sep {
+    display: inline;
+    flex-shrink: 0;
+    color: var(--ink-tertiary);
+  }
   .chat-history-btn { display: inline-flex; }
   .chat-thread { padding: 16px 14px; }
   /* composer blends into the page (no white box) */
@@ -4596,6 +5104,11 @@
     width: 280px;
     z-index: 75;
     border-radius: 0;
+    /* the drawer slides over the chat, so it must be opaque (not the desktop
+       transparent blend) and lift off the scrim */
+    background: var(--app-bg);
+    border-right: 1px solid var(--hairline);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.12);
     transform: translateX(-100%);
     transition: transform 0.2s ease;
   }

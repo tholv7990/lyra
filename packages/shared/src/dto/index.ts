@@ -110,11 +110,18 @@ export interface PipelineStepInput {
   mode: StepMode;
 }
 
+export interface PipelineVariableInput {
+  key: string;
+  label?: string;
+  default?: string;
+}
+
 export interface CreatePipelineDto {
   name: string;
   description?: string;
   tags?: string[];
   steps?: PipelineStepInput[];
+  variables?: PipelineVariableInput[];
 }
 
 export interface UpdatePipelineDto {
@@ -122,6 +129,13 @@ export interface UpdatePipelineDto {
   description?: string;
   tags?: string[];
   steps?: PipelineStepInput[];
+  variables?: PipelineVariableInput[];
+}
+
+// Values entered when starting a pipeline run (keyed by the pipeline's variable
+// keys). Unknown keys are ignored; missing keys fall back to the variable default.
+export interface RunPipelineDto {
+  variables?: Record<string, string>;
 }
 
 // ===== Workspace labels =====
