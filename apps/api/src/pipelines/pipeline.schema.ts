@@ -12,6 +12,10 @@ export class PipelineStepItem {
   @Prop({ required: true }) model!: string;
   @Prop({ required: true, enum: Object.values(StepMode), default: StepMode.Auto })
   mode!: StepMode;
+
+  // When set, this step maps its prompt over a named run collection (parallel).
+  @Prop({ type: Object })
+  fanOut?: { over: string; itemVar?: string };
 }
 const PipelineStepItemSchema = SchemaFactory.createForClass(PipelineStepItem);
 

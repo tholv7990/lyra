@@ -176,4 +176,62 @@ describe('Pipeline runs (e2e)', () => {
     state = (await http().get(`/runs/${run.id}`).set(auth(token)).expect(200)).body;
     expect(state.status).toBe('done');
   });
+
+  it('fans a step out over a collection (parallel, per-item prompt, arbitrary N)', async () => {
+    const fanPrompt = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Fan', content: 'Brand {item}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const pipelineId = await makePipeline([
+      newStep({ name: 'Brand each', promptId: fanPrompt, fanOut: { over: 'images' } }),
+    ]);
+    // arbitrary N — three items here, but the engine maps over however many
+    const run = (
+      await http()
+        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+        .set(auth(token))
+        .send({ collections: { images: ['Red', 'Blue', 'Green'] } })
+        .expect(201)
+    ).body;
+    expect(run.steps[0].fanOut).toEqual({ over: 'images' });
+
+    const done = (
+      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+    ).body;
+    expect(done.status).toBe('done');
+    // the echo stub returns each item's filled prompt — all three appear
+    const result = done.steps[0].result as string;
+    expect(result).toContain('Brand Red');
+    expect(result).toContain('Brand Blue');
+    expect(result).toContain('Brand Green');
+    expect(result).toContain('3/3');
+  });
+
+  it('fan-out over an empty collection completes without error', async () => {
+    const fanPrompt = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Fan2', content: 'Brand {item}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const pipelineId = await makePipeline([
+      newStep({ name: 'Brand each', promptId: fanPrompt, fanOut: { over: 'images' } }),
+    ]);
+    const run = (
+      await http()
+        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+        .set(auth(token))
+        .send({ collections: {} })
+        .expect(201)
+    ).body;
+    const done = (
+      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+    ).body;
+    expect(done.status).toBe('done');
+    expect(done.steps[0].result).toContain('empty');
+  });
 });

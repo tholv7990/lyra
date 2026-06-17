@@ -32,6 +32,10 @@ export class RunStep {
   @Prop({ required: true, default: '' })
   prompt!: string;
 
+  // When set, the step maps its prompt over a named run collection (parallel).
+  @Prop({ type: Object })
+  fanOut?: { over: string; itemVar?: string };
+
   @Prop()
   result?: string;
 
@@ -78,6 +82,10 @@ export class Run extends AuditedEntity {
   // pipeline custom + system vars). Frozen at creation.
   @Prop({ type: Object })
   variables?: Record<string, string>;
+
+  // Named lists a fan-out step maps over (frozen at creation). Arbitrary length.
+  @Prop({ type: Object })
+  collections?: Record<string, string[]>;
 
   @Prop({ required: true, default: 'idle' })
   status!: string;

@@ -11,4 +11,9 @@ export class RunPipelineBody implements RunPipelineDto {
   @IsOptional()
   @IsObject()
   variables?: Record<string, string>;
+
+  // Named lists a fan-out step maps over (e.g. the source images to brand).
+  @IsOptional()
+  @IsObject()
+  collections?: Record<string, string[]>;
 }

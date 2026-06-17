@@ -103,6 +103,16 @@ export interface Project extends Audited {
   pipelines: string[]; // referenced pipeline ids (workspace library)
 }
 
+// Fan-out config on a step: map the step's prompt over a named run collection,
+// one (parallel) provider call per item. `itemVar` is the token the item fills
+// (default "item"); the item is also available as {input}. N is arbitrary — the
+// engine maps over however many items the collection holds, capped only by the
+// run-time concurrency limit.
+export interface FanOutConfig {
+  over: string; // name of the run collection to map over
+  itemVar?: string; // token for the current item (default 'item')
+}
+
 export interface Step {
   index: number;
   key?: StepKey; // fixed pipeline only; composable pipeline steps omit it
@@ -113,6 +123,7 @@ export interface Step {
   status: StepStatus;
   model: string;
   prompt: string;
+  fanOut?: FanOutConfig; // when set, the step maps over a run collection
   result?: string;
   assetIds?: string[];
   usage?: { tokens?: number; costUsd?: number };
@@ -132,6 +143,8 @@ export interface Run extends Audited {
   // variables, pipeline custom vars, and system vars ({note}/{date}). Frozen at run
   // creation so later pipeline/project edits don't leak in.
   variables?: Record<string, string>;
+  // Named lists a fan-out step maps over (frozen at creation). Arbitrary length.
+  collections?: Record<string, string[]>;
   status: RunStatus;
   currentStep: number;
   steps: Step[];
@@ -252,6 +265,7 @@ export interface PipelineStep {
   provider: Provider;
   model: string;
   mode: StepMode;
+  fanOut?: FanOutConfig; // map this step over a run collection (parallel, N items)
 }
 
 // A user-defined variable for a pipeline. Any step prompt can reference it as

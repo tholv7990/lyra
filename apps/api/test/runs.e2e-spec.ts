@@ -199,4 +199,56 @@ describe('Runs (e2e)', () => {
     expect(assets[0]).toMatchObject({ type: 'image', stepIndex: 0, runId: run.id });
     expect(assets[0].url).toContain('http');
   });
+
+  it('fans an image step out over a collection → one asset per item', async () => {
+    await http()
+      .put(`/workspaces/${wsId}/keys/image`)
+      .set(auth(token))
+      .send({ key: 'img-test' })
+      .expect(200);
+    const promptId = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Render each', content: 'Brand {item}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const pipelineId = (
+      await http()
+        .post(`/workspaces/${wsId}/pipelines`)
+        .set(auth(token))
+        .send({
+          name: 'Fan render',
+          steps: [
+            {
+              name: 'Render each',
+              promptId,
+              provider: 'image',
+              model: 'img-1',
+              mode: 'auto',
+              fanOut: { over: 'shots' },
+            },
+          ],
+        })
+        .expect(201)
+    ).body.id;
+    const run = (
+      await http()
+        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+        .set(auth(token))
+        .send({ collections: { shots: ['hero', 'lifestyle', 'detail', 'packaging'] } })
+        .expect(201)
+    ).body;
+    const done = (
+      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+    ).body;
+    expect(done.status).toBe('done');
+    // four items → four assets, all on this step
+    expect(done.steps[0].assetIds).toHaveLength(4);
+    const assets = (
+      await http().get(`/runs/${run.id}/assets`).set(auth(token)).expect(200)
+    ).body as { type: string; stepIndex: number }[];
+    expect(assets).toHaveLength(4);
+    expect(assets.every((a) => a.type === 'image' && a.stepIndex === 0)).toBe(true);
+  });
 });

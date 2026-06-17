@@ -48,14 +48,21 @@ export interface PipelineRunInput {
   note?: string;
   // Custom variable values entered at run start (already merged with defaults).
   variables?: Record<string, string>;
+  // Named lists a fan-out step maps over (e.g. the source images to brand).
+  collections?: Record<string, string[]>;
   steps: {
     name: string;
     promptId: string;
     provider: Provider;
     model: string;
     mode: StepMode;
+    fanOut?: { over: string; itemVar?: string };
   }[];
 }
+
+// Fan-out execution limits — how many items run concurrently, and per-item retries.
+const FANOUT_CONCURRENCY = 4;
+const FANOUT_RETRIES = 2;
 
 @Injectable()
 export class RunsService extends BaseRepository<Run> {
@@ -85,6 +92,7 @@ export class RunsService extends BaseRepository<Run> {
         provider: ps.provider,
         model: ps.model,
         mode: ps.mode,
+        fanOut: ps.fanOut,
         status: StepStatus.Idle,
         // Store the raw template — project/custom/system vars and {input}/{step:Name}
         // resolve at run time from the run's variable snapshot + prior outputs.
@@ -107,6 +115,7 @@ export class RunsService extends BaseRepository<Run> {
       pipelineName: input.pipelineName,
       context: { note: input.note ?? '' },
       variables,
+      collections: input.collections ?? {},
       createdBy: actorId,
       updatedBy: actorId,
       status: 'idle',
@@ -177,6 +186,10 @@ export class RunsService extends BaseRepository<Run> {
     const provider = providerOf(step);
     const apiKey = (await this.keys.getDecrypted(doc.workspaceId, provider)) ?? '';
 
+    // Fan-out step: map the prompt over a run collection (parallel) instead of a
+    // single call.
+    if (step.fanOut) return this.executeFanOut(doc, state, index, provider, apiKey);
+
     // Resolve the prompt at run time: first variables ({product}/{tone}/{date}…)
     // from the run snapshot, then chaining ({input}/{step:Name}). When a chaining
     // placeholder is used we skip auto-appending prior context.
@@ -194,6 +207,50 @@ export class RunsService extends BaseRepository<Run> {
             result: s.result as string,
           }));
     return this.registry.get(provider).execute({ step: stepForRun, apiKey, priorResults });
+  }
+
+  // Fan-out a step over a run collection: one (capped-parallel) provider call per
+  // item, the item filling {item}/{input}. N is arbitrary. Partial failure is
+  // tolerated — the step completes with the successful outputs (assets merged);
+  // it only errors if EVERY item fails.
+  private async executeFanOut(
+    doc: RunDocument,
+    state: RunState,
+    index: number,
+    provider: Provider,
+    apiKey: string,
+  ): Promise<StepRunOutput> {
+    const step = state.steps[index];
+    const cfg = step.fanOut as { over: string; itemVar?: string };
+    const itemVar = cfg.itemVar?.trim() || 'item';
+    const items = doc.collections?.[cfg.over] ?? [];
+    if (items.length === 0) {
+      return { result: `[fan-out] collection "${cfg.over}" is empty — nothing to map.`, assets: [], usage: { tokens: 0 } };
+    }
+    const impl = this.registry.get(provider);
+    const runItem = (item: string): Promise<StepRunOutput> => {
+      const filled = fillPrompt(step.prompt, { ...(doc.variables ?? {}), [itemVar]: item });
+      // For a fan-out item, {input} is the item itself; {step:Name} still resolves.
+      const withInput = filled.split('{input}').join(item);
+      const { prompt } = resolveStepRefs(withInput, state.steps, index);
+      return impl.execute({ step: { ...step, prompt }, apiKey, priorResults: [] });
+    };
+
+    const settled = await mapPool(items, FANOUT_CONCURRENCY, (item) =>
+      withRetry(() => runItem(item), FANOUT_RETRIES),
+    );
+    const ok = settled.filter((s): s is { ok: true; value: StepRunOutput } => s.ok);
+    const failed = settled.filter((s): s is { ok: false; error: string } => !s.ok);
+    if (ok.length === 0) {
+      throw new Error(`All ${items.length} fan-out items failed (e.g. ${failed[0]?.error})`);
+    }
+    const assets = ok.flatMap((s) => s.value.assets ?? []);
+    const tokens = ok.reduce((n, s) => n + (s.value.usage?.tokens ?? 0), 0);
+    const body = ok.map((s) => s.value.result).join('\n---\n');
+    const head = failed.length
+      ? `[fan-out ${ok.length}/${items.length} ok · ${failed.length} failed]\n`
+      : `[fan-out ${ok.length}/${items.length}]\n`;
+    return { result: head + body, assets, usage: { tokens } };
   }
 
   // Run one step: validate, mark running, call the provider, then complete or
@@ -292,4 +349,37 @@ export class RunsService extends BaseRepository<Run> {
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Step failed';
+}
+
+// Run `fn` over `items` with at most `cap` in flight at once; preserves order.
+async function mapPool<T, R>(
+  items: T[],
+  cap: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(cap, items.length) }, worker));
+  return out;
+}
+
+type Settled<R> = { ok: true; value: R } | { ok: false; error: string };
+
+// Try `fn` up to (1 + retries) times; never throws — returns a settled result.
+async function withRetry<R>(fn: () => Promise<R>, retries: number): Promise<Settled<R>> {
+  let error = 'failed';
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return { ok: true, value: await fn() };
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'failed';
+    }
+  }
+  return { ok: false, error };
 }

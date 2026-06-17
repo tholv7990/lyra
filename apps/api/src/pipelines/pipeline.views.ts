@@ -26,6 +26,7 @@ export function toPipeline(
         provider: s.provider,
         model: s.model,
         mode: s.mode,
+        fanOut: s.fanOut ? { over: s.fanOut.over, itemVar: s.fanOut.itemVar } : undefined,
       }),
     ),
     variables: (p.variables ?? []).map(

@@ -15,10 +15,21 @@ import {
   TAG_MAX,
   TAG_MAX_LEN,
   type CreatePipelineDto,
+  type FanOutConfig,
   type PipelineStepInput,
   type PipelineVariableInput,
   type UpdatePipelineDto,
 } from '@lyra/shared';
+
+export class FanOutBody implements FanOutConfig {
+  @IsString()
+  @MinLength(1)
+  over!: string;
+
+  @IsOptional()
+  @IsString()
+  itemVar?: string;
+}
 
 export class PipelineVariableBody implements PipelineVariableInput {
   @IsString()
@@ -59,6 +70,11 @@ export class PipelineStepBody implements PipelineStepInput {
 
   @IsEnum(StepMode)
   mode!: StepMode;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => FanOutBody)
+  fanOut?: FanOutBody;
 }
 
 export class CreatePipelineBody implements CreatePipelineDto {

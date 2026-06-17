@@ -106,12 +106,15 @@ same number of on-brand images, shown as assets and gated for approval.
   existing run status chips/colors.
 
 ## Acceptance criteria  ← the contract
-- [ ] AC1: An Image step in a pipeline can be set `fanOut` bound to a prompt +
+- [x] AC1: An Image step in a pipeline can be set `fanOut` bound to a prompt +
   `Provider.Image` + model; a non-fan-out step still runs once (no regression).
-- [ ] AC2: Running a fan-out Image step over a collection of N source images makes
-  N provider calls (≤ concurrency cap at a time); the per-item prompt = the step
-  template filled with that item; N images are stored (R2 URL on `Asset.url`) and
-  attached to the step (`assetIds.length === successful N`).
+  ✅ Pass 1b.
+- [x] AC2: Running a fan-out Image step over a collection of N source images makes
+  N provider calls (≤ concurrency cap at a time, via an in-process pool); the
+  per-item prompt = the step template filled with that item (`{item}`/`{input}`);
+  N assets are stored and attached to the step (`assetIds.length === successful N`).
+  ✅ Pass 1b — over the **mock** provider (placeholder URLs); the real image
+  provider + **R2 URLs** + **BullMQ** queue land with D1/D4/D5.
 - [x] AC3: `StepRunOutput.assets[]` is populated and persisted; each `Asset` is
   workspace-scoped, typed `image`, and soft-deletable. ✅ Pass 1a.
 - [ ] AC4: Partial failure — if k of N items fail after retries, the step completes
@@ -164,6 +167,16 @@ Lands value early and isolates the queue work.
 ---
 
 ## Status log
+- 2026-06-18 — Claude — **Pass 1b engine** landed (decision-independent, over the
+  mock provider): `fanOut` config on a pipeline step (`{ over, itemVar }`), a run
+  `collections: Record<string,string[]>` (arbitrary N), and a fan-out executor —
+  maps the prompt per item (`{item}`/`{input}`), runs **capped-parallel** (pool of
+  4) with **per-item retry (×2)** and **partial-failure tolerance** (completes with
+  the successes; errors only if all fail; empty collection is a no-op). Aggregates
+  results + assets + usage onto the one step. e2e: per-item mapping over 3 items
+  (echo stub) + 4-item image fan-out → 4 assets + empty-collection. **AC1/AC2 met
+  (mock); AC4 logic in.** Remaining: real provider + R2 + BullMQ (D1/D4/D5), and the
+  builder fan-out toggle + run-start collection input (web). Full gates + e2e (78) green.
 - 2026-06-18 — Claude — **Pass 1a web** landed: the run view now renders each
   step's media as a thumbnail strip (`RunStepCard`, reused by the desktop flow
   node), fed by `GET /runs/:id/assets` via `ProjectDetail → RunFlow → buildRunGraph`.

@@ -1,5 +1,5 @@
 import { Role, ProjectStatus, ProjectShare, PromptStatus, Provider, StepMode } from '../enums';
-import type { PromptMedia } from '../models';
+import type { FanOutConfig, PromptMedia } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
 // The api implements each as a class-validator class that `implements`
@@ -116,6 +116,7 @@ export interface PipelineStepInput {
   provider: Provider;
   model: string;
   mode: StepMode;
+  fanOut?: FanOutConfig;
 }
 
 export interface PipelineVariableInput {
@@ -144,6 +145,8 @@ export interface UpdatePipelineDto {
 // keys). Unknown keys are ignored; missing keys fall back to the variable default.
 export interface RunPipelineDto {
   variables?: Record<string, string>;
+  // Named lists a fan-out step maps over (e.g. the source images to brand).
+  collections?: Record<string, string[]>;
 }
 
 // ===== Workspace labels =====

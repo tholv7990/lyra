@@ -48,6 +48,9 @@ export class PipelinesService extends BaseRepository<Pipeline> {
       if (!s.model?.trim()) {
         throw new BadRequestException(`Step "${s.name}" needs a model.`);
       }
+      const fanOut = s.fanOut?.over?.trim()
+        ? { over: s.fanOut.over.trim(), itemVar: s.fanOut.itemVar?.trim() || undefined }
+        : undefined;
       return {
         id: s.id || randomUUID(),
         name: s.name,
@@ -55,6 +58,7 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         provider: s.provider,
         model: s.model,
         mode: s.mode,
+        fanOut,
       };
     });
   }
