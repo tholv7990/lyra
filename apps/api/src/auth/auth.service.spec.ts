@@ -4,11 +4,14 @@ import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
+import { BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { MembershipsService } from '../workspaces/memberships.service';
+import { MailerService } from '../mail/mailer.service';
 import { RefreshToken } from './refresh-token.schema';
+import { PasswordReset } from './password-reset.schema';
 
 // In-memory stand-in for the RefreshToken Mongoose model — keeps the unit
 // test free of any database so it runs in CI without downloading mongod.
@@ -37,6 +40,41 @@ function makeRtModel() {
         return { deletedCount: i >= 0 ? 1 : 0 };
       },
     })),
+    deleteMany: jest.fn((q: any) => ({
+      exec: async () => {
+        const before = store.length;
+        for (let i = store.length - 1; i >= 0; i--) {
+          if (!q.userId || store[i].userId === q.userId) store.splice(i, 1);
+        }
+        return { deletedCount: before - store.length };
+      },
+    })),
+  };
+}
+
+// In-memory stand-in for the PasswordReset model.
+function makePrModel() {
+  const store: Array<{ _id: string; userId: string; tokenHash: string; expiresAt: Date }> = [];
+  let seq = 0;
+  return {
+    store,
+    create: jest.fn(async (doc: any) => {
+      const rec = { _id: `pr-${++seq}`, ...doc };
+      store.push(rec);
+      return rec;
+    }),
+    findOne: jest.fn((q: any) => ({
+      exec: async () =>
+        store.find((r) => r.tokenHash === q.tokenHash && r.expiresAt > q.expiresAt.$gt) ?? null,
+    })),
+    deleteMany: jest.fn((q: any) => ({
+      exec: async () => {
+        for (let i = store.length - 1; i >= 0; i--) {
+          if (!q.userId || store[i].userId === q.userId) store.splice(i, 1);
+        }
+        return { deletedCount: 0 };
+      },
+    })),
   };
 }
 
@@ -44,15 +82,19 @@ describe('AuthService', () => {
   let service: AuthService;
   let users: {
     findByEmail: jest.Mock;
+    findById: jest.Mock;
     create: jest.Mock;
     toSafeUser: jest.Mock;
   };
   let rtModel: ReturnType<typeof makeRtModel>;
+  let prModel: ReturnType<typeof makePrModel>;
 
   beforeEach(async () => {
     rtModel = makeRtModel();
+    prModel = makePrModel();
     users = {
       findByEmail: jest.fn(),
+      findById: jest.fn(),
       create: jest.fn(),
       toSafeUser: jest.fn((u: any) => ({
         id: u._id,
@@ -81,8 +123,13 @@ describe('AuthService', () => {
         { provide: MembershipsService, useValue: memberships },
         { provide: JwtService, useValue: { sign: jest.fn(() => 'access.jwt.token') } },
         { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
+        {
+          provide: MailerService,
+          useValue: { sendPasswordReset: jest.fn(), sendPasswordChanged: jest.fn() },
+        },
         { provide: getConnectionToken(), useValue: connection },
         { provide: getModelToken(RefreshToken.name), useValue: rtModel },
+        { provide: getModelToken(PasswordReset.name), useValue: prModel },
       ],
     }).compile();
 
@@ -168,5 +215,41 @@ describe('AuthService', () => {
     const { refreshToken } = await service.signup('a@b.com', 'password123', 'Ann');
     await service.logout(refreshToken);
     await expect(service.refresh(refreshToken)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('changePassword rejects a wrong current password', async () => {
+    const passwordHash = await argon2.hash('old-password');
+    users.findById.mockResolvedValue({ _id: 'u1', email: 'a@b.com', passwordHash, save: jest.fn() });
+    await expect(service.changePassword('u1', 'wrong', 'new-password1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('changePassword sets the new hash, revokes other sessions, issues a fresh one', async () => {
+    const passwordHash = await argon2.hash('old-password');
+    const doc: any = { _id: 'u1', email: 'a@b.com', name: 'A', passwordHash, save: jest.fn() };
+    users.findById.mockResolvedValue(doc);
+    // a stale session that must be revoked
+    rtModel.store.push({ _id: 'old', userId: 'u1', tokenHash: 'x', expiresAt: new Date(Date.now() + 1e9) });
+
+    const { auth, refreshToken } = await service.changePassword('u1', 'old-password', 'new-password1');
+
+    await expect(argon2.verify(doc.passwordHash, 'new-password1')).resolves.toBe(true);
+    expect(doc.save).toHaveBeenCalled();
+    expect(rtModel.store.some((r) => r._id === 'old')).toBe(false); // revoked
+    expect(refreshToken).toBeTruthy();
+    expect(auth.accessToken).toBe('access.jwt.token');
+  });
+
+  it('resetPassword rejects an invalid token', async () => {
+    await expect(service.resetPassword('nope', 'new-password1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('forgotPassword stays silent for an unknown email (no token created)', async () => {
+    users.findByEmail.mockResolvedValue(null);
+    await service.forgotPassword('ghost@nowhere.com');
+    expect(prModel.store).toHaveLength(0);
   });
 });

@@ -78,13 +78,6 @@ export function Projects() {
 
   return (
     <div>
-      <div className="prompts-head">
-        <div className="titles">
-          <h2>Projects</h2>
-          <p>A project per brand or product — assign pipelines and run them here.</p>
-        </div>
-      </div>
-
       <div className="lin-toolbar">
         <input className="lin-search" placeholder="Search projects…" value={q} onChange={(e) => setQ(e.target.value)} />
         <button className="lin-add" onClick={() => navigate('/projects/new')} title="New project" aria-label="New project">
@@ -134,7 +127,7 @@ export function Projects() {
               <span className="prow-date" style={{ whiteSpace: 'normal' }}>{p.product || '—'}</span>
               <span className="prow-date">{fmtDate(p.updatedAt)}</span>
               <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
-                <Link className="txt-btn accent" to={`/projects/${p.id}`}>Open</Link>
+                <Link className="txt-btn" to={`/projects/${p.id}`}>Open</Link>
                 {canEdit(p) && <Link className="txt-btn" to={`/projects/${p.id}/edit`}>Edit</Link>}
                 {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
               </span>

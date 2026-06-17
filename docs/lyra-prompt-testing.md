@@ -1,7 +1,11 @@
 # Lyra — Prompt Testing (Playground + history)
 
-> **Status:** approved design, not yet implemented. A Prompt-module feature that
-> complements the prompt library and reuses the run execution layer.
+> **Status: BUILT** (`apps/api/src/prompt-tests`, `apps/web` Try page). A Prompt-module
+> feature that complements the prompt library and reuses the run execution layer.
+> **One change from this design:** runs are **ephemeral** — a test streams its answer
+> but is **not** auto-saved. The user saves it to history explicitly via a green ✓
+> (`POST .../tests/save`); leaving with an unsaved answer prompts a confirm. History
+> is per-prompt and each entry snapshots the **prompt text + answer** at save time.
 
 ## 1. Why
 

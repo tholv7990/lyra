@@ -1,0 +1,72 @@
+# LiteLLM gateway for Lyra — the routing module.
+#
+# Lyra's OpenAI-compatible client (apps/api/src/runs/providers/openai-compat.client.ts)
+# points at this gateway when LITELLM_BASE is set; the `model` string the workspace
+# selects picks the backend below. Claude stays on Lyra's NATIVE Anthropic client
+# (native prompt caching), so it is NOT routed here by default.
+#
+# `model_name` MUST match the model ids Lyra sends (see MODEL_CATALOG in
+# packages/shared/src/constants/models.ts, or "Refresh models" which reads GET /models here).
+#
+# Run:  pip install 'litellm[proxy]'
+#       export OPENAI_API_KEY=...  DEEPSEEK_API_KEY=...  LITELLM_MASTER_KEY=sk-...
+#       litellm --config litellm.config.yaml --port 4000
+# See docs/lyra-litellm-gateway.md for the full setup (Ollama, virtual keys, caching).
+
+model_list:
+  # --- Self-hosted open models via Ollama ($0/token) ---
+  - model_name: deepseek-v3-local
+    litellm_params:
+      model: ollama/deepseek-v3
+      api_base: http://localhost:11434
+  - model_name: llama-3.3-local
+    litellm_params:
+      model: ollama/llama3.3
+      api_base: http://localhost:11434
+
+  # --- OpenAI (official API; automatic prompt caching, no config) ---
+  # Replace the model ids with real OpenAI models you have access to.
+  - model_name: gpt-5.5-pro
+    litellm_params:
+      model: openai/gpt-5.5-pro
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-5.5
+    litellm_params:
+      model: openai/gpt-5.5
+      api_key: os.environ/OPENAI_API_KEY
+
+  # --- DeepSeek hosted API (optional; only if you also want the official DeepSeek API) ---
+  - model_name: deepseek-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: os.environ/DEEPSEEK_API_KEY
+  - model_name: deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # --- Claude (OPTIONAL) ---
+  # Lyra calls Claude via its native client by default (better prompt-caching control).
+  # Uncomment to also expose Claude through the gateway for a fully unified setup.
+  # - model_name: claude-opus-4-8
+  #   litellm_params:
+  #     model: anthropic/claude-opus-4-8
+  #     api_key: os.environ/ANTHROPIC_API_KEY
+  # - model_name: claude-sonnet-4-6
+  #   litellm_params:
+  #     model: anthropic/claude-sonnet-4-6
+  #     api_key: os.environ/ANTHROPIC_API_KEY
+
+litellm_settings:
+  num_retries: 2
+  request_timeout: 600
+  # Gateway-level fallback: if a self-hosted model is down, use a hosted one.
+  fallbacks:
+    - deepseek-v3-local: ["gpt-5.5"]
+    - llama-3.3-local: ["gpt-5.5"]
+
+general_settings:
+  # Lyra sends this as the per-call apiKey. For multi-tenant use, mint a LiteLLM
+  # VIRTUAL KEY per workspace instead and store that as the workspace's key
+  # (preserves Lyra's per-workspace gating/budgets). See the doc.
+  master_key: os.environ/LITELLM_MASTER_KEY

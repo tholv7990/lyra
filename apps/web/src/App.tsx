@@ -7,15 +7,17 @@ import {
 import { useAuth } from './auth/useAuth';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { MatrixRain } from './components/MatrixRain';
 import { Home } from './pages/Home';
 import { Projects } from './pages/Projects';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { ProjectEditor } from './pages/ProjectEditor';
 import { Prompts } from './pages/Prompts';
 import { PromptEditor } from './pages/PromptEditor';
-import { PromptPlayground } from './pages/PromptPlayground';
+import { Chats } from './pages/Chats';
 import { Pipelines } from './pages/Pipelines';
-import { PipelineCreate } from './pages/PipelineCreate';
 import { PipelineBuilder } from './pages/PipelineBuilder';
 import { Settings } from './pages/Settings';
 import { AppLayout } from './layout/AppLayout';
@@ -37,7 +39,12 @@ function PublicOnlyLayout() {
   const { user, loading } = useAuth();
   if (loading) return <Loading />;
   if (user) return <Navigate to="/" replace />;
-  return <Outlet />;
+  return (
+    <>
+      <MatrixRain />
+      <Outlet />
+    </>
+  );
 }
 
 const router = createBrowserRouter([
@@ -46,6 +53,8 @@ const router = createBrowserRouter([
     children: [
       { path: '/login', element: <Login /> },
       { path: '/signup', element: <Signup /> },
+      { path: '/forgot-password', element: <ForgotPassword /> },
+      { path: '/reset-password', element: <ResetPassword /> },
     ],
   },
   {
@@ -58,10 +67,11 @@ const router = createBrowserRouter([
       { path: '/projects/:id/edit', element: <ProjectEditor /> },
       { path: '/prompts', element: <Prompts /> },
       { path: '/prompts/new', element: <PromptEditor /> },
-      { path: '/prompts/:id/edit', element: <PromptEditor /> },
-      { path: '/prompts/:id/test', element: <PromptPlayground /> },
+      { path: '/prompts/:id', element: <PromptEditor /> },
+      { path: '/chats', element: <Chats /> },
+      { path: '/chats/:id', element: <Chats /> },
       { path: '/pipelines', element: <Pipelines /> },
-      { path: '/pipelines/new', element: <PipelineCreate /> },
+      { path: '/pipelines/new', element: <PipelineBuilder /> },
       { path: '/pipelines/:id', element: <PipelineBuilder /> },
       { path: '/settings', element: <Settings /> },
     ],

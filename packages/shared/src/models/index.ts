@@ -116,11 +116,11 @@ export interface Step {
 
 export interface Run extends Audited {
   id: string;
-  projectId: string;
+  projectId?: string; // absent for a builder "test run" (no project)
   workspaceId: string;
   pipelineId?: string; // set when the run came from a composable pipeline
   pipelineName?: string;
-  context?: { product: string; niche: string; homepageUrl: string };
+  context?: { product: string; niche: string; homepageUrl: string; note?: string };
   status: RunStatus;
   currentStep: number;
   steps: Step[];
@@ -157,6 +157,15 @@ export interface TagCount {
   count: number;
 }
 
+// A workspace label: a reusable, colour-coded tag owned by the workspace.
+// Prompts/pipelines reference labels by `name` (their `tags`); the colour is
+// resolved from the workspace's labels (see labelColor()).
+export interface LabelInfo {
+  id: string;
+  name: string;
+  color: string;
+}
+
 // A page of results from a paginated list endpoint.
 export interface Paged<T> {
   items: T[];
@@ -165,21 +174,47 @@ export interface Paged<T> {
   limit: number;
 }
 
-// One run of a prompt against a model — the unit of the testing playground's
-// history. Single-turn: `input` is what was sent, `result` is the model reply.
-export interface PromptTest extends Audited {
+// ===== Chats (conversations) =====
+// A chat is a Claude-style multi-turn conversation in the workspace. Every turn
+// is a prompt→answer exchange stamped with the provider·model that produced it.
+// Chats are the iteration workshop; good prompts get promoted to the library.
+export type ChatRole = 'user' | 'assistant';
+
+export interface ConversationMessage {
   id: string;
-  workspaceId: string;
-  promptId: string;
+  role: ChatRole;
+  content: string;
+  media?: PromptMedia[];
   provider: Provider;
   model: string;
-  input: string;
-  media: PromptMedia[];
-  result: string;
   usage?: { tokens?: number; costUsd?: number };
-  starred: boolean;
-  tags: string[];
   error?: string;
+  createdAt: string;
+}
+
+// The full conversation with its message thread (the detail view).
+export interface Conversation extends Audited {
+  id: string;
+  workspaceId: string;
+  title: string;
+  provider: Provider;
+  model: string;
+  originPromptId?: string; // the library prompt this chat was opened from
+  starred: boolean;
+  messages: ConversationMessage[];
+}
+
+// A lightweight list item for the chat-history sidebar (no message bodies).
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  provider: Provider;
+  model: string;
+  starred: boolean;
+  messageCount: number;
+  lastMessageAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ===== Composable pipelines =====

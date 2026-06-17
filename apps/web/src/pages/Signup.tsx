@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { SignupDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { GoogleButton } from '../components/GoogleButton';
 
 export function Signup() {
   const { signup } = useAuth();
@@ -43,6 +44,9 @@ export function Signup() {
         <p className="sub muted">Start running the Lyra pipeline</p>
 
         {error && <p className="error">{error}</p>}
+
+        <GoogleButton label="Sign up with Google" />
+        <div className="auth-or"><span>or</span></div>
 
         <label className="field">
           <span>Name</span>

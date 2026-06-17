@@ -36,3 +36,6 @@ coverage/
 .vscode/*
 !.vscode/extensions.json
 *.local
+
+# Temp dump from Figma MCP get_design_context (not source)
+.figma-assets/

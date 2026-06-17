@@ -9,8 +9,13 @@ export class User {
   email!: string;
 
   // Server-only field — never lives in @lyra/shared, never serialized to clients.
-  @Prop({ required: true })
-  passwordHash!: string;
+  // Optional: accounts created via Google sign-in have no password.
+  @Prop()
+  passwordHash?: string;
+
+  // Set for accounts that signed in with Google (the OAuth `sub`).
+  @Prop({ index: true })
+  googleId?: string;
 
   @Prop({ required: true })
   name!: string;

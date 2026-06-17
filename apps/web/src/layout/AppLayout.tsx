@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { WorkspaceMenu } from './WorkspaceMenu';
+import { BreadcrumbContext, AppNavContext } from './breadcrumb';
 import {
   HomeIcon,
   ProjectsIcon,
   PromptsIcon,
+  ChatsIcon,
   PipelinesIcon,
   MembersIcon,
   SettingsIcon,
-  MenuIcon,
   LogoutIcon,
 } from './icons';
 import './layout.css';
@@ -20,107 +21,149 @@ function initials(name?: string) {
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
 }
 
-const TITLES: Record<string, string> = {
-  '/': 'Home',
-  '/projects': 'Projects',
-  '/prompts': 'Prompts',
-  '/pipelines': 'Pipelines',
-  '/settings': 'Settings',
-};
+// Top-level sections. The breadcrumb derives the module from the current path;
+// detail pages add the record name via useBreadcrumb().
+const MODULES = [
+  { path: '/chats', name: 'Chats' },
+  { path: '/prompts', name: 'Prompts' },
+  { path: '/pipelines', name: 'Pipelines' },
+  { path: '/projects', name: 'Projects' },
+  { path: '/settings', name: 'Settings' },
+];
+function moduleFor(pathname: string) {
+  return (
+    MODULES.find((m) => pathname === m.path || pathname.startsWith(`${m.path}/`)) ?? {
+      path: '/',
+      name: 'Home',
+    }
+  );
+}
+
+const COLLAPSE_KEY = 'lyra.nav.collapsed';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // mobile drawer
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(COLLAPSE_KEY) === '1',
+  );
+  const [record, setRecord] = useState<string | null>(null); // breadcrumb record
+
   const close = () => setOpen(false);
-  const title = TITLES[location.pathname] ?? 'Lyra';
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+      return next;
+    });
+
+  const mod = moduleFor(location.pathname);
+  const isDetail = mod.path !== '/' && location.pathname !== mod.path;
 
   return (
-    <div className="app">
-      {open && <div className="scrim" onClick={close} />}
+    <BreadcrumbContext.Provider value={setRecord}>
+     <AppNavContext.Provider value={() => setOpen(true)}>
+      <div className={`app ${collapsed ? 'nav-collapsed' : ''}`}>
+        {open && <div className="scrim" onClick={close} />}
 
-      <aside className={`sidebar ${open ? 'open' : ''}`}>
-        <WorkspaceMenu />
-
-        <nav className="sidebar-nav">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            onClick={close}
-          >
-            <HomeIcon />
-            Home
-          </NavLink>
-          <NavLink
-            to="/projects"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            onClick={close}
-          >
-            <ProjectsIcon />
-            Projects
-          </NavLink>
-          <NavLink
-            to="/prompts"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            onClick={close}
-          >
-            <PromptsIcon />
-            Prompts
-          </NavLink>
-          <NavLink
-            to="/pipelines"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            onClick={close}
-          >
-            <PipelinesIcon />
-            Pipelines
-          </NavLink>
-          <div className="nav-item disabled">
-            <MembersIcon />
-            Members
-            <span className="soon">Soon</span>
+        <aside className={`sidebar ${open ? 'open' : ''}`}>
+          <div className="brand">
+            <button
+              className="brand-btn"
+              onClick={toggleCollapsed}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <img className="brand-full" src="/lyra-logo-horizontal-light.svg" alt="Lyra" />
+              <img className="brand-mark" src="/lyra-mark-squircle.svg" alt="Lyra" />
+            </button>
+            <button className="brand-close" onClick={close} aria-label="Close menu">
+              ✕
+            </button>
           </div>
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            onClick={close}
-          >
-            <SettingsIcon />
-            Settings
-          </NavLink>
-        </nav>
 
-        <div className="sidebar-spacer" />
+          <WorkspaceMenu />
 
-        <div className="sidebar-user">
-          <div className="avatar">{initials(user?.name)}</div>
-          <div className="meta">
-            <div className="name">{user?.name}</div>
-            <div className="email">{user?.email}</div>
+          <nav className="sidebar-nav">
+            <NavLink to="/" end title="Home" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <HomeIcon />
+              <span className="nav-txt">Home</span>
+            </NavLink>
+            <NavLink to="/chats" title="Chats" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ChatsIcon />
+              <span className="nav-txt">Chats</span>
+            </NavLink>
+            <NavLink to="/prompts" title="Prompts" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <PromptsIcon />
+              <span className="nav-txt">Prompts</span>
+            </NavLink>
+            <NavLink to="/pipelines" title="Pipelines" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <PipelinesIcon />
+              <span className="nav-txt">Pipelines</span>
+            </NavLink>
+            <NavLink to="/projects" title="Projects" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ProjectsIcon />
+              <span className="nav-txt">Projects</span>
+            </NavLink>
+            <div className="nav-item disabled" title="Members (soon)">
+              <MembersIcon />
+              <span className="nav-txt">Members</span>
+              <span className="soon">Soon</span>
+            </div>
+            <NavLink to="/settings" title="Settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <SettingsIcon />
+              <span className="nav-txt">Settings</span>
+            </NavLink>
+          </nav>
+
+          <div className="sidebar-spacer" />
+
+          <div className="sidebar-user">
+            <div className="avatar">{initials(user?.name)}</div>
+            <div className="meta">
+              <div className="name">{user?.name}</div>
+              <div className="email">{user?.email}</div>
+            </div>
           </div>
-        </div>
-        <button className="nav-item" onClick={() => void logout()}>
-          <LogoutIcon />
-          Sign out
-        </button>
-      </aside>
-
-      <div className="main">
-        <header className="topbar">
-          <button
-            className="icon-btn menu-toggle"
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-          >
-            <MenuIcon />
+          <button className="nav-item" title="Sign out" onClick={() => void logout()}>
+            <LogoutIcon />
+            <span className="nav-txt">Sign out</span>
           </button>
-          <h1>{title}</h1>
-        </header>
-        <div className="content">
-          <Outlet />
+        </aside>
+
+        <div className="main">
+          <header className="topbar">
+            <button
+              className="topbar-menu"
+              onClick={() => setOpen(true)}
+              aria-label="Open menu"
+            >
+              <img src="/lyra-mark-squircle.svg" alt="Menu" />
+            </button>
+            <nav className="breadcrumb">
+              {isDetail ? (
+                <>
+                  <Link to={mod.path} className="bc-back" aria-label={`Back to ${mod.name}`}>
+                    ‹
+                  </Link>
+                  <Link to={mod.path} className="bc-module">
+                    {mod.name}
+                  </Link>
+                  <span className="bc-sep">/</span>
+                  <span className="bc-record">{record ?? '…'}</span>
+                </>
+              ) : (
+                <span className="bc-current">{mod.name}</span>
+              )}
+            </nav>
+          </header>
+          <div className="content">
+            <Outlet />
+          </div>
         </div>
       </div>
-    </div>
+     </AppNavContext.Provider>
+    </BreadcrumbContext.Provider>
   );
 }

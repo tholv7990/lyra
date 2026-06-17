@@ -14,6 +14,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (dto: LoginDto) => Promise<void>;
   signup: (dto: SignupDto) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -63,6 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   }, []);
 
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      const res = await api<AuthResponse>('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      // The server rotated sessions; adopt the fresh access token.
+      setAccessToken(res.accessToken);
+      setUser(res.user);
+    },
+    [],
+  );
+
   const logout = useCallback(async () => {
     try {
       await api('/auth/logout', { method: 'POST', retry: false });
@@ -74,8 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, signup, logout }),
-    [user, loading, login, signup, logout],
+    () => ({ user, loading, login, signup, changePassword, logout }),
+    [user, loading, login, signup, changePassword, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,10 +1,4 @@
-import {
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-} from 'react';
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import {
   dedupeTags,
   normalizeTag,
@@ -17,11 +11,6 @@ interface TagInputProps {
   value: string[];
   suggestions: TagCount[];
   onChange: (tags: string[]) => void;
-}
-
-function chipStyle(tag: string): CSSProperties {
-  const c = tagColor(tag);
-  return { color: c, borderColor: `${c}55`, background: `${c}14` };
 }
 
 // A tag picker: type to filter the workspace vocabulary, click a suggestion or
@@ -77,7 +66,7 @@ export function TagInput({ value, suggestions, onChange }: TagInputProps) {
     <div className="tag-input">
       <div className="tag-input-box" onClick={() => inputRef.current?.focus()}>
         {value.map((t) => (
-          <span key={t} className="tag-chip" style={chipStyle(t)}>
+          <span key={t} className="tag-chip">
             <span className="tdot" style={{ background: tagColor(t) }} />
             {t}
             <button

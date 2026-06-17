@@ -21,8 +21,11 @@ const LABEL: Record<Provider, string> = Object.fromEntries(
 const LISTABLE: Provider[] = [Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek];
 
 export function Settings() {
-  const { user } = useAuth();
+  const { user, changePassword } = useAuth();
   const { current } = useWorkspace();
+  const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [keys, setKeys] = useState<Record<string, ApiKeyInfo>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -116,6 +119,28 @@ export function Settings() {
       setToRemove(null);
     } finally {
       setRemoving(false);
+    }
+  }
+
+  async function submitPassword() {
+    setPwMsg(null);
+    if (pw.next.length < 8) {
+      setPwMsg({ ok: false, text: 'New password must be at least 8 characters.' });
+      return;
+    }
+    if (pw.next !== pw.confirm) {
+      setPwMsg({ ok: false, text: 'New passwords do not match.' });
+      return;
+    }
+    setPwBusy(true);
+    try {
+      await changePassword(pw.current, pw.next);
+      setPw({ current: '', next: '', confirm: '' });
+      setPwMsg({ ok: true, text: 'Password updated. Your other devices were signed out.' });
+    } catch (err) {
+      setPwMsg({ ok: false, text: err instanceof Error ? err.message : 'Could not change password' });
+    } finally {
+      setPwBusy(false);
     }
   }
 
@@ -233,6 +258,49 @@ export function Settings() {
             );
           })}
         </div>
+      </section>
+
+      {/* ===== Section 3: Password ===== */}
+      <section className="set-section">
+        <div className="set-section-head">
+          <h2>Password</h2>
+          <p>Change your password. Updating it signs out your other devices.</p>
+        </div>
+        <form className="pw-form" onSubmit={(e) => { e.preventDefault(); void submitPassword(); }}>
+          <input
+            className="text-input"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Current password"
+            value={pw.current}
+            onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
+          />
+          <input
+            className="text-input"
+            type="password"
+            autoComplete="new-password"
+            placeholder="New password (min 8 characters)"
+            value={pw.next}
+            onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+          />
+          <input
+            className="text-input"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Confirm new password"
+            value={pw.confirm}
+            onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))}
+          />
+          <button
+            className="btn-primary"
+            type="submit"
+            style={{ width: 'auto', alignSelf: 'flex-start' }}
+            disabled={pwBusy || !pw.current || !pw.next || !pw.confirm}
+          >
+            {pwBusy ? 'Updating…' : 'Update password'}
+          </button>
+          {pwMsg && <p className={pwMsg.ok ? 'pw-ok' : 'error'}>{pwMsg.text}</p>}
+        </form>
       </section>
 
       <ConfirmDialog

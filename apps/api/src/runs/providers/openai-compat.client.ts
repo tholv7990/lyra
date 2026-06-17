@@ -1,12 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { Provider } from '@lyra/shared';
-import type { LlmCompletion, LlmAttachment } from './anthropic.client';
+import type { LlmCompletion, LlmAttachment, LlmTurn } from './anthropic.client';
 
-// Base URLs for the OpenAI-compatible chat-completions API.
+// Official base URLs for the OpenAI-compatible chat-completions API.
 export const OPENAI_COMPAT_BASE: Partial<Record<Provider, string>> = {
   [Provider.OpenAI]: 'https://api.openai.com/v1',
   [Provider.DeepSeek]: 'https://api.deepseek.com/v1',
 };
+
+// Resolve the base URL per call. When LITELLM_BASE is set, OpenAI + DeepSeek
+// traffic routes through the local LiteLLM gateway (which forwards to OpenAI,
+// Ollama, etc. — see docs/lyra-litellm-gateway.md); otherwise the official APIs.
+// Read at call time, not module load: LITELLM_BASE is loaded from .env into
+// process.env at bootstrap, after this module is first imported.
+export function compatBaseUrl(provider: Provider): string | undefined {
+  const gateway = process.env.LITELLM_BASE?.trim();
+  if (gateway && (provider === Provider.OpenAI || provider === Provider.DeepSeek)) {
+    return gateway;
+  }
+  return OPENAI_COMPAT_BASE[provider];
+}
 
 export interface OpenAiParams {
   baseUrl: string;
@@ -14,6 +27,7 @@ export interface OpenAiParams {
   model: string;
   system: string;
   prompt: string;
+  history?: LlmTurn[];
   maxTokens?: number;
   attachments?: LlmAttachment[];
   signal?: AbortSignal;
@@ -53,6 +67,7 @@ export class OpenAiCompatClient {
       ...(stream ? { stream_options: { include_usage: true } } : {}),
       messages: [
         { role: 'system', content: p.system },
+        ...(p.history ?? []).map((t) => ({ role: t.role, content: t.content })),
         { role: 'user', content: this.userContent(p) },
       ],
     });

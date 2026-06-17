@@ -8,7 +8,7 @@ import { ApiKey } from '../../keys/api-key.schema';
 import { Project } from '../../projects/project.schema';
 import { Run } from '../../runs/run.schema';
 import { Prompt } from '../../prompts/prompt.schema';
-import { PromptTest } from '../../prompt-tests/prompt-test.schema';
+import { Conversation } from '../../conversations/conversation.schema';
 import { Pipeline } from '../../pipelines/pipeline.schema';
 import { ProjectPipeline } from '../../pipelines/project-pipeline.schema';
 import { ProviderModel } from '../../models/provider-model.schema';
@@ -25,7 +25,8 @@ export class CascadeService {
     @InjectModel(Project.name) private readonly proj: Model<Project>,
     @InjectModel(Run.name) private readonly runs: Model<Run>,
     @InjectModel(Prompt.name) private readonly prompts: Model<Prompt>,
-    @InjectModel(PromptTest.name) private readonly promptTests: Model<PromptTest>,
+    @InjectModel(Conversation.name)
+    private readonly conversations: Model<Conversation>,
     @InjectModel(Pipeline.name) private readonly pipelines: Model<Pipeline>,
     @InjectModel(ProjectPipeline.name)
     private readonly projectPipelines: Model<ProjectPipeline>,
@@ -43,7 +44,7 @@ export class CascadeService {
       this.proj.updateMany({ workspaceId }, patch),
       this.runs.updateMany({ workspaceId }, patch),
       this.prompts.updateMany({ workspaceId }, patch),
-      this.promptTests.updateMany({ workspaceId }, patch),
+      this.conversations.updateMany({ workspaceId }, patch),
       this.pipelines.updateMany({ workspaceId }, patch),
       this.projectPipelines.updateMany({ workspaceId }, patch),
       this.providerModels.updateMany({ workspaceId }, patch),

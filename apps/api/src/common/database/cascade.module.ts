@@ -7,7 +7,10 @@ import { ApiKey, ApiKeySchema } from '../../keys/api-key.schema';
 import { Project, ProjectSchema } from '../../projects/project.schema';
 import { Run, RunSchema } from '../../runs/run.schema';
 import { Prompt, PromptSchema } from '../../prompts/prompt.schema';
-import { PromptTest, PromptTestSchema } from '../../prompt-tests/prompt-test.schema';
+import {
+  Conversation,
+  ConversationSchema,
+} from '../../conversations/conversation.schema';
 import { Pipeline, PipelineSchema } from '../../pipelines/pipeline.schema';
 import {
   ProjectPipeline,
@@ -31,7 +34,7 @@ import { CascadeService } from './cascade.service';
       { name: Project.name, schema: ProjectSchema },
       { name: Run.name, schema: RunSchema },
       { name: Prompt.name, schema: PromptSchema },
-      { name: PromptTest.name, schema: PromptTestSchema },
+      { name: Conversation.name, schema: ConversationSchema },
       { name: Pipeline.name, schema: PipelineSchema },
       { name: ProjectPipeline.name, schema: ProjectPipelineSchema },
       { name: ProviderModel.name, schema: ProviderModelSchema },

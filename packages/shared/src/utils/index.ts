@@ -40,12 +40,13 @@ export function canManageKeys(ctx: MemberCtx): boolean {
 
 export function fillPrompt(
   tmpl: string,
-  vars: { product?: string; niche?: string; homepage?: string },
+  vars: { product?: string; niche?: string; homepage?: string; note?: string },
 ): string {
   return tmpl
     .replace(/{product}/g, vars.product?.trim() || '{product}')
     .replace(/{niche}/g, vars.niche?.trim() || '{niche}')
-    .replace(/{homepage}/g, vars.homepage?.trim() || '{homepage}');
+    .replace(/{homepage}/g, vars.homepage?.trim() || '{homepage}')
+    .replace(/{note}/g, vars.note?.trim() || '{note}');
 }
 
 // ===== Prompt tags =====
@@ -87,6 +88,17 @@ export function tagColor(tag: string): string {
     hash = ((hash << 5) + hash + key.charCodeAt(i)) >>> 0;
   }
   return TAG_PALETTE[hash % TAG_PALETTE.length];
+}
+
+// Resolve a label's display colour: the workspace label's saved colour if one
+// exists (matched case-insensitively by name), else the deterministic tagColor.
+export function labelColor(
+  name: string,
+  labels: ReadonlyArray<{ name: string; color: string }>,
+): string {
+  const key = tagKey(name);
+  const found = labels.find((l) => tagKey(l.name) === key);
+  return found ? found.color : tagColor(name);
 }
 
 // ===== Prompt media =====

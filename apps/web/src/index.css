@@ -17,12 +17,15 @@
   --primary-pressed: #e25a0e;
   --primary-tint: rgba(255, 107, 26, 0.12);
   --danger: #e5484d;
+  --success: #2da44e;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   /* Linear control system: a single 6px radius + 32px height for buttons,
      inputs, selects — the dense, consistent control language Linear uses. */
   --radius-control: 6px;
+  /* Text buttons use Linear's tighter 4px edge; fields/icon buttons stay 6px. */
+  --radius-button: 4px;
   --control-h: 32px;
   /* Subtle hover wash for rows, menu items, soft (secondary) buttons. */
   --surface-hover: rgba(0, 0, 0, 0.04);
@@ -30,6 +33,29 @@
   --shadow-sm: 0 1px 2px rgba(16, 17, 26, 0.04), 0 1px 3px rgba(16, 17, 26, 0.03);
   --shadow-md: 0 1px 2px rgba(16, 17, 26, 0.04), 0 8px 24px rgba(16, 17, 26, 0.07);
   --shadow-lg: 0 1px 2px rgba(16, 17, 26, 0.05), 0 16px 40px rgba(16, 17, 26, 0.1);
+  /* Control + overlay elevation — Linear's ramp (tight shadow on buttons, large
+     soft downward blur on overlays), translated from its dark tokens to light
+     alphas. See docs/lyra-linear-audit.md. */
+  --shadow-button: 0 1px 2px rgba(16, 17, 26, 0.08);
+  --shadow-button-strong: 0 1px 2px rgba(16, 17, 26, 0.1), 0 2px 6px rgba(16, 17, 26, 0.08);
+  --shadow-tooltip: 0 2px 4px rgba(16, 17, 26, 0.12), 0 4px 12px rgba(16, 17, 26, 0.1);
+  --shadow-popover: 0 0 0 1px rgba(16, 17, 26, 0.04), 0 8px 24px rgba(16, 17, 26, 0.12),
+    0 16px 48px rgba(16, 17, 26, 0.12);
+  /* Focus ring — one orange-tinted ring reused by every focusable control. */
+  --focus-ring: 0 0 0 3px var(--primary-tint);
+  --focus-ring-danger: 0 0 0 3px rgba(229, 72, 77, 0.16);
+  /* Type scale — Linear's Inter ramp (weights 400/500 only). Body/controls map
+     to --text-normal / --text-small; headings use the tighter line-heights. */
+  --text-micro: 11px;
+  --text-mini: 12px;
+  --text-small: 13px;
+  --text-normal: 15px;
+  --text-large: 18px;
+  --text-title3: 20px;
+  --text-title2: 24px;
+  --text-title1: 36px;
+  --lh-body: 1.47;
+  --lh-tight: 1.1;
   font-family: Inter, 'SF Pro Text', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -72,10 +98,21 @@ body {
   min-height: 100vh;
   background: var(--app-bg);
   color: var(--ink);
-  font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+  /* Linear body: 15px Inter, ~22px line-height (1.47), near-neutral tracking. */
+  font-size: var(--text-normal);
+  line-height: var(--lh-body);
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Linear headings: tight line-height + modest negative tracking app-wide.
+   Component rules with explicit values (and .md headings) still override. */
+h1,
+h2,
+h3,
+h4 {
+  line-height: var(--lh-tight);
+  letter-spacing: -0.014em;
 }
 
 /* Flex centering so the card shrinks to fit narrow viewports (no h-scroll). */
@@ -85,6 +122,18 @@ body {
   align-items: center;
   justify-content: center;
   padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Matrix digital-rain backdrop on the auth pages (see MatrixRain.tsx) */
+.matrix-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  background: #ffffff;
+  pointer-events: none;
 }
 
 .muted {
@@ -106,12 +155,17 @@ body {
   border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 28px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  /* lifts off the light rain so the form stays crisp */
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.06),
+    0 18px 50px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 .auth-card h1 {
   font-size: 21px;
   font-weight: 600;
+  line-height: var(--lh-tight);
   letter-spacing: -0.02em;
   margin: 0 0 4px;
   text-align: center;
@@ -120,7 +174,7 @@ body {
 .auth-card .sub {
   text-align: center;
   margin: 0 0 22px;
-  font-size: 14px;
+  font-size: var(--text-normal);
 }
 
 .field {
@@ -173,9 +227,9 @@ select.text-input {
   justify-content: center;
   gap: 6px;
   min-height: var(--control-h);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-button);
   padding: 0 14px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -185,23 +239,51 @@ select.text-input {
     box-shadow 0.12s ease;
 }
 
+/* Linear size scale — default is Medium (32px). Opt-in modifiers, applied
+   alongside a hierarchy class (e.g. `btn-ghost btn-sm`): Large 40 / Small 28 /
+   Extra-small 24, mirroring Linear's button sizes. */
+.btn-lg {
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+  gap: 8px;
+}
+.btn-sm {
+  min-height: 28px;
+  padding: 0 11px;
+  font-size: 13px;
+}
+.btn-xs {
+  min-height: 24px;
+  padding: 0 9px;
+  font-size: 12px;
+  gap: 4px;
+}
+
 /* Primary — the single orange CTA. A hairline-dark inset gives Linear's crisp
-   "filled" edge without a glow. */
+   "filled" edge; --shadow-button adds Linear's subtle lift off the surface. */
 .btn-primary {
   width: 100%;
   margin-top: 6px;
   background: var(--primary);
   color: #fff;
   border: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button);
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button-strong);
 }
 
 .btn-primary:active {
   background: var(--primary-pressed);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--focus-ring);
 }
 
 .btn-primary:disabled {
@@ -211,19 +293,29 @@ select.text-input {
   cursor: not-allowed;
 }
 
-/* Secondary — Linear's soft-filled button (no harsh white+border). */
+/* Secondary — Linear's soft-filled button: a visible hairline border + micro
+   shadow so it reads as a real, liftable control (not a flat grey wash). */
 .btn-ghost {
   background: var(--surface-2);
   color: var(--ink);
-  border: 1px solid transparent;
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-button);
 }
 
 .btn-ghost:hover {
   background: var(--surface-3);
+  border-color: var(--hairline-strong);
 }
 
 .btn-ghost:active {
   background: var(--surface-4, #e1e1e6);
+  box-shadow: none;
+}
+
+.btn-ghost:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
 }
 
 /* Destructive actions */
@@ -231,15 +323,23 @@ select.text-input {
   background: var(--danger);
   color: #fff;
   border: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button);
 }
 
 .btn-danger:hover {
   background: #d33b40;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button-strong);
+}
+
+.btn-danger:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--focus-ring-danger);
 }
 
 .btn-danger:disabled {
   background: #e8e8ea;
   color: rgba(60, 60, 67, 0.4);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -262,12 +362,65 @@ select.text-input {
   font-weight: 500;
 }
 
+/* "Continue with Google" — neutral secondary button, full width like the form. */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-button);
+  background: var(--field);
+  color: var(--ink);
+  font-size: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.google-btn:hover {
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-button);
+}
+
+.google-btn:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+
+.google-g {
+  flex: none;
+}
+
+/* "or" divider — hairline rule with a centered label. */
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--ink-tertiary);
+  font-size: var(--text-mini);
+}
+
+.auth-or::before,
+.auth-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
 .dashboard {
   max-width: 520px;
 }
 
 .dashboard h1 {
   font-size: 22px;
+  line-height: var(--lh-tight);
   letter-spacing: -0.02em;
 }
 

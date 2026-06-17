@@ -16,6 +16,21 @@ export interface LoginDto {
   password: string;
 }
 
+// ===== Account security =====
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  newPassword: string;
+}
+
 export interface CreateProjectDto {
   name: string;
   product: string;
@@ -109,15 +124,37 @@ export interface UpdatePipelineDto {
   steps?: PipelineStepInput[];
 }
 
-// ===== Prompt testing =====
-export interface CreatePromptTestDto {
+// ===== Workspace labels =====
+export interface CreateLabelDto {
+  name: string;
+  color: string;
+}
+
+export interface UpdateLabelDto {
+  name?: string;
+  color?: string;
+}
+
+// ===== Chats (conversations) =====
+// Create an (empty) conversation. The first message is sent separately via the
+// streaming messages endpoint. `originPromptId` links a chat opened from a
+// library prompt.
+export interface CreateConversationDto {
   provider: Provider;
   model: string;
-  input: string;
+  title?: string;
+  originPromptId?: string;
+}
+
+// Send a user turn; the server streams the assistant reply and persists both.
+export interface SendChatMessageDto {
+  provider: Provider;
+  model: string;
+  content: string;
   media?: PromptMedia[];
 }
 
-export interface UpdatePromptTestDto {
+export interface UpdateConversationDto {
+  title?: string;
   starred?: boolean;
-  tags?: string[];
 }

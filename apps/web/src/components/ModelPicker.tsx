@@ -41,7 +41,6 @@ export function ModelPicker({
   return (
     <div className="model-pick" ref={ref}>
       <button type="button" className="model-pill" onClick={() => setOpen((s) => !s)}>
-        <span className="mp-provider">{PROVIDER_LABELS[provider]}</span>
         <span className="mp-model">{label}</span>
         <span className="mp-caret">⌄</span>
       </button>

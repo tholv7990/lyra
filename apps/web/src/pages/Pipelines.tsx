@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { tagColor, type Pipeline } from '@lyra/shared';
+import { labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PipelinesIcon, PlusIcon } from '../layout/icons';
 
@@ -16,6 +17,7 @@ const PAGE_SIZE = 10;
 export function Pipelines() {
   const { user } = useAuth();
   const { current } = useWorkspace();
+  const { labels } = useLabels(current?.id);
   const navigate = useNavigate();
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,13 +68,6 @@ export function Pipelines() {
 
   return (
     <div>
-      <div className="prompts-head">
-        <div className="titles">
-          <h2>Pipelines</h2>
-          <p>Reusable, composable flows — assign them to projects and run them.</p>
-        </div>
-      </div>
-
       <div className="lin-toolbar">
         <input className="lin-search" placeholder="Search pipelines…" value={q} onChange={(e) => setQ(e.target.value)} />
         <button className="lin-add" onClick={() => navigate('/pipelines/new')} title="New pipeline" aria-label="New pipeline">
@@ -117,18 +112,18 @@ export function Pipelines() {
                 {p.description && <span className="snip">{p.description}</span>}
               </div>
               <span className="prow-tags">
-                {p.tags.slice(0, 3).map((t) => {
-                  const c = tagColor(t);
-                  return (
-                    <span key={t} className="tag-chip ro" style={{ color: c, borderColor: `${c}55`, background: `${c}14` } as CSSProperties}>{t}</span>
-                  );
-                })}
+                {p.tags.slice(0, 3).map((t) => (
+                  <span key={t} className="tag-chip ro">
+                    <span className="tdot" style={{ background: labelColor(t, labels) }} />
+                    {t}
+                  </span>
+                ))}
                 {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
               </span>
               <span className="prow-date">{p.steps.length}</span>
               <span className="prow-date">{fmtDate(p.updatedAt)}</span>
               <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
-                <Link className="txt-btn accent" to={`/pipelines/${p.id}`}>Open</Link>
+                <Link className="txt-btn" to={`/pipelines/${p.id}`}>Open</Link>
                 {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
               </span>
             </div>

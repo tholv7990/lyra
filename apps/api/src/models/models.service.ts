@@ -7,7 +7,7 @@ import { KeysService } from '../keys/keys.service';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
 import {
   OpenAiCompatClient,
-  OPENAI_COMPAT_BASE,
+  compatBaseUrl,
 } from '../runs/providers/openai-compat.client';
 import {
   curateAnthropic,
@@ -58,7 +58,7 @@ export class ModelsService {
     if (provider === Provider.Anthropic) {
       return curateAnthropic(await this.anthropic.listModels(key));
     }
-    const base = OPENAI_COMPAT_BASE[provider];
+    const base = compatBaseUrl(provider);
     if (base) {
       const ids = await this.openai.listModels(base, key);
       return provider === Provider.OpenAI

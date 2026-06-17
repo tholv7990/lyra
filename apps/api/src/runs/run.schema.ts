@@ -56,8 +56,9 @@ export type RunDocument = HydratedDocument<Run>;
 
 @Schema({ timestamps: true })
 export class Run extends AuditedEntity {
-  @Prop({ required: true, index: true })
-  projectId!: string;
+  // Absent for a builder "test run" (no project — just typed/blank context).
+  @Prop({ index: true })
+  projectId?: string;
 
   @Prop({ required: true, index: true })
   workspaceId!: string;

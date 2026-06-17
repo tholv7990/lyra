@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   PromptStatus,
-  tagColor,
+  Provider,
+  defaultModel,
+  labelColor,
+  type Conversation,
   type Paged,
   type Prompt,
   type TagCount,
@@ -10,7 +13,9 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { LabelPicker } from '../components/LabelPicker';
 import { PromptsIcon, PlusIcon } from '../layout/icons';
 
 const STATUS_COLOR: Record<PromptStatus, string> = {
@@ -32,6 +37,7 @@ export function Prompts() {
   const { current } = useWorkspace();
   const navigate = useNavigate();
   const wsId = current?.id;
+  const { labels, createLabel } = useLabels(wsId);
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [total, setTotal] = useState(0);
@@ -49,6 +55,7 @@ export function Prompts() {
 
   const [toDelete, setToDelete] = useState<Prompt | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = !!status || !!tag || !!q.trim();
@@ -108,13 +115,45 @@ export function Prompts() {
       .catch(() => undefined);
   }
 
-  async function toggleStatus(p: Prompt) {
-    const next = p.status === PromptStatus.Public ? PromptStatus.Draft : PromptStatus.Public;
+  async function patchPrompt(p: Prompt, body: Record<string, unknown>) {
     try {
-      const updated = await api<Prompt>(`/prompts/${p.id}`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
+      const updated = await api<Prompt>(`/prompts/${p.id}`, { method: 'PATCH', body: JSON.stringify(body) });
       setPrompts((list) => list.map((x) => (x.id === updated.id ? updated : x)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update prompt');
+    }
+  }
+
+  function toggleStatus(p: Prompt) {
+    void patchPrompt(p, {
+      status: p.status === PromptStatus.Public ? PromptStatus.Draft : PromptStatus.Public,
+    });
+  }
+
+  function commitTitle(p: Prompt) {
+    const val = editing?.val.trim() ?? '';
+    setEditing(null);
+    if (val && val !== p.title) void patchPrompt(p, { title: val });
+  }
+
+  // Open a prompt in a new chat: create a conversation seeded with the prompt's
+  // provider·model, then prefill the composer with its content (via nav state).
+  async function openInChat(p: Prompt) {
+    if (!wsId) return;
+    const prov = p.provider ?? Provider.Anthropic;
+    try {
+      const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
+        method: 'POST',
+        body: JSON.stringify({
+          provider: prov,
+          model: p.model ?? defaultModel(prov),
+          title: p.title,
+          originPromptId: p.id,
+        }),
+      });
+      navigate(`/chats/${convo.id}`, { state: { seed: p.content } });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open chat');
     }
   }
 
@@ -134,13 +173,6 @@ export function Prompts() {
 
   return (
     <div>
-      <div className="prompts-head">
-        <div className="titles">
-          <h2>Prompts</h2>
-          <p>Reusable, on-brand prompts for your pipelines.</p>
-        </div>
-      </div>
-
       {/* Linear-style filter toolbar */}
       <div className="lin-toolbar">
         <input
@@ -175,7 +207,7 @@ export function Prompts() {
               {vocab.length > 0 && <div className="lin-menu-label">Tag</div>}
               {vocab.slice(0, 12).map((t) => (
                 <button key={t.value} className="lin-menu-item" onClick={() => { setTag(t.value); setFilterMenu(false); }}>
-                  <span className="dot" style={{ background: tagColor(t.value) }} />
+                  <span className="dot" style={{ background: labelColor(t.value, labels) }} />
                   {t.value} <span className="lin-menu-count">{t.count}</span>
                 </button>
               ))}
@@ -213,51 +245,79 @@ export function Prompts() {
               <span>Status</span>
               <span>Tags</span>
               <span>Updated</span>
-              <span />
+              <span className="th-actions">Actions</span>
             </div>
             {prompts.map((p) => {
-              const open = () => (canEdit(p) ? navigate(`/prompts/${p.id}/edit`) : navigate(`/prompts/${p.id}/test`));
+              const editable = canEdit(p);
               return (
-              <div
-                className="prow"
-                key={p.id}
-                role="button"
-                tabIndex={0}
-                onClick={open}
-                onKeyDown={(e) => { if (e.key === 'Enter') open(); }}
-              >
-                <div className="prow-name">
-                  <span className="nm">{p.title}</span>
-                  {p.content && <span className="snip">{p.content}</span>}
-                </div>
-                <span>
-                  <span className={`badge status-${p.status}`}>{STATUS_LABEL[p.status]}</span>
-                </span>
-                <span className="prow-tags">
-                  {p.tags.slice(0, 3).map((t) => {
-                    const c = tagColor(t);
-                    return (
-                      <span key={t} className="tag-chip ro" style={{ color: c, borderColor: `${c}55`, background: `${c}14` } as CSSProperties}>
-                        {t}
-                      </span>
-                    );
-                  })}
-                  {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
-                </span>
-                <span className="prow-date">{fmtDate(p.updatedAt)}</span>
-                <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
-                  <Link className="txt-btn accent" to={`/prompts/${p.id}/test`}>Test</Link>
-                  {canEdit(p) && (
-                    <>
-                      <button className="txt-btn" onClick={() => toggleStatus(p)} title={p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}>
-                        {p.status === PromptStatus.Public ? 'Unpublish' : 'Publish'}
-                      </button>
-                      <Link className="txt-btn" to={`/prompts/${p.id}/edit`}>Edit</Link>
-                      <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>
-                    </>
+                <div className="prow" key={p.id}>
+                  {editing?.id === p.id ? (
+                    <input
+                      className="prow-edit"
+                      autoFocus
+                      value={editing.val}
+                      onChange={(e) => setEditing({ id: p.id, val: e.target.value })}
+                      onBlur={() => commitTitle(p)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); commitTitle(p); }
+                        else if (e.key === 'Escape') setEditing(null);
+                      }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="prow-name"
+                      title={editable ? 'Click to rename' : p.title}
+                      onClick={() => (editable ? setEditing({ id: p.id, val: p.title }) : void openInChat(p))}
+                    >
+                      <span className="nm">{p.title}</span>
+                      {p.content && <span className="snip">{p.content}</span>}
+                    </button>
                   )}
-                </span>
-              </div>
+
+                  <span className="prow-status">
+                    {editable ? (
+                      <button
+                        type="button"
+                        className={`badge status-${p.status} badge-btn`}
+                        onClick={() => toggleStatus(p)}
+                        title="Toggle Draft / Public"
+                      >
+                        {STATUS_LABEL[p.status]}
+                      </button>
+                    ) : (
+                      <span className={`badge status-${p.status}`}>{STATUS_LABEL[p.status]}</span>
+                    )}
+                  </span>
+
+                  <span className="prow-tags">
+                    {editable ? (
+                      <LabelPicker
+                        value={p.tags}
+                        labels={labels}
+                        onChange={(tags) => void patchPrompt(p, { tags })}
+                        onCreate={createLabel}
+                      />
+                    ) : (
+                      <>
+                        {p.tags.slice(0, 3).map((t) => (
+                          <span key={t} className="tag-chip ro">
+                            <span className="tdot" style={{ background: labelColor(t, labels) }} />
+                            {t}
+                          </span>
+                        ))}
+                        {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
+                      </>
+                    )}
+                  </span>
+
+                  <span className="prow-date">{fmtDate(p.updatedAt)}</span>
+
+                  <span className="prow-actions">
+                    <button className="txt-btn" onClick={() => void openInChat(p)}>Open in chat</button>
+                    {editable && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
+                  </span>
+                </div>
               );
             })}
           </div>

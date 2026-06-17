@@ -1,20 +1,44 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   defaultModel,
+  labelColor,
   Provider,
+  PromptStatus,
   StepMode,
   tagColor,
+  type ApiKeyInfo,
   type Paged,
   type Pipeline,
   type PipelineStep,
   type Prompt,
+  type Run,
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useModels } from '../lib/useModels';
+import { useLabels } from '../lib/useLabels';
+import { useRunActions } from '../lib/useRunActions';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
-import { TagInput } from '../components/TagInput';
+import { LabelPicker } from '../components/LabelPicker';
+import { EditorShell } from '../components/EditorShell';
+import { RunFlow } from '../components/RunFlow';
+import { FlowPagerControls, useFlowPager } from '../components/FlowPager';
+import { PromptPicker } from '../components/PromptPicker';
+import { PromptDetails } from '../components/PromptDetails';
+import { EditorActions } from '../components/EditorActions';
+import { EyeIcon } from '../layout/icons';
+import { useBreadcrumb } from '../layout/breadcrumb';
+
+const RUN_STATUS_LABEL: Record<string, string> = {
+  idle: 'Idle',
+  queued: 'Queued',
+  running: 'Running',
+  waiting: 'Awaiting approval',
+  awaiting_gate: 'Awaiting approval',
+  done: 'Done',
+  error: 'Error',
+};
 
 const PROVIDER_LABELS: Record<Provider, string> = {
   [Provider.OpenAI]: 'OpenAI',
@@ -23,7 +47,6 @@ const PROVIDER_LABELS: Record<Provider, string> = {
   [Provider.Image]: 'Image',
   [Provider.Video]: 'Video',
 };
-const PROVIDERS = Object.values(Provider);
 
 function uuid() {
   return crypto.randomUUID();
@@ -34,10 +57,13 @@ type Editing = { step: Draft; index: number; isNew: boolean } | null;
 
 export function PipelineBuilder() {
   const { id } = useParams<{ id: string }>();
+  const isNew = !id;
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { current } = useWorkspace();
   const wsId = current?.id;
   const { catalog } = useModels(wsId);
+  const { labels, createLabel } = useLabels(wsId);
 
   // First refreshed/known model for a provider (falls back to the static default).
   const catalogDefault = (p: Provider) => catalog[p]?.[0]?.id ?? defaultModel(p);
@@ -45,8 +71,9 @@ export function PipelineBuilder() {
     catalog[p]?.find((o) => o.id === m)?.label ?? m;
 
   const [pipeline, setPipeline] = useState<Pipeline | null>(null);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [name, setName] = useState('');
+  useBreadcrumb(isNew ? name.trim() || 'New' : pipeline?.name ?? '…');
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
@@ -56,31 +83,50 @@ export function PipelineBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  // Test-from-builder (no project): run the sequence; {note} fills from the
+  // pipeline note. Project-context runs live on the project page.
+  const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
+  const [run, setRun] = useState<Run | null>(null);
+  const [runMode, setRunMode] = useState(false);
+  const [creatingRun, setCreatingRun] = useState(false);
+  const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null); // full-prompt viewer
+  const runActions = useRunActions(run, setRun);
+  const pager = useFlowPager(steps.length); // mobile one-step pager (build mode)
   const dragFrom = useRef<number | null>(null);
   const dragTo = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!id || !wsId) return;
-    api<Pipeline>(`/pipelines/${id}`)
-      .then((p) => {
-        setPipeline(p);
-        setName(p.name);
-        setDescription(p.description);
-        setTags(p.tags);
-        setSteps(p.steps);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load pipeline'));
+    if (!wsId) return;
+    if (id) {
+      api<Pipeline>(`/pipelines/${id}`)
+        .then((p) => {
+          setPipeline(p);
+          setName(p.name);
+          setDescription(p.description);
+          setTags(p.tags);
+          setSteps(p.steps);
+        })
+        .catch((e) => setError(e instanceof Error ? e.message : 'Could not load pipeline'));
+    }
     api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?limit=200`)
       .then((r) => setPrompts(r.items))
       .catch(() => setPrompts([]));
+    api<ApiKeyInfo[]>(`/workspaces/${wsId}/keys`)
+      .then((ks) => setKeysSet(new Set(ks.map((k) => k.provider))))
+      .catch(() => setKeysSet(new Set()));
   }, [id, wsId]);
 
   const canEdit = useMemo(
-    () => !!user && !!pipeline && (pipeline.createdBy.id === user.id || current?.role === 'owner'),
-    [user, pipeline, current],
+    () =>
+      isNew ||
+      (!!user && !!pipeline && (pipeline.createdBy.id === user.id || current?.role === 'owner')),
+    [isNew, user, pipeline, current],
   );
 
-  const promptTitle = (pid: string) => prompts.find((p) => p.id === pid)?.title ?? '(prompt)';
+  // Steps bind a PUBLIC library prompt (a draft wouldn't be visible to other
+  // members running the pipeline). The picker only offers these.
+  const pickablePrompts = prompts.filter((p) => p.status === PromptStatus.Public);
 
   function mark<T>(setter: (v: T) => void) {
     return (v: T) => {
@@ -95,7 +141,7 @@ export function PipelineBuilder() {
       index,
       step: {
         name: '',
-        promptId: prompts[0]?.id ?? '',
+        promptId: '', // chosen via the picker (which also sets name/provider/model)
         provider: Provider.Anthropic,
         model: catalogDefault(Provider.Anthropic),
         mode: StepMode.Auto,
@@ -110,13 +156,15 @@ export function PipelineBuilder() {
   function saveStep() {
     if (!editing) return;
     const s = editing.step;
-    if (!s.name.trim() || !s.promptId) {
-      setError('Step needs a name and a prompt.');
+    if (!s.promptId) {
+      setError('Pick a prompt for this step.');
       return;
     }
+    // Name/provider/model come from the chosen prompt (set on pick).
+    const p = prompts.find((x) => x.id === s.promptId);
     const finalStep: PipelineStep = {
       id: s.id ?? uuid(),
-      name: s.name.trim(),
+      name: (s.name || p?.title || 'Step').trim(),
       promptId: s.promptId,
       provider: s.provider,
       model: s.model,
@@ -133,6 +181,15 @@ export function PipelineBuilder() {
     setDirty(true);
     setEditing(null);
     setError(null);
+  }
+
+  function toggleMode(index: number) {
+    setSteps((list) =>
+      list.map((x, i) =>
+        i === index ? { ...x, mode: x.mode === StepMode.Gate ? StepMode.Auto : StepMode.Gate } : x,
+      ),
+    );
+    setDirty(true);
   }
 
   function removeStep(index: number) {
@@ -203,6 +260,32 @@ export function PipelineBuilder() {
   }
 
   async function save() {
+    if (saving) return;
+    // New pipeline: create it (with whatever steps were added), then switch to
+    // edit mode. The builder is the single create + edit surface.
+    if (isNew) {
+      if (!wsId || !name.trim()) return;
+      setSaving(true);
+      setError(null);
+      try {
+        const created = await api<Pipeline>(`/workspaces/${wsId}/pipelines`, {
+          method: 'POST',
+          body: JSON.stringify({ name: name.trim(), description, tags, steps }),
+        });
+        setPipeline(created);
+        setName(created.name);
+        setDescription(created.description);
+        setTags(created.tags);
+        setSteps(created.steps);
+        setDirty(false);
+        navigate(`/pipelines/${created.id}`, { replace: true });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not create pipeline');
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
     if (!id) return;
     setSaving(true);
     setError(null);
@@ -221,42 +304,208 @@ export function PipelineBuilder() {
     }
   }
 
-  if (!pipeline) {
+  // Test-run this pipeline with no project (typed/blank context), then light up
+  // the same flow. Auto-saves unsaved edits first so the test reflects them.
+  async function startTest() {
+    if (isNew || !id || !wsId || steps.length === 0 || creatingRun) return;
+    setCreatingRun(true);
+    setError(null);
+    try {
+      if (dirty) {
+        const updated = await api<Pipeline>(`/pipelines/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ name, description, tags, steps }),
+        });
+        setPipeline(updated);
+        setSteps(updated.steps);
+        setDirty(false);
+      }
+      const created = await api<Run>(`/workspaces/${wsId}/pipelines/${id}/test-runs`, {
+        method: 'POST',
+      });
+      setRun(created);
+      setRunMode(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not start test');
+    } finally {
+      setCreatingRun(false);
+    }
+  }
+
+  if (!isNew && !pipeline) {
     return <p className="empty">{error ?? 'Loading…'}</p>;
   }
 
   const ed = editing?.step;
 
+  // One editable step node — reused by the full flow (desktop) and the pager
+  // (mobile). Shows the bound prompt's name, snippet, tags, creator + an eye to
+  // open the full prompt.
+  const renderNode = (s: PipelineStep, i: number) => {
+    const p = prompts.find((x) => x.id === s.promptId);
+    return (
+      <div
+        data-step-index={i}
+        className={`flow-node${dragIndex === i ? ' dragging' : ''}${
+          overIndex === i && dragIndex !== null && dragIndex !== i ? ' drag-over' : ''
+        }`}
+        style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}
+      >
+        {canEdit && (
+          <div className="flow-grip" title="Drag to reorder" onPointerDown={(e) => startDrag(e, i)} aria-hidden>
+            ⠿
+          </div>
+        )}
+        <div className="flow-node-main" onClick={() => canEdit && openEdit(i)}>
+          <div className="flow-node-head">
+            <span className="flow-num">{i + 1}</span>
+            <span className="flow-name">{s.name}</span>
+            {canEdit ? (
+              <button
+                type="button"
+                className={`mode-tag mode-toggle ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}
+                title="Toggle gate / auto"
+                onClick={(e) => { e.stopPropagation(); toggleMode(i); }}
+              >
+                {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
+              </button>
+            ) : (
+              <span className={`mode-tag ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
+                {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
+              </span>
+            )}
+            {p && (
+              <span
+                className="flow-eye"
+                role="button"
+                tabIndex={0}
+                title="View full prompt"
+                onClick={(e) => { e.stopPropagation(); setDetailPrompt(p); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setDetailPrompt(p); } }}
+              >
+                <EyeIcon width={15} height={15} />
+              </span>
+            )}
+          </div>
+          {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
+          <div className="flow-node-sub">
+            {PROVIDER_LABELS[s.provider]} · {modelLabel(s.provider, s.model)}
+          </div>
+          {p && (p.tags.length > 0 || p.createdBy?.name) && (
+            <div className="flow-node-foot">
+              {p.tags.slice(0, 4).map((t) => (
+                <span key={t} className="tag-chip ro">
+                  <span className="tdot" style={{ background: labelColor(t, labels) }} />
+                  {t}
+                </span>
+              ))}
+              {p.createdBy?.name && (
+                <span className="flow-by">
+                  <span className="flow-avatar">{p.createdBy.name.charAt(0).toUpperCase()}</span>
+                  {p.createdBy.name}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        {canEdit && (
+          <div className="flow-node-actions">
+            <button className="icon-mini" title="Move up" onClick={() => move(i, -1)}>↑</button>
+            <button className="icon-mini" title="Move down" onClick={() => move(i, 1)}>↓</button>
+            <button className="icon-mini danger" title="Remove" onClick={() => removeStep(i)}>×</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div className="pb">
-      <div className="pb-top">
-        <Link to="/pipelines" className="pg-back">← Pipelines</Link>
-        <div className="pb-title-row">
-          <input
-            className="text-input pb-name"
-            value={name}
-            disabled={!canEdit}
-            onChange={(e) => mark(setName)(e.target.value)}
-            placeholder="Pipeline name"
+    <EditorShell
+      wide
+      onBack={() => navigate('/pipelines')}
+      title={
+        <input
+          className="eshell-name"
+          value={name}
+          disabled={!canEdit || runMode}
+          onChange={(e) => mark(setName)(e.target.value)}
+          placeholder="Pipeline name"
+        />
+      }
+      actions={
+        runMode ? undefined : (
+          <EditorActions
+            onConfirm={() => void save()}
+            onCancel={() => navigate('/pipelines')}
+            confirmDisabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
+            confirmTitle={isNew ? 'Create pipeline' : 'Save changes'}
           />
+        )
+      }
+    >
+      {/* test trigger (build) / run controls (testing) — no project here */}
+      {runMode && run ? (
+        <div className="run-bar">
+          <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} onClick={() => setRunMode(false)}>
+            ‹ Builder
+          </button>
+          <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL[run.status] ?? run.status}</span>
+          <span className="run-bar-proj">Test run</span>
+          <div className="run-bar-actions">
+            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
+              Run all
+            </button>
+            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
+              Stop
+            </button>
+            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy} onClick={runActions.reset}>
+              Reset
+            </button>
+          </div>
+        </div>
+      ) : !isNew ? (
+        <div className="run-bar">
+          <span className="run-bar-label">Test</span>
           <button
             className="btn-primary"
             style={{ width: 'auto', marginTop: 0 }}
-            disabled={!canEdit || !dirty || saving}
-            onClick={() => void save()}
+            disabled={steps.length === 0 || creatingRun || saving}
+            onClick={() => void startTest()}
           >
-            {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
+            {creatingRun ? 'Testing…' : 'Test ▶'}
           </button>
+          <span className="muted" style={{ fontSize: 12 }}>
+            {steps.length === 0 ? 'Add a step to test' : 'Runs with no project · {note} fills from the note'}
+          </span>
         </div>
+      ) : null}
+
+      {runMode && run ? (
+        <RunFlow
+          run={run}
+          busy={runActions.busy}
+          hasKey={(p) => keysSet.has(p)}
+          onRunStep={runActions.runStep}
+          onApprove={runActions.approve}
+          onSavePrompt={runActions.savePrompt}
+        />
+      ) : (
+      <>
+      <div className="pb-top">
         <input
           className="text-input pb-desc"
           value={description}
           disabled={!canEdit}
           onChange={(e) => mark(setDescription)(e.target.value)}
-          placeholder="Description (optional)"
+          placeholder="Note (optional) — available to prompts as {note}"
         />
         <div className="pb-tags">
-          <TagInput value={tags} suggestions={[]} onChange={mark(setTags)} />
+          <LabelPicker
+            value={tags}
+            labels={labels}
+            onChange={mark(setTags)}
+            onCreate={createLabel}
+          />
         </div>
       </div>
 
@@ -267,145 +516,89 @@ export function PipelineBuilder() {
         </p>
       )}
 
-      <div className="flow">
-        <div className="flow-cap">● Start</div>
+      {pager.isMobile ? (
+        <div className="flow flow-edit pager">
+          {pager.page === 0 && (
+            <>
+              <div className="flow-cap">● Start</div>
+              {canEdit && steps.length === 0 && <Connector onAdd={() => openNew(0)} />}
+            </>
+          )}
+          {pager.page >= 1 && pager.page <= steps.length && (
+            <>
+              {canEdit && <Connector onAdd={() => openNew(pager.page - 1)} />}
+              {renderNode(steps[pager.page - 1], pager.page - 1)}
+              {canEdit && pager.page === steps.length && <Connector onAdd={() => openNew(steps.length)} />}
+            </>
+          )}
+          {pager.page === steps.length + 1 && <div className="flow-cap end">◉ End</div>}
+          <FlowPagerControls pager={pager} stepCount={steps.length} />
+        </div>
+      ) : (
+        <div className="flow">
+          <div className="flow-cap">● Start</div>
 
-        {steps.map((s, i) => (
-          <div key={s.id}>
-            <Connector onAdd={canEdit ? () => openNew(i) : undefined} />
-            <div
-              data-step-index={i}
-              className={`flow-node${dragIndex === i ? ' dragging' : ''}${
-                overIndex === i && dragIndex !== null && dragIndex !== i ? ' drag-over' : ''
-              }`}
-              style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}
-            >
-              {canEdit && (
-                <div
-                  className="flow-grip"
-                  title="Drag to reorder"
-                  onPointerDown={(e) => startDrag(e, i)}
-                  aria-hidden
-                >
-                  ⠿
-                </div>
-              )}
-              <div className="flow-node-main" onClick={() => canEdit && openEdit(i)}>
-                <div className="flow-node-head">
-                  <span className="flow-num">{i + 1}</span>
-                  <span className="flow-name">{s.name}</span>
-                  <span className={`mode-tag ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
-                    {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
-                  </span>
-                </div>
-                <div className="flow-node-sub">
-                  {promptTitle(s.promptId)} · {PROVIDER_LABELS[s.provider]} · {modelLabel(s.provider, s.model)}
-                </div>
-              </div>
-              {canEdit && (
-                <div className="flow-node-actions">
-                  <button className="icon-mini" title="Move up" onClick={() => move(i, -1)}>↑</button>
-                  <button className="icon-mini" title="Move down" onClick={() => move(i, 1)}>↓</button>
-                  <button className="icon-mini danger" title="Remove" onClick={() => removeStep(i)}>×</button>
-                </div>
-              )}
+          {steps.map((s, i) => (
+            <div key={s.id}>
+              <Connector onAdd={canEdit ? () => openNew(i) : undefined} />
+              {renderNode(s, i)}
             </div>
-          </div>
-        ))}
+          ))}
 
-        <Connector onAdd={canEdit ? () => openNew(steps.length) : undefined} />
-        <div className="flow-cap end">◉ End</div>
-      </div>
+          <Connector onAdd={canEdit ? () => openNew(steps.length) : undefined} />
+          <div className="flow-cap end">◉ End</div>
+        </div>
+      )}
 
       {ed && (
         <div className="drawer-scrim" onClick={() => setEditing(null)}>
-          <div className="drawer" onClick={(e) => e.stopPropagation()}>
-            <h3>{editing.isNew ? 'Add step' : 'Edit step'}</h3>
-
-            <label className="pf-field">
-              <span className="pf-label">Name</span>
-              <input
-                className="text-input"
-                autoFocus
-                value={ed.name}
-                onChange={(e) => setEditing({ ...editing!, step: { ...ed, name: e.target.value } })}
-              />
-            </label>
-
-            <label className="pf-field">
-              <span className="pf-label">Prompt</span>
-              <select
-                className="text-input"
-                value={ed.promptId}
-                onChange={(e) => setEditing({ ...editing!, step: { ...ed, promptId: e.target.value } })}
-              >
-                <option value="">Select a prompt…</option>
-                {prompts.map((p) => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-              </select>
-            </label>
-
-            <div className="form-row">
-              <label className="pf-field">
-                <span className="pf-label">Provider</span>
-                <select
-                  className="text-input"
-                  value={ed.provider}
-                  onChange={(e) => {
-                    const provider = e.target.value as Provider;
-                    setEditing({ ...editing!, step: { ...ed, provider, model: catalogDefault(provider) } });
-                  }}
-                >
-                  {PROVIDERS.map((p) => (
-                    <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="pf-field">
-                <span className="pf-label">Model</span>
-                <select
-                  className="text-input"
-                  value={ed.model}
-                  onChange={(e) => setEditing({ ...editing!, step: { ...ed, model: e.target.value } })}
-                >
-                  {(catalog[ed.provider] ?? []).map((m) => (
-                    <option key={m.id} value={m.id}>{m.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="pf-field">
-              <span className="pf-label">Mode</span>
-              <div className="seg">
-                <button
-                  type="button"
-                  className={ed.mode === StepMode.Auto ? 'on' : ''}
-                  onClick={() => setEditing({ ...editing!, step: { ...ed, mode: StepMode.Auto } })}
-                >
-                  Auto
-                </button>
-                <button
-                  type="button"
-                  className={ed.mode === StepMode.Gate ? 'on' : ''}
-                  onClick={() => setEditing({ ...editing!, step: { ...ed, mode: StepMode.Gate } })}
-                >
-                  Gate
-                </button>
+          <div className="drawer addstep" onClick={(e) => e.stopPropagation()}>
+            {/* header: title (left) · ✓ add (green) · ✕ cancel (red) */}
+            <div className="addstep-head">
+              <h3>{editing.isNew ? 'Add Step' : 'Edit Step'}</h3>
+              <div className="addstep-actions">
+                <EditorActions
+                  onConfirm={saveStep}
+                  onCancel={() => setEditing(null)}
+                  confirmDisabled={!ed.promptId}
+                  confirmTitle={editing.isNew ? 'Add step' : 'Save step'}
+                />
               </div>
             </div>
 
-            <div className="drawer-actions">
-              <button className="btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={saveStep}>
-                {editing.isNew ? 'Add step' : 'Save step'}
-              </button>
-            </div>
+            {/* A step just binds a prompt — name/provider/model (and a default
+                Auto mode) come from it; gate/auto is toggled on the flow node. */}
+            <PromptPicker
+              prompts={pickablePrompts}
+              labels={labels}
+              value={ed.promptId}
+              modelLabel={(p) => (p.model ? modelLabel(p.provider ?? Provider.Anthropic, p.model) : '')}
+              onChange={(promptId) => {
+                const p = pickablePrompts.find((x) => x.id === promptId);
+                setEditing({
+                  ...editing!,
+                  step: {
+                    ...ed,
+                    promptId,
+                    name: p?.title ?? ed.name,
+                    provider: p?.provider ?? ed.provider,
+                    model: p?.model ?? ed.model,
+                  },
+                });
+              }}
+            />
           </div>
         </div>
       )}
-    </div>
+      </>
+      )}
+
+      {runActions.error && <p className="error">{runActions.error}</p>}
+
+      {detailPrompt && (
+        <PromptDetails prompt={detailPrompt} labels={labels} onClose={() => setDetailPrompt(null)} />
+      )}
+    </EditorShell>
   );
 }
 

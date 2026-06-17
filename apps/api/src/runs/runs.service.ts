@@ -35,13 +35,14 @@ import {
   type RunState,
 } from './run.engine';
 
-// Composable-pipeline run creation input.
+// Composable-pipeline run creation input. projectId is omitted for a builder
+// "test run" (no project — placeholders come from the supplied context).
 export interface PipelineRunInput {
-  projectId: string;
+  projectId?: string;
   workspaceId: string;
   pipelineId: string;
   pipelineName: string;
-  context: { product: string; niche: string; homepageUrl: string };
+  context: { product: string; niche: string; homepageUrl: string; note?: string };
   steps: {
     name: string;
     promptId: string;
@@ -108,6 +109,7 @@ export class RunsService extends BaseRepository<Run> {
           product: input.context.product,
           niche: input.context.niche,
           homepage: input.context.homepageUrl,
+          note: input.context.note,
         }),
       });
     }

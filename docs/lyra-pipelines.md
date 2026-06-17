@@ -1,9 +1,21 @@
 # Lyra — Composable Pipelines (business model v2)
 
-> **Status:** approved design, not yet implemented. This document **supersedes the
-> fixed 8-step pipeline** described in `lyra-requirements.md` (§ the hard-coded
-> `STEP_DEFS` / `STEP_PROVIDERS` run model). The 8 steps survive only as a
-> **starter template**, not as the product's structure.
+> **Status: BUILT (phases 1–6).** Composable pipelines are live end-to-end:
+> shared contracts, the pipelines library + CRUD, project assignment, the
+> generalized run engine, the **vertical-flow builder** (now the single create +
+> edit surface — the separate create form is gone), a **searchable prompt picker**
+> (public prompts only), the **unified run view** (`RunFlow` — nodes light up with
+> live status, inline gate **Approve**, expandable results), running from **either**
+> the project hub **or** the builder (pick a project → Run), and the **mobile
+> one-step pager** for both building and running.
+> **Still deferred:** the one-click 8-step **starter template**, branching/DAG,
+> standalone reusable steps, run history/analytics, and sending attachments to the
+> provider. Only **Anthropic** executes for real (others use `MockStepProvider`).
+>
+> This document **supersedes the fixed 8-step pipeline** described in
+> `lyra-requirements.md` (§ the hard-coded `STEP_DEFS` / `STEP_PROVIDERS` run
+> model). The 8 steps survive only as a **starter template** (not yet seeded),
+> not as the product's structure.
 
 ## 1. Why we're changing
 
@@ -220,18 +232,36 @@ workspace stack.
 
 ## 9. Suggested build phases (for the pivot)
 
-1. **Shared contracts** — Pipeline/PipelineStep/ProjectPipeline models + DTOs,
+1. ✅ **Shared contracts** — Pipeline/PipelineStep/ProjectPipeline models + DTOs,
    `MODEL_CATALOG`, Run/RunStep extensions, decouple `prompt.type` from provider.
-2. **api — pipelines library** — CRUD (workspace-visible, creator/owner edit) +
+2. ✅ **api — pipelines library** — CRUD (workspace-visible, creator/owner edit) +
    tags; unit/e2e.
-3. **api — assignment + run-from-pipeline** — `ProjectPipeline`; generalize the
+3. ✅ **api — assignment + run-from-pipeline** — `ProjectPipeline`; generalize the
    run engine (dynamic steps, per-step provider/model, per-step gates); create runs
    from a (project, pipeline); e2e.
-4. **web — library + hub** — Pipelines nav + library page; Project pipelines hub
+4. ✅ **web — library + hub** — Pipelines nav + library page; Project pipelines hub
    (assign / add-from-library / new).
-5. **web — builder** — vertical flow (Start/End, connectors, `+` insert), node
-   drawer (prompt/provider/model/gate), reorder.
-6. **web — unified run** — live status on nodes, inline gate approval, results;
-   **mobile one-step pager** for build + run.
-7. **Seed the 8-step starter template** + polish; retire the old project-run
-   workbench.
+5. ✅ **web — builder** — vertical flow (Start/End, connectors, `+` insert), node
+   drawer (prompt/provider/model/gate), reorder. **Also:** the builder is the single
+   create + edit surface (`/pipelines/new` opens it; first save creates), and the
+   prompt field is a searchable `PromptPicker` (public prompts: name · creator · tags).
+6. ✅ **web — unified run** — live status on nodes (`RunFlow`), inline gate approval,
+   results; **mobile one-step pager** (`FlowPager`) for build + run. Runs launch from
+   the project hub **and** from the builder (project picker → live status).
+7. ⏳ **Seed the 8-step starter template** (not done) + polish; the old project-run
+   workbench is **retired** (the project run renders as `RunFlow`).
+
+### As-built notes (deltas from the plan above)
+- **Builder = create + edit.** There is no separate "create pipeline" form; `/pipelines/new`
+  renders the builder in new mode and the first **Create** persists it (with any steps
+  already added).
+- **Prompt picker is public-only.** A step binds a **public** library prompt — a draft
+  isn't visible to other members running the pipeline, so drafts are excluded (publish to use).
+- **Run from the builder.** Decision 14 ("the pipeline page lights up") is realized: a
+  `Run in [project ▾] → Run ▶` bar (the Start node's trigger role) creates a run and
+  swaps the flow into `RunFlow`; **‹ Builder** returns to editing. Run also auto-saves
+  unsaved edits first.
+- **Shared run plumbing.** `useRunActions` (run-all/stop/reset/run-step/approve/save-prompt)
+  drives both the project run and the builder run; both render the same `RunFlow`.
+- **Files:** `apps/web/src/components/{RunFlow,FlowPager,PromptPicker,EditorShell}.tsx`,
+  `apps/web/src/lib/useRunActions.ts`.

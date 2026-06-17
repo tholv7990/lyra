@@ -29,19 +29,22 @@ export class RunAccessGuard implements CanActivate {
     const run = await this.runs.findById(req.params?.id as string);
     if (!run) throw new NotFoundException('Run not found');
 
-    const project = await this.projects.findActiveById(run.projectId);
-    if (!project) throw new NotFoundException('Project not found');
-
     const membership = await this.memberships.findFor(run.workspaceId, user.id);
     if (!membership) throw new ForbiddenException('Not a member of this workspace');
 
-    const ctx: MemberCtx = {
-      userId: user.id,
-      role: membership.role,
-      canManageKeys: membership.canManageKeys,
-    };
-    if (!canViewProject(project, ctx)) {
-      throw new ForbiddenException('No access to this run');
+    // Test runs have no project — workspace membership is enough. Project runs
+    // additionally require visibility of their project.
+    if (run.projectId) {
+      const project = await this.projects.findActiveById(run.projectId);
+      if (!project) throw new NotFoundException('Project not found');
+      const ctx: MemberCtx = {
+        userId: user.id,
+        role: membership.role,
+        canManageKeys: membership.canManageKeys,
+      };
+      if (!canViewProject(project, ctx)) {
+        throw new ForbiddenException('No access to this run');
+      }
     }
 
     (req as unknown as { run: unknown }).run = run;

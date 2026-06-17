@@ -8,6 +8,7 @@ import {
   tagKey,
   dedupeTags,
   tagColor,
+  labelColor,
   mediaTypeForMime,
   isAllowedMedia,
   type MemberCtx,
@@ -134,6 +135,16 @@ describe('tagColor', () => {
   });
   it('returns a color from the palette', () => {
     expect(TAG_PALETTE).toContain(tagColor('anything'));
+  });
+});
+
+describe('labelColor', () => {
+  const labels = [{ name: 'Bug', color: '#eb5757' }];
+  it('uses the workspace label colour, matched case-insensitively', () => {
+    expect(labelColor('bug', labels)).toBe('#eb5757');
+  });
+  it('falls back to the deterministic tagColor when unknown', () => {
+    expect(labelColor('whatever', labels)).toBe(tagColor('whatever'));
   });
 });
 

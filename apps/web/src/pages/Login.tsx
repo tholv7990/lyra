@@ -1,11 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { LoginDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { GoogleButton } from '../components/GoogleButton';
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const googleError =
+    params.get('error') === 'google'
+      ? 'Google sign-in failed. Please try again.'
+      : params.get('error') === 'google_unavailable'
+        ? 'Google sign-in isn’t set up yet.'
+        : null;
   const [form, setForm] = useState<LoginDto>({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,7 +45,10 @@ export function Login() {
         <h1>Welcome back</h1>
         <p className="sub muted">Sign in to your Lyra workspace</p>
 
-        {error && <p className="error">{error}</p>}
+        {(error || googleError) && <p className="error">{error ?? googleError}</p>}
+
+        <GoogleButton />
+        <div className="auth-or"><span>or</span></div>
 
         <label className="field">
           <span>Email</span>
@@ -60,6 +71,10 @@ export function Login() {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
         </label>
+
+        <div className="auth-aux">
+          <Link to="/forgot-password">Forgot password?</Link>
+        </div>
 
         <button className="btn-primary" type="submit" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}

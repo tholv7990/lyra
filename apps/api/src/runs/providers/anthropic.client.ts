@@ -7,11 +7,19 @@ export interface LlmAttachment {
   dataBase64: string;
 }
 
+// Prior conversation turns (text only) for multi-turn chat. The current turn is
+// passed via `prompt`/`attachments`; history carries the earlier exchanges.
+export interface LlmTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface LlmCompletionParams {
   apiKey: string;
   model: string;
   system: string;
   prompt: string;
+  history?: LlmTurn[];
   maxTokens?: number;
   attachments?: LlmAttachment[];
   signal?: AbortSignal;
@@ -40,9 +48,29 @@ function userContent(params: LlmCompletionParams): unknown {
   return blocks;
 }
 
+// Mark the system prompt as a cacheable prefix (Anthropic prompt caching).
+// When the same template is reused across runs/steps, cache hits cost ~0.1x of
+// input. Below the model's minimum cacheable size it simply isn't cached — no
+// error, no write premium. Verify via the response's cache_read_input_tokens.
+function systemBlocks(system: string) {
+  return [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
+}
+
+// Prior turns + the current user message. History is text-only (attachments
+// apply to the current turn); the current turn may carry image/document blocks.
+function buildMessages(params: LlmCompletionParams) {
+  const history = (params.history ?? []).map((t) => ({ role: t.role, content: t.content }));
+  return [...history, { role: 'user', content: userContent(params) }];
+}
+
 interface AnthropicResponse {
   content?: { type: string; text?: string }[];
-  usage?: { input_tokens?: number; output_tokens?: number };
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
+  };
   error?: { message?: string };
 }
 
@@ -79,8 +107,8 @@ export class AnthropicClient {
       body: JSON.stringify({
         model: params.model,
         max_tokens: params.maxTokens ?? 2048,
-        system: params.system,
-        messages: [{ role: 'user', content: userContent(params) }],
+        ...(params.system ? { system: systemBlocks(params.system) } : {}),
+        messages: buildMessages(params),
       }),
     });
 
@@ -117,8 +145,8 @@ export class AnthropicClient {
       body: JSON.stringify({
         model: params.model,
         max_tokens: params.maxTokens ?? 2048,
-        system: params.system,
-        messages: [{ role: 'user', content: userContent(params) }],
+        ...(params.system ? { system: systemBlocks(params.system) } : {}),
+        messages: buildMessages(params),
         stream: true,
       }),
     });

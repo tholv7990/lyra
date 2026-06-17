@@ -36,7 +36,7 @@ export default defineConfig({
       '/invites': api(),
       '/projects': api(true), // also SPA routes
       '/prompts': api(true), // also SPA routes
-      '/prompt-tests': api(),
+      '/conversations': api(), // chat threads (the SPA route is /chats)
       '/pipelines': api(true), // also SPA routes
       '/files': api(), // always proxy — files open in a new tab (a navigation)
       '/runs': api(),

@@ -15,6 +15,7 @@ import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
 import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from '../pipelines/pipelines.service';
+import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RunsService } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
@@ -50,6 +51,44 @@ export class RunsController {
           product: project.product,
           niche: project.niche,
           homepageUrl: project.homepageUrl,
+          note: pipeline.description ?? '',
+        },
+        steps: pipeline.steps.map((s) => ({
+          name: s.name,
+          promptId: s.promptId,
+          provider: s.provider,
+          model: s.model,
+          mode: s.mode,
+        })),
+      },
+      user.id,
+    );
+    return this.runs.toView(run);
+  }
+
+  // Test-run a pipeline from the builder — no project. {note} is filled from the
+  // pipeline's note; {product}/{niche}/{homepage} stay blank (no project).
+  @Post('workspaces/:id/pipelines/:pipelineId/test-runs')
+  @UseGuards(WorkspaceGuard)
+  async createTestRun(
+    @Param('id') workspaceId: string,
+    @Param('pipelineId') pipelineId: string,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    const pipeline = await this.pipelines.findActiveById(pipelineId);
+    if (!pipeline || pipeline.workspaceId !== workspaceId) {
+      throw new NotFoundException('Pipeline not found');
+    }
+    const run = await this.runs.createForPipeline(
+      {
+        workspaceId,
+        pipelineId: pipeline._id.toString(),
+        pipelineName: pipeline.name,
+        context: {
+          product: '',
+          niche: '',
+          homepageUrl: '',
+          note: pipeline.description ?? '',
         },
         steps: pipeline.steps.map((s) => ({
           name: s.name,

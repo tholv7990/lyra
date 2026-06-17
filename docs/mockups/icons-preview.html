@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Lyra solid icons — preview</title>
+<style>
+  body { font-family: Inter, system-ui, sans-serif; background: #f4f4f6; color: #1d1d1f; padding: 28px; }
+  h1 { font-size: 18px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; margin-top: 18px; }
+  .cell { background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .row { display: flex; align-items: center; gap: 14px; color: #1d1d1f; }
+  .row svg { color: #1d1d1f; }
+  .big { width: 28px; height: 28px; }
+  .lbl { font-size: 12px; color: rgba(60,60,67,.62); }
+  .dark { background: #1d1d23; }
+  .dark .cell { background: #26262e; border-color: rgba(255,255,255,.1); }
+  .dark .row svg, .dark .lbl { color: #e6e6ea; }
+</style>
+</head>
+<body>
+<h1>Lyra solid icons (16px + 28px)</h1>
+<div class="grid" id="grid"></div>
+<script>
+const icons = {
+  Home: '<path d="M8.66 1.78a1 1 0 0 0-1.32 0L1.84 6.6A1.5 1.5 0 0 0 1.33 7.73V13A1.5 1.5 0 0 0 2.83 14.5H5.5a.5.5 0 0 0 .5-.5v-3.1a2 2 0 0 1 4 0V14a.5.5 0 0 0 .5.5h2.67A1.5 1.5 0 0 0 14.67 13V7.73a1.5 1.5 0 0 0-.51-1.13L8.66 1.78Z"/>',
+  Projects: '<path d="M2 4.6A1.6 1.6 0 0 1 3.6 3h2.5a1.6 1.6 0 0 1 1.13.47L8 4.25h4.4A1.6 1.6 0 0 1 14 5.85v5.55A1.6 1.6 0 0 1 12.4 13H3.6A1.6 1.6 0 0 1 2 11.4V4.6Z"/>',
+  Members: '<circle cx="5.6" cy="5.5" r="2.4"/><circle cx="11" cy="6.1" r="1.9"/><path d="M1.3 12.7c0-2.27 1.93-3.7 4.3-3.7 1.3 0 2.45.43 3.2 1.18a.6.6 0 0 1 .03.83 4.7 4.7 0 0 0-.93 1.94.6.6 0 0 1-.58.45H1.9a.6.6 0 0 1-.6-.6v-.1Z"/><path d="M11 9.3c2 0 3.5 1.28 3.5 3.13a.57.57 0 0 1-.57.57h-3.1a.5.5 0 0 1-.49-.42 5.6 5.6 0 0 0-.97-2.36.5.5 0 0 1 .2-.74A4 4 0 0 1 11 9.3Z"/>',
+  Prompts: '<path d="M4 2.6h8A2 2 0 0 1 14 4.6v4a2 2 0 0 1-2 2H7.1l-3 2.46A.6.6 0 0 1 3.1 12.6V10.5A2 2 0 0 1 2 8.6v-4A2 2 0 0 1 4 2.6Z"/>',
+  Pipelines: '<path d="M5.6 4H9a1.5 1.5 0 0 1 1.5 1.5v1M5.6 12H9a1.5 1.5 0 0 0 1.5-1.5v-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="4" cy="4" r="2.1"/><circle cx="4" cy="12" r="2.1"/><circle cx="12" cy="8" r="2.1"/>',
+  Settings: '<g><rect x="7" y="0.7" width="2" height="3" rx="0.6"/><rect x="7" y="12.3" width="2" height="3" rx="0.6"/><rect x="0.7" y="7" width="3" height="2" rx="0.6"/><rect x="12.3" y="7" width="3" height="2" rx="0.6"/></g><g transform="rotate(45 8 8)"><rect x="7" y="0.7" width="2" height="3" rx="0.6"/><rect x="7" y="12.3" width="2" height="3" rx="0.6"/><rect x="0.7" y="7" width="3" height="2" rx="0.6"/><rect x="12.3" y="7" width="3" height="2" rx="0.6"/></g><path fill-rule="evenodd" clip-rule="evenodd" d="M8 2.1a5.9 5.9 0 1 0 0 11.8 5.9 5.9 0 0 0 0-11.8Zm0 3.6a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6Z"/>',
+  Menu: '<rect x="2" y="3.6" width="12" height="1.9" rx="0.95"/><rect x="2" y="7.05" width="12" height="1.9" rx="0.95"/><rect x="2" y="10.5" width="12" height="1.9" rx="0.95"/>',
+  Chevron: '<path d="M3.3 5.55a1 1 0 0 1 1.4 0L8 8.84l3.3-3.29a1 1 0 1 1 1.4 1.42l-4 3.98a1 1 0 0 1-1.4 0l-4-3.98a1 1 0 0 1 0-1.42Z"/>',
+  Check: '<path d="M6.16 11.1 3.3 8.24a.9.9 0 0 1 1.27-1.27l2.18 2.18 4.65-4.66a.9.9 0 1 1 1.28 1.28l-5.3 5.3a.9.9 0 0 1-1.27 0Z"/>',
+  Trash: '<path d="M6.5 1.6a1 1 0 0 0-1 1V3H2.9a.75.75 0 0 0 0 1.5h10.2A.75.75 0 0 0 13.1 3H10.5v-.4a1 1 0 0 0-1-1h-3Zm.5 1.4h2V3H7v0Z"/><path d="M3.9 5.6h8.2l-.52 7.03A1.5 1.5 0 0 1 10.08 14H5.92a1.5 1.5 0 0 1-1.5-1.37L3.9 5.6Z"/>',
+  Plus: '<path d="M8 2.4a.95.95 0 0 1 .95.95V7.05h3.7a.95.95 0 0 1 0 1.9H8.95v3.7a.95.95 0 0 1-1.9 0V8.95H3.35a.95.95 0 0 1 0-1.9h3.7V3.35A.95.95 0 0 1 8 2.4Z"/>',
+  Refresh: '<path d="M3.05 8a4.95 4.95 0 0 1 8.4-3.55l.78-.78A.7.7 0 0 1 13.43 4.16V7.1a.7.7 0 0 1-.7.7H9.8a.7.7 0 0 1-.5-1.2l1.02-1.02A3.15 3.15 0 0 0 4.65 8a.8.8 0 0 1-1.6 0Z"/><path d="M12.95 8a4.95 4.95 0 0 1-8.4 3.55l-.78.78A.7.7 0 0 1 2.57 11.84V8.9a.7.7 0 0 1 .7-.7H6.2a.7.7 0 0 1 .5 1.2l-1.02 1.02A3.15 3.15 0 0 0 11.35 8a.8.8 0 0 1 1.6 0Z"/>',
+  Logout: '<path d="M3.5 2.5h4a1.5 1.5 0 0 1 1.5 1.5v1.2a.8.8 0 0 1-1.6 0V4.1H4v7.8h3.4v-1.1a.8.8 0 0 1 1.6 0V12a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 2 12V4a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M11.06 5.64 13.7 7.4a.7.7 0 0 1 0 1.2l-2.64 1.76a.7.7 0 0 1-1.09-.58V8.8H7.4a.8.8 0 0 1 0-1.6h2.57V6.22a.7.7 0 0 1 1.09-.58Z"/>',
+};
+const grid = document.getElementById('grid');
+for (const [name, body] of Object.entries(icons)) {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.innerHTML =
+    '<div class="row">' +
+    '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">' + body + '</svg>' +
+    '<svg class="big" viewBox="0 0 16 16" fill="currentColor">' + body + '</svg>' +
+    '</div><div class="lbl">' + name + '</div>';
+  grid.appendChild(cell);
+}
+</script>
+</body>
+</html>

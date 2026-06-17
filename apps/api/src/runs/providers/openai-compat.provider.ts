@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { defaultModel, looksLikeModelId, Provider, STEP_DEFS } from '@lyra/shared';
-import { OpenAiCompatClient, OPENAI_COMPAT_BASE } from './openai-compat.client';
+import { OpenAiCompatClient, compatBaseUrl } from './openai-compat.client';
 import type {
   StepProvider,
   StepRunContext,
@@ -21,7 +21,7 @@ export class OpenAiCompatStepProvider implements StepProvider {
 
   async execute(ctx: StepRunContext): Promise<StepRunOutput> {
     const provider = ctx.step.provider ?? Provider.OpenAI;
-    const baseUrl = OPENAI_COMPAT_BASE[provider];
+    const baseUrl = compatBaseUrl(provider);
     if (!baseUrl) throw new Error(`No endpoint configured for ${provider}`);
 
     // Composable steps carry a real model id; fixed steps carry a display label.

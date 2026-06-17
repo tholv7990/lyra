@@ -19,6 +19,11 @@ export const MODEL_CATALOG: Record<Provider, ModelOption[]> = {
     { id: 'gpt-5.5', label: 'GPT-5.5' },
   ],
   [Provider.DeepSeek]: [
+    // Self-hosted open models served via Ollama behind the LiteLLM gateway
+    // ($0/token). See docs/lyra-litellm-gateway.md.
+    { id: 'deepseek-v3-local', label: 'DeepSeek V3 (local)' },
+    { id: 'llama-3.3-local', label: 'Llama 3.3 (local)' },
+    // DeepSeek's hosted API (used when the gateway forwards to api.deepseek.com).
     { id: 'deepseek-reasoner', label: 'DeepSeek Reasoner' },
     { id: 'deepseek-chat', label: 'DeepSeek Chat' },
   ],
@@ -41,5 +46,5 @@ export function defaultModel(provider: Provider): string {
 // steps fall back to the provider default. We no longer gate on the static
 // catalog — models are refreshed from the provider's live API.
 export function looksLikeModelId(model: string): boolean {
-  return /^[a-z0-9][a-z0-9.\-]*$/.test(model.trim());
+  return /^[a-z0-9][a-z0-9.-]*$/.test(model.trim());
 }

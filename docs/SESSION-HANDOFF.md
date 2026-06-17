@@ -1,88 +1,104 @@
 # Session handoff — continue here
 
 > New session: open this file first (`docs/SESSION-HANDOFF.md`), then say what you want to continue.
-> Branch: **dev** (clean, all pushed). Last commit: `fe93769`.
+> Branch: **dev**.
+> ⚠️ **A LARGE amount of work is UNCOMMITTED** — not just the last session. `git status` shows many modified files **and** whole untracked modules/components that the app depends on, e.g. `apps/api/src/{conversations,mail,labels}/`, `apps/web/src/components/{Chats deps, RunFlow, FlowPager, MatrixRain, GoogleButton, ProviderIcon, SaveAsPromptModal, Composer, EditorShell, …}`, `apps/web/src/pages/{Chats,ForgotPassword,ResetPassword}.tsx`, `scripts/`, several docs. Everything **builds + tests green** and the app runs, but none of it is in git history. **Strongly recommend committing before relying on the next session** so this can't be lost. (Per repo rule, commit only when the user asks — but flag this immediately.)
 
 ---
 
 ## 0. Resume the dev environment (do this first)
 
 Live preview is **dev.getlyras.app** (cloudflared tunnel → Vite). Pieces:
-- **web** — Vite dev on `:5173` (HMR; picks up changes automatically).
+- **web** — Vite dev on `:5173` (HMR; picks up changes automatically). **Mobile via the tunnel does NOT get HMR — do a full page reload there.**
 - **api** — `node dist/main.js` from `apps/api` on `:3001` (does **not** auto-reload).
 - **mongo** — Docker on `:27017` (`docker compose up -d mongo`).
 - **tunnel** — cloudflared → dev.getlyras.app.
 
-**After a backend (apps/api or packages/shared) change you MUST:**
+**After a backend (apps/api or packages/shared) change you MUST rebuild + restart the api:**
 ```bash
-pnpm --filter @lyra/api build           # (shared first if shared changed: pnpm --filter @lyra/shared build)
-# kill whatever holds :3001, then:
-# (PowerShell) Get-NetTCPConnection -LocalPort 3001 -State Listen | %{ Stop-Process -Id $_.OwningProcess -Force }
-# start: node dist/main.js  (cwd apps/api, picks up apps/api/.env, NODE_ENV stays 'development' so autoIndex is on)
+pnpm --filter @lyra/shared build   # only if packages/shared changed (do it first)
+pnpm --filter @lyra/api build
+# (PowerShell) kill :3001 then start detached, logs to %TEMP%:
+#   Get-NetTCPConnection -LocalPort 3001 -State Listen | %{ Stop-Process -Id $_.OwningProcess -Force }
+#   Start-Process node -ArgumentList "dist/main.js" -WorkingDirectory <repo>\apps\api `
+#     -RedirectStandardOutput "$env:TEMP\lyra-api.log" -RedirectStandardError "$env:TEMP\lyra-api.err.log" -WindowStyle Hidden
+# verify: Invoke-RestMethod http://localhost:3001/health  -> {status: ok}
 ```
-Web changes need no restart (HMR). Verify: `curl localhost:3001/health` → 200.
+Web changes need no restart (HMR), but reload mobile fully.
 
-Checks before committing (what CI gates): `pnpm turbo run lint type-check test build`.
-e2e: `pnpm --filter @lyra/api test:e2e` (in-memory mongo, hermetic; provider clients are stubbed).
-
----
-
-## 1. PENDING TASK — Linear design audit & enhancement (blocked on Figma MCP)
-
-**Goal:** read the **Linear Design System (Community)** Figma, audit Lyra's UI against it, apply enhancements.
-
-**Figma MCP status:** registered in Claude Code as `figma-dev` → `http://127.0.0.1:3845/mcp` (HTTP). The server works (handshake 200, `claude mcp list` shows ✓ Connected). **BUT** the chat session kept failing to *bind* the figma tools at startup (they never appeared in-session), so the audit never ran.
-
-**To make a NEW session load the Figma tools (order matters):**
-1. Open the **Figma desktop app** → the Linear file → **Dev Mode** (Shift+D) → right **Inspect** panel → **MCP** section → **“Enable desktop MCP server.”** Leave it open.
-2. Confirm it's up: port 3845 listening (`Get-NetTCPConnection -LocalPort 3845`) and `claude mcp list` shows `figma-dev ✓`.
-3. **Only then start a fresh Claude Code session** (MCP tools bind once, at startup — start it *after* the server is up).
-4. In the new session, verify tools loaded: `ToolSearch "figma"` should return `mcp__figma-dev__get_code` / `get_variable_defs` / `get_metadata` / `get_image`. If still empty, the session didn't bind it — fully quit Claude Code and reopen (don't just reload the window).
-5. In Figma, **select a component** (Buttons / Input Fields / etc.), then ask: *"read the figma button and audit ours."*
-
-**Zero-setup fallback (no MCP):** in Figma Dev Mode, select a component → right-click → **Copy/Paste as → Copy as code (CSS)** → paste it into chat. I'll match ours to those exact values. This always works regardless of the MCP issue.
-
-**Audit plan once specs are available** — compare Figma → Lyra and apply gaps:
-- **Tokens:** color/neutral ramp, accent, **shadows/elevation**, **radii**, **control heights**, **type scale** (size/weight/tracking).
-- **Components:** buttons, inputs/text fields, menus/dropdowns, badges, **toggles**, focus rings, cards/rows.
-- Lyra keeps its **orange `#FF6B1A`** brand accent (design invariant) — match Linear's *structure/spacing/states*, not their indigo.
-
-### Where Lyra's design lives
-- `apps/web/src/index.css` — **active** short-name tokens used by components: `--primary`, `--primary-hover/-pressed/-tint`, `--app-bg`, `--surface-1/2/3`, `--field`, `--hairline`, `--hairline-strong`, `--ink`, `--ink-muted/-tertiary`, `--danger`, `--radius-sm/md/lg`, `--radius-control` (6px), `--control-h` (32px), `--surface-hover`, `--shadow-sm/md/lg`. Also the **button system** (`.btn-primary` / `.btn-ghost` soft-filled secondary / `.btn-danger`) and `.text-input`.
-- `apps/web/src/layout/layout.css` — **all component CSS** (big file): lists (`.ptable` / `.prow`), Linear toolbars (`.lin-toolbar` / `.lin-search` / `.lin-filter` / `.lin-menu` / `.lin-chip` / `.lin-add`), chat (`.chat-*`, `.cmsg` / `.cbubble` / `.ctext`, markdown `.md` / `.md-code`), prompt editor (`.pe-*`), model picker (`.model-pick` / `.model-pill` / `.model-menu`), composer (`.composer-box` / `.composer-input` / `.composer-bar` / `.composer-add`), settings (`.set-section` / `.key-row` / `.model-group`), icon buttons (`.icon-btn` / `-primary` / `-danger`), flow/builder (`.flow-*`, drag `.flow-grip`).
-- `apps/web/src/styles/tokens.css` — parallel Tailwind v4 `@theme` (`--color-*`) layer (utilities); the hand-written components use the index.css names.
-- `apps/web/src/layout/icons.tsx` — 16px line icons.
-- Shared components: `apps/web/src/components/` — `Markdown.tsx`, `ModelPicker.tsx`, `AttachmentPreviews.tsx`, `TagInput.tsx`, `ConfirmDialog.tsx`.
+Checks before committing (what CI gates):
+`pnpm turbo run type-check lint test build`
+e2e: `pnpm --filter @lyra/api test:e2e` (in-memory mongo, hermetic; provider clients stubbed). Currently **all green** (11 e2e suites / 70 tests; unit 28 api + 32 shared + 4 web).
 
 ---
 
-## 2. What shipped this session (all on `dev`, pushed)
+## 1. ACTIVE TASK — Pipeline "should work like an image"
 
-**Models / providers**
-- New `apps/api/src/models/` module: per-(workspace,provider) model catalog fetched live from the provider's API and saved. `GET /workspaces/:id/models` (effective = stored-or-default) + `POST /workspaces/:id/keys/:provider/models` (refresh). Curated to current flagships via `apps/api/src/models/model-curation.ts` (Anthropic latest per tier; OpenAI newest GPT family + newest o-series; DeepSeek current). Settings page has a **Refresh models** button per provider.
-- Real providers: **Anthropic** (native), **OpenAI + DeepSeek** via `OpenAiCompatClient`/`OpenAiCompatStepProvider`. OpenAI accepts **images** (data-URI); DeepSeek text-only; image/video still MockStepProvider. Static-catalog gating removed — `looksLikeModelId` picks a real id over a fixed-step display label.
+The user said *"Our pipeline will work like an image"* and was about to attach a reference image — **it didn't come through.** First thing: **ask them to re-attach the image.**
 
-**Prompt testing chat** (`/prompts/:id/test`, `PromptPlayground.tsx` + `prompt-tests` module)
-- Claude-style: **markdown rendering** (react-markdown + remark-gfm, dark copyable code blocks), prompt **name/status/tags in the header** (separate from the thread), **auto-scroll pauses** when you scroll up, **Stop cancels the provider call** (AbortSignal threaded controller→run→clients) and persists the partial. One white framed panel, no separators.
+Before building, pin down which they mean (these differ a lot in effort):
+- **Visual restyle** of the existing *linear* flow (boxes + connecting lines, n8n-look) — CSS/layout only.
+- **Run-view animation** — flow lights up node→node as it runs (we already light steps up; this is polish).
+- **Real DAG** — steps that branch/merge (parallel/conditional). This is a **data-model change**: steps would need explicit edges (`from`/`to`), and the run engine + builder + `RunFlow`/`FlowPager` would all need to handle a graph instead of an array.
 
-**Create/Edit are now full pages** (modals removed): `/prompts/new`, `/prompts/:id/edit` (`PromptEditor.tsx`), `/projects/new`, `/projects/:id/edit` (`ProjectEditor.tsx`), `/pipelines/new` (`PipelineCreate.tsx` → builder). Prompt editor mirrors the test page: title + tags(left)/Public-toggle(right) row (no labels) + **live Markdown preview area** on top + **small composer at the bottom** (attach + **model picker** + char count). Prompts now persist a **default provider+model** (`Prompt.provider/model` in shared + Mongo + DTOs); the playground pre-selects them.
-
-**Lists** (Prompts/Pipelines/Projects): whole **row navigates** to detail (actions stop-propagation); **client-side paging** (10–15/page); the **create action is a "+" icon** in the search toolbar (opens the page).
-
-**Settings**: two sections — **Provider keys** (mobile: full-width input, action buttons below) + **Models** grouped by provider with refresh. Icon buttons; password-style key inputs; "key set" indicator.
-
-**Infra fix**: Vite dev proxy served the SPA for navigations to `/prompts` `/projects` `/pipelines` (they're both API prefixes *and* SPA routes) — fixed the `Cannot GET /prompts`-on-reload bug. See `apps/web/vite.config.ts`.
-
-Mockups (reference, not built into app): `docs/mockups/prompt-editor*.html`.
+Current reality (so you scope correctly): a pipeline is a **linear sequence** of steps. Builder = vertical step list; run = `RunFlow` (desktop) / `FlowPager` (mobile one-step pager) lighting up top→bottom, gates pause for Approve. See `docs/lyra-pipelines.md` and `apps/web/src/components/{RunFlow,FlowPager}.tsx`, `apps/web/src/lib/useRunActions.ts`, `apps/api/src/runs/`.
 
 ---
 
-## 3. Open follow-ups / notes
-- **Linear/Figma audit** — the main pending item (section 1).
-- **Bundle size**: web JS is ~547 KB (gzip ~166 KB) after adding react-markdown to chat + editor. Optional: lazy-load `Markdown.tsx` so those libs load only on the test/editor pages.
-- **Security**: the tester account password (`Tholv.7990@gmail.com`) was shared in chat earlier — **should be rotated**. Never commit it.
-- Live provider testing: model *listing* (refresh) works without balance; actual chat completions need provider credit (DeepSeek/OpenAI accounts were out of balance; Anthropic key not set on that workspace).
-- `mongodb` MCP server shows "Failed to connect" in `claude mcp list` — unrelated to the app (the app uses its own Mongoose connection); ignore.
+## 2. BLOCKED on the user adding credentials (then restart api)
 
-## 4. Source-of-truth docs
-`CLAUDE.md` (root) · `docs/lyra-pipelines.md` (business model v2) · `docs/lyra-prompt-testing.md` · `docs/lyra-requirements.md` · `docs/lyra-hosting-cicd.md` · `docs/lyra-design-system.md` (note: dark tokens there are superseded by the light/Linear `index.css`).
+Both features are **fully built**; they just need real secrets dropped into `apps/api/.env` (gitignored) replacing the placeholders, then an api restart.
+
+**a) Google sign-in (OAuth redirect flow) — needs Google Cloud creds**
+- `.env` placeholders to replace: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+- Google Cloud Console: APIs & Services → Credentials → **OAuth client ID → Web application**. Authorized redirect URI **must** be `https://dev.getlyras.app/auth/google/callback` (add `http://localhost:5173/auth/google/callback` for local). OAuth consent screen in "Testing" is fine; add the tester email as a test user.
+- Until set, the Google button just bounces to `/login?error=google_unavailable` (nothing breaks).
+
+**b) Password-reset email (SMTP via Spacemail) — needs the mailbox password**
+- `.env` placeholder to replace: `SMTP_PASS` (the `support@getlyras.com` mailbox password). Host/port/user already set (`mail.spacemail.com:465`, SSL).
+- Until set, the mailer is a **dev stub** that logs the reset link to `%TEMP%\lyra-api.log` instead of sending.
+
+**Never paste these secrets into chat** — they go in `apps/api/.env` only. After editing `.env`, restart the api (section 0).
+
+---
+
+## 3. What shipped last session (on disk, uncommitted)
+
+**Chats (major) — replaces the old per-prompt testing playground**
+- New top-level **Chats** section: Claude-style **multi-turn** chat workbench. Nav order is now **Home · Chats · Prompts · Pipelines · Projects · …**.
+- **API:** new `apps/api/src/conversations/` module. New **`Conversation`** collection (per-user, soft-deleted, embedded `messages[]`, each message stamps `provider·model`). Endpoints: `POST /workspaces/:id/conversations` (create empty), `GET /workspaces/:id/conversations` (sidebar list), `GET /conversations/:id`, `POST /conversations/:id/messages` (SSE stream, multi-turn — prior turns sent as context; **every turn auto-persists**), `PATCH`/`DELETE /conversations/:id`. Access = workspace member **and** creator.
+- The streaming clients (`anthropic.client.ts`, `openai-compat.client.ts`) gained an optional **`history`** param for multi-turn. History is **text-only**; only the current turn sends attachments.
+- **Web:** `apps/web/src/pages/Chats.tsx` (handles `/chats` and `/chats/:id`), `components/ProviderIcon.tsx` (real brand logomarks — Claude/OpenAI/DeepSeek from Simple Icons, white on a brand-colour badge; Image/Video = neutral glyph), `components/SaveAsPromptModal.tsx`.
+- **Bridge to the library:** **Save as prompt** on any user message → `SaveAsPromptModal` → `POST /workspaces/:id/prompts` (carries the message's provider·model). **Open in chat** on a library prompt (`Prompts.tsx`) → creates a conversation seeded with that prompt (composer prefilled via nav `state.seed`).
+- **Removed:** the `prompt-tests` module, `PromptPlayground.tsx`, the `/prompts/:id/try` route, and the `SavePromptTestDto`/`PromptTest` shared types. Vite proxy `/prompt-tests` → `/conversations`. Cascade soft-delete now covers `Conversation`.
+- **Auto-save model:** there is **no manual save tick** in chat — every run is kept; star/keep is via **Save as prompt** into the library. (Supersedes the green-tick design in `docs/lyra-prompt-testing.md`, now marked superseded.)
+
+**Account security**
+- Change password (Settings → Password), **forgot/reset via email** (`/forgot-password`, `/reset-password` public pages). `MailerService` (nodemailer, SMTP-or-dev-stub), `PasswordReset` collection (hashed single-use token, TTL). Security-reviewed (forgot-password is fire-and-forget + prior tokens purged to avoid a timing oracle).
+
+**Google sign-in (code complete, see §2)**
+- `User.passwordHash` optional + `User.googleId`; password login rejects Google-only accounts. `AuthService.googleConfigured/googleAuthUrl/loginWithGoogle`; `AuthController` `GET /auth/google` + `/auth/google/callback` (CSRF `g_state` cookie). `GoogleButton.tsx` on Login + Signup. White **matrix-rain** background on the auth pages (`MatrixRain.tsx`).
+
+**Prompt editor fixes** (`PromptEditor.tsx`)
+- Header actions reordered to **✓ save then ✕ cancel**. Added an **unsaved-changes guard** (`useBlocker` + `beforeunload`) with a "Save changes?" dialog.
+
+---
+
+## 4. Chats — architecture notes & gotchas (for whoever continues)
+
+- **First-send flow (important):** new chats are **lazy-created** on first send. The reply **streams while still on `/chats`**, then we `navigate('/chats/:id', {replace})` **after** it finishes (a `skipLoadRef` stops the load-effect from re-fetching). This ordering avoids a mid-stream navigation race that previously blanked the thread. If a send fails **before streaming** (e.g. the chosen provider has no key), the just-created empty conversation is **deleted** so it doesn't litter history. Don't reintroduce navigate-before-stream.
+- **Provider keys still gate sends** (BYOK, per-workspace, encrypted). Sending with a model whose provider has no key → 400 from `prepareRun` → error shown on the assistant bubble (and, for a brand-new chat, the empty convo is cleaned up).
+- **Chats are private to their creator.** Teams share via **public prompts** in the library, not via chats.
+- **Known leftover:** any **empty chats** created before the fix above will still show blank when opened — delete them via the trash on hover in the sidebar.
+- `AppNavContext` (in `apps/web/src/layout/breadcrumb.ts`) lets the full-bleed chat open the app nav drawer; the chat's mobile top-left button is the **Lyra mark** (`/lyra-mark-squircle.svg`) and opens that menu (the app hides its top bar for `.chat` on mobile).
+
+---
+
+## 5. Other open follow-ups
+- **Old `docs/SESSION-HANDOFF.md` Figma/Linear audit** is still pending — see git history (`d67f584`) for the full plan if you want to resume it. Short version: enable the Figma desktop MCP server *before* starting the session, then audit Lyra's tokens/components against the Linear community file (keep the orange `#FF6B1A` accent).
+- **Secret hygiene:** the tester Gmail/SMTP passwords must be **rotated** and never committed; keep all secrets in `apps/api/.env`.
+- **Bundle size:** web JS ~585 KB (gzip ~178 KB). Optional: lazy-load `Markdown.tsx` / the chat route.
+- **Providers:** only **Anthropic** + **OpenAI/DeepSeek** (OpenAI-compatible) execute for real; image/video are still mocks.
+
+## 6. Source-of-truth docs
+`CLAUDE.md` (root, current-state paragraph is up to date incl. Chats) · `docs/lyra-pipelines.md` (composable pipelines / business model v2) · `docs/lyra-requirements.md` · `docs/lyra-hosting-cicd.md` · `docs/lyra-design-system.md` (its dark tokens are superseded by the light/Linear `index.css`) · `docs/lyra-prompt-testing.md` (**superseded** by Chats — historical only).
