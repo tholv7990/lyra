@@ -11,6 +11,7 @@ import { Prompt } from '../../prompts/prompt.schema';
 import { Conversation } from '../../conversations/conversation.schema';
 import { Pipeline } from '../../pipelines/pipeline.schema';
 import { ProviderModel } from '../../models/provider-model.schema';
+import { Asset } from '../../assets/asset.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
 // so there are no circular module dependencies.
@@ -29,6 +30,7 @@ export class CascadeService {
     @InjectModel(Pipeline.name) private readonly pipelines: Model<Pipeline>,
     @InjectModel(ProviderModel.name)
     private readonly providerModels: Model<ProviderModel>,
+    @InjectModel(Asset.name) private readonly assets: Model<Asset>,
   ) {}
 
   async deleteWorkspace(workspaceId: string, actorId: string) {
@@ -44,6 +46,7 @@ export class CascadeService {
       this.conversations.updateMany({ workspaceId }, patch),
       this.pipelines.updateMany({ workspaceId }, patch),
       this.providerModels.updateMany({ workspaceId }, patch),
+      this.assets.updateMany({ workspaceId }, patch),
     ]);
   }
 
@@ -51,8 +54,12 @@ export class CascadeService {
     const patch = { active: false, updatedBy: actorId };
     await this.proj.updateOne({ _id: projectId }, patch);
     // The project's pipeline references live on the project doc; the library
-    // pipelines themselves stay. Runs for this project are soft-deleted.
+    // pipelines themselves stay. Runs for this project are soft-deleted, and the
+    // assets those runs produced go with them.
+    const runs = await this.runs.find({ projectId }, { _id: 1 });
     await this.runs.updateMany({ projectId }, patch);
+    const runIds = runs.map((r) => r._id.toString());
+    if (runIds.length) await this.assets.updateMany({ runId: { $in: runIds } }, patch);
   }
 
   // Soft-delete a library pipeline and pull its id out of every project that

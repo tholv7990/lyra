@@ -16,8 +16,20 @@ export interface StepRunContext {
   priorResults: PriorStepResult[];
 }
 
+// A media asset a step produced (pre-persistence). The run service turns these
+// into `Asset` documents and stamps their ids onto the step's `assetIds`.
+export interface StepAssetOutput {
+  type: 'image' | 'video' | 'audio';
+  url: string;
+  thumbUrl?: string;
+  meta?: Record<string, unknown>;
+}
+
 export interface StepRunOutput {
   result: string;
+  // Media outputs (image/video/audio). A text step omits this; a render step
+  // returns one or more. Persisted as `Asset` docs and surfaced on the run.
+  assets?: StepAssetOutput[];
   usage?: { tokens?: number; costUsd?: number };
 }
 

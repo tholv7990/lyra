@@ -1,7 +1,7 @@
 ---
 id: brand-stage-image-fanout
 title: Brand stage — real image generation + parallel fan-out
-status: draft
+status: in-dev                   # Pass 1a (multi-asset foundation) landed; see status log
 owner: Claude (design/BA/QA)
 developer: Codex
 branch: task/brand-stage-image-fanout
@@ -104,8 +104,8 @@ shown as assets and gated for approval.
   N provider calls (≤ concurrency cap at a time); the per-item prompt = the step
   template filled with that item; N images are stored (R2 URL on `Asset.url`) and
   attached to the step (`assetIds.length === successful N`).
-- [ ] AC3: `StepRunOutput.assets[]` is populated and persisted; each `Asset` is
-  workspace-scoped, typed `image`, and soft-deletable.
+- [x] AC3: `StepRunOutput.assets[]` is populated and persisted; each `Asset` is
+  workspace-scoped, typed `image`, and soft-deletable. ✅ Pass 1a.
 - [ ] AC4: Partial failure — if k of N items fail after retries, the step completes
   with N−k assets and surfaces k per-item errors (run not wedged).
 - [ ] AC5: A gate on the step pauses the run with the N assets visible; Approve
@@ -156,6 +156,15 @@ Lands value early and isolates the queue work.
 ---
 
 ## Status log
+- 2026-06-18 — Claude — **Pass 1a landed** (decision-independent foundation, no
+  D1–D6 lock needed): added `StepRunOutput.assets[]`; new **Asset module**
+  (`apps/api/src/assets/*` — schema/service/module, workspace-scoped, audited,
+  soft-deletable + cascade on workspace/project delete); the **mock image/video
+  provider** emits a placeholder asset; run steps persist assets onto
+  `Step.assetIds`; new **`GET /runs/:id/assets`**; e2e proves an image step run
+  persists + lists its asset. Full gates + api e2e green (75). **AC3 met; AC6
+  reused.** Remaining (await **D1/D4/D5**): real image provider, R2 upload,
+  fan-out + BullMQ queue (Pass 1b), and run-view thumbnails (status: in-dev).
 - 2026-06-18 — Claude — spec drafted; first slice of the "B" north star. Awaiting
   owner review + decisions D1–D6 before ready-for-dev (status: draft).
 

@@ -16,6 +16,7 @@ import { BaseRepository } from '../common/database/base.repository';
 import { KeysService } from '../keys/keys.service';
 import { UsersService } from '../users/users.service';
 import { PromptsService } from '../prompts/prompts.service';
+import { AssetsService } from '../assets/assets.service';
 import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
 import type { StepRunOutput } from './providers/step-provider.interface';
@@ -64,6 +65,7 @@ export class RunsService extends BaseRepository<Run> {
     private readonly users: UsersService,
     private readonly registry: ProviderRegistry,
     private readonly prompts: PromptsService,
+    private readonly assets: AssetsService,
   ) {
     super(model);
   }
@@ -203,11 +205,35 @@ export class RunsService extends BaseRepository<Run> {
     this.guard(() => assertRunnable(state, index, present));
     beginStep(state, index);
     try {
-      completeStep(state, index, await this.executeStep(doc, state, index));
+      const output = await this.executeStep(doc, state, index);
+      completeStep(state, index, output);
+      await this.saveAssets(doc, state, index, output, actorId);
     } catch (err) {
       failStep(state, index, errMessage(err));
     }
     return this.persist(doc, state, actorId);
+  }
+
+  // Persist any media a step produced as Asset docs and stamp their ids onto the
+  // step (so the run carries `assetIds`; the bytes live behind each Asset.url).
+  private async saveAssets(
+    doc: RunDocument,
+    state: RunState,
+    index: number,
+    output: StepRunOutput,
+    actorId: string,
+  ): Promise<void> {
+    if (!output.assets?.length) return;
+    const ids = await this.assets.createForStep(
+      {
+        workspaceId: doc.workspaceId,
+        runId: doc._id.toString(),
+        stepIndex: index,
+        actorId,
+      },
+      output.assets,
+    );
+    state.steps[index].assetIds = ids;
   }
 
   // Run consecutive steps until a gate pauses, a step is locked (missing key),
@@ -220,7 +246,9 @@ export class RunsService extends BaseRepository<Run> {
       if (isLocked(state.steps[index], present)) break;
       beginStep(state, index);
       try {
-        completeStep(state, index, await this.executeStep(doc, state, index));
+        const output = await this.executeStep(doc, state, index);
+        completeStep(state, index, output);
+        await this.saveAssets(doc, state, index, output, actorId);
       } catch (err) {
         failStep(state, index, errMessage(err));
         break;

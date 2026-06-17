@@ -9,13 +9,14 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import type { Run as RunModel, User } from '@lyra/shared';
+import type { Asset as AssetModel, Run as RunModel, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
 import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from '../pipelines/pipelines.service';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { AssetsService } from '../assets/assets.service';
 import { RunsService } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
@@ -41,6 +42,7 @@ export class RunsController {
   constructor(
     private readonly runs: RunsService,
     private readonly pipelines: PipelinesService,
+    private readonly assets: AssetsService,
   ) {}
 
   // Create a run by executing a composable pipeline in this project's context.
@@ -125,6 +127,13 @@ export class RunsController {
   @UseGuards(RunAccessGuard)
   get(@CurrentRun() run: RunDocument): Promise<RunModel> {
     return this.runs.toView(run);
+  }
+
+  // Media produced by this run's steps (images/video). Same access as the run.
+  @Get('runs/:id/assets')
+  @UseGuards(RunAccessGuard)
+  async runAssets(@CurrentRun() run: RunDocument): Promise<AssetModel[]> {
+    return this.assets.toViews(await this.assets.listForRun(run._id.toString()));
   }
 
   @Patch('runs/:id/steps/:i/prompt')

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { StepKey } from '@lyra/shared';
+import { Provider, StepKey } from '@lyra/shared';
 import type {
+  StepAssetOutput,
   StepProvider,
   StepRunContext,
   StepRunOutput,
@@ -8,12 +9,27 @@ import type {
 
 // Deterministic mock output — no provider call, no spend. Used for providers
 // not yet wired (openai, deepseek, image, video); they become real in their
-// own phases (5 and 6).
+// own phases (5 and 6). Image/Video steps also emit a placeholder asset so the
+// run's asset path is exercised end-to-end without a real render.
 @Injectable()
 export class MockStepProvider implements StepProvider {
   execute(ctx: StepRunContext): Promise<StepRunOutput> {
-    return Promise.resolve({ result: mockResult(ctx.step.key), usage: { tokens: 0, costUsd: 0 } });
+    return Promise.resolve({
+      result: mockResult(ctx.step.key),
+      assets: mockAssets(ctx.step.provider as Provider | undefined),
+      usage: { tokens: 0, costUsd: 0 },
+    });
   }
+}
+
+function mockAssets(provider?: Provider): StepAssetOutput[] | undefined {
+  if (provider === Provider.Image) {
+    return [{ type: 'image', url: 'https://placehold.co/600x600?text=mock+image', meta: { mock: true } }];
+  }
+  if (provider === Provider.Video) {
+    return [{ type: 'video', url: 'https://placehold.co/600x600?text=mock+video', meta: { mock: true } }];
+  }
+  return undefined;
 }
 
 function mockResult(key?: StepKey): string {

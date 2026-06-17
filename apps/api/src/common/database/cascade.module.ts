@@ -16,6 +16,7 @@ import {
   ProviderModel,
   ProviderModelSchema,
 } from '../../models/provider-model.schema';
+import { Asset, AssetSchema } from '../../assets/asset.schema';
 import { CascadeService } from './cascade.service';
 
 // Standalone: depends only on schemas (not feature modules), so importing it
@@ -33,6 +34,7 @@ import { CascadeService } from './cascade.service';
       { name: Conversation.name, schema: ConversationSchema },
       { name: Pipeline.name, schema: PipelineSchema },
       { name: ProviderModel.name, schema: ProviderModelSchema },
+      { name: Asset.name, schema: AssetSchema },
     ]),
   ],
   providers: [CascadeService],

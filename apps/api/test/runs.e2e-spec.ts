@@ -156,4 +156,47 @@ describe('Runs (e2e)', () => {
     ).body.accessToken;
     await http().get(`/runs/${run.id}`).set(auth(outsider)).expect(403);
   });
+
+  it('an image step persists assets, listed via /runs/:id/assets', async () => {
+    await http()
+      .put(`/workspaces/${wsId}/keys/image`)
+      .set(auth(token))
+      .send({ key: 'img-test' })
+      .expect(200);
+    const promptId = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Render', content: 'Brand {product}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const imgPipelineId = (
+      await http()
+        .post(`/workspaces/${wsId}/pipelines`)
+        .set(auth(token))
+        .send({
+          name: 'Render flow',
+          steps: [{ name: 'Render', promptId, provider: 'image', model: 'img-1', mode: 'auto' }],
+        })
+        .expect(201)
+    ).body.id;
+    const run = (
+      await http()
+        .post(`/projects/${projectId}/pipelines/${imgPipelineId}/runs`)
+        .set(auth(token))
+        .expect(201)
+    ).body;
+    const done = (
+      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+    ).body;
+    expect(done.status).toBe('done');
+    expect(done.steps[0].assetIds).toHaveLength(1);
+
+    const assets = (
+      await http().get(`/runs/${run.id}/assets`).set(auth(token)).expect(200)
+    ).body as { type: string; url: string; stepIndex: number; runId: string }[];
+    expect(assets).toHaveLength(1);
+    expect(assets[0]).toMatchObject({ type: 'image', stepIndex: 0, runId: run.id });
+    expect(assets[0].url).toContain('http');
+  });
 });

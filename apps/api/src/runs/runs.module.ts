@@ -6,6 +6,7 @@ import { KeysModule } from '../keys/keys.module';
 import { UsersModule } from '../users/users.module';
 import { PromptsModule } from '../prompts/prompts.module';
 import { PipelinesModule } from '../pipelines/pipelines.module';
+import { AssetsModule } from '../assets/assets.module';
 import { Run, RunSchema } from './run.schema';
 import { RunsService } from './runs.service';
 import { RunsController } from './runs.controller';
@@ -25,6 +26,7 @@ import { ProviderRegistry } from './providers/provider.registry';
     UsersModule, // UsersService (ref expansion)
     PromptsModule, // load prompt content for pipeline runs
     PipelinesModule, // load a pipeline to run it
+    AssetsModule, // persist media a step produces
     MongooseModule.forFeature([{ name: Run.name, schema: RunSchema }]),
   ],
   controllers: [RunsController],

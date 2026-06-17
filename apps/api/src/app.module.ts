@@ -9,6 +9,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { ProjectsModule } from './projects/projects.module';
 import { KeysModule } from './keys/keys.module';
 import { RunsModule } from './runs/runs.module';
+import { AssetsModule } from './assets/assets.module';
 import { PromptsModule } from './prompts/prompts.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { PipelinesModule } from './pipelines/pipelines.module';
@@ -37,6 +38,7 @@ import { HealthController } from './health.controller';
     ProjectsModule,
     KeysModule,
     RunsModule,
+    AssetsModule,
     PromptsModule,
     ConversationsModule,
     PipelinesModule,
