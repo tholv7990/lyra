@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { promptVarsForStep, BUILTIN_VAR_LABELS, type Run, type Step } from '@lyra/shared';
+import { promptVarsForStep, BUILTIN_VAR_LABELS, type Asset, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
 import { RunStepCard, providerOf } from './RunStepCard';
 import { buildRunGraph } from './flow/buildGraph';
@@ -14,6 +14,8 @@ interface RunFlowProps {
   onApprove: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
   mobileLayout?: 'pager' | 'flow';
+  // Media produced by the run's steps (from GET /runs/:id/assets), shown per step.
+  assets?: Asset[];
 }
 
 // The unified run view (n8n-style): the pipeline rendered as the same vertical
@@ -28,9 +30,11 @@ export function RunFlow({
   onApprove,
   onSavePrompt,
   mobileLayout = 'pager',
+  assets = [],
 }: RunFlowProps) {
   const pager = useFlowPager(run.steps.length);
   const { isMobile, setPage } = pager;
+  const assetsFor = (index: number) => assets.filter((a) => a.stepIndex === index);
 
   // On mobile, follow the active step as the run progresses.
   useEffect(() => {
@@ -55,6 +59,7 @@ export function RunFlow({
       onSavePrompt={(p) => onSavePrompt(step.index, p)}
       vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
       stepNames={stepNames}
+      assets={assetsFor(step.index)}
     />
   );
 
@@ -87,7 +92,7 @@ export function RunFlow({
     );
   }
 
-  const graph = buildRunGraph({ run, hasKey });
+  const graph = buildRunGraph({ run, hasKey, assets });
   return (
     <Suspense fallback={<div className="flow-canvas loading">Loading canvas…</div>}>
       <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt }} />

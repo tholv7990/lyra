@@ -7,6 +7,7 @@ import {
   StepStatus,
   tagColor,
   unknownStepRefs,
+  type Asset,
   type PromptVar,
   type Step,
 } from '@lyra/shared';
@@ -43,10 +44,12 @@ export interface RunStepCardProps {
   // the card renders exactly as before.
   vars?: PromptVar[];
   stepNames?: string[];
+  // Media this step produced (image/video). Rendered as a thumbnail strip.
+  assets?: Asset[];
 }
 
 export function RunStepCard(props: RunStepCardProps) {
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, vars, stepNames } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, vars, stepNames, assets } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
@@ -117,6 +120,22 @@ export function RunStepCard(props: RunStepCardProps) {
           </div>
         ) : null}
       </div>
+
+      {assets && assets.length > 0 && (
+        <div className="rn-assets" aria-label={`${assets.length} generated asset${assets.length === 1 ? '' : 's'}`}>
+          {assets.map((a) =>
+            a.type === 'image' ? (
+              <a key={a.id} className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title="Open full size">
+                <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
+              </a>
+            ) : (
+              <a key={a.id} className={`rn-asset rn-asset-${a.type}`} href={a.url} target="_blank" rel="noreferrer" title={`Open ${a.type}`}>
+                <span className="rn-asset-glyph" aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span>
+              </a>
+            ),
+          )}
+        </div>
+      )}
 
       {expanded && (
         <div className="rn-body">

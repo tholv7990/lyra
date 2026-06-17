@@ -164,6 +164,10 @@ Lands value early and isolates the queue work.
 ---
 
 ## Status log
+- 2026-06-18 — Claude — **Pass 1a web** landed: the run view now renders each
+  step's media as a thumbnail strip (`RunStepCard`, reused by the desktop flow
+  node), fed by `GET /runs/:id/assets` via `ProjectDetail → RunFlow → buildRunGraph`.
+  Pass 1a is complete end-to-end (mock asset → persisted → visible). Gates green.
 - 2026-06-18 — Claude — **Pass 1a landed** (decision-independent foundation, no
   D1–D6 lock needed): added `StepRunOutput.assets[]`; new **Asset module**
   (`apps/api/src/assets/*` — schema/service/module, workspace-scoped, audited,

@@ -6,6 +6,7 @@ import {
   ProjectShare,
   StepMode,
   type ApiKeyInfo,
+  type Asset,
   type Pipeline,
   type Project,
   type Provider,
@@ -60,6 +61,7 @@ export function ProjectDetail() {
   const [library, setLibrary] = useState<Pipeline[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [run, setRun] = useState<Run | null>(null);
+  const [runAssets, setRunAssets] = useState<Asset[]>([]);
   const [runView, setRunView] = useState(false); // focused run view vs dashboard
   useBreadcrumb(runView && run ? run.pipelineName ?? project?.name ?? '…' : project?.name ?? '…');
   const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
@@ -93,6 +95,21 @@ export function ProjectDetail() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Load the run's media whenever the run changes (e.g. after a step renders).
+  useEffect(() => {
+    if (!run) {
+      setRunAssets([]);
+      return;
+    }
+    let cancelled = false;
+    api<Asset[]>(`/runs/${run.id}/assets`)
+      .then((a) => !cancelled && setRunAssets(a))
+      .catch(() => !cancelled && setRunAssets([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [run]);
 
   async function act<T>(fn: () => Promise<T>) {
     setBusy(true);
@@ -277,6 +294,7 @@ export function ProjectDetail() {
                   onApprove={approve}
                   onSavePrompt={savePrompt}
                   mobileLayout="flow"
+                  assets={runAssets}
                 />
                 <RunSummary run={run} busy={busy} onRetry={runStep} />
               </>
