@@ -50,6 +50,10 @@ export function RunStepCard(props: RunStepCardProps) {
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
+  const waitingForResult =
+    !step.result &&
+    !step.error &&
+    (step.status === StepStatus.Queued || step.status === StepStatus.Running);
 
   // Auto-open the node that needs attention (current / gate / errored).
   const wantsAttention =
@@ -165,7 +169,13 @@ export function RunStepCard(props: RunStepCardProps) {
             )}
           </div>
           {step.error && <p className="step-error">{step.error}</p>}
-          {step.result && <pre className="result-box">{step.result}</pre>}
+          {waitingForResult && (
+            <div className="result-box rn-result-pin rn-result-waiting">
+              <span className="rn-result-spinner" aria-hidden />
+              <span>Waiting for result</span>
+            </div>
+          )}
+          {step.result && <pre className="result-box rn-result-pin">{step.result}</pre>}
         </div>
       )}
     </div>

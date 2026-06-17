@@ -244,25 +244,31 @@ export function PromptEditor() {
 
       {error && <p className="error pe-error">{error}</p>}
 
-      {/* tags (left) + Public toggle (right), one row, no labels */}
+      {/* Label picker (left) + status toggle (right) in one row. */}
       <div className="pe-row">
-        <div className="pe-tags">
-          <LabelPicker
-            value={form.tags}
-            labels={labels}
-            onChange={(tags) => setForm({ ...form, tags })}
-            onCreate={createLabel}
-          />
+        <div className="pe-field pe-tags">
+          <span className="pe-field-label">Label</span>
+          <div className="pe-field-control">
+            <LabelPicker
+              value={form.tags}
+              labels={labels}
+              onChange={(tags) => setForm({ ...form, tags })}
+              onCreate={createLabel}
+            />
+          </div>
         </div>
-        <label className="pe-toggle" title="Public prompts can be reused across the workspace">
-          <span className="pe-toggle-text">Public</span>
-          <input
-            type="checkbox"
-            checked={form.status === PromptStatus.Public}
-            onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
-          />
-          <span className="pe-track"><span className="pe-knob" /></span>
-        </label>
+        <div className="pe-field pe-status">
+          <span className="pe-field-label">Status</span>
+          <label className="pe-toggle" title="Public prompts can be reused across the workspace">
+            <span className="pe-toggle-text">Public</span>
+            <input
+              type="checkbox"
+              checked={form.status === PromptStatus.Public}
+              onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
+            />
+            <span className="pe-track"><span className="pe-knob" /></span>
+          </label>
+        </div>
       </div>
 
       {/* live preview (the "answer" area) — grows and scrolls */}

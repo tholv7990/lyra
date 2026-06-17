@@ -1,11 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
 import { Markdown } from './Markdown';
-import { XIcon } from '../layout/icons';
+import { ProviderIcon } from './ProviderIcon';
+import { CheckIcon, XIcon } from '../layout/icons';
 
 function initial(name?: string) {
   const n = (name ?? '').trim();
   return n ? n[0].toUpperCase() : '?';
+}
+
+function fmtDate(iso: string) {
+  const parts = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).formatToParts(new Date(iso));
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
+  return [month, day, year].filter(Boolean).join(' ');
 }
 
 // Read-only full view of a library prompt (opened by the eye icon on a step or a
@@ -13,37 +26,73 @@ function initial(name?: string) {
 export function PromptDetails({
   prompt,
   labels,
+  canEdit = false,
+  onSaveContent,
   onClose,
 }: {
   prompt: Prompt;
   labels: LabelInfo[];
+  canEdit?: boolean;
+  onSaveContent?: (content: string) => void | Promise<void>;
   onClose: () => void;
 }) {
+  const [content, setContent] = useState(prompt.content);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasChanges = content !== prompt.content;
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  async function saveContent() {
+    if (!canEdit || !onSaveContent || busy || !content.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onSaveContent(content);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save prompt');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="dialog-scrim" onClick={onClose}>
       <div className="dialog prompt-details" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="pd-head">
           <h3>{prompt.title}</h3>
-          <button className="icon-btn" onClick={onClose} aria-label="Close" title="Close">
+          <button className="pd-close" onClick={onClose} aria-label="Close" title="Close">
             <XIcon />
           </button>
         </div>
         <div className="pd-meta">
-          <span className="pd-avatar">{initial(prompt.createdBy.name)}</span>
-          <span>{prompt.createdBy.name}</span>
-          {prompt.model && (
+          <span
+            className="pd-avatar"
+            style={{
+              color: labelColor(prompt.createdBy.name, []),
+              background: `${labelColor(prompt.createdBy.name, [])}16`,
+            }}
+            title={`Created by ${prompt.createdBy.name}`}
+          >
+            {initial(prompt.createdBy.name)}
+          </span>
+          <span>{fmtDate(prompt.createdAt)}</span>
+          {prompt.provider && prompt.model && (
             <>
               <span className="pd-dot">·</span>
-              <span>{prompt.model}</span>
+              <span className="pd-provider">
+                <ProviderIcon provider={prompt.provider} size={14} />
+                {prompt.model}
+              </span>
             </>
           )}
         </div>
+        {error && <p className="error">{error}</p>}
         {prompt.tags.length > 0 && (
           <div className="pd-tags">
             {prompt.tags.map((t) => (
@@ -54,9 +103,32 @@ export function PromptDetails({
             ))}
           </div>
         )}
-        <div className="pd-body">
-          {prompt.content.trim() ? <Markdown>{prompt.content}</Markdown> : <p className="muted">No content.</p>}
-        </div>
+        {canEdit ? (
+          <label className="field pd-edit">
+            <span className="pd-edit-label">
+              <span>Edit prompt</span>
+              <button
+                type="button"
+                className="pd-save-icon"
+                onClick={() => void saveContent()}
+                aria-label="Save changes"
+                title="Save changes"
+                disabled={busy || !content.trim() || !hasChanges}
+              >
+                <CheckIcon width={16} height={16} />
+              </button>
+            </span>
+            <textarea
+              className="text-input pd-editarea"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+          </label>
+        ) : (
+          <div className="pd-body">
+            {prompt.content.trim() ? <Markdown>{prompt.content}</Markdown> : <p className="muted">No content.</p>}
+          </div>
+        )}
       </div>
     </div>
   );

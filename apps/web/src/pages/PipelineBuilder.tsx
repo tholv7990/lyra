@@ -27,8 +27,7 @@ import { PromptPicker } from '../components/PromptPicker';
 import { PromptDetails } from '../components/PromptDetails';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
-import { RunVariablesModal } from '../components/RunVariablesModal';
-import { PipelineVarsEditor } from '../components/PipelineVarsEditor';
+import { StepTestModal } from '../components/StepTestModal';
 import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
 import { buildEditGraph } from '../components/flow/buildGraph';
 import { useBreadcrumb } from '../layout/breadcrumb';
@@ -75,8 +74,8 @@ export function PipelineBuilder() {
   const [tags, setTags] = useState<string[]>([]);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
   const [variables, setVariables] = useState<PipelineVariable[]>([]);
-  const [askVars, setAskVars] = useState(false); // run-start values form open?
   const [editing, setEditing] = useState<Editing>(null);
+  const [testingStep, setTestingStep] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +111,30 @@ export function PipelineBuilder() {
       .then((ks) => setKeysSet(new Set(ks.map((k) => k.provider))))
       .catch(() => setKeysSet(new Set()));
   }, [id, wsId]);
+
+  useEffect(() => {
+    const missing = Array.from(new Set(steps.map((s) => s.promptId)))
+      .filter((promptId) => promptId && !prompts.some((p) => p.id === promptId));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      missing.map((promptId) =>
+        api<Prompt>(`/prompts/${promptId}`).catch(() => null),
+      ),
+    ).then((items) => {
+      if (cancelled) return;
+      const found = items.filter((p): p is Prompt => !!p);
+      if (found.length > 0) {
+        setPrompts((list) => {
+          const existing = new Set(list.map((p) => p.id));
+          return [...list, ...found.filter((p) => !existing.has(p.id))];
+        });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [steps, prompts]);
 
   const canEdit = useMemo(
     () =>
@@ -254,8 +277,7 @@ export function PipelineBuilder() {
   // Open the variables form first when the pipeline declares any; otherwise run.
   function triggerTest() {
     if (isNew || !id || !wsId || steps.length === 0 || creatingRun) return;
-    if (variables.length > 0) setAskVars(true);
-    else void startTest({});
+    void startTest({});
   }
 
   // Test-run this pipeline with no project (typed/blank context) + the entered
@@ -281,7 +303,6 @@ export function PipelineBuilder() {
       });
       setRun(created);
       setRunMode(true);
-      setAskVars(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start test');
     } finally {
@@ -312,6 +333,7 @@ export function PipelineBuilder() {
       const pr = prompts.find((x) => x.id === id);
       if (pr) setDetailPrompt(pr);
     },
+    onTestStep: (index) => setTestingStep(index),
   };
 
   // One editable step node — reused by the desktop canvas (Task 9) and the mobile pager.
@@ -387,15 +409,15 @@ export function PipelineBuilder() {
       {/* run controls only while testing — the Test ▶ trigger lives in the header */}
       {runMode && run ? (
         <>
-          <div className="run-bar">
-            <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} onClick={() => setRunMode(false)}>
-              ← Back to editing
+          <div className="run-bar run-view-bar">
+            <button className="txt-btn run-back" onClick={() => setRunMode(false)}>
+              Back to editing
             </button>
             <span className="run-bar-proj"><strong>Test run</strong></span>
             <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL[run.status] ?? run.status}</span>
-            <div className="run-bar-actions">
+            <div className="run-view-actions">
               <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
-                ▶ Run all
+                Run all
               </button>
               <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
                 Stop
@@ -405,9 +427,6 @@ export function PipelineBuilder() {
               </button>
             </div>
           </div>
-          <p className="run-hint">
-            Preview run — no project attached. Each step calls its AI model; click <strong>▶ Run all</strong> (or a single step’s <strong>Run</strong>), and the answer appears inside that step and feeds the next. <strong>← Back to editing</strong> returns to the builder.
-          </p>
         </>
       ) : null}
 
@@ -419,6 +438,7 @@ export function PipelineBuilder() {
           onRunStep={runActions.runStep}
           onApprove={runActions.approve}
           onSavePrompt={runActions.savePrompt}
+          mobileLayout="flow"
         />
       ) : (
       <>
@@ -442,15 +462,6 @@ export function PipelineBuilder() {
             </div>
           </div>
         )}
-
-        <PipelineVarsEditor
-          variables={variables}
-          disabled={!canEdit}
-          onChange={(v) => {
-            setVariables(v);
-            setDirty(true);
-          }}
-        />
 
         {error && <p className="error">{error}</p>}
         {prompts.length === 0 && (
@@ -529,18 +540,22 @@ export function PipelineBuilder() {
 
       {runActions.error && <p className="error">{runActions.error}</p>}
 
-      {askVars && (
-        <RunVariablesModal
-          title="Test run"
-          variables={variables}
-          busy={creatingRun}
-          onCancel={() => setAskVars(false)}
-          onRun={(values) => void startTest(values)}
-        />
-      )}
-
       {detailPrompt && (
         <PromptDetails prompt={detailPrompt} labels={labels} onClose={() => setDetailPrompt(null)} />
+      )}
+
+      {testingStep !== null && steps[testingStep] && (
+        <StepTestModal
+          wsId={wsId ?? ''}
+          title={steps[testingStep].name}
+          promptId={steps[testingStep].promptId}
+          initialPrompt={prompts.find((x) => x.id === steps[testingStep].promptId)?.content ?? ''}
+          initialMedia={prompts.find((x) => x.id === steps[testingStep].promptId)?.media ?? []}
+          provider={steps[testingStep].provider}
+          model={steps[testingStep].model}
+          catalog={catalog}
+          onClose={() => setTestingStep(null)}
+        />
       )}
     </EditorShell>
   );

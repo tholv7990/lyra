@@ -3,20 +3,13 @@ import {
   StepMode,
   tagColor,
   labelColor,
-  Provider,
+  type Provider,
   type PipelineStep,
   type Prompt,
 } from '@lyra/shared';
 import { EyeIcon } from '../layout/icons';
+import { ProviderIcon } from './ProviderIcon';
 import { useFlowCallbacks } from './flow/flowCallbacks';
-
-const PROVIDER_LABELS: Record<Provider, string> = {
-  [Provider.OpenAI]: 'OpenAI',
-  [Provider.Anthropic]: 'Anthropic',
-  [Provider.DeepSeek]: 'DeepSeek',
-  [Provider.Image]: 'Image',
-  [Provider.Video]: 'Video',
-};
 
 export interface StepCardProps {
   step: PipelineStep;
@@ -66,10 +59,24 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               <EyeIcon width={15} height={15} />
             </span>
           )}
+          {cb.onTestStep && (
+            <button
+              type="button"
+              className="flow-test-btn"
+              title="Test this step"
+              onClick={(e) => {
+                e.stopPropagation();
+                cb.onTestStep?.(i);
+              }}
+            >
+              Test
+            </button>
+          )}
         </div>
         {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
         <div className="flow-node-sub">
-          {PROVIDER_LABELS[s.provider]} · {modelLabel(s.provider, s.model)}
+          <ProviderIcon provider={s.provider} size={14} />
+          <span>{modelLabel(s.provider, s.model)}</span>
         </div>
         {p && (p.tags.length > 0 || p.createdBy?.name) && (
           <div className="flow-node-foot">

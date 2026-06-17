@@ -13,13 +13,22 @@ interface RunFlowProps {
   onRunStep: (index: number) => void;
   onApprove: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
+  mobileLayout?: 'pager' | 'flow';
 }
 
 // The unified run view (n8n-style): the pipeline rendered as the same vertical
 // flow as the builder (Start → nodes → End), lit up with live per-step status.
 // Each node shows its status, an inline Run/Approve action, and — when expanded —
 // the (editable) prompt and the result/error.
-export function RunFlow({ run, busy, hasKey, onRunStep, onApprove, onSavePrompt }: RunFlowProps) {
+export function RunFlow({
+  run,
+  busy,
+  hasKey,
+  onRunStep,
+  onApprove,
+  onSavePrompt,
+  mobileLayout = 'pager',
+}: RunFlowProps) {
   const pager = useFlowPager(run.steps.length);
   const { isMobile, setPage } = pager;
 
@@ -48,6 +57,22 @@ export function RunFlow({ run, busy, hasKey, onRunStep, onApprove, onSavePrompt 
       stepNames={stepNames}
     />
   );
+
+  if (isMobile && mobileLayout === 'flow') {
+    return (
+      <div className="flow run-flow flow-mobile-full">
+        <div className="flow-cap">● Start</div>
+        <div className="flow-connector" aria-hidden />
+        {run.steps.map((step) => (
+          <div className="run-flow-segment" key={step.index}>
+            {node(step)}
+            <div className="flow-connector" aria-hidden />
+          </div>
+        ))}
+        <div className="flow-cap end">◎ End</div>
+      </div>
+    );
+  }
 
   if (isMobile) {
     const { page } = pager;

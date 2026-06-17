@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
-  ProjectVisibility,
+  ProjectStatus,
+  ProjectShare,
   StepMode,
   type ApiKeyInfo,
   type Pipeline,
@@ -15,20 +16,13 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useIsMobile } from '../lib/useIsMobile';
 import { useModels } from '../lib/useModels';
+import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
 import { RunFlow } from '../components/RunFlow';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { useBreadcrumb } from '../layout/breadcrumb';
-
-function host(u: string) {
-  try {
-    return new URL(u).host;
-  } catch {
-    return u;
-  }
-}
 
 const STATUS_LABEL: Record<string, string> = {
   idle: 'Idle',
@@ -40,11 +34,10 @@ const STATUS_LABEL: Record<string, string> = {
   error: 'Error',
 };
 
-const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
-  [ProjectVisibility.Private]: 'Private',
-  [ProjectVisibility.Shared]: 'Shared',
-  [ProjectVisibility.Workspace]: 'Workspace',
-};
+function shareLabel(p: Project): string {
+  if (p.status !== ProjectStatus.Public) return 'Draft';
+  return p.shared === ProjectShare.All ? 'Public · Everyone' : 'Public · Chosen people';
+}
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -64,13 +57,14 @@ export function ProjectDetail() {
       else n.add(pid);
       return n;
     });
-  useBreadcrumb(project?.name ?? '…');
   const [library, setLibrary] = useState<Pipeline[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [run, setRun] = useState<Run | null>(null);
   const [runView, setRunView] = useState(false); // focused run view vs dashboard
+  useBreadcrumb(runView && run ? run.pipelineName ?? project?.name ?? '…' : project?.name ?? '…');
   const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
   const [askVarsFor, setAskVarsFor] = useState<Pipeline | null>(null);
+  const [adding, setAdding] = useState(false); // attach-pipeline picker open
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +116,38 @@ export function ProjectDetail() {
       { userId: user.id, role: current.role, canManageKeys: current.canManageKeys },
     );
 
+  // The project's pipelines, resolved from the id refs against the workspace
+  // library (soft-deleted/unknown ids are dropped). `unassigned` feeds the picker.
+  const byId = useMemo(() => new Map(library.map((p) => [p.id, p])), [library]);
+  const assigned = useMemo(
+    () => (project?.pipelines ?? []).map((pid) => byId.get(pid)).filter((p): p is Pipeline => !!p),
+    [project, byId],
+  );
+  const unassigned = useMemo(
+    () => library.filter((p) => !(project?.pipelines ?? []).includes(p.id)),
+    [project, library],
+  );
+
+  const projectVars = useMemo(
+    () => Object.fromEntries((project?.variables ?? []).map((v) => [v.key, v.value])),
+    [project],
+  );
+
+  const savePipelines = (ids: string[]) =>
+    act(async () => {
+      const updated = await api<Project>(`/projects/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ pipelines: ids }),
+      });
+      setProject(updated);
+    });
+  const attachPipeline = (pid: string) => {
+    setAdding(false);
+    return savePipelines([...(project?.pipelines ?? []), pid]);
+  };
+  const detachPipeline = (pid: string) =>
+    savePipelines((project?.pipelines ?? []).filter((x) => x !== pid));
+
   // Start a run and jump into the focused run view.
   const startRun = (pipelineId: string, values: Record<string, string>) =>
     act(async () => {
@@ -147,13 +173,33 @@ export function ProjectDetail() {
   };
 
   const runAll = () =>
-    run && act(async () => setRun(await api<Run>(`/runs/${run.id}/run-all`, { method: 'POST' })));
+    run &&
+    act(async () => {
+      const before = run;
+      setRun(previewRunProgress(run));
+      try {
+        setRun(await api<Run>(`/runs/${run.id}/run-all`, { method: 'POST' }));
+      } catch (err) {
+        setRun(before);
+        throw err;
+      }
+    });
   const stop = () =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/stop`, { method: 'POST' })));
   const reset = () =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/reset`, { method: 'POST' })));
   const runStep = (i: number) =>
-    run && act(async () => setRun(await api<Run>(`/runs/${run.id}/steps/${i}/run`, { method: 'POST' })));
+    run &&
+    act(async () => {
+      const before = run;
+      setRun(previewRunProgress(run, i));
+      try {
+        setRun(await api<Run>(`/runs/${run.id}/steps/${i}/run`, { method: 'POST' }));
+      } catch (err) {
+        setRun(before);
+        throw err;
+      }
+    });
   const approve = (i: number) =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/steps/${i}/approve`, { method: 'POST' })));
   const savePrompt = (i: number, prompt: string) =>
@@ -179,7 +225,7 @@ export function ProjectDetail() {
         // header bar is hidden via CSS). On mobile the breadcrumb is hidden, so the
         // title (and the ‹ back) live here.
         isMobile ? (
-          <h2 className="eshell-name">{project.name}</h2>
+          <h2 className="eshell-name">{runView && run ? run.pipelineName ?? 'Run' : project.name}</h2>
         ) : (
           <span className="eshell-spacer" aria-hidden />
         )
@@ -189,6 +235,7 @@ export function ProjectDetail() {
         <RunVariablesModal
           title={`Run “${askVarsFor.name}”`}
           variables={askVarsFor.variables}
+          prefill={projectVars}
           busy={busy}
           onCancel={() => setAskVarsFor(null)}
           onRun={(values) => void startRun(askVarsFor.id, values)}
@@ -199,17 +246,15 @@ export function ProjectDetail() {
         {runView && run ? (
           /* ---- Focused run view ---- */
           <div className="run-view">
-            <div className="run-view-head">
+            <div className="run-bar run-view-bar">
               <button className="txt-btn run-back" onClick={() => setRunView(false)}>
-                ← Back to project
+                Back to project
               </button>
-              <div className="run-view-title">
-                <h2>{run.pipelineName ?? 'Run'}</h2>
-                <span className={`badge status-${run.status}`}>{STATUS_LABEL[run.status] ?? run.status}</span>
-              </div>
+              <span className="run-bar-proj"><strong>{run.pipelineName ?? 'Run'}</strong></span>
+              <span className={`badge status-${run.status}`}>{STATUS_LABEL[run.status] ?? run.status}</span>
               <div className="run-view-actions">
                 <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status === 'done'} onClick={runAll}>
-                  ▶ Run all
+                  Run all
                 </button>
                 <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status !== 'running'} onClick={stop}>
                   Stop
@@ -231,6 +276,7 @@ export function ProjectDetail() {
                   onRunStep={runStep}
                   onApprove={approve}
                   onSavePrompt={savePrompt}
+                  mobileLayout="flow"
                 />
                 <RunSummary run={run} busy={busy} onRetry={runStep} />
               </>
@@ -242,7 +288,7 @@ export function ProjectDetail() {
             <div className="proj-head">
               <div className="proj-head-top">
                 <p className="proj-product">
-                  {project.product || 'No product description yet — add one with Edit.'}
+                  {project.description || 'No description yet — add one with Edit.'}
                 </p>
                 {canEdit && (
                   <Link className="btn-ghost proj-edit" style={{ width: 'auto', marginTop: 0 }} to={`/projects/${project.id}/edit`}>
@@ -251,19 +297,7 @@ export function ProjectDetail() {
                 )}
               </div>
               <div className="proj-meta">
-                {project.niche && (
-                  <>
-                    <span>{project.niche}</span>
-                    <span className="dot">·</span>
-                  </>
-                )}
-                {project.homepageUrl && (
-                  <>
-                    <a href={project.homepageUrl} target="_blank" rel="noreferrer">{host(project.homepageUrl)}</a>
-                    <span className="dot">·</span>
-                  </>
-                )}
-                <span className={`badge vis-${project.visibility}`}>{VISIBILITY_LABELS[project.visibility]}</span>
+                <span className={`badge status-${project.status}`}>{shareLabel(project)}</span>
                 <span className="dot">·</span>
                 <span>
                   Created {new Date(project.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} by {project.createdBy.name}
@@ -271,26 +305,69 @@ export function ProjectDetail() {
               </div>
             </div>
 
+            {project.variables.length > 0 && (
+              <div className="proj-vars-view">
+                {project.variables.map((v) => (
+                  <span className="proj-var-chip" key={v.key}>
+                    <code>{`{${v.key}}`}</code>
+                    <span className="proj-var-val">{v.value || '—'}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
             {error && <p className="error">{error}</p>}
 
             <div className="section-head proj-sec">
               <h2>Pipelines</h2>
+              {canEdit && unassigned.length > 0 && (
+                <div className="proj-add-pipe">
+                  <button
+                    className="btn-ghost"
+                    style={{ width: 'auto', marginTop: 0 }}
+                    disabled={busy}
+                    onClick={() => setAdding((s) => !s)}
+                  >
+                    + Add pipeline
+                  </button>
+                  {adding && (
+                    <div className="lin-menu proj-add-menu">
+                      {unassigned.map((p) => (
+                        <button key={p.id} className="lin-menu-item" disabled={busy} onClick={() => void attachPipeline(p.id)}>
+                          {p.name}
+                          <span className="lin-menu-count">{p.steps.length} step{p.steps.length === 1 ? '' : 's'}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            {library.length === 0 ? (
+            {assigned.length === 0 ? (
               <div className="prompt-empty">
-                <h3>No pipelines yet</h3>
+                <h3>No pipelines assigned</h3>
                 <p>
-                  Create pipelines in the{' '}
-                  <Link to="/pipelines" style={{ color: 'var(--primary)' }}>Pipelines</Link>{' '}
-                  section, then run them here against this project.
+                  {library.length === 0 ? (
+                    <>
+                      Create pipelines in the{' '}
+                      <Link to="/pipelines" style={{ color: 'var(--primary)' }}>Pipelines</Link>{' '}
+                      section, then add them here to run against this project.
+                    </>
+                  ) : canEdit ? (
+                    <>Use <strong>+ Add pipeline</strong> above to attach one of your workspace pipelines.</>
+                  ) : (
+                    <>No pipelines have been added to this project yet.</>
+                  )}
                 </p>
-                <Link className="btn-primary" to="/pipelines" style={{ width: 'auto' }}>
-                  Go to Pipelines
-                </Link>
+                {library.length === 0 && (
+                  <Link className="btn-primary" to="/pipelines" style={{ width: 'auto' }}>
+                    Go to Pipelines
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="list">
-                {library.map((p) => {
+                {assigned.map((p) => {
                   const open = !closedPipes.has(p.id);
                   return (
                     <div className={`pipe-card${open ? ' open' : ''}`} key={p.id}>
@@ -310,6 +387,16 @@ export function ProjectDetail() {
                           </div>
                         </div>
                         <span className="row-actions" onClick={(e) => e.stopPropagation()}>
+                          {canEdit && (
+                            <button
+                              className="txt-btn danger"
+                              disabled={busy}
+                              title={`Remove “${p.name}” from this project`}
+                              onClick={() => void detachPipeline(p.id)}
+                            >
+                              Remove
+                            </button>
+                          )}
                           <button
                             className="btn-primary"
                             style={{ width: 'auto', marginTop: 0 }}

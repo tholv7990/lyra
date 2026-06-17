@@ -14,6 +14,7 @@ export interface FlowCallbacks {
   onRemove?: (index: number) => void;
   onInsert?: (index: number) => void;
   onViewPrompt?: (promptId: string) => void;
+  onTestStep?: (index: number) => void;
 }
 
 const Ctx = createContext<FlowCallbacks>({ busy: false });

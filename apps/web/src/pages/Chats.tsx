@@ -43,9 +43,22 @@ function initials(name?: string) {
 // "‹ Prompts / <title>" and the in-chat back link, so there's a one-tap way back.
 type ChatOrigin = { label: string; to: string; record: string };
 
+export function updateMessageContent(
+  messages: ConversationMessage[],
+  id: string,
+  content: string,
+) {
+  return messages.map((m) => (m.id === id ? { ...m, content } : m));
+}
+
 const IconCopy = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" />
+  </svg>
+);
+const IconEdit = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
   </svg>
 );
 const IconBookmark = () => (
@@ -87,6 +100,8 @@ export function Chats() {
   const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saveFor, setSaveFor] = useState<ConversationMessage | null>(null);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -347,6 +362,27 @@ export function Chats() {
     setTimeout(() => setCopied(false), 1400);
   }
 
+  function beginEdit(message: ConversationMessage) {
+    setEditingMsgId(message.id);
+    setEditingText(message.content);
+  }
+
+  function saveEdit() {
+    if (!editingMsgId || !editingText.trim()) return;
+    const nextText = editingText;
+    setMessages((m) => updateMessageContent(m, editingMsgId, nextText));
+    setSaveFor((current) =>
+      current?.id === editingMsgId ? { ...current, content: nextText } : current,
+    );
+    setEditingMsgId(null);
+    setEditingText('');
+  }
+
+  function cancelEdit() {
+    setEditingMsgId(null);
+    setEditingText('');
+  }
+
   async function removeChat(c: ConversationSummary) {
     try {
       await api(`/conversations/${c.id}`, { method: 'DELETE' });
@@ -437,6 +473,7 @@ export function Chats() {
               messages.map((m, i) => {
                 const isLast = i === messages.length - 1;
                 if (m.role === 'user') {
+                  const editingThis = editingMsgId === m.id;
                   return (
                     <div key={m.id} className="cmsg">
                       <div className="cavatar user">{initials(user?.name)}</div>
@@ -450,8 +487,59 @@ export function Chats() {
                             {m.media.map((md, j) => <Attachment key={`${md.url}-${j}`} m={md} />)}
                           </div>
                         )}
-                        <div className="cbubble">{m.content}</div>
+                        {editingThis ? (
+                          <div className="cmsg-editor">
+                            <textarea
+                              className="text-input cmsg-editarea"
+                              value={editingText}
+                              rows={Math.min(10, Math.max(3, editingText.split('\n').length + 1))}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                                  e.preventDefault();
+                                  saveEdit();
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  cancelEdit();
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <div className="cmsg-edit-actions">
+                              <button type="button" className="btn-ghost mini" onClick={cancelEdit}>
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-primary mini"
+                                disabled={!editingText.trim()}
+                                onClick={saveEdit}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="cbubble">{m.content}</div>
+                        )}
                         <div className="cactions">
+                          <button
+                            className="cicon"
+                            onClick={() => copy(m.content)}
+                            title={copied ? 'Copied' : 'Copy prompt'}
+                            aria-label="Copy prompt"
+                          >
+                            <IconCopy />
+                          </button>
+                          <button
+                            className="cicon"
+                            onClick={() => beginEdit(m)}
+                            title="Edit prompt"
+                            aria-label="Edit prompt"
+                            disabled={streaming}
+                          >
+                            <IconEdit />
+                          </button>
                           <button className="cmsg-save" onClick={() => setSaveFor(m)} title="Save this prompt to the library">
                             <IconBookmark /> Save as prompt
                           </button>

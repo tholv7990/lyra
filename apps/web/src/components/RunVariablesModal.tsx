@@ -7,18 +7,24 @@ import type { PipelineVariable } from '@lyra/shared';
 export function RunVariablesModal({
   title,
   variables,
+  prefill,
   busy,
   onCancel,
   onRun,
 }: {
   title: string;
   variables: PipelineVariable[];
+  // Values to seed fields with (e.g. the project's variables) — used when a key
+  // matches; falls back to the pipeline variable's own default.
+  prefill?: Record<string, string>;
   busy?: boolean;
   onCancel: () => void;
   onRun: (values: Record<string, string>) => void;
 }) {
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(variables.map((v) => [v.key, v.default ?? ''])),
+    Object.fromEntries(
+      variables.map((v) => [v.key, prefill?.[v.key] ?? v.default ?? '']),
+    ),
   );
   return (
     <div className="drawer-scrim" onClick={onCancel}>
