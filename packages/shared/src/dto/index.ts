@@ -189,9 +189,20 @@ export interface CopilotChatDto {
   messages: AiChatTurn[];
 }
 
+// An action the copilot wants to take that needs the user's approval before it
+// runs (Phase 3b). The model only *proposes*; the client executes on approval.
+export interface PendingCopilotAction {
+  type: 'run_pipeline';
+  pipelineId: string;
+  pipelineName: string;
+  projectId: string;
+  projectName: string;
+}
+
 export interface CopilotResponse {
   reply: string;
   tools?: string[]; // names of the tools the copilot used this turn (for the UI)
+  actions?: PendingCopilotAction[]; // approval-gated proposals
 }
 
 export interface UpdatePipelineDto {

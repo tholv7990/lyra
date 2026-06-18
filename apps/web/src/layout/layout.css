@@ -7138,6 +7138,11 @@
   color: var(--ink-tertiary);
   margin-bottom: 4px;
 }
+.copilot-action-btns {
+  display: inline-flex;
+  gap: 8px;
+  flex: none;
+}
 
 @media (max-width: 560px) {
   .lin-ai-txt {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AiChatTurn, CopilotResponse } from '@lyra/shared';
+import type { AiChatTurn, CopilotResponse, PendingCopilotAction, Run } from '@lyra/shared';
 import { api } from '../lib/api';
 
 interface Props {
@@ -18,6 +18,8 @@ export function CopilotPanel({ wsId, onClose }: Props) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingCopilotAction[]>([]);
+  const [actBusy, setActBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export function CopilotPanel({ wsId, onClose }: Props) {
     setInput('');
     setBusy(true);
     setError(null);
+    setPending([]);
     try {
       const res = await api<CopilotResponse>(`/workspaces/${wsId}/copilot`, {
         method: 'POST',
@@ -42,10 +45,36 @@ export function CopilotPanel({ wsId, onClose }: Props) {
         setToolsByIdx((m) => ({ ...m, [idx]: res.tools! }));
       }
       setMessages((m) => [...m, { role: 'assistant', content: res.reply }]);
+      if (res.actions?.length) setPending(res.actions);
     } catch (e) {
       setError(e instanceof Error ? e.message : t('copilot.error'));
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Approve a proposed run — execute it via the normal run endpoints (this is the
+  // gate: nothing runs until the user clicks). Append a result summary to the chat.
+  async function approveRun(action: PendingCopilotAction) {
+    if (actBusy) return;
+    setActBusy(true);
+    setError(null);
+    try {
+      const run = await api<Run>(`/projects/${action.projectId}/pipelines/${action.pipelineId}/runs`, {
+        method: 'POST',
+        body: JSON.stringify({ variables: {}, collections: {} }),
+      });
+      const done = await api<Run>(`/runs/${run.id}/run-all`, { method: 'POST' });
+      const steps = (done.steps ?? []).map((s) => `${s.name} (${s.status})`).join(', ');
+      setMessages((m) => [
+        ...m,
+        { role: 'assistant', content: `✓ ${action.pipelineName} → ${done.status}\n${steps}` },
+      ]);
+      setPending([]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('copilot.error'));
+    } finally {
+      setActBusy(false);
     }
   }
 
@@ -77,6 +106,34 @@ export function CopilotPanel({ wsId, onClose }: Props) {
         </div>
 
         {error && <p className="error bwa-error">{error}</p>}
+
+        {pending.map((a, i) => (
+          <div className="bwa-draft copilot-action" key={i}>
+            <span className="bwa-draft-info">
+              ▶ {t('copilot.runProposal', { pipeline: a.pipelineName, project: a.projectName })}
+            </span>
+            <span className="copilot-action-btns">
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ width: 'auto', marginTop: 0 }}
+                disabled={actBusy}
+                onClick={() => setPending((p) => p.filter((_, j) => j !== i))}
+              >
+                {t('copilot.dismiss')}
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ width: 'auto', marginTop: 0 }}
+                disabled={actBusy}
+                onClick={() => void approveRun(a)}
+              >
+                {actBusy ? t('copilot.running') : t('copilot.approveRun')}
+              </button>
+            </span>
+          </div>
+        ))}
 
         <div className="bwa-compose">
           <textarea

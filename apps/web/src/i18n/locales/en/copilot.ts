@@ -3,4 +3,8 @@ export default {
   hint: 'Ask about your workspace — prompts, pipelines, projects, runs. I read your real data to answer.',
   placeholder: 'Ask Lyra Copilot…',
   error: 'Copilot failed',
+  runProposal: 'Run {{pipeline}} on {{project}}?',
+  approveRun: 'Approve & run',
+  dismiss: 'Dismiss',
+  running: 'Running…',
 } as const;

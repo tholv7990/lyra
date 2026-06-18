@@ -5,6 +5,7 @@ import {
   Role,
   type AiChatTurn,
   type CopilotResponse,
+  type PendingCopilotAction,
 } from '@lyra/shared';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
 import { KeysService } from '../keys/keys.service';
@@ -18,7 +19,9 @@ const SYSTEM = [
   'Help the user understand and work with THEIR workspace: the prompt library, pipelines, projects, and runs.',
   '',
   'ALWAYS use the tools to look up real data before answering questions about their workspace — never guess names, ids, step contents, or run results. If something is not found, say so plainly.',
-  'You can READ but not change anything. Be concise and concrete; refer to things by their real names. When you cite a run result, summarise it rather than dumping the whole thing.',
+  'Be concise and concrete; refer to things by their real names. When you cite a run result, summarise it rather than dumping the whole thing.',
+  '',
+  'You can READ everything. The ONLY action you can take is to PROPOSE running a pipeline (run_pipeline) — and that only RUNS after the user approves it in the UI. Never claim a pipeline has run or will run automatically; say you have proposed it for their approval.',
 ].join('\n');
 
 const TOOLS = [
@@ -67,6 +70,19 @@ const TOOLS = [
       required: ['run_id'],
     },
   },
+  {
+    name: 'run_pipeline',
+    description:
+      'PROPOSE running a pipeline (by name or id) on a project (by name or id). This does NOT run it — it asks the user to approve in the UI. Use it when the user asks to run/execute a pipeline.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pipeline: { type: 'string', description: 'pipeline name or id' },
+        project: { type: 'string', description: 'project name or id' },
+      },
+      required: ['pipeline', 'project'],
+    },
+  },
 ];
 
 // Read-only copilot: Claude with tools over the user's workspace. Grounds its
@@ -87,18 +103,62 @@ export class CopilotService {
     if (!apiKey) {
       throw new BadRequestException('Set your Anthropic key in Settings to use Lyra Copilot.');
     }
+    const pending: PendingCopilotAction[] = [];
     const out = await this.anthropic.runWithTools({
       apiKey,
       model: defaultModel(Provider.Anthropic),
       system: SYSTEM,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
       tools: TOOLS,
-      runTool: (name, input) =>
-        this.execTool(workspaceId, userId, name, (input ?? {}) as Record<string, unknown>),
+      runTool: (name, input) => {
+        const i = (input ?? {}) as Record<string, unknown>;
+        if (name === 'run_pipeline') {
+          return this.proposeRun(workspaceId, userId, str(i.pipeline), str(i.project), pending);
+        }
+        return this.execTool(workspaceId, userId, name, i);
+      },
       maxTokens: 1500,
       maxRounds: 6,
     });
-    return { reply: out.text || 'Okay.', tools: [...new Set(out.toolCalls)] };
+    return {
+      reply: out.text || 'Okay.',
+      tools: [...new Set(out.toolCalls)],
+      actions: pending.length ? pending : undefined,
+    };
+  }
+
+  // Propose (do NOT run) a pipeline on a project — records a pending action the
+  // user approves in the UI; the client then runs it via the normal run endpoints.
+  private async proposeRun(
+    workspaceId: string,
+    userId: string,
+    pipelineRef: string,
+    projectRef: string,
+    pending: PendingCopilotAction[],
+  ): Promise<string> {
+    const pipeline = await this.resolvePipeline(workspaceId, pipelineRef);
+    if (!pipeline) return `No pipeline matches "${pipelineRef}". Ask the user to clarify.`;
+    if (pipeline.steps.length === 0) return `Pipeline "${pipeline.name}" has no steps to run.`;
+    const project = await this.resolveProject(workspaceId, userId, projectRef);
+    if (!project) return `No project matches "${projectRef}". Ask the user to clarify.`;
+    pending.push({
+      type: 'run_pipeline',
+      pipelineId: pipeline._id.toString(),
+      pipelineName: pipeline.name,
+      projectId: project._id.toString(),
+      projectName: project.name,
+    });
+    return `Proposed running "${pipeline.name}" on project "${project.name}". The user must APPROVE it in the UI before it runs — do not say it has run.`;
+  }
+
+  private async resolvePipeline(workspaceId: string, ref: string) {
+    const docs = await this.pipelines.listForWorkspace(workspaceId);
+    const lref = ref.toLowerCase();
+    return (
+      docs.find((d) => d._id.toString() === ref) ||
+      docs.find((d) => d.name.toLowerCase() === lref) ||
+      docs.find((d) => d.name.toLowerCase().includes(lref))
+    );
   }
 
   private execTool(
@@ -246,4 +306,8 @@ export class CopilotService {
       })),
     });
   }
+}
+
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : '';
 }
