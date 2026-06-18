@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   STEP_DEFS,
   STEP_PROVIDERS,
@@ -55,6 +56,7 @@ export interface RunStepCardProps {
 }
 
 export function RunStepCard(props: RunStepCardProps) {
+  const { t } = useTranslation();
   const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, runId, vars, stepNames, assets, history } =
     props;
   const isGate = step.mode === StepMode.Gate;
@@ -107,8 +109,8 @@ export function RunStepCard(props: RunStepCardProps) {
           <div className="flow-node-head">
             <span className="flow-num">{step.index + 1}</span>
             <span className="flow-name">{stepTitle(step)}</span>
-            <span className={`mode-tag ${isGate ? 'gate' : 'auto'}`}>{isGate ? 'GATE' : 'AUTO'}</span>
-            <span className={`badge status-${step.status}`}>{STATUS_LABEL[step.status] ?? step.status}</span>
+            <span className={`mode-tag ${isGate ? 'gate' : 'auto'}`}>{isGate ? t('run.gate') : t('run.auto')}</span>
+            <span className={`badge status-${step.status}`}>{t(`run.status_${step.status}`)}</span>
           </div>
           <div className="flow-node-sub">{step.model}</div>
         </button>
@@ -118,12 +120,12 @@ export function RunStepCard(props: RunStepCardProps) {
           <div className="rn-action">
             {!locked && step.status === StepStatus.Waiting && (
               <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onApprove}>
-                Approve
+                {t('common.approve')}
               </button>
             )}
             {!locked && runnable && (
               <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onRun}>
-                Run
+                {t('common.run')}
               </button>
             )}
             {hasResult && (
@@ -136,7 +138,7 @@ export function RunStepCard(props: RunStepCardProps) {
                   setShowResult(true);
                 }}
               >
-                View result
+                {t('run.viewResult')}
               </button>
             )}
           </div>
@@ -169,7 +171,7 @@ export function RunStepCard(props: RunStepCardProps) {
           )}
           {vars && vars.length > 0 && (
             <div className="rn-vars">
-              <span className="rn-vars-label">Insert</span>
+              <span className="rn-vars-label">{t('run.insert')}</span>
               {vars.map((v) => (
                 <button
                   key={v.token}
@@ -192,20 +194,20 @@ export function RunStepCard(props: RunStepCardProps) {
           />
           {dangling.length > 0 && (
             <p className="rn-var-warn">
-              Unknown step reference{dangling.length > 1 ? 's' : ''}:{' '}
-              {dangling.map((n) => `{step:${n}}`).join(', ')} — no matching step.
+              {t('run.unknownStepRef')}:{' '}
+              {dangling.map((n) => `{step:${n}}`).join(', ')}
             </p>
           )}
           <div className="rn-body-actions">
             {dirty && (
               <button className="btn-ghost" disabled={busy} onClick={() => props.onSavePrompt(draft)}>
-                Save prompt
+                {t('run.savePrompt')}
               </button>
             )}
             {locked && (
               <span className="muted" style={{ fontSize: 13 }}>
-                Locked — set the <strong>{provider}</strong> key in{' '}
-                <Link to="/settings" style={{ color: 'var(--primary)' }}>Settings</Link>
+                {t('run.lockedHint', { provider })}{' '}
+                <Link to="/settings" style={{ color: 'var(--primary)' }}>{t('nav.settings')}</Link>
               </span>
             )}
           </div>

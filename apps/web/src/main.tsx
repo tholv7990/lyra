@@ -12,6 +12,8 @@ import '@xyflow/react/dist/style.css';
 //        <h1 className="text-display-xl font-display text-ink">
 import './styles/tokens.css';
 import './index.css';
+// Initialise i18n (en/vi) before the app renders.
+import './i18n';
 
 const queryClient = new QueryClient();
 

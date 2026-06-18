@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
 import { Markdown } from './Markdown';
 import { ProviderIcon } from './ProviderIcon';
@@ -36,6 +37,7 @@ export function PromptDetails({
   onSaveContent?: (content: string) => void | Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [content, setContent] = useState(prompt.content);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function PromptDetails({
       await onSaveContent(content);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save prompt');
+      setError(e instanceof Error ? e.message : t('prompts.errSave'));
     } finally {
       setBusy(false);
     }
@@ -66,7 +68,7 @@ export function PromptDetails({
       <div className="dialog prompt-details" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="pd-head">
           <h3>{prompt.title}</h3>
-          <button className="pd-close" onClick={onClose} aria-label="Close" title="Close">
+          <button className="pd-close" onClick={onClose} aria-label={t('common.close')} title={t('common.close')}>
             <XIcon />
           </button>
         </div>
@@ -77,7 +79,7 @@ export function PromptDetails({
               color: labelColor(prompt.createdBy.name, []),
               background: `${labelColor(prompt.createdBy.name, [])}16`,
             }}
-            title={`Created by ${prompt.createdBy.name}`}
+            title={t('prompts.createdBy', { name: prompt.createdBy.name })}
           >
             {initial(prompt.createdBy.name)}
           </span>
@@ -106,7 +108,7 @@ export function PromptDetails({
         {canEdit ? (
           <label className="field pd-edit">
             <span className="pd-edit-label">
-              <span>Edit prompt</span>
+              <span>{t('prompts.editPrompt')}</span>
               <button
                 type="button"
                 className="pd-save-icon"
@@ -126,7 +128,7 @@ export function PromptDetails({
           </label>
         ) : (
           <div className="pd-body">
-            {prompt.content.trim() ? <Markdown>{prompt.content}</Markdown> : <p className="muted">No content.</p>}
+            {prompt.content.trim() ? <Markdown>{prompt.content}</Markdown> : <p className="muted">{t('prompts.noContent')}</p>}
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
@@ -13,9 +14,9 @@ import { EditorShell } from '../components/EditorShell';
 import { CheckIcon, XIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'Draft',
-  [ProjectStatus.Public]: 'Public',
+const STATUS_KEY: Record<ProjectStatus, string> = {
+  [ProjectStatus.Draft]: 'projects.statusDraft',
+  [ProjectStatus.Public]: 'projects.statusPublic',
 };
 const STATUS_COLOR: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: '#d4a72c',
@@ -23,9 +24,9 @@ const STATUS_COLOR: Record<ProjectStatus, string> = {
 };
 // Shown beneath the toggle; reflects what the current status actually does.
 // (Member-level sharing is deferred — a public project is visible to everyone.)
-const STATUS_HELP: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'Only you and workspace owners can see it.',
-  [ProjectStatus.Public]: 'Everyone in this workspace can see it.',
+const STATUS_HELP_KEY: Record<ProjectStatus, string> = {
+  [ProjectStatus.Draft]: 'projects.statusHelpDraft',
+  [ProjectStatus.Public]: 'projects.statusHelpPublic',
 };
 
 interface Form {
@@ -43,6 +44,7 @@ const empty: Form = {
 };
 
 export function ProjectEditor() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const { user } = useAuth();
@@ -51,7 +53,7 @@ export function ProjectEditor() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState<Form>(empty);
-  useBreadcrumb(isEdit ? form.name.trim() || '…' : 'New');
+  useBreadcrumb(isEdit ? form.name.trim() || '…' : t('projects.breadcrumbNew'));
   const [loading, setLoading] = useState(isEdit);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export function ProjectEditor() {
           status: p.status,
         });
       })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load project'))
+      .catch((e) => setError(e instanceof Error ? e.message : t('projects.loadFailed')))
       .finally(() => setLoading(false));
   }, [id, user, current]);
 
@@ -124,14 +126,14 @@ export function ProjectEditor() {
         navigate(`/projects/${created.id}`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save project');
+      setError(err instanceof Error ? err.message : t('projects.saveFailed'));
       setBusy(false);
     }
   }
 
-  if (loading) return <p className="empty">Loading…</p>;
+  if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (denied) {
-    return <p className="empty">You don't have permission to edit this project.</p>;
+    return <p className="empty">{t('projects.editDenied')}</p>;
   }
 
   return (
@@ -140,7 +142,7 @@ export function ProjectEditor() {
       title={
         <input
           className="eshell-name"
-          placeholder="Project name"
+          placeholder={t('projects.namePlaceholder')}
           autoFocus
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -149,14 +151,14 @@ export function ProjectEditor() {
       }
       actions={
         <>
-          <button type="button" className="icon-btn-danger" title="Cancel" aria-label="Cancel" onClick={() => navigate(cancelTo)}>
+          <button type="button" className="icon-btn-danger" title={t('common.cancel')} aria-label={t('common.cancel')} onClick={() => navigate(cancelTo)}>
             <XIcon />
           </button>
           <button
             type="button"
             className="icon-btn-success"
-            title={isEdit ? 'Save changes' : 'Create project'}
-            aria-label={isEdit ? 'Save changes' : 'Create project'}
+            title={isEdit ? t('projects.saveChanges') : t('projects.createProject')}
+            aria-label={isEdit ? t('projects.saveChanges') : t('projects.createProject')}
             disabled={busy || !form.name.trim()}
             onClick={() => void save()}
           >
@@ -169,13 +171,13 @@ export function ProjectEditor() {
       <div className="project-edit">
         <section className="project-edit-section">
           <div className="project-edit-section-head">
-            <span className="pf-label">Description</span>
-            <p>A short summary of this brand or product.</p>
+            <span className="pf-label">{t('projects.descriptionLabel')}</span>
+            <p>{t('projects.descriptionHelp')}</p>
           </div>
           <div className="project-field project-field-stack">
             <textarea
               className="project-input project-textarea"
-              placeholder="What this project is about — the brand, product, or store it represents."
+              placeholder={t('projects.descriptionPlaceholder')}
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -185,35 +187,35 @@ export function ProjectEditor() {
 
         <section className="project-edit-section">
           <div className="project-edit-section-head">
-            <span className="pf-label">Variables</span>
-            <p>Key→value pairs that fill <code>{'{key}'}</code> placeholders in step prompts at run time.</p>
+            <span className="pf-label">{t('projects.variablesLabel')}</span>
+            <p>{t('projects.variablesHelpPre')} <code>{'{key}'}</code> {t('projects.variablesHelpPost')}</p>
           </div>
           <div className="project-vars">
             {form.variables.length === 0 ? (
-              <p className="project-vars-empty">No variables yet. Add e.g. <code>product</code>, <code>niche</code>, or <code>homepage</code>.</p>
+              <p className="project-vars-empty">{t('projects.variablesEmptyPre')} <code>product</code>, <code>niche</code>, {t('projects.variablesEmptyOr')} <code>homepage</code>.</p>
             ) : (
               form.variables.map((v, i) => (
                 <div key={i} className="project-vars-row">
                   <input
                     className="text-input"
-                    placeholder="key"
+                    placeholder={t('projects.varKeyPlaceholder')}
                     value={v.key}
                     onChange={(e) => setVar(i, { key: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
                   />
                   <input
                     className="text-input"
-                    placeholder="value"
+                    placeholder={t('projects.varValuePlaceholder')}
                     value={v.value}
                     onChange={(e) => setVar(i, { value: e.target.value })}
                   />
-                  <button className="icon-mini danger" title="Remove variable" onClick={() => removeVar(i)}>
+                  <button className="icon-mini danger" title={t('projects.removeVariable')} onClick={() => removeVar(i)}>
                     ×
                   </button>
                 </div>
               ))
             )}
             <button className="btn-ghost pvars-add" style={{ width: 'auto', marginTop: 0 }} onClick={addVar}>
-              + Add variable
+              {t('projects.addVariable')}
             </button>
           </div>
         </section>
@@ -221,10 +223,10 @@ export function ProjectEditor() {
         <section className="project-edit-section">
           <div className="project-status-row">
             <div className="project-status-text">
-              <span className="pf-label">Status</span>
-              <p>{STATUS_HELP[form.status]}</p>
+              <span className="pf-label">{t('projects.status')}</span>
+              <p>{t(STATUS_HELP_KEY[form.status])}</p>
             </div>
-            <div className="seg" role="radiogroup" aria-label="Project status">
+            <div className="seg" role="radiogroup" aria-label={t('projects.statusAria')}>
               {Object.values(ProjectStatus).map((s) => (
                 <button
                   key={s}
@@ -235,7 +237,7 @@ export function ProjectEditor() {
                   onClick={() => setForm({ ...form, status: s })}
                 >
                   <span className="sdot" style={{ background: STATUS_COLOR[s] }} />
-                  {STATUS_LABEL[s]}
+                  {t(STATUS_KEY[s])}
                 </button>
               ))}
             </div>

@@ -6,6 +6,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   defaultModel,
   isAllowedMedia,
@@ -68,6 +69,7 @@ const IconBookmark = () => (
 );
 
 export function Chats() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,13 +82,13 @@ export function Chats() {
 
   const [list, setList] = useState<ConversationSummary[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
-  const [title, setTitle] = useState('New chat');
+  const [title, setTitle] = useState(t('chats.newChat'));
   const [origin, setOrigin] = useState<ChatOrigin | null>(null);
   // Mirror origin in a ref so `send` can carry it through its post-stream navigate
   // without needing the latest value baked into its closure.
   const originRef = useRef<ChatOrigin | null>(null);
   useBreadcrumb(
-    origin ? origin.record : id ? title : 'Chats',
+    origin ? origin.record : id ? title : t('chats.title'),
     origin ? { label: origin.label, to: origin.to } : null,
   );
 
@@ -134,7 +136,7 @@ export function Chats() {
       // Don't reset while a seeded send is mid-flight on this canvas.
       if (!seedActiveRef.current) {
         setMessages([]);
-        setTitle('New chat');
+        setTitle(t('chats.newChat'));
       }
       return;
     }
@@ -152,7 +154,7 @@ export function Chats() {
         setProvider(c.provider);
         setModel(c.model);
       })
-      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load chat'));
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : t('chats.couldNotLoad')));
     return () => {
       cancelled = true;
     };
@@ -207,8 +209,8 @@ export function Chats() {
     if (!files || !wsId) return;
     setError(null);
     for (const file of Array.from(files)) {
-      if (!isAllowedMedia(file.type, file.name)) { setError(`${file.name}: file type not allowed`); continue; }
-      if (file.size > MEDIA_MAX_BYTES) { setError(`${file.name}: exceeds 25 MB`); continue; }
+      if (!isAllowedMedia(file.type, file.name)) { setError(`${file.name}: ${t('chats.fileTypeNotAllowed')}`); continue; }
+      if (file.size > MEDIA_MAX_BYTES) { setError(`${file.name}: ${t('chats.fileTooLarge')}`); continue; }
       setUploading((u) => u + 1);
       try {
         const fd = new FormData();
@@ -216,7 +218,7 @@ export function Chats() {
         const media = await api<PromptMedia>(`/workspaces/${wsId}/files`, { method: 'POST', body: fd });
         setAttachments((a) => [...a, media]);
       } catch (e) {
-        setError(e instanceof Error ? e.message : `Could not upload ${file.name}`);
+        setError(e instanceof Error ? e.message : t('chats.couldNotUpload', { name: file.name }));
       } finally {
         setUploading((u) => u - 1);
       }
@@ -229,7 +231,7 @@ export function Chats() {
     if (!id) {
       // already on a fresh canvas
       setMessages([]);
-      setTitle('New chat');
+      setTitle(t('chats.newChat'));
       setInput('');
       setAttachments([]);
       return;
@@ -275,7 +277,7 @@ export function Chats() {
           cid = convo.id;
           createdNow = true;
         } catch (e) {
-          patchLast({ error: e instanceof Error ? e.message : 'Could not start chat' });
+          patchLast({ error: e instanceof Error ? e.message : t('chats.couldNotStart') });
           setStreaming(false);
           return;
         }
@@ -301,7 +303,7 @@ export function Chats() {
               setStreaming(false);
               abortRef.current?.abort();
             } else if (evt.type === 'error') {
-              patchLast({ error: String(evt.message ?? 'Chat failed') });
+              patchLast({ error: String(evt.message ?? t('chats.chatFailed')) });
               setStreaming(false);
               abortRef.current?.abort();
             }
@@ -310,7 +312,7 @@ export function Chats() {
         );
       } catch (e) {
         if ((e as Error)?.name !== 'AbortError') {
-          patchLast({ error: e instanceof Error ? e.message : 'Chat failed' });
+          patchLast({ error: e instanceof Error ? e.message : t('chats.chatFailed') });
         }
       } finally {
         setStreaming(false);
@@ -397,11 +399,11 @@ export function Chats() {
 
       <aside className="chat-history">
         <button className="chat-new" onClick={newChat}>
-          <PlusIcon /> New chat
+          <PlusIcon /> {t('chats.newChat')}
         </button>
         <div className="chat-history-list">
           {list.length === 0 ? (
-            <p className="pg-empty">No chats yet.</p>
+            <p className="pg-empty">{t('chats.noChatsYet')}</p>
           ) : (
             list.map((c) => (
               <div key={c.id} className={`cl-item ${c.id === id ? 'active' : ''}`}>
@@ -418,9 +420,9 @@ export function Chats() {
                     <span className="cl-title">{c.title}</span>
                     {c.starred && <span className="pg-star">★</span>}
                   </span>
-                  <span className="cl-sub">{modelLabel(catalog, c.provider, c.model)} · {c.messageCount} msg</span>
+                  <span className="cl-sub">{modelLabel(catalog, c.provider, c.model)} · {t('chats.messageCount', { count: c.messageCount })}</span>
                 </button>
-                <button className="cl-del" onClick={() => void removeChat(c)} title="Delete chat" aria-label="Delete chat">
+                <button className="cl-del" onClick={() => void removeChat(c)} title={t('chats.deleteChat')} aria-label={t('chats.deleteChat')}>
                   <TrashIcon />
                 </button>
               </div>
@@ -431,8 +433,8 @@ export function Chats() {
 
       <main className="chat-main">
         <header className="chat-top">
-          <button className="chat-back chat-menu" onClick={openNav} aria-label="Open menu" title="Menu">
-            <img src="/lyra-mark-squircle.svg" alt="Menu" width={24} height={24} />
+          <button className="chat-back chat-menu" onClick={openNav} aria-label={t('chats.openMenu')} title={t('chats.menu')}>
+            <img src="/lyra-mark-squircle.svg" alt={t('chats.menu')} width={24} height={24} />
           </button>
           <div className="pg-headinfo">
             <div className="pg-headtitle">
@@ -442,18 +444,18 @@ export function Chats() {
                   <span className="chat-crumb-sep">/</span>
                 </>
               )}
-              <span className="pg-name">{origin ? origin.record : id ? title : 'New chat'}</span>
+              <span className="pg-name">{origin ? origin.record : id ? title : t('chats.newChat')}</span>
             </div>
           </div>
           <div className="chat-top-actions">
-            <button className="icon-btn" onClick={newChat} title="New chat" aria-label="New chat">
+            <button className="icon-btn" onClick={newChat} title={t('chats.newChat')} aria-label={t('chats.newChat')}>
               <PlusIcon />
             </button>
             <button
               className="icon-btn chat-history-btn"
               onClick={() => setShowHistory((s) => !s)}
-              title="Chats"
-              aria-label="Chats"
+              title={t('chats.title')}
+              aria-label={t('chats.title')}
             >
               <ListIcon />
             </button>
@@ -466,8 +468,8 @@ export function Chats() {
           <div className="chat-thread">
             {messages.length === 0 ? (
               <div className="chat-empty">
-                <h3>Start a chat</h3>
-                <p>Pick a model, write a prompt, and iterate. Like a prompt? Save it to your library.</p>
+                <h3>{t('chats.startAChat')}</h3>
+                <p>{t('chats.startAChatHint')}</p>
               </div>
             ) : (
               messages.map((m, i) => {
@@ -507,7 +509,7 @@ export function Chats() {
                             />
                             <div className="cmsg-edit-actions">
                               <button type="button" className="btn-ghost mini" onClick={cancelEdit}>
-                                Cancel
+                                {t('common.cancel')}
                               </button>
                               <button
                                 type="button"
@@ -515,7 +517,7 @@ export function Chats() {
                                 disabled={!editingText.trim()}
                                 onClick={saveEdit}
                               >
-                                Save
+                                {t('common.save')}
                               </button>
                             </div>
                           </div>
@@ -526,22 +528,22 @@ export function Chats() {
                           <button
                             className="cicon"
                             onClick={() => copy(m.content)}
-                            title={copied ? 'Copied' : 'Copy prompt'}
-                            aria-label="Copy prompt"
+                            title={copied ? t('common.copied') : t('chats.copyPrompt')}
+                            aria-label={t('chats.copyPrompt')}
                           >
                             <IconCopy />
                           </button>
                           <button
                             className="cicon"
                             onClick={() => beginEdit(m)}
-                            title="Edit prompt"
-                            aria-label="Edit prompt"
+                            title={t('chats.editPrompt')}
+                            aria-label={t('chats.editPrompt')}
                             disabled={streaming}
                           >
                             <IconEdit />
                           </button>
-                          <button className="cmsg-save" onClick={() => setSaveFor(m)} title="Save this prompt to the library">
-                            <IconBookmark /> Save as prompt
+                          <button className="cmsg-save" onClick={() => setSaveFor(m)} title={t('chats.saveToLibrary')}>
+                            <IconBookmark /> {t('chats.saveAsPrompt')}
                           </button>
                         </div>
                       </div>
@@ -560,7 +562,7 @@ export function Chats() {
                       </div>
                       {done && (
                         <div className="cactions">
-                          <button className="cicon" onClick={() => copy(m.content)} title={copied ? 'Copied' : 'Copy'}><IconCopy /></button>
+                          <button className="cicon" onClick={() => copy(m.content)} title={copied ? t('common.copied') : t('common.copy')}><IconCopy /></button>
                         </div>
                       )}
                     </div>
@@ -576,7 +578,7 @@ export function Chats() {
             value={input}
             onChange={setInput}
             onSubmit={() => { if (!streaming) void send(input, attachments); }}
-            placeholder="Message Lyra…  (⌘/Ctrl + Enter to send)"
+            placeholder={t('chats.composerPlaceholder')}
             media={attachments}
             onRemoveMedia={(idx) => setAttachments((a) => a.filter((_, i) => i !== idx))}
             uploading={uploading}
@@ -610,17 +612,18 @@ export function Chats() {
 }
 
 function Attachment({ m }: { m: PromptMedia }) {
+  const { t } = useTranslation();
   if (m.type === MediaType.Image) {
     return (
       <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-thumb">
-        <img src={m.url} alt={m.name ?? 'image'} />
+        <img src={m.url} alt={m.name ?? t('chats.imageFallback')} />
       </a>
     );
   }
   const c = tagColor(m.name ?? m.url);
   return (
     <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-file" style={{ color: c, background: `${c}14`, borderColor: `${c}40` } as CSSProperties}>
-      {m.name ?? 'file'}
+      {m.name ?? t('chats.fileFallback')}
     </a>
   );
 }

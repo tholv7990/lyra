@@ -1,0 +1,10 @@
+export default {
+  home: 'Trang chủ',
+  projects: 'Dự án',
+  pipelines: 'Quy trình',
+  prompts: 'Câu lệnh',
+  chats: 'Trò chuyện',
+  settings: 'Cài đặt',
+  logout: 'Đăng xuất',
+  account: 'Tài khoản',
+} as const;

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Provider, canManageKeys, type ApiKeyInfo, type ModelOption } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { LanguageSelect, ThemeSegment } from '../components/PrefControls';
 import { CheckIcon, RefreshIcon, TrashIcon } from '../layout/icons';
 
 const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
@@ -21,6 +23,7 @@ const LABEL: Record<Provider, string> = Object.fromEntries(
 const LISTABLE: Provider[] = [Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek];
 
 export function Settings() {
+  const { t } = useTranslation();
   const { user, changePassword } = useAuth();
   const { current } = useWorkspace();
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
@@ -148,10 +151,28 @@ export function Settings() {
     <div className="settings">
       {error && <p className="error">{error}</p>}
 
-      {/* ===== Section 1: Provider keys ===== */}
+      {/* ===== Preferences (language + appearance) ===== */}
       <section className="set-section">
         <div className="set-section-head">
-          <h2>Provider keys</h2>
+          <h2>{t('settings.preferences')}</h2>
+          <p>{t('settings.preferencesHint')}</p>
+        </div>
+        <div className="pref-rows">
+          <div className="pref-row">
+            <div className="pref-row-label">{t('settings.language')}</div>
+            <LanguageSelect />
+          </div>
+          <div className="pref-row">
+            <div className="pref-row-label">{t('settings.appearance')}</div>
+            <ThemeSegment />
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Section: Provider keys ===== */}
+      <section className="set-section">
+        <div className="set-section-head">
+          <h2>{t('settings.providerKeys')}</h2>
           <p>
             Bring-your-own keys, encrypted at rest per workspace. Each pipeline step unlocks once its provider key is set.
             {!canManage && ' You need Owner or key-management permission to change these.'}

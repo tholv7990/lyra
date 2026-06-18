@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Asset, Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
 
@@ -23,16 +24,6 @@ interface StepResultModalProps {
   onClose: () => void;
 }
 
-const STATUS_TEXT: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  running: 'Running',
-  waiting: 'Awaiting approval',
-  skipped: 'Skipped',
-  done: 'Done',
-  error: 'Error',
-};
-
 interface Version {
   key: string;
   runId: string;
@@ -46,12 +37,13 @@ interface Version {
 // Shows the output text (copyable), any image/video/audio inline, per-file and
 // zip downloads, and a per-run version switcher when the step has history.
 export function StepResultModal({ runId, step, assets, history = [], onClose }: StepResultModalProps) {
-  const title = step.name?.trim() || `Step ${step.index + 1}`;
+  const { t } = useTranslation();
+  const title = step.name?.trim() || t('run.step', { n: step.index + 1 });
   const provider = step.provider ?? '';
 
   const versions = useMemo<Version[]>(
     () => [
-      { key: 'current', runId, status: step.status, result: step.result, error: step.error, label: 'This run' },
+      { key: 'current', runId, status: step.status, result: step.result, error: step.error, label: t('run.thisRun') },
       ...history.map((h) => ({
         key: h.runId,
         runId: h.runId,
@@ -129,12 +121,12 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
             <span className="srm-num">{step.index + 1}</span>
             <h3>{title}</h3>
             <span className={`badge status-${current.status}`}>
-              {STATUS_TEXT[current.status] ?? current.status}
+              {t(`run.status_${current.status}`)}
             </span>
           </div>
           <div className="srm-meta">
             {provider && <span className="srm-pm">{provider} · {step.model}</span>}
-            <button type="button" className="srm-x" onClick={onClose} aria-label="Close">
+            <button type="button" className="srm-x" onClick={onClose} aria-label={t('common.close')}>
               ×
             </button>
           </div>
@@ -142,7 +134,7 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
 
         {versions.length > 1 && (
           <div className="srm-versions">
-            <span className="srm-versions-label">Version</span>
+            <span className="srm-versions-label">{t('run.version')}</span>
             <select
               className="srm-version-select"
               value={Math.min(sel, versions.length - 1)}
@@ -151,32 +143,30 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
               {versions.map((v, i) => (
                 <option key={v.key} value={i}>
                   {v.label}
-                  {i === 0 ? ' · latest' : ''}
+                  {i === 0 ? ` · ${t('run.latest')}` : ''}
                 </option>
               ))}
             </select>
-            <span className="srm-version-count">{versions.length} runs</span>
+            <span className="srm-version-count">{t('run.runsCount', { n: versions.length })}</span>
           </div>
         )}
 
         <div className="srm-body">
           {shownAssets === undefined ? (
-            <div className="srm-media-loading">Loading media…</div>
+            <div className="srm-media-loading">{t('run.loadingMedia')}</div>
           ) : shownAssets.length > 0 ? (
             <div className="srm-media">
               <div className="srm-media-bar">
-                <span>
-                  {shownAssets.length} file{shownAssets.length === 1 ? '' : 's'}
-                </span>
+                <span>{t('run.files', { count: shownAssets.length })}</span>
                 <button type="button" className="btn-ghost srm-dl-all" onClick={dlZip}>
-                  Download all (.zip)
+                  {t('run.downloadAll')}
                 </button>
               </div>
               <div className="srm-media-grid">
                 {shownAssets.map((a) => (
                   <div className="srm-asset" key={a.id}>
                     {a.type === 'image' ? (
-                      <a href={a.url} target="_blank" rel="noreferrer" title="Open full size">
+                      <a href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')}>
                         <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
                       </a>
                     ) : a.type === 'video' ? (
@@ -189,7 +179,7 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
                       className="srm-asset-dl"
                       onClick={() => dlOne(a.id, fallbackName(a, step.index))}
                     >
-                      Download
+                      {t('common.download')}
                     </button>
                   </div>
                 ))}
@@ -200,22 +190,22 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
           {current.error ? (
             <>
               <div className="srm-result-bar">
-                <span>Error</span>
+                <span>{t('common.error')}</span>
               </div>
               <pre className="srm-result srm-error">{current.error}</pre>
             </>
           ) : current.result ? (
             <>
               <div className="srm-result-bar">
-                <span>Output</span>
+                <span>{t('run.output')}</span>
                 <button type="button" className="btn-ghost srm-copy" onClick={copy}>
-                  {copied ? 'Copied' : 'Copy'}
+                  {copied ? t('common.copied') : t('common.copy')}
                 </button>
               </div>
               <pre className="srm-result">{current.result}</pre>
             </>
           ) : shownAssets && shownAssets.length === 0 ? (
-            <p className="srm-empty">No result for this version yet.</p>
+            <p className="srm-empty">{t('run.noResult')}</p>
           ) : null}
         </div>
       </div>

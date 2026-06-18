@@ -292,6 +292,15 @@ export interface PipelineVariable {
 
 // A reusable workspace-library pipeline: an ordered, linear chain of steps.
 // Assigned to projects (many-to-many) and run in a project's context.
+// Where a pipeline came from. `ai` records the goal + model that generated it —
+// the seed for future "learn from good pipelines" retrieval. Manual pipelines
+// omit it (treated as source: 'manual').
+export interface PipelineOrigin {
+  source: 'ai' | 'manual';
+  goal?: string;
+  model?: string;
+}
+
 export interface Pipeline extends Audited {
   id: string;
   workspaceId: string;
@@ -300,6 +309,7 @@ export interface Pipeline extends Audited {
   tags: string[];
   steps: PipelineStep[];
   variables: PipelineVariable[];
+  origin?: PipelineOrigin;
 }
 
 export interface Asset {

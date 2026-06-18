@@ -13,7 +13,7 @@
 .sidebar {
   width: 248px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--card);
   border-right: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;
@@ -283,7 +283,7 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 10px 28px rgba(0, 0, 0, 0.12);
@@ -345,7 +345,7 @@
 .topbar {
   height: 52px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--card);
   border-bottom: 1px solid var(--hairline);
   display: flex;
   align-items: center;
@@ -498,7 +498,7 @@
 }
 
 .panel {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 16px;
   padding: 20px;
@@ -596,7 +596,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 14px 16px;
@@ -751,7 +751,7 @@
 
 /* Collapsible pipeline card (project dashboard) — header + vertical step list */
 .pipe-card {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
@@ -1016,7 +1016,7 @@
 .project-edit-section {
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -1042,7 +1042,7 @@
 
 .project-edit-section-head code {
   color: var(--ink);
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 5px;
   padding: 1px 4px;
@@ -1087,7 +1087,7 @@
 }
 
 .project-input:focus {
-  background: #fff;
+  background: var(--card);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-tint);
 }
@@ -1112,7 +1112,7 @@
   gap: 8px;
   border: 1px solid var(--hairline);
   border-radius: 10px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   text-align: left;
   padding: 12px;
@@ -1251,7 +1251,7 @@
 }
 .seg-btn:hover { color: var(--ink); }
 .seg-btn.active {
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
 }
@@ -1317,7 +1317,7 @@
   .project-input {
     height: 40px;
     border-color: var(--hairline-strong);
-    background: #fff;
+    background: var(--card);
   }
   .project-visibility-grid {
     grid-template-columns: 1fr;
@@ -1531,7 +1531,7 @@
   border-radius: 6px;
   transition: background 0.12s ease, color 0.12s ease;
 }
-.pe-tabs button.on { background: #fff; color: var(--ink); box-shadow: var(--shadow-sm); }
+.pe-tabs button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
 
 .pe-preview {
   flex: 1;
@@ -1625,7 +1625,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1738,7 +1738,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 14px 16px;
@@ -1811,7 +1811,7 @@
 }
 
 .model-group {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 14px 16px;
@@ -1929,7 +1929,7 @@
 .form-inline {
   display: grid;
   gap: 10px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 18px;
@@ -1981,7 +1981,7 @@
 .dialog {
   width: 100%;
   max-width: 380px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 14px;
   padding: 22px;
@@ -2010,7 +2010,7 @@
 
 /* ===== Project detail info panel ===== */
 .detail-panel {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 6px;
@@ -2072,7 +2072,7 @@
 }
 
 .project-card {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-left: 3px solid var(--hairline-strong);
   border-radius: 14px;
@@ -2222,7 +2222,7 @@
 .modal {
   width: 100%;
   max-width: 560px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
@@ -2296,7 +2296,7 @@
   flex: 1;
   min-width: 150px;
   height: var(--control-h);
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-control);
   padding: 0 11px;
@@ -2353,7 +2353,7 @@
 .lin-filter-btn {
   height: var(--control-h);
   border: 1px solid var(--hairline-strong);
-  background: #fff;
+  background: var(--card);
   border-radius: var(--radius-control);
   padding: 0 11px;
   display: inline-flex;
@@ -2416,7 +2416,7 @@
   max-height: min(420px, calc(100dvh - 140px));
   overflow-y: auto;
   overflow-x: hidden;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 10px;
   box-shadow: var(--shadow-popover);
@@ -2625,7 +2625,7 @@
 
 /* dense table list */
 .ptable {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
@@ -2928,7 +2928,7 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--ink);
-  background: #fff;
+  background: var(--card);
   outline: none;
   box-shadow: var(--focus-ring);
 }
@@ -3061,7 +3061,7 @@
   height: 28px;
   border-radius: var(--radius-control);
   border: 1px solid var(--hairline);
-  background: #fff;
+  background: var(--card);
   color: var(--ink-muted);
   font-size: 13px;
   font-weight: 500;
@@ -3178,7 +3178,7 @@
   justify-content: center;
   gap: 6px;
   border: none;
-  background: #fff;
+  background: var(--card);
   color: var(--ink-muted);
   font-size: 13px;
   font-weight: 500;
@@ -3336,7 +3336,7 @@
   padding: 8px;
   border: 1px solid var(--hairline);
   border-radius: 10px;
-  background: #fff;
+  background: var(--card);
 }
 
 .media-thumb {
@@ -3570,7 +3570,7 @@
   left: 0;
   right: 0;
   z-index: 50;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 10px;
   box-shadow: var(--shadow-popover);
@@ -3671,7 +3671,7 @@
   left: 0;
   z-index: 60;
   width: 264px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 12px;
   box-shadow: var(--shadow-popover);
@@ -3796,7 +3796,7 @@
 
 .prompt-card {
   position: relative;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 16px 18px 14px;
@@ -3964,7 +3964,7 @@
   padding: 60px 24px;
   border: 1px dashed var(--hairline-strong);
   border-radius: 18px;
-  background: linear-gradient(180deg, var(--surface-1) 0%, #fff 60%);
+  background: linear-gradient(180deg, var(--surface-1) 0%, var(--card) 60%);
 }
 
 .prompt-empty-art {
@@ -4117,7 +4117,7 @@
   height: 22px;
   border-radius: 50%;
   border: 1px solid var(--hairline-strong);
-  background: #fff;
+  background: var(--card);
   color: var(--ink-muted);
   font-size: 15px;
   line-height: 1;
@@ -4137,7 +4137,7 @@
   position: relative;
   width: 100%;
   max-width: 460px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-left: 3px solid var(--accent, var(--hairline-strong));
   border-radius: 12px;
@@ -4581,7 +4581,7 @@
 .run-final {
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -4608,7 +4608,7 @@
 .run-timeline {
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
   overflow: hidden;
 }
 .run-timeline-head {
@@ -4759,7 +4759,7 @@
   place-items: center;
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--card);
   color: var(--ink-muted);
   cursor: pointer;
 }
@@ -4771,7 +4771,7 @@
   align-items: center;
   gap: 5px;
   border: 1px solid var(--hairline);
-  background: #fff;
+  background: var(--card);
   border-radius: 999px;
   padding: 3px 9px;
   font-size: 12px;
@@ -4802,7 +4802,7 @@
   gap: 6px;
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
   padding: 11px 12px;
   cursor: pointer;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
@@ -5075,7 +5075,7 @@
   width: 100%;
   max-width: 380px;
   height: 100%;
-  background: #fff;
+  background: var(--card);
   border-left: 1px solid var(--hairline-strong);
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.16);
   padding: 22px;
@@ -5777,7 +5777,7 @@
   height: 34px;
   flex-shrink: 0;
   border: 1px solid var(--hairline-strong);
-  background: #fff;
+  background: var(--card);
   border-radius: 50%;
   color: var(--ink-muted);
   font-size: 18px;
@@ -5804,7 +5804,7 @@
      box lifts off the background, even when the fill blends with the page. */
   border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: 16px;
-  background: #fff;
+  background: var(--card);
   padding: 6px 6px 6px 4px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.08);
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
@@ -5886,7 +5886,7 @@
   min-width: 220px;
   max-height: 320px;
   overflow-y: auto;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline-strong);
   border-radius: 12px;
   box-shadow: var(--shadow-popover);
@@ -6330,7 +6330,7 @@
 }
 
 .step {
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 16px;
@@ -6710,7 +6710,7 @@
   padding: 4px 8px;
   border: 1px solid var(--hairline-strong);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
 }
 .srm-version-count {
@@ -6775,7 +6775,7 @@
 .srm-asset-dl {
   border: 0;
   border-top: 1px solid var(--hairline);
-  background: #fff;
+  background: var(--card);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -6841,5 +6841,160 @@
   }
   .srm-media-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+
+/* ===== Preference controls (language + theme) ===== */
+.topbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pref-lang.select-sm {
+  width: auto;
+  min-width: 96px;
+}
+.pref-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+.pref-theme-toggle:hover {
+  color: var(--ink);
+}
+
+/* Header language control — borderless flag + EN/VN. */
+.pref-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 4px;
+  transition: color 0.12s ease;
+}
+.pref-lang-toggle:hover {
+  color: var(--ink);
+}
+.pref-lang-flag {
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  display: block;
+  flex: none;
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+
+/* Segmented System / Light / Dark control (Settings → Preferences). */
+.pref-seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+}
+.pref-seg-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.pref-seg-btn:hover {
+  color: var(--ink);
+}
+.pref-seg-btn.active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-button);
+}
+
+/* "Build with AI" — toolbar button + modal. */
+.lin-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: var(--control-h);
+  padding: 0 12px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.lin-ai-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--primary);
+}
+.dialog.bwa {
+  max-width: 480px;
+}
+.badge.ai-built {
+  background: var(--primary-tint);
+  color: var(--primary);
+  border: none;
+  white-space: nowrap;
+}
+.bwa-goal {
+  width: 100%;
+  resize: vertical;
+  min-height: 88px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+@media (max-width: 560px) {
+  .lin-ai-txt {
+    display: none;
+  }
+}
+
+.pref-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 460px;
+}
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.pref-row-label {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .pref-lang.select-sm {
+    min-width: 72px;
   }
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   PromptStatus,
   type LabelInfo,
@@ -35,6 +36,7 @@ export function SaveAsPromptModal({
   onClose,
   onSaved,
 }: Props) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState(content);
   const [tags, setTags] = useState<string[]>([]);
@@ -61,7 +63,7 @@ export function SaveAsPromptModal({
       });
       onSaved(prompt);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save prompt');
+      setError(e instanceof Error ? e.message : t('prompts.errSave'));
     } finally {
       setBusy(false);
     }
@@ -70,15 +72,15 @@ export function SaveAsPromptModal({
   return (
     <div className="dialog-scrim" onClick={onClose}>
       <div className="dialog sap" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <h3>Save as prompt</h3>
+        <h3>{t('prompts.saveAsPrompt')}</h3>
         {error && <p className="error">{error}</p>}
 
         <label className="field">
-          <span>Title</span>
+          <span>{t('prompts.title')}</span>
           <input
             className="text-input"
             autoFocus
-            placeholder="e.g. Hero headline generator"
+            placeholder={t('prompts.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -88,8 +90,8 @@ export function SaveAsPromptModal({
           <div className="sap-tags">
             <LabelPicker value={tags} labels={labels} onChange={setTags} onCreate={onCreateLabel} />
           </div>
-          <label className="pe-toggle" title="Public prompts can be reused across the workspace">
-            <span className="pe-toggle-text">Public</span>
+          <label className="pe-toggle" title={t('prompts.publicHint')}>
+            <span className="pe-toggle-text">{t('prompts.publicLabel')}</span>
             <input
               type="checkbox"
               checked={isPublic}
@@ -100,7 +102,7 @@ export function SaveAsPromptModal({
         </div>
 
         <label className="field">
-          <span>Prompt</span>
+          <span>{t('prompts.prompt')}</span>
           <textarea
             className="text-input sap-body"
             rows={6}
@@ -111,7 +113,7 @@ export function SaveAsPromptModal({
 
         <div className="dialog-actions">
           <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -120,7 +122,7 @@ export function SaveAsPromptModal({
             disabled={busy || !title.trim() || !body.trim()}
             onClick={() => void save()}
           >
-            {busy ? 'Saving…' : 'Save to library'}
+            {busy ? t('common.saving') : t('prompts.saveToLibrary')}
           </button>
         </div>
       </div>

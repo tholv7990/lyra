@@ -1,0 +1,90 @@
+import { Provider, StepMode } from '@lyra/shared';
+import { PipelineAiService } from './pipeline-ai.service';
+import type { AnthropicClient } from '../runs/providers/anthropic.client';
+import type { PromptsService } from '../prompts/prompts.service';
+import type { KeysService } from '../keys/keys.service';
+
+const PROMPT = {
+  _id: { toString: () => 'p1' },
+  title: 'Crawl store',
+  content: 'Crawl the given store URL and extract products.',
+  tags: ['source'],
+  provider: Provider.Crawl,
+  model: 'fetch',
+};
+
+function makeService(completionText: string, prompts: unknown[]) {
+  const anthropic = {
+    complete: jest.fn().mockResolvedValue({ text: completionText }),
+  } as unknown as AnthropicClient;
+  const promptsSvc = {
+    listPublic: jest.fn().mockResolvedValue(prompts),
+  } as unknown as PromptsService;
+  const keys = {
+    getDecrypted: jest.fn().mockResolvedValue('sk-test'),
+  } as unknown as KeysService;
+  return new PipelineAiService(anthropic, promptsSvc, keys);
+}
+
+describe('PipelineAiService.generate', () => {
+  it('grounds steps to real prompt ids and clamps an invalid model', async () => {
+    const text = JSON.stringify({
+      name: 'My pipeline',
+      description: 'desc',
+      steps: [
+        { name: 'Crawl', promptId: 'p1', provider: 'crawl', model: 'fetch', mode: 'auto' },
+        { name: 'Brand', promptId: 'p1', provider: 'openai', model: 'not-a-real-model', mode: 'gate' },
+      ],
+    });
+    const out = await makeService(text, [PROMPT]).generate('ws', 'do a thing');
+
+    expect(out.origin.source).toBe('ai');
+    expect(out.steps).toHaveLength(2);
+    expect(out.steps[0].promptId).toBe('p1');
+    expect(out.steps[0].mode).toBe(StepMode.Auto);
+    expect(out.steps[1].mode).toBe(StepMode.Gate);
+    // the bogus model was clamped to a valid catalog entry
+    expect(out.steps[1].model).not.toBe('not-a-real-model');
+  });
+
+  it('turns an unknown prompt id into a gap step', async () => {
+    const text = JSON.stringify({
+      name: 'P',
+      description: '',
+      steps: [
+        {
+          name: 'Mystery',
+          promptId: 'does-not-exist',
+          provider: 'anthropic',
+          model: 'x',
+          mode: 'auto',
+          suggestion: 'need a brief prompt',
+        },
+      ],
+    });
+    const out = await makeService(text, [PROMPT]).generate('ws', 'goal');
+
+    expect(out.steps[0].promptId).toBe('');
+    expect(out.steps[0].suggestion).toBeTruthy();
+  });
+
+  it('parses JSON even when wrapped in a code fence + prose', async () => {
+    const text = 'Here is your pipeline:\n```json\n{"name":"X","description":"","steps":[]}\n```\nEnjoy!';
+    const out = await makeService(text, [PROMPT]).generate('ws', 'goal');
+    expect(out.name).toBe('X');
+    expect(out.steps).toEqual([]);
+  });
+
+  it('requires an Anthropic key', async () => {
+    const svc = new PipelineAiService(
+      { complete: jest.fn() } as unknown as AnthropicClient,
+      { listPublic: jest.fn() } as unknown as PromptsService,
+      { getDecrypted: jest.fn().mockResolvedValue(null) } as unknown as KeysService,
+    );
+    await expect(svc.generate('ws', 'goal')).rejects.toThrow(/Anthropic key/i);
+  });
+
+  it('errors when the library is empty', async () => {
+    await expect(makeService('{}', []).generate('ws', 'goal')).rejects.toThrow(/library is empty/i);
+  });
+});

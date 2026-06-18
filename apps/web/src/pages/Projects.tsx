@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { canEditProject, labelColor, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
@@ -7,9 +8,9 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ProjectsIcon, PlusIcon } from '../layout/icons';
 
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'Draft',
-  [ProjectStatus.Public]: 'Public',
+const STATUS_KEY: Record<ProjectStatus, string> = {
+  [ProjectStatus.Draft]: 'projects.statusDraft',
+  [ProjectStatus.Public]: 'projects.statusPublic',
 };
 const STATUS_COLOR: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: '#d4a72c',
@@ -23,6 +24,7 @@ function fmtDate(iso: string) {
 const PAGE_SIZE = 10;
 
 export function Projects() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { current } = useWorkspace();
   const navigate = useNavigate();
@@ -104,7 +106,7 @@ export function Projects() {
       setProjects((list) => list.filter((x) => x.id !== toDelete.id));
       setToDelete(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete project');
+      setError(err instanceof Error ? err.message : t('projects.deleteFailed'));
     } finally {
       setDeleting(false);
     }
@@ -117,13 +119,13 @@ export function Projects() {
   return (
     <div>
       <div className="lin-toolbar">
-        <input className="lin-search" placeholder="Search projects…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="lin-search" placeholder={t('projects.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="lin-filter" ref={filterRef}>
           <button
             className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
             onClick={() => setFilterMenu((s) => !s)}
           >
-            + Filter{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            {t('projects.filter')}{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
           </button>
           {filterMenu && (
             <div className="lin-menu">
@@ -137,21 +139,21 @@ export function Projects() {
                     setCreatorFilters([]);
                   }}
                 >
-                  Clear
+                  {t('common.clear')}
                 </button>
               </div>
-              <div className="lin-menu-label">Status</div>
+              <div className="lin-menu-label">{t('projects.status')}</div>
               {Object.values(ProjectStatus).map((status) => (
                 <button key={status} className="lin-menu-item" onClick={() => setStatusFilters((list) => toggleFilterValue(list, status))}>
                   <span className="dot" style={{ background: STATUS_COLOR[status] }} />
-                  {STATUS_LABELS[status]}
+                  {t(STATUS_KEY[status])}
                   {statusFilters.includes(status) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
               {creatorVocab.length > 0 && (
                 <details className="lin-menu-section">
                   <summary className="lin-menu-summary">
-                    <span>Created by</span>
+                    <span>{t('projects.createdBy')}</span>
                     {creatorFilters.length > 0 && <span className="lin-menu-summary-count">{creatorFilters.length}</span>}
                   </summary>
                   {creatorVocab.map((creator) => (
@@ -166,7 +168,7 @@ export function Projects() {
             </div>
           )}
         </div>
-        <button className="lin-add" onClick={() => navigate('/projects/new')} title="New project" aria-label="New project">
+        <button className="lin-add" onClick={() => navigate('/projects/new')} title={t('projects.newProject')} aria-label={t('projects.newProject')}>
           <PlusIcon />
         </button>
       </div>
@@ -174,16 +176,16 @@ export function Projects() {
       {error && <p className="error">{error}</p>}
 
       {loading ? (
-        <p className="empty">Loading projects…</p>
+        <p className="empty">{t('projects.loadingProjects')}</p>
       ) : projects.length === 0 ? (
         <div className="prompt-empty">
           <div className="prompt-empty-art"><ProjectsIcon width={26} height={26} /></div>
-          <h3>Create your first project</h3>
-          <p>A project holds a brand or product. Assign pipelines and run them to produce on-brand content.</p>
-          <button className="btn-primary" onClick={() => navigate('/projects/new')}>New project</button>
+          <h3>{t('projects.emptyTitle')}</h3>
+          <p>{t('projects.emptyBody')}</p>
+          <button className="btn-primary" onClick={() => navigate('/projects/new')}>{t('projects.newProject')}</button>
         </div>
       ) : visible.length === 0 ? (
-        <p className="empty">No projects match your search.</p>
+        <p className="empty">{t('projects.noMatch')}</p>
       ) : (
         <>
         <div className="ptable t-project">
@@ -200,23 +202,23 @@ export function Projects() {
                 <span className="nm">{p.name}</span>
               </div>
               <span>
-                <span className={`badge status-${p.status}`}>{STATUS_LABELS[p.status]}</span>
+                <span className={`badge status-${p.status}`}>{t(STATUS_KEY[p.status])}</span>
               </span>
               <span className="prow-date" style={{ whiteSpace: 'normal' }}>{p.description || '—'}</span>
               <span className="prow-date">{fmtDate(p.updatedAt)}</span>
               <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
-                <Link className="txt-btn" to={`/projects/${p.id}`}>Open</Link>
-                {canEdit(p) && <Link className="txt-btn" to={`/projects/${p.id}/edit`}>Edit</Link>}
-                {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>Delete</button>}
+                <Link className="txt-btn" to={`/projects/${p.id}`}>{t('common.open')}</Link>
+                {canEdit(p) && <Link className="txt-btn" to={`/projects/${p.id}/edit`}>{t('common.edit')}</Link>}
+                {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>{t('common.delete')}</button>}
               </span>
             </div>
           ))}
         </div>
         {totalPages > 1 && (
           <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← Prev</button>
-            <span className="pager-info">Page {page} of {totalPages} · {visible.length} total</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>{t('projects.prev')}</button>
+            <span className="pager-info">{t('projects.pagerInfo', { page, totalPages, total: visible.length })}</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>{t('projects.nextPage')}</button>
           </div>
         )}
         </>
@@ -224,9 +226,9 @@ export function Projects() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Delete project?"
-        message={<><strong>{toDelete?.name}</strong> and its runs will be removed. This can’t be undone.</>}
-        confirmLabel="Delete"
+        title={t('projects.deleteTitle')}
+        message={<><strong>{toDelete?.name}</strong>{t('projects.deleteMessage')}</>}
+        confirmLabel={t('common.delete')}
         danger
         busy={deleting}
         onConfirm={() => void confirmDelete()}

@@ -11,6 +11,21 @@
       content="Lyra — run an 8-step AI creative pipeline to produce on-brand images and video for your brand."
     />
     <title>Lyra</title>
+    <!-- Apply the saved/system theme before first paint to avoid a flash. -->
+    <script>
+      (function () {
+        try {
+          var p = localStorage.getItem('lyra.theme') || 'system';
+          var dark =
+            p === 'dark' ||
+            (p === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

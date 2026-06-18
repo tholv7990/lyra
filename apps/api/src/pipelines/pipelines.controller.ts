@@ -9,23 +9,34 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { dedupeTags, type Pipeline as PipelineModel, type User } from '@lyra/shared';
+import {
+  dedupeTags,
+  type GeneratedPipeline,
+  type Pipeline as PipelineModel,
+  type User,
+} from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { PipelinesService } from './pipelines.service';
+import { PipelineAiService } from './pipeline-ai.service';
 import { PipelineAccessGuard } from './guards/pipeline-access.guard';
 import {
   CurrentPipeline,
   RequirePipelineOwner,
 } from './decorators/pipeline.decorators';
 import type { PipelineDocument } from './pipeline.schema';
-import { CreatePipelineBody, UpdatePipelineBody } from './dto/pipelines.dto';
+import {
+  CreatePipelineBody,
+  GeneratePipelineBody,
+  UpdatePipelineBody,
+} from './dto/pipelines.dto';
 import { CascadeService } from '../common/database/cascade.service';
 
 @Controller()
 export class PipelinesController {
   constructor(
     private readonly pipelines: PipelinesService,
+    private readonly pipelineAi: PipelineAiService,
     private readonly cascade: CascadeService,
   ) {}
 
@@ -46,8 +57,23 @@ export class PipelinesController {
       tags: dedupeTags(body.tags ?? []),
       steps: this.pipelines.normalizeSteps(body.steps ?? []),
       variables: this.pipelines.normalizeVariables(body.variables ?? []),
+      // Provenance — only persisted when the client marks it AI-built.
+      ...(body.origin?.source === 'ai'
+        ? { origin: { source: 'ai', goal: body.origin.goal, model: body.origin.model } }
+        : {}),
     });
     return this.pipelines.toView(pipeline);
+  }
+
+  // Design a pipeline from the workspace's prompt library + a goal. Returns a
+  // draft (not saved) for the builder to pre-fill; runs on Claude (BYOK).
+  @Post('workspaces/:id/pipelines/generate')
+  @UseGuards(WorkspaceGuard)
+  async generate(
+    @Param('id') workspaceId: string,
+    @Body() body: GeneratePipelineBody,
+  ): Promise<GeneratedPipeline> {
+    return this.pipelineAi.generate(workspaceId, body.goal);
   }
 
   @Get('workspaces/:id/pipelines')

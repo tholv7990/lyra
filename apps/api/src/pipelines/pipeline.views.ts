@@ -1,5 +1,6 @@
 import type {
   Pipeline as PipelineModel,
+  PipelineOrigin,
   PipelineStep,
   PipelineVariable,
   StepCondition,
@@ -40,6 +41,13 @@ export function toPipeline(
     variables: (p.variables ?? []).map(
       (v): PipelineVariable => ({ key: v.key, label: v.label, default: v.default }),
     ),
+    origin: p.origin
+      ? ({
+          source: p.origin.source === 'ai' ? 'ai' : 'manual',
+          goal: p.origin.goal,
+          model: p.origin.model,
+        } as PipelineOrigin)
+      : undefined,
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),

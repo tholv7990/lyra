@@ -7,7 +7,9 @@ import { AuditedEntity } from '../common/database/audited.entity';
 export class PipelineStepItem {
   @Prop({ required: true }) id!: string;
   @Prop({ required: true, trim: true }) name!: string;
-  @Prop({ required: true }) promptId!: string;
+  // Empty string = a "gap" step (AI couldn't match a library prompt yet). Not
+  // `required` so a gap step persists; the builder badges it until filled.
+  @Prop({ default: '' }) promptId!: string;
   @Prop({ required: true, enum: Object.values(Provider) }) provider!: Provider;
   @Prop({ required: true }) model!: string;
   @Prop({ required: true, enum: Object.values(StepMode), default: StepMode.Auto })
@@ -52,6 +54,11 @@ export class Pipeline extends AuditedEntity {
 
   @Prop({ type: [PipelineVariableItemSchema], default: [] })
   variables!: PipelineVariableItem[];
+
+  // Provenance — set when AI generated this pipeline (source/goal/model). Absent
+  // for manually-built pipelines. Seeds future "learn from good pipelines".
+  @Prop({ type: Object })
+  origin?: { source: string; goal?: string; model?: string };
 }
 
 export const PipelineSchema = SchemaFactory.createForClass(Pipeline);

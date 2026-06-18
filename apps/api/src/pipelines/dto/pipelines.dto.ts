@@ -18,6 +18,8 @@ import {
   type ConditionOp,
   type CreatePipelineDto,
   type FanOutConfig,
+  type GeneratePipelineDto,
+  type PipelineOrigin,
   type PipelineStepInput,
   type PipelineVariableInput,
   type StepCondition,
@@ -75,8 +77,8 @@ export class PipelineStepBody implements PipelineStepInput {
   @MinLength(1)
   name!: string;
 
+  // May be '' — a "gap" step the AI couldn't match to a library prompt yet.
   @IsString()
-  @MinLength(1)
   promptId!: string;
 
   @IsEnum(Provider)
@@ -98,6 +100,28 @@ export class PipelineStepBody implements PipelineStepInput {
   @ValidateNested()
   @Type(() => ConditionBody)
   condition?: ConditionBody;
+}
+
+export class PipelineOriginBody implements PipelineOrigin {
+  @IsIn(['ai', 'manual'])
+  source!: 'ai' | 'manual';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  goal?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  model?: string;
+}
+
+export class GeneratePipelineBody implements GeneratePipelineDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(4000)
+  goal!: string;
 }
 
 export class CreatePipelineBody implements CreatePipelineDto {
@@ -128,6 +152,11 @@ export class CreatePipelineBody implements CreatePipelineDto {
   @ValidateNested({ each: true })
   @Type(() => PipelineVariableBody)
   variables?: PipelineVariableBody[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PipelineOriginBody)
+  origin?: PipelineOriginBody;
 }
 
 export class UpdatePipelineBody implements UpdatePipelineDto {

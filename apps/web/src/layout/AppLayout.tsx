@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
+import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
 import { WorkspaceMenu } from './WorkspaceMenu';
 import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadcrumb';
 import {
@@ -43,6 +45,7 @@ const COLLAPSE_KEY = 'lyra.nav.collapsed';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const [open, setOpen] = useState(false); // mobile drawer
   const [collapsed, setCollapsed] = useState(
@@ -59,6 +62,16 @@ export function AppLayout() {
     });
 
   const mod = moduleFor(location.pathname);
+  // Translate the breadcrumb module label to match the (translated) sidebar.
+  const NAV_KEY: Record<string, string> = {
+    '/': 'nav.home',
+    '/chats': 'nav.chats',
+    '/prompts': 'nav.prompts',
+    '/pipelines': 'nav.pipelines',
+    '/projects': 'nav.projects',
+    '/settings': 'nav.settings',
+  };
+  const modLabel = t(NAV_KEY[mod.path] ?? '', { defaultValue: mod.name });
   // A path under a module is a detail view; so is any page that set a parent
   // override (e.g. a chat opened from a prompt, before it gets its own /chats/:id).
   const isDetail =
@@ -89,34 +102,34 @@ export function AppLayout() {
           <WorkspaceMenu />
 
           <nav className="sidebar-nav">
-            <NavLink to="/" end title="Home" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <NavLink to="/" end title={t('nav.home')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <HomeIcon />
-              <span className="nav-txt">Home</span>
+              <span className="nav-txt">{t('nav.home')}</span>
             </NavLink>
-            <NavLink to="/chats" title="Chats" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <NavLink to="/chats" title={t('nav.chats')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ChatsIcon />
-              <span className="nav-txt">Chats</span>
+              <span className="nav-txt">{t('nav.chats')}</span>
             </NavLink>
-            <NavLink to="/prompts" title="Prompts" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <NavLink to="/prompts" title={t('nav.prompts')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PromptsIcon />
-              <span className="nav-txt">Prompts</span>
+              <span className="nav-txt">{t('nav.prompts')}</span>
             </NavLink>
-            <NavLink to="/pipelines" title="Pipelines" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <NavLink to="/pipelines" title={t('nav.pipelines')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PipelinesIcon />
-              <span className="nav-txt">Pipelines</span>
+              <span className="nav-txt">{t('nav.pipelines')}</span>
             </NavLink>
-            <NavLink to="/projects" title="Projects" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <NavLink to="/projects" title={t('nav.projects')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ProjectsIcon />
-              <span className="nav-txt">Projects</span>
+              <span className="nav-txt">{t('nav.projects')}</span>
             </NavLink>
             <div className="nav-item disabled" title="Members (soon)">
               <MembersIcon />
               <span className="nav-txt">Members</span>
               <span className="soon">Soon</span>
             </div>
-            <NavLink to="/settings" title="Settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <NavLink to="/settings" title={t('nav.settings')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <SettingsIcon />
-              <span className="nav-txt">Settings</span>
+              <span className="nav-txt">{t('nav.settings')}</span>
             </NavLink>
           </nav>
 
@@ -129,9 +142,9 @@ export function AppLayout() {
               <div className="email">{user?.email}</div>
             </div>
           </div>
-          <button className="nav-item" title="Sign out" onClick={() => void logout()}>
+          <button className="nav-item" title={t('nav.logout')} onClick={() => void logout()}>
             <LogoutIcon />
-            <span className="nav-txt">Sign out</span>
+            <span className="nav-txt">{t('nav.logout')}</span>
           </button>
         </aside>
 
@@ -147,19 +160,23 @@ export function AppLayout() {
             <nav className="breadcrumb">
               {isDetail ? (
                 <>
-                  <Link to={crumb.parent?.to ?? mod.path} className="bc-back" aria-label={`Back to ${crumb.parent?.label ?? mod.name}`}>
+                  <Link to={crumb.parent?.to ?? mod.path} className="bc-back" aria-label={`Back to ${crumb.parent?.label ?? modLabel}`}>
                     ‹
                   </Link>
                   <Link to={crumb.parent?.to ?? mod.path} className="bc-module">
-                    {crumb.parent?.label ?? mod.name}
+                    {crumb.parent?.label ?? modLabel}
                   </Link>
                   <span className="bc-sep">/</span>
                   <span className="bc-record">{crumb.record ?? '…'}</span>
                 </>
               ) : (
-                <span className="bc-current">{mod.name}</span>
+                <span className="bc-current">{modLabel}</span>
               )}
             </nav>
+            <div className="topbar-actions">
+              <LanguageToggleButton />
+              <ThemeToggleButton />
+            </div>
           </header>
           <div className="content">
             <Outlet />

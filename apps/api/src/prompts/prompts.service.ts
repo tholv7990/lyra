@@ -88,6 +88,15 @@ export class PromptsService extends BaseRepository<Prompt> {
     });
   }
 
+  // Public prompts only (the set pipelines bind) — newest first, capped. Used by
+  // the AI pipeline generator to ground its design in real, usable prompts.
+  listPublic(workspaceId: string, limit = 60) {
+    return this.find(
+      { workspaceId, status: PromptStatus.Public },
+      { sort: { updatedAt: -1 }, limit },
+    );
+  }
+
   // Paginated + filtered list. Multi-select filters use OR within each group
   // and AND between groups.
   async listPaged(

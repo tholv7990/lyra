@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { LoginDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
 import { GoogleButton } from '../components/GoogleButton';
@@ -18,14 +19,15 @@ const EyeOffIcon = () => (
 );
 
 export function Login() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const googleError =
     params.get('error') === 'google'
-      ? 'Google sign-in failed. Please try again.'
+      ? t('auth.googleFailed')
       : params.get('error') === 'google_unavailable'
-        ? 'Google sign-in isn’t set up yet.'
+        ? t('auth.googleUnavailable')
         : null;
   const [form, setForm] = useState<LoginDto>({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
@@ -40,10 +42,10 @@ export function Login() {
       await login(form);
       navigate('/');
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Login failed';
+      const raw = err instanceof Error ? err.message : t('auth.loginFailed');
       // The API returns a deliberately vague "Invalid credentials" for both
       // unknown email and wrong password — present it in plain language.
-      setError(raw === 'Invalid credentials' ? 'Email or password is incorrect.' : raw);
+      setError(raw === 'Invalid credentials' ? t('auth.invalidCreds') : raw);
     } finally {
       setBusy(false);
     }
@@ -59,16 +61,16 @@ export function Login() {
           width={159}
           height={64}
         />
-        <h1>Welcome back</h1>
-        <p className="sub muted">Sign in to your Lyra workspace</p>
+        <h1>{t('auth.loginTitle')}</h1>
+        <p className="sub muted">{t('auth.loginSubtitle')}</p>
 
         {(error || googleError) && <p className="error">{error ?? googleError}</p>}
 
         <GoogleButton />
-        <div className="auth-or"><span>or</span></div>
+        <div className="auth-or"><span>{t('auth.or')}</span></div>
 
         <label className="field">
-          <span>Email</span>
+          <span>{t('auth.email')}</span>
           <input
             className="text-input"
             type="email"
@@ -79,7 +81,7 @@ export function Login() {
         </label>
 
         <label className="field">
-          <span>Password</span>
+          <span>{t('auth.password')}</span>
           <div className="pw-wrap">
             <input
               className="text-input"
@@ -92,8 +94,8 @@ export function Login() {
               type="button"
               className="pw-toggle"
               onClick={() => setShowPw((s) => !s)}
-              aria-label={showPw ? 'Hide password' : 'Show password'}
-              title={showPw ? 'Hide password' : 'Show password'}
+              aria-label={showPw ? t('auth.hidePassword') : t('auth.showPassword')}
+              title={showPw ? t('auth.hidePassword') : t('auth.showPassword')}
             >
               {showPw ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -101,15 +103,15 @@ export function Login() {
         </label>
 
         <div className="auth-aux">
-          <Link to="/forgot-password">Forgot password?</Link>
+          <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
         </div>
 
         <button className="btn-primary" type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? t('auth.signingIn') : t('auth.signIn')}
         </button>
 
         <p className="switch">
-          New to Lyra? <Link to="/signup">Create an account</Link>
+          {t('auth.noAccount')} <Link to="/signup">{t('auth.createOne')}</Link>
         </p>
       </form>
     </div>

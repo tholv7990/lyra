@@ -1,5 +1,6 @@
 import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   defaultModel,
   providerNeedsKey,
@@ -8,23 +9,26 @@ import {
   StepMode,
   type ApiKeyInfo,
   type ConditionOp,
+  type GeneratedPipeline,
   type Paged,
   type Pipeline,
+  type PipelineOrigin,
   type PipelineStep,
   type PipelineVariable,
   type Prompt,
   type Run,
 } from '@lyra/shared';
 
-// Friendly labels for the condition operators (builder select).
-const COND_OPS: { op: ConditionOp; label: string }[] = [
-  { op: 'exists', label: 'is set' },
-  { op: 'empty', label: 'is empty' },
-  { op: 'eq', label: 'equals' },
-  { op: 'ne', label: 'is not' },
-  { op: 'contains', label: 'contains' },
-  { op: 'gt', label: 'greater than' },
-  { op: 'lt', label: 'less than' },
+// Friendly labels for the condition operators (builder select). Label keys are
+// resolved via i18n at render.
+const COND_OPS: { op: ConditionOp; labelKey: string }[] = [
+  { op: 'exists', labelKey: 'pipelines.condOpExists' },
+  { op: 'empty', labelKey: 'pipelines.condOpEmpty' },
+  { op: 'eq', labelKey: 'pipelines.condOpEq' },
+  { op: 'ne', labelKey: 'pipelines.condOpNe' },
+  { op: 'contains', labelKey: 'pipelines.condOpContains' },
+  { op: 'gt', labelKey: 'pipelines.condOpGt' },
+  { op: 'lt', labelKey: 'pipelines.condOpLt' },
 ];
 const COND_NEEDS_VALUE = (op: ConditionOp) => op !== 'exists' && op !== 'empty';
 import { api } from '../lib/api';
@@ -49,15 +53,15 @@ import { useBreadcrumb } from '../layout/breadcrumb';
 
 const FlowCanvas = lazy(() => import('../components/FlowCanvas'));
 
-const RUN_STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  running: 'Running',
-  waiting: 'Awaiting approval',
-  awaiting_gate: 'Awaiting approval',
-  skipped: 'Skipped',
-  done: 'Done',
-  error: 'Error',
+const RUN_STATUS_LABEL_KEY: Record<string, string> = {
+  idle: 'run.status_idle',
+  queued: 'run.status_queued',
+  running: 'run.status_running',
+  waiting: 'run.status_waiting',
+  awaiting_gate: 'run.status_waiting',
+  skipped: 'run.status_skipped',
+  done: 'run.status_done',
+  error: 'run.status_error',
 };
 
 function uuid() {
@@ -68,6 +72,7 @@ type Draft = Omit<PipelineStep, 'id'> & { id?: string };
 type Editing = { step: Draft; index: number; isNew: boolean } | null;
 
 export function PipelineBuilder() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const isNew = !id;
   const navigate = useNavigate();
@@ -84,7 +89,7 @@ export function PipelineBuilder() {
 
   const [pipeline, setPipeline] = useState<Pipeline | null>(null);
   const [name, setName] = useState('');
-  useBreadcrumb(isNew ? name.trim() || 'New' : pipeline?.name ?? '…');
+  useBreadcrumb(isNew ? name.trim() || t('pipelines.breadcrumbNew') : pipeline?.name ?? '…');
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [missingPromptIds, setMissingPromptIds] = useState<Set<string>>(new Set());
   const [description, setDescription] = useState('');
@@ -96,6 +101,32 @@ export function PipelineBuilder() {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [origin, setOrigin] = useState<PipelineOrigin | null>(null);
+
+  // Pre-fill a new pipeline from an AI-generated draft handed over via router
+  // state (the "Build with AI" modal). Gap steps arrive with an empty promptId
+  // and are badged "needs a prompt". Runs once; the router state is then cleared
+  // so a refresh doesn't re-apply the draft.
+  const location = useLocation();
+  useEffect(() => {
+    const draft = (location.state as { draft?: GeneratedPipeline } | null)?.draft;
+    if (!isNew || !draft) return;
+    setName(draft.name);
+    setDescription(draft.description);
+    setSteps(
+      draft.steps.map((s) => ({
+        id: uuid(),
+        name: s.name,
+        promptId: s.promptId ?? '',
+        provider: s.provider,
+        model: s.model,
+        mode: s.mode,
+      })),
+    );
+    setOrigin(draft.origin);
+    setDirty(true);
+    navigate('.', { replace: true, state: null });
+  }, []);
 
   // Test-from-builder (no project): run the sequence; {note} fills from the
   // pipeline note. Project-context runs live on the project page.
@@ -120,7 +151,7 @@ export function PipelineBuilder() {
           setSteps(p.steps);
           setVariables(p.variables ?? []);
         })
-        .catch((e) => setError(e instanceof Error ? e.message : 'Could not load pipeline'));
+        .catch((e) => setError(e instanceof Error ? e.message : t('pipelines.loadError')));
     }
     api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?limit=200`)
       .then((r) => setPrompts(r.items))
@@ -208,14 +239,14 @@ export function PipelineBuilder() {
     if (!editing) return;
     const s = editing.step;
     if (!s.promptId) {
-      setError('Pick a prompt for this step.');
+      setError(t('pipelines.pickPromptError'));
       return;
     }
     // Name/provider/model come from the chosen prompt (set on pick).
     const p = prompts.find((x) => x.id === s.promptId);
     const finalStep: PipelineStep = {
       id: s.id ?? uuid(),
-      name: (s.name || p?.title || 'Step').trim(),
+      name: (s.name || p?.title || t('pipelines.defaultStepName')).trim(),
       promptId: s.promptId,
       provider: s.provider,
       model: s.model,
@@ -280,7 +311,14 @@ export function PipelineBuilder() {
       try {
         const created = await api<Pipeline>(`/workspaces/${wsId}/pipelines`, {
           method: 'POST',
-          body: JSON.stringify({ name: name.trim(), description, tags, steps, variables }),
+          body: JSON.stringify({
+            name: name.trim(),
+            description,
+            tags,
+            steps,
+            variables,
+            ...(origin?.source === 'ai' ? { origin } : {}),
+          }),
         });
         setPipeline(created);
         setName(created.name);
@@ -291,7 +329,7 @@ export function PipelineBuilder() {
         setDirty(false);
         navigate(`/pipelines/${created.id}`, { replace: true });
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not create pipeline');
+        setError(e instanceof Error ? e.message : t('pipelines.createError'));
       } finally {
         setSaving(false);
       }
@@ -310,7 +348,7 @@ export function PipelineBuilder() {
       setVariables(updated.variables ?? []);
       setDirty(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save pipeline');
+      setError(e instanceof Error ? e.message : t('pipelines.saveError'));
     } finally {
       setSaving(false);
     }
@@ -359,14 +397,14 @@ export function PipelineBuilder() {
       setRun(created);
       setRunMode(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start test');
+      setError(e instanceof Error ? e.message : t('pipelines.startTestError'));
     } finally {
       setCreatingRun(false);
     }
   }
 
   if (!isNew && !pipeline) {
-    return <p className="empty">{error ?? 'Loading…'}</p>;
+    return <p className="empty">{error ?? t('common.loading')}</p>;
   }
 
   const ed = editing?.step;
@@ -402,6 +440,7 @@ export function PipelineBuilder() {
         labels={labels}
         modelLabel={modelLabel}
         promptMissing={!!s.promptId && missingPromptIds.has(s.promptId)}
+        needsPrompt={!s.promptId}
       />
     </FlowCallbacksProvider>
   );
@@ -417,7 +456,7 @@ export function PipelineBuilder() {
             value={name}
             disabled={!canEdit || runMode}
             onChange={(e) => mark(setName)(e.target.value)}
-            placeholder="Pipeline name"
+            placeholder={t('pipelines.namePlaceholder')}
           />
         ) : (
           // Desktop existing: name lives in the breadcrumb, so reuse the header
@@ -428,7 +467,7 @@ export function PipelineBuilder() {
               value={description}
               disabled={!canEdit || runMode}
               onChange={(e) => mark(setDescription)(e.target.value)}
-              placeholder="Note (optional) — available to prompts as {note}"
+              placeholder={t('pipelines.notePlaceholder')}
             />
             {!runMode && (
               <div className="pb-tags">
@@ -447,16 +486,16 @@ export function PipelineBuilder() {
                 style={{ width: 'auto', marginTop: 0 }}
                 disabled={steps.length === 0 || creatingRun || saving}
                 onClick={triggerTest}
-                title="Runs with no project · {note} fills from the note"
+                title={t('pipelines.testHint')}
               >
-                {creatingRun ? 'Testing…' : 'Test ▶'}
+                {creatingRun ? t('pipelines.testing') : `${t('pipelines.test')} ▶`}
               </button>
             )}
             <EditorActions
               onConfirm={() => void save()}
               onCancel={() => navigate('/pipelines')}
               confirmDisabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
-              confirmTitle={isNew ? 'Create pipeline' : 'Save changes'}
+              confirmTitle={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
             />
           </>
         )
@@ -467,19 +506,19 @@ export function PipelineBuilder() {
         <>
           <div className="run-bar run-view-bar">
             <button className="txt-btn run-back" onClick={() => setRunMode(false)}>
-              Back to editing
+              {t('pipelines.backToEditing')}
             </button>
-            <span className="run-bar-proj"><strong>Test run</strong></span>
-            <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL[run.status] ?? run.status}</span>
+            <span className="run-bar-proj"><strong>{t('pipelines.testRun')}</strong></span>
+            <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL_KEY[run.status] ? t(RUN_STATUS_LABEL_KEY[run.status]) : run.status}</span>
             <div className="run-view-actions">
               <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
-                Run all
+                {t('run.runAll')}
               </button>
               <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
-                Stop
+                {t('run.stop')}
               </button>
               <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy} onClick={runActions.reset}>
-                Reset
+                {t('run.reset')}
               </button>
             </div>
           </div>
@@ -506,7 +545,7 @@ export function PipelineBuilder() {
               value={description}
               disabled={!canEdit}
               onChange={(e) => mark(setDescription)(e.target.value)}
-              placeholder="Note (optional) — available to prompts as {note}"
+              placeholder={t('pipelines.notePlaceholder')}
             />
             <div className="pb-tags">
               <LabelPicker
@@ -522,7 +561,7 @@ export function PipelineBuilder() {
         {error && <p className="error">{error}</p>}
         {prompts.length === 0 && (
           <p className="empty">
-            No prompts yet — <Link to="/prompts" style={{ color: 'var(--primary)' }}>create a prompt</Link> first to add steps.
+            {t('pipelines.noPromptsBefore')}<Link to="/prompts" style={{ color: 'var(--primary)' }}>{t('pipelines.noPromptsLink')}</Link>{t('pipelines.noPromptsAfter')}
           </p>
         )}
       </div>
@@ -531,7 +570,7 @@ export function PipelineBuilder() {
         // Mobile: the whole pipeline as a scrollable vertical overview (every step
         // visible at once, tap a card to edit, + between cards to insert).
         <div className="flow flow-edit">
-          <div className="flow-cap">● Start</div>
+          <div className="flow-cap">● {t('pipelines.flowStart')}</div>
           {canEdit && <Connector onAdd={() => openNew(0)} />}
           {steps.map((s, i) => (
             <Fragment key={s.id}>
@@ -539,10 +578,10 @@ export function PipelineBuilder() {
               {canEdit && <Connector onAdd={() => openNew(i + 1)} />}
             </Fragment>
           ))}
-          <div className="flow-cap end">◉ End</div>
+          <div className="flow-cap end">◉ {t('pipelines.flowEnd')}</div>
         </div>
       ) : (
-        <Suspense fallback={<div className="flow-canvas loading">Loading canvas…</div>}>
+        <Suspense fallback={<div className="flow-canvas loading">{t('pipelines.loadingCanvas')}</div>}>
           <FlowCanvas
             graph={buildEditGraph({ steps, canEdit })}
             callbacks={flowCbs}
@@ -556,13 +595,13 @@ export function PipelineBuilder() {
           <div className="drawer addstep" onClick={(e) => e.stopPropagation()}>
             {/* header: title (left) · ✓ add (green) · ✕ cancel (red) */}
             <div className="addstep-head">
-              <h3>{editing.isNew ? 'Add Step' : 'Edit Step'}</h3>
+              <h3>{editing.isNew ? t('pipelines.addStep') : t('pipelines.editStep')}</h3>
               <div className="addstep-actions">
                 <EditorActions
                   onConfirm={saveStep}
                   onCancel={() => setEditing(null)}
                   confirmDisabled={!ed.promptId}
-                  confirmTitle={editing.isNew ? 'Add step' : 'Save step'}
+                  confirmTitle={editing.isNew ? t('pipelines.addStepTitle') : t('pipelines.saveStepTitle')}
                 />
               </div>
             </div>
@@ -602,15 +641,15 @@ export function PipelineBuilder() {
                     })
                   }
                 />
-                <span><strong>Fan out</strong> — run this step once per item in a collection, in parallel</span>
+                <span><strong>{t('pipelines.fanOut')}</strong> {t('pipelines.fanOutDesc')}</span>
               </label>
               {ed.fanOut && (
                 <div className="addstep-fanout-fields">
                   <label className="addstep-fanout-field">
-                    <span>Collection name</span>
+                    <span>{t('pipelines.collectionName')}</span>
                     <input
                       className="text-input"
-                      placeholder="e.g. images"
+                      placeholder={t('pipelines.collectionPlaceholder')}
                       value={ed.fanOut.over}
                       onChange={(e) =>
                         setEditing({
@@ -621,7 +660,7 @@ export function PipelineBuilder() {
                     />
                   </label>
                   <p className="muted addstep-fanout-help">
-                    Each item fills <code>{'{item}'}</code> (and <code>{'{input}'}</code>) in the prompt. You enter the items when you run.
+                    {t('pipelines.fanOutHelpBefore')}<code>{'{item}'}</code>{t('pipelines.fanOutHelpMid')}<code>{'{input}'}</code>{t('pipelines.fanOutHelpAfter')}
                   </p>
                 </div>
               )}
@@ -645,14 +684,14 @@ export function PipelineBuilder() {
                     })
                   }
                 />
-                <span><strong>Condition</strong> — run this step only when a variable matches (else skip it)</span>
+                <span><strong>{t('pipelines.condition')}</strong> {t('pipelines.conditionDesc')}</span>
               </label>
               {ed.condition && (
                 <div className="addstep-cond-fields">
-                  <span className="addstep-cond-when">when</span>
+                  <span className="addstep-cond-when">{t('pipelines.when')}</span>
                   <input
                     className="text-input addstep-cond-var"
-                    placeholder="variable"
+                    placeholder={t('pipelines.variablePlaceholder')}
                     value={ed.condition.variable}
                     onChange={(e) =>
                       setEditing({
@@ -672,13 +711,13 @@ export function PipelineBuilder() {
                     }
                   >
                     {COND_OPS.map((o) => (
-                      <option key={o.op} value={o.op}>{o.label}</option>
+                      <option key={o.op} value={o.op}>{t(o.labelKey)}</option>
                     ))}
                   </select>
                   {COND_NEEDS_VALUE(ed.condition.op) && (
                     <input
                       className="text-input addstep-cond-val"
-                      placeholder="value"
+                      placeholder={t('pipelines.valuePlaceholder')}
                       value={ed.condition.value ?? ''}
                       onChange={(e) =>
                         setEditing({
@@ -705,7 +744,7 @@ export function PipelineBuilder() {
 
       {askRunVars && (
         <RunVariablesModal
-          title="Test run"
+          title={t('pipelines.testRun')}
           variables={variables}
           collections={runFanOutNames}
           busy={creatingRun}
@@ -732,10 +771,11 @@ export function PipelineBuilder() {
 }
 
 function Connector({ onAdd }: { onAdd?: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flow-connector">
       {onAdd && (
-        <button className="flow-add" onClick={onAdd} title="Add step">+</button>
+        <button className="flow-add" onClick={onAdd} title={t('pipelines.addStepTitle')}>+</button>
       )}
     </div>
   );

@@ -20,6 +20,8 @@ export interface StepCardProps {
   modelLabel: (p: Provider, m: string) => string;
   // The step's bound prompt was deleted/inactive — flag it so it can be re-picked.
   promptMissing?: boolean;
+  // No prompt bound yet (e.g. an AI "gap" step) — flag it so the user picks one.
+  needsPrompt?: boolean;
 }
 
 // One editable step node, shared by the desktop canvas (a React Flow node) and
@@ -27,10 +29,10 @@ export interface StepCardProps {
 // through the FlowCallbacks context (no closure over builder state). Reorder is
 // via the ← / → actions (the old pointer-drag grip is gone — on the canvas you
 // drag to reposition, and ← / → change the sequence).
-export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelLabel, promptMissing }: StepCardProps) {
+export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelLabel, promptMissing, needsPrompt }: StepCardProps) {
   const cb = useFlowCallbacks();
   return (
-    <div className={`flow-node${promptMissing ? ' broken' : ''}`} style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}>
+    <div className={`flow-node${promptMissing || needsPrompt ? ' broken' : ''}`} style={{ '--accent': tagColor(s.name || s.promptId || String(i)) } as CSSProperties}>
       <div className="flow-node-main" onClick={() => canEdit && cb.onEdit?.(i)}>
         <div className="flow-node-head">
           <span className="flow-num">{i + 1}</span>
@@ -67,6 +69,11 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               ⚠ PROMPT DELETED
             </span>
           )}
+          {needsPrompt && !promptMissing && (
+            <span className="mode-tag missing" title="No prompt bound yet — pick a prompt for this step">
+              ⚠ NEEDS PROMPT
+            </span>
+          )}
           {p && (
             <span
               className="flow-eye"
@@ -96,6 +103,9 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
         {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
         {promptMissing && (
           <div className="flow-node-snip broken-hint">Prompt deleted — re-pick a prompt for this step.</div>
+        )}
+        {needsPrompt && !promptMissing && (
+          <div className="flow-node-snip broken-hint">AI couldn’t match a prompt — pick one for this step.</div>
         )}
         <div className="flow-node-sub">
           <ProviderIcon provider={s.provider} size={14} />

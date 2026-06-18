@@ -19,6 +19,7 @@ export function StepNode({ data }: NodeProps) {
         labels={edit?.labels ?? []}
         modelLabel={edit?.modelLabel ?? ((_p, m) => m)}
         promptMissing={promptMissing}
+        needsPrompt={!d.step.promptId}
       />
       <Handle type="source" position={Position.Right} isConnectable={false} />
     </div>

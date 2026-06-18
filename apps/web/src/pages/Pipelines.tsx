@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
@@ -7,6 +8,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LabelPicker } from '../components/LabelPicker';
+import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { PipelinesIcon, PlusIcon, XIcon } from '../layout/icons';
 
 function fmtDate(iso: string) {
@@ -74,6 +76,7 @@ export function pipelineMatchesFilters(
 }
 
 export function Pipelines() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { current } = useWorkspace();
   const { labels, createLabel } = useLabels(current?.id);
@@ -90,6 +93,7 @@ export function Pipelines() {
   const [toDelete, setToDelete] = useState<Pipeline | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
+  const [aiOpen, setAiOpen] = useState(false); // "Build with AI" modal
 
   const wsId = current?.id;
 
@@ -148,7 +152,7 @@ export function Pipelines() {
       });
       setPipelines((list) => list.map((x) => (x.id === updated.id ? updated : x)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update pipeline');
+      setError(err instanceof Error ? err.message : t('pipelines.updateError'));
       throw err;
     }
   }
@@ -167,7 +171,7 @@ export function Pipelines() {
       setPipelines((list) => list.filter((x) => x.id !== toDelete.id));
       setToDelete(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete pipeline');
+      setError(err instanceof Error ? err.message : t('pipelines.deleteError'));
     } finally {
       setDeleting(false);
     }
@@ -180,13 +184,13 @@ export function Pipelines() {
   return (
     <div>
       <div className="lin-toolbar">
-        <input className="lin-search" placeholder="Search pipelines…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="lin-search" placeholder={t('pipelines.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="lin-filter" ref={filterRef}>
           <button
             className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
             onClick={() => setFilterMenu((s) => !s)}
           >
-            + Filter{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            {t('pipelines.filter')}{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
           </button>
           {filterMenu && (
             <div className="lin-menu">
@@ -200,15 +204,15 @@ export function Pipelines() {
                     setCreatorFilters([]);
                   }}
                 >
-                  Clear
+                  {t('common.clear')}
                 </button>
               </div>
               <details className="lin-menu-section">
                 <summary className="lin-menu-summary">
-                  <span>Tags</span>
+                  <span>{t('pipelines.tags')}</span>
                   {tagFilters.length > 0 && <span className="lin-menu-summary-count">{tagFilters.length}</span>}
                 </summary>
-                {tagVocab.length === 0 && <div className="lin-menu-empty">No pipeline tags</div>}
+                {tagVocab.length === 0 && <div className="lin-menu-empty">{t('pipelines.noTags')}</div>}
                 {tagVocab.map(([tag, count]) => (
                   <button key={tag} className="lin-menu-item" onClick={() => setTagFilters((list) => toggleFilterValue(list, tag))}>
                     <span className="dot" style={{ background: labelColor(tag, labels) }} />
@@ -220,7 +224,7 @@ export function Pipelines() {
               {creatorVocab.length > 0 && (
                 <details className="lin-menu-section">
                   <summary className="lin-menu-summary">
-                    <span>Created by</span>
+                    <span>{t('pipelines.createdBy')}</span>
                     {creatorFilters.length > 0 && <span className="lin-menu-summary-count">{creatorFilters.length}</span>}
                   </summary>
                   {creatorVocab.map((creator) => (
@@ -235,24 +239,30 @@ export function Pipelines() {
             </div>
           )}
         </div>
-        <button className="lin-add" onClick={() => navigate('/pipelines/new')} title="New pipeline" aria-label="New pipeline">
+        <button className="lin-ai-btn" onClick={() => setAiOpen(true)} title={t('pipelines.buildWithAi')}>
+          <span aria-hidden>✨</span>
+          <span className="lin-ai-txt">{t('pipelines.buildWithAi')}</span>
+        </button>
+        <button className="lin-add" onClick={() => navigate('/pipelines/new')} title={t('pipelines.newPipeline')} aria-label={t('pipelines.newPipeline')}>
           <PlusIcon />
         </button>
       </div>
 
+      {aiOpen && wsId && <BuildWithAiModal wsId={wsId} onClose={() => setAiOpen(false)} />}
+
       {error && <p className="error">{error}</p>}
 
       {loading ? (
-        <p className="empty">Loading pipelines…</p>
+        <p className="empty">{t('pipelines.loading')}</p>
       ) : pipelines.length === 0 ? (
         <div className="prompt-empty">
           <div className="prompt-empty-art"><PipelinesIcon width={26} height={26} /></div>
-          <h3>Build your first pipeline</h3>
-          <p>Chain prompts into a flow — each step runs a prompt on a model you pick, feeding its output to the next.</p>
-          <button className="btn-primary" onClick={() => navigate('/pipelines/new')}>New pipeline</button>
+          <h3>{t('pipelines.emptyTitle')}</h3>
+          <p>{t('pipelines.emptyBody')}</p>
+          <button className="btn-primary" onClick={() => navigate('/pipelines/new')}>{t('pipelines.newPipeline')}</button>
         </div>
       ) : visible.length === 0 ? (
-        <p className="empty">No pipelines match your search.</p>
+        <p className="empty">{t('pipelines.noMatch')}</p>
       ) : (
         <>
         <div className="ptable t-pipeline">
@@ -278,7 +288,7 @@ export function Pipelines() {
                   <button
                     type="button"
                     className="prow-name"
-                    title={canEdit(p) ? 'Click to rename' : p.name}
+                    title={canEdit(p) ? t('pipelines.clickToRename') : p.name}
                     onClick={() => (canEdit(p) ? setEditing({ id: p.id, val: p.name }) : navigate(`/pipelines/${p.id}`))}
                   >
                     <span className="nm">{p.name}</span>
@@ -311,10 +321,15 @@ export function Pipelines() {
                 )}
               </span>
               <span className="prow-status">
-                <span className="badge step-count">{p.steps.length} steps</span>
+                <span className="badge step-count">{t('pipelines.steps', { count: p.steps.length })}</span>
+                {p.origin?.source === 'ai' && (
+                  <span className="badge ai-built" title={p.origin.goal || t('pipelines.aiBuilt')}>
+                    ✨ {t('pipelines.aiBuilt')}
+                  </span>
+                )}
               </span>
               <span className="prow-facts">
-                <span className="prow-date" title={`Created by ${p.createdBy.name}`}>
+                <span className="prow-date" title={t('pipelines.createdByName', { name: p.createdBy.name })}>
                   <span className="prow-updated-icon" style={avatarStyle(p.createdBy.name)} aria-hidden="true">
                     {initial(p.createdBy.name)}
                   </span>
@@ -325,8 +340,8 @@ export function Pipelines() {
                 <button
                   className="prow-open"
                   onClick={() => navigate(`/pipelines/${p.id}`)}
-                  title="Open pipeline"
-                  aria-label={`Open ${p.name}`}
+                  title={t('pipelines.openPipeline')}
+                  aria-label={t('pipelines.openNamed', { name: p.name })}
                 >
                   <PipelinesIcon width={15} height={15} />
                 </button>
@@ -334,8 +349,8 @@ export function Pipelines() {
                   <button
                     className="prow-delete"
                     onClick={() => setToDelete(p)}
-                    title="Delete pipeline"
-                    aria-label={`Delete ${p.name}`}
+                    title={t('pipelines.deletePipeline')}
+                    aria-label={t('pipelines.deleteNamed', { name: p.name })}
                   >
                     <XIcon width={14} height={14} />
                   </button>
@@ -346,9 +361,9 @@ export function Pipelines() {
         </div>
         {totalPages > 1 && (
           <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← Prev</button>
-            <span className="pager-info">Page {page} of {totalPages} · {visible.length} total</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← {t('pipelines.prev')}</button>
+            <span className="pager-info">{t('pipelines.pageInfo', { page, totalPages, total: visible.length })}</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>{t('common.next')} →</button>
           </div>
         )}
         </>
@@ -356,9 +371,9 @@ export function Pipelines() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Delete pipeline?"
-        message={<><strong>{toDelete?.name}</strong> will be removed. Projects using it lose access. This can’t be undone.</>}
-        confirmLabel="Delete"
+        title={t('pipelines.deleteConfirmTitle')}
+        message={<>{t('pipelines.deleteConfirmBefore')}<strong>{toDelete?.name}</strong>{t('pipelines.deleteConfirmAfter')}</>}
+        confirmLabel={t('common.delete')}
         danger
         busy={deleting}
         onConfirm={() => void confirmDelete()}

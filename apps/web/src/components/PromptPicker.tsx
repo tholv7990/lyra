@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
 import { EyeIcon, FilterIcon } from '../layout/icons';
 import { PromptDetails } from './PromptDetails';
@@ -25,6 +26,7 @@ export function PromptPicker({
   /** Resolve a prompt's model to a readable label (provider catalog). */
   modelLabel?: (p: Prompt) => string;
 }) {
+  const { t } = useTranslation();
   const [q, setQ] = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [showFilter, setShowFilter] = useState(false);
@@ -51,7 +53,7 @@ export function PromptPicker({
       <div className="ppick-searchrow">
         <input
           className="text-input ppick-search"
-          placeholder="Search prompts…"
+          placeholder={t('prompts.searchPlaceholder')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -59,8 +61,8 @@ export function PromptPicker({
           type="button"
           className={`ppick-filterbtn ${showFilter || activeTags.length ? 'on' : ''}`}
           onClick={() => setShowFilter((s) => !s)}
-          title="Filter by tags"
-          aria-label="Filter by tags"
+          title={t('prompts.filterByTags')}
+          aria-label={t('prompts.filterByTags')}
         >
           <FilterIcon width={15} height={15} />
         </button>
@@ -82,14 +84,14 @@ export function PromptPicker({
             ))}
           </div>
         ) : (
-          <p className="ppick-empty" style={{ padding: '2px 2px' }}>No tags yet.</p>
+          <p className="ppick-empty" style={{ padding: '2px 2px' }}>{t('prompts.noTagsYet')}</p>
         ))}
 
       <div className="ppick-grid">
         {prompts.length === 0 ? (
-          <p className="ppick-empty">No public prompts yet — publish a prompt to use it in a step.</p>
+          <p className="ppick-empty">{t('prompts.noPublicPrompts')}</p>
         ) : list.length === 0 ? (
-          <p className="ppick-empty">No prompts match your filters.</p>
+          <p className="ppick-empty">{t('prompts.noMatchFilters')}</p>
         ) : (
           list.map((p) => {
             const ml = modelLabel?.(p) ?? p.model ?? '';
@@ -106,7 +108,7 @@ export function PromptPicker({
                     className="ppick-eye"
                     role="button"
                     tabIndex={0}
-                    title="View full prompt"
+                    title={t('prompts.viewFullPrompt')}
                     onClick={(e) => { e.stopPropagation(); setDetail(p); }}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setDetail(p); } }}
                   >

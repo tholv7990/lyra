@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   defaultModel,
   isAllowedMedia,
@@ -40,6 +41,7 @@ const emptyForm: FormState = {
 };
 
 export function PromptEditor() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const { user } = useAuth();
@@ -52,7 +54,7 @@ export function PromptEditor() {
   const [form, setForm] = useState<FormState>(emptyForm);
   // The last-saved snapshot — `form` is "dirty" when it differs from this.
   const baselineRef = useRef<FormState>(emptyForm);
-  useBreadcrumb(isEdit ? form.title.trim() || '…' : 'New');
+  useBreadcrumb(isEdit ? form.title.trim() || '…' : t('prompts.newTitle'));
   const [loading, setLoading] = useState(isEdit);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(0);
@@ -113,7 +115,7 @@ export function PromptEditor() {
         setForm(loaded);
         baselineRef.current = loaded;
       })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load prompt'))
+      .catch((e) => setError(e instanceof Error ? e.message : t('prompts.errLoad')))
       .finally(() => setLoading(false));
   }, [id, user]);
 
@@ -121,8 +123,8 @@ export function PromptEditor() {
     if (!files || !wsId) return;
     setError(null);
     for (const file of Array.from(files)) {
-      if (!isAllowedMedia(file.type, file.name)) { setError(`${file.name}: file type not allowed`); continue; }
-      if (file.size > MEDIA_MAX_BYTES) { setError(`${file.name}: exceeds 25 MB`); continue; }
+      if (!isAllowedMedia(file.type, file.name)) { setError(t('prompts.errFileType', { name: file.name })); continue; }
+      if (file.size > MEDIA_MAX_BYTES) { setError(t('prompts.errFileSize', { name: file.name })); continue; }
       setUploading((u) => u + 1);
       try {
         const fd = new FormData();
@@ -130,7 +132,7 @@ export function PromptEditor() {
         const media = await api<PromptMedia>(`/workspaces/${wsId}/files`, { method: 'POST', body: fd });
         setForm((f) => ({ ...f, media: [...f.media, media] }));
       } catch (e) {
-        setError(e instanceof Error ? e.message : `Could not upload ${file.name}`);
+        setError(e instanceof Error ? e.message : t('prompts.errUpload', { name: file.name }));
       } finally {
         setUploading((u) => u - 1);
       }
@@ -157,7 +159,7 @@ export function PromptEditor() {
     } catch (err) {
       // Abort (user pressed stop) is not an error — just stay on the page.
       if ((err as Error)?.name !== 'AbortError') {
-        setError(err instanceof Error ? err.message : 'Could not save prompt');
+        setError(err instanceof Error ? err.message : t('prompts.errSave'));
       }
       return false;
     } finally {
@@ -177,9 +179,9 @@ export function PromptEditor() {
     saveAbortRef.current?.abort();
   }
 
-  if (loading) return <p className="empty">Loading…</p>;
+  if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (denied) {
-    return <p className="empty">You can only edit prompts you created.</p>;
+    return <p className="empty">{t('prompts.onlyEditOwn')}</p>;
   }
 
   return (
@@ -191,8 +193,8 @@ export function PromptEditor() {
         <button
           type="button"
           className="pe-rename-btn"
-          title="Edit name"
-          aria-label="Edit name"
+          title={t('prompts.editName')}
+          aria-label={t('prompts.editName')}
           onClick={() => setRenaming(true)}
         >
           <PencilIcon />
@@ -202,12 +204,12 @@ export function PromptEditor() {
           className="pe-title-text"
           onClick={() => setRenaming(true)}
         >
-          {form.title.trim() || 'Untitled prompt'}
+          {form.title.trim() || t('prompts.untitled')}
         </button>
         <input
           ref={titleRef}
           className="pe-title"
-          placeholder="Prompt title"
+          placeholder={t('prompts.promptTitlePlaceholder')}
           autoFocus
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -224,8 +226,8 @@ export function PromptEditor() {
           <button
             type="submit"
             className="icon-btn-success"
-            title={isEdit ? 'Save changes' : 'Create prompt'}
-            aria-label={isEdit ? 'Save changes' : 'Create prompt'}
+            title={isEdit ? t('prompts.saveChanges') : t('prompts.createPrompt')}
+            aria-label={isEdit ? t('prompts.saveChanges') : t('prompts.createPrompt')}
             disabled={busy || !form.title.trim()}
           >
             <CheckIcon width={16} height={16} />
@@ -233,8 +235,8 @@ export function PromptEditor() {
           <button
             type="button"
             className="icon-btn-danger"
-            title="Cancel"
-            aria-label="Cancel"
+            title={t('common.cancel')}
+            aria-label={t('common.cancel')}
             onClick={() => navigate('/prompts')}
           >
             <XIcon />
@@ -247,7 +249,7 @@ export function PromptEditor() {
       {/* Label picker (left) + status toggle (right) in one row. */}
       <div className="pe-row">
         <div className="pe-field pe-tags">
-          <span className="pe-field-label">Label</span>
+          <span className="pe-field-label">{t('prompts.label')}</span>
           <div className="pe-field-control">
             <LabelPicker
               value={form.tags}
@@ -258,9 +260,9 @@ export function PromptEditor() {
           </div>
         </div>
         <div className="pe-field pe-status">
-          <span className="pe-field-label">Status</span>
-          <label className="pe-toggle" title="Public prompts can be reused across the workspace">
-            <span className="pe-toggle-text">Public</span>
+          <span className="pe-field-label">{t('prompts.status')}</span>
+          <label className="pe-toggle" title={t('prompts.publicHint')}>
+            <span className="pe-toggle-text">{t('prompts.publicLabel')}</span>
             <input
               type="checkbox"
               checked={form.status === PromptStatus.Public}
@@ -277,11 +279,12 @@ export function PromptEditor() {
           <Markdown>{form.content}</Markdown>
         ) : (
           <div className="pe-preview-hint">
-            <h3>Write your prompt</h3>
-            <p>Type below — a live preview renders here.</p>
+            <h3>{t('prompts.writeHeading')}</h3>
+            <p>{t('prompts.writeHint')}</p>
             <p className="pe-preview-vars">
-              Variables: <code>{'{product}'}</code> <code>{'{niche}'}</code> <code>{'{homepage}'}</code> <code>{'{note}'}</code>{' '}
-              — and in a pipeline, <code>{'{input}'}</code> (previous step) or <code>{'{step:Name}'}</code> (any earlier step).
+              {t('prompts.variables')}: <code>{'{product}'}</code> <code>{'{niche}'}</code> <code>{'{homepage}'}</code> <code>{'{note}'}</code>{' '}
+              — {t('prompts.variablesPipeline')} <code>{'{input}'}</code> ({t('prompts.variablesPrevStep')}){' '}
+              {t('prompts.variablesOr')} <code>{'{step:Name}'}</code> ({t('prompts.variablesAnyStep')}).
             </p>
           </div>
         )}
@@ -293,7 +296,7 @@ export function PromptEditor() {
         value={form.content}
         onChange={(v) => setForm((f) => ({ ...f, content: v }))}
         onSubmit={() => void save()}
-        placeholder="Add prompt"
+        placeholder={t('prompts.addPrompt')}
         media={form.media}
         onRemoveMedia={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
         uploading={uploading}
@@ -307,7 +310,7 @@ export function PromptEditor() {
         canSubmit={!!form.title.trim()}
         trailing={
           <span className="pe-counter">
-            <kbd className="pe-kbd">⌘/Ctrl+↵</kbd> to save · {form.content.length.toLocaleString()} chars
+            <kbd className="pe-kbd">⌘/Ctrl+↵</kbd> {t('prompts.saveShortcut')} · {t('prompts.charCount', { chars: form.content.length.toLocaleString() })}
           </span>
         }
       />
@@ -315,8 +318,8 @@ export function PromptEditor() {
       {blocker.state === 'blocked' && (
         <div className="dialog-scrim" onClick={() => blocker.reset?.()}>
           <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <h3>Save changes?</h3>
-            <p>You have unsaved changes. If you leave, they’ll be lost.</p>
+            <h3>{t('prompts.unsavedTitle')}</h3>
+            <p>{t('prompts.unsavedBody')}</p>
             <div className="dialog-actions">
               <button
                 type="button"
@@ -324,7 +327,7 @@ export function PromptEditor() {
                 onClick={() => blocker.proceed?.()}
                 disabled={busy}
               >
-                Discard &amp; leave
+                {t('prompts.discardLeave')}
               </button>
               <button
                 type="button"
@@ -336,7 +339,7 @@ export function PromptEditor() {
                   if (ok) blocker.proceed?.();
                 }}
               >
-                {busy ? 'Saving…' : 'Save'}
+                {busy ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   PromptStatus,
   Provider,
@@ -24,10 +25,6 @@ import { ChatsIcon, EyeIcon, PromptsIcon, PlusIcon, XIcon } from '../layout/icon
 const STATUS_COLOR: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: '#d4a72c',
   [PromptStatus.Public]: '#2da44e',
-};
-const STATUS_LABEL: Record<PromptStatus, string> = {
-  [PromptStatus.Draft]: 'Draft',
-  [PromptStatus.Public]: 'Public',
 };
 const PROVIDER_LABEL: Record<Provider, string> = {
   [Provider.OpenAI]: 'OpenAI',
@@ -89,11 +86,14 @@ function avatarStyle(name?: string): CSSProperties {
 }
 
 export function Prompts() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { current } = useWorkspace();
   const navigate = useNavigate();
   const wsId = current?.id;
   const { labels, createLabel } = useLabels(wsId);
+  const statusLabel = (s: PromptStatus) =>
+    s === PromptStatus.Public ? t('prompts.statusPublic') : t('prompts.statusDraft');
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [total, setTotal] = useState(0);
@@ -192,7 +192,7 @@ export function Prompts() {
       // from the full-library endpoints so the filter options stay correct.
       loadVocab();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update prompt');
+      setError(err instanceof Error ? err.message : t('prompts.errUpdate'));
       throw err;
     }
   }
@@ -225,7 +225,7 @@ export function Prompts() {
         provider: prov,
         model: p.model ?? defaultModel(prov),
         // origin breadcrumb: the chat shows "Prompts / <title>" and links back here
-        from: { label: 'Prompts', to: '/prompts', record: p.title },
+        from: { label: t('prompts.breadcrumb'), to: '/prompts', record: p.title },
       },
     });
   }
@@ -251,7 +251,7 @@ export function Prompts() {
       setDeleteUsage(null);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete prompt');
+      setError(err instanceof Error ? err.message : t('prompts.errDelete'));
     } finally {
       setDeleting(false);
     }
@@ -263,7 +263,7 @@ export function Prompts() {
       <div className="lin-toolbar">
         <input
           className="lin-search"
-          placeholder="Search prompts…"
+          placeholder={t('prompts.searchPlaceholder')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -272,7 +272,7 @@ export function Prompts() {
             className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
             onClick={() => setFilterMenu((s) => !s)}
           >
-            + Filter{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            + {t('prompts.filter')}{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
           </button>
           {filterMenu && (
             <div className="lin-menu">
@@ -288,23 +288,23 @@ export function Prompts() {
                     setCreatedBy([]);
                   }}
                 >
-                  Clear
+                  {t('common.clear')}
                 </button>
               </div>
-              <div className="lin-menu-label">Status</div>
+              <div className="lin-menu-label">{t('prompts.filterStatus')}</div>
               {[PromptStatus.Draft, PromptStatus.Public].map((s) => (
                 <button key={s} className="lin-menu-item" onClick={() => setStatuses((list) => toggleFilterValue(list, s))}>
                   <span className="dot" style={{ background: STATUS_COLOR[s] }} />
-                  {STATUS_LABEL[s]}
+                  {statusLabel(s)}
                   {statuses.includes(s) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
               <details className="lin-menu-section">
                 <summary className="lin-menu-summary">
-                  <span>Tags</span>
+                  <span>{t('prompts.filterTags')}</span>
                   {tags.length > 0 && <span className="lin-menu-summary-count">{tags.length}</span>}
                 </summary>
-                {vocab.length === 0 && <div className="lin-menu-empty">No prompt tags</div>}
+                {vocab.length === 0 && <div className="lin-menu-empty">{t('prompts.noPromptTags')}</div>}
                 {vocab.map((t) => (
                   <button key={t.value} className="lin-menu-item" onClick={() => setTags((list) => toggleFilterValue(list, t.value))}>
                     <span className="dot" style={{ background: labelColor(t.value, labels) }} />
@@ -313,7 +313,7 @@ export function Prompts() {
                   </button>
                 ))}
               </details>
-              {providerVocab.length > 0 && <div className="lin-menu-label">Provider</div>}
+              {providerVocab.length > 0 && <div className="lin-menu-label">{t('prompts.filterProvider')}</div>}
               {providerVocab.map(([provider, count]) => (
                 <button key={provider} className="lin-menu-item" onClick={() => setProviders((list) => toggleFilterValue(list, provider))}>
                   <ProviderIcon provider={provider} size={14} />
@@ -324,7 +324,7 @@ export function Prompts() {
               {creators.length > 0 && (
                 <details className="lin-menu-section">
                   <summary className="lin-menu-summary">
-                    <span>Created by</span>
+                    <span>{t('prompts.filterCreatedBy')}</span>
                     {createdBy.length > 0 && <span className="lin-menu-summary-count">{createdBy.length}</span>}
                   </summary>
                   {creators.map((creator) => (
@@ -339,7 +339,7 @@ export function Prompts() {
             </div>
           )}
         </div>
-        <button className="lin-add" onClick={() => navigate('/prompts/new')} title="New prompt" aria-label="New prompt">
+        <button className="lin-add" onClick={() => navigate('/prompts/new')} title={t('prompts.newPrompt')} aria-label={t('prompts.newPrompt')}>
           <PlusIcon />
         </button>
       </div>
@@ -347,17 +347,17 @@ export function Prompts() {
       {error && <p className="error">{error}</p>}
 
       {loading ? (
-        <p className="empty">Loading prompts…</p>
+        <p className="empty">{t('prompts.loadingPrompts')}</p>
       ) : prompts.length === 0 ? (
         !hasFilters ? (
           <div className="prompt-empty">
             <div className="prompt-empty-art"><PromptsIcon width={26} height={26} /></div>
-            <h3>Build your prompt library</h3>
-            <p>Save reusable prompts, tag them, and use them as steps in your pipelines.</p>
-            <button className="btn-primary" onClick={() => navigate('/prompts/new')}>Create your first prompt</button>
+            <h3>{t('prompts.emptyTitle')}</h3>
+            <p>{t('prompts.emptyBody')}</p>
+            <button className="btn-primary" onClick={() => navigate('/prompts/new')}>{t('prompts.emptyCta')}</button>
           </div>
         ) : (
-          <p className="empty">No prompts match these filters.</p>
+          <p className="empty">{t('prompts.noMatch')}</p>
         )
       ) : (
         <>
@@ -383,7 +383,7 @@ export function Prompts() {
                       <button
                         type="button"
                         className="prow-name"
-                        title={editable ? 'Click to rename' : p.title}
+                        title={editable ? t('prompts.clickToRename') : p.title}
                         onClick={() => (editable ? setEditing({ id: p.id, val: p.title }) : openInChat(p))}
                       >
                         <span className="nm">{p.title}</span>
@@ -399,8 +399,8 @@ export function Prompts() {
                   <button
                     type="button"
                     className="prow-eye"
-                    title="View full prompt"
-                    aria-label={`View full prompt for ${p.title}`}
+                    title={t('prompts.viewFullPrompt')}
+                    aria-label={t('prompts.viewFullPromptFor', { title: p.title })}
                     onClick={() => setDetailPrompt(p)}
                   >
                     <EyeIcon width={15} height={15} />
@@ -433,12 +433,12 @@ export function Prompts() {
                         type="button"
                         className={`badge status-${p.status} badge-btn`}
                         onClick={() => toggleStatus(p)}
-                        title="Toggle Draft / Public"
+                        title={t('prompts.toggleStatus')}
                       >
-                        {STATUS_LABEL[p.status]}
+                        {statusLabel(p.status)}
                       </button>
                     ) : (
-                      <span className={`badge status-${p.status}`}>{STATUS_LABEL[p.status]}</span>
+                      <span className={`badge status-${p.status}`}>{statusLabel(p.status)}</span>
                     )}
                   </span>
 
@@ -449,7 +449,7 @@ export function Prompts() {
                         {p.model}
                       </span>
                     )}
-                    <span className="prow-date" title={`Updated by ${p.updatedBy.name}`}>
+                    <span className="prow-date" title={t('prompts.updatedBy', { name: p.updatedBy.name })}>
                       <span
                         className="prow-updated-icon"
                         style={avatarStyle(p.updatedBy.name)}
@@ -465,8 +465,8 @@ export function Prompts() {
                     <button
                       className="prow-chat"
                       onClick={() => openInChat(p)}
-                      title="Open in chat"
-                      aria-label={`Open ${p.title} in chat`}
+                      title={t('prompts.openInChat')}
+                      aria-label={t('prompts.openInChatNamed', { title: p.title })}
                     >
                       <ChatsIcon width={15} height={15} />
                     </button>
@@ -474,8 +474,8 @@ export function Prompts() {
                       <button
                         className="prow-delete"
                         onClick={() => askDelete(p)}
-                        title="Delete prompt"
-                        aria-label={`Delete ${p.title}`}
+                        title={t('prompts.deletePrompt')}
+                        aria-label={t('prompts.deletePromptNamed', { title: p.title })}
                       >
                         <XIcon width={14} height={14} />
                       </button>
@@ -487,27 +487,27 @@ export function Prompts() {
           </div>
 
           <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← Prev</button>
-            <span className="pager-info">Page {page} of {totalPages} · {total} total</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← {t('prompts.prev')}</button>
+            <span className="pager-info">{t('prompts.pagerInfo', { page, totalPages, total })}</span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>{t('common.next')} →</button>
           </div>
         </>
       )}
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Delete prompt?"
+        title={t('prompts.deleteTitle')}
         message={
           <>
-            <strong>{toDelete?.title}</strong> will be removed from the library. This can’t be undone.
+            <strong>{toDelete?.title}</strong> {t('prompts.deleteRemoved')}
             {deleteUsage != null && deleteUsage > 0 && (
               <span className="confirm-warn">
-                ⚠ Used by {deleteUsage} pipeline{deleteUsage === 1 ? '' : 's'} — those steps will be left empty.
+                ⚠ {t('prompts.deleteUsageWarn', { count: deleteUsage })}
               </span>
             )}
           </>
         }
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
         danger
         busy={deleting}
         onConfirm={() => void confirmDelete()}

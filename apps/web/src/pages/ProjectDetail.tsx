@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
@@ -28,21 +29,16 @@ import { RunVariablesModal } from '../components/RunVariablesModal';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  running: 'Running',
-  waiting: 'Awaiting approval',
-  awaiting_gate: 'Awaiting approval',
-  skipped: 'Skipped',
-  done: 'Done',
-  error: 'Error',
+const STATUS_KEY: Record<string, string> = {
+  idle: 'run.status_idle',
+  queued: 'run.status_queued',
+  running: 'run.status_running',
+  waiting: 'run.status_waiting',
+  awaiting_gate: 'run.status_waiting',
+  skipped: 'run.status_skipped',
+  done: 'run.status_done',
+  error: 'run.status_error',
 };
-
-function shareLabel(p: Project): string {
-  if (p.status !== ProjectStatus.Public) return 'Draft';
-  return p.shared === ProjectShare.All ? 'Public · Everyone' : 'Public · Chosen people';
-}
 
 // Distinct collection names the pipeline's fan-out steps map over.
 function fanOutNames(p: Pipeline): string[] {
@@ -50,8 +46,15 @@ function fanOutNames(p: Pipeline): string[] {
 }
 
 export function ProjectDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const shareLabel = (p: Project): string => {
+    if (p.status !== ProjectStatus.Public) return t('projects.statusDraft');
+    return p.shared === ProjectShare.All ? t('projects.shareEveryone') : t('projects.shareChosen');
+  };
+  const statusLabel = (status: string): string =>
+    STATUS_KEY[status] ? t(STATUS_KEY[status]) : status;
   const { user } = useAuth();
   const { current } = useWorkspace();
   const wsId = current?.id;
@@ -95,11 +98,11 @@ export function ProjectDetail() {
       setRuns(rs);
       setKeysSet(new Set(keys.map((k) => k.provider)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load project');
+      setError(err instanceof Error ? err.message : t('projects.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     void load();
@@ -154,7 +157,7 @@ export function ProjectDetail() {
     try {
       await fn();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Action failed');
+      setError(err instanceof Error ? err.message : t('projects.actionFailed'));
     } finally {
       setBusy(false);
     }
@@ -284,8 +287,8 @@ export function ProjectDetail() {
       ),
     );
 
-  if (loading) return <p className="empty">Loading…</p>;
-  if (!project) return <p className="empty">{error ?? 'Project not found.'}</p>;
+  if (loading) return <p className="empty">{t('common.loading')}</p>;
+  if (!project) return <p className="empty">{error ?? t('projects.notFound')}</p>;
 
   return (
     <EditorShell
@@ -296,7 +299,7 @@ export function ProjectDetail() {
         // header bar is hidden via CSS). On mobile the breadcrumb is hidden, so the
         // title (and the ‹ back) live here.
         isMobile ? (
-          <h2 className="eshell-name">{runView && run ? run.pipelineName ?? 'Run' : project.name}</h2>
+          <h2 className="eshell-name">{runView && run ? run.pipelineName ?? t('projects.runFallback') : project.name}</h2>
         ) : (
           <span className="eshell-spacer" aria-hidden />
         )
@@ -304,7 +307,7 @@ export function ProjectDetail() {
     >
       {askVarsFor && (
         <RunVariablesModal
-          title={`Run “${askVarsFor.name}”`}
+          title={t('projects.runNamed', { name: askVarsFor.name })}
           variables={askVarsFor.variables}
           collections={fanOutNames(askVarsFor)}
           prefill={projectVars}
@@ -320,25 +323,25 @@ export function ProjectDetail() {
           <div className="run-view">
             <div className="run-bar run-view-bar">
               <button className="txt-btn run-back" onClick={() => setRunView(false)}>
-                Back to project
+                {t('run.backToProject')}
               </button>
-              <span className="run-bar-proj"><strong>{run.pipelineName ?? 'Run'}</strong></span>
-              <span className={`badge status-${run.status}`}>{STATUS_LABEL[run.status] ?? run.status}</span>
+              <span className="run-bar-proj"><strong>{run.pipelineName ?? t('projects.runFallback')}</strong></span>
+              <span className={`badge status-${run.status}`}>{statusLabel(run.status)}</span>
               <div className="run-view-actions">
                 <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status === 'done'} onClick={runAll}>
-                  Run all
+                  {t('run.runAll')}
                 </button>
                 <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status !== 'running'} onClick={stop}>
-                  Stop
+                  {t('run.stop')}
                 </button>
                 <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={reset}>
-                  Reset
+                  {t('run.reset')}
                 </button>
               </div>
             </div>
             {error && <p className="error">{error}</p>}
             {run.steps.length === 0 ? (
-              <p className="empty">This pipeline has no steps yet. Add steps in the builder.</p>
+              <p className="empty">{t('projects.noStepsYet')}</p>
             ) : (
               <>
                 <RunFlow
@@ -362,11 +365,11 @@ export function ProjectDetail() {
             <div className="proj-head">
               <div className="proj-head-top">
                 <p className="proj-product">
-                  {project.description || 'No description yet — add one with Edit.'}
+                  {project.description || t('projects.noDescription')}
                 </p>
                 {canEdit && (
                   <Link className="btn-ghost proj-edit" style={{ width: 'auto', marginTop: 0 }} to={`/projects/${project.id}/edit`}>
-                    Edit
+                    {t('common.edit')}
                   </Link>
                 )}
               </div>
@@ -374,7 +377,10 @@ export function ProjectDetail() {
                 <span className={`badge status-${project.status}`}>{shareLabel(project)}</span>
                 <span className="dot">·</span>
                 <span>
-                  Created {new Date(project.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} by {project.createdBy.name}
+                  {t('projects.createdByOn', {
+                    date: new Date(project.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                    name: project.createdBy.name,
+                  })}
                 </span>
               </div>
             </div>
@@ -393,7 +399,7 @@ export function ProjectDetail() {
             {error && <p className="error">{error}</p>}
 
             <div className="section-head proj-sec">
-              <h2>Pipelines</h2>
+              <h2>{t('projects.pipelines')}</h2>
               <div className="proj-sec-actions">
               {assigned.length > 0 && (
                 <button
@@ -401,9 +407,9 @@ export function ProjectDetail() {
                   style={{ width: 'auto', marginTop: 0 }}
                   disabled={busy}
                   onClick={runAllPipelines}
-                  title="Launch every pipeline on this project, each in its context"
+                  title={t('projects.runAllTitle')}
                 >
-                  ▶ Run all
+                  {t('projects.runAllPipelines')}
                 </button>
               )}
               {canEdit && unassigned.length > 0 && (
@@ -414,14 +420,14 @@ export function ProjectDetail() {
                     disabled={busy}
                     onClick={() => setAdding((s) => !s)}
                   >
-                    + Add pipeline
+                    {t('projects.addPipeline')}
                   </button>
                   {adding && (
                     <div className="lin-menu proj-add-menu">
                       {unassigned.map((p) => (
                         <button key={p.id} className="lin-menu-item" disabled={busy} onClick={() => void attachPipeline(p.id)}>
                           {p.name}
-                          <span className="lin-menu-count">{p.steps.length} step{p.steps.length === 1 ? '' : 's'}</span>
+                          <span className="lin-menu-count">{t('projects.stepCount', { count: p.steps.length })}</span>
                         </button>
                       ))}
                     </div>
@@ -432,23 +438,23 @@ export function ProjectDetail() {
             </div>
             {assigned.length === 0 ? (
               <div className="prompt-empty">
-                <h3>No pipelines assigned</h3>
+                <h3>{t('projects.noPipelinesTitle')}</h3>
                 <p>
                   {library.length === 0 ? (
                     <>
-                      Create pipelines in the{' '}
-                      <Link to="/pipelines" style={{ color: 'var(--primary)' }}>Pipelines</Link>{' '}
-                      section, then add them here to run against this project.
+                      {t('projects.noPipelinesCreatePre')}{' '}
+                      <Link to="/pipelines" style={{ color: 'var(--primary)' }}>{t('projects.pipelines')}</Link>{' '}
+                      {t('projects.noPipelinesCreatePost')}
                     </>
                   ) : canEdit ? (
-                    <>Use <strong>+ Add pipeline</strong> above to attach one of your workspace pipelines.</>
+                    <>{t('projects.noPipelinesAddPre')} <strong>{t('projects.addPipeline')}</strong> {t('projects.noPipelinesAddPost')}</>
                   ) : (
-                    <>No pipelines have been added to this project yet.</>
+                    <>{t('projects.noPipelinesViewer')}</>
                   )}
                 </p>
                 {library.length === 0 && (
                   <Link className="btn-primary" to="/pipelines" style={{ width: 'auto' }}>
-                    Go to Pipelines
+                    {t('projects.goToPipelines')}
                   </Link>
                 )}
               </div>
@@ -469,7 +475,7 @@ export function ProjectDetail() {
                         <div className="grow">
                           <div className="title">{p.name}</div>
                           <div className="sub">
-                            {p.steps.length} step{p.steps.length === 1 ? '' : 's'}
+                            {t('projects.stepCount', { count: p.steps.length })}
                             {p.description ? ` · ${p.description}` : ''}
                           </div>
                         </div>
@@ -478,27 +484,27 @@ export function ProjectDetail() {
                             <button
                               className="txt-btn danger"
                               disabled={busy}
-                              title={`Remove “${p.name}” from this project`}
+                              title={t('projects.removeFromProject', { name: p.name })}
                               onClick={() => void detachPipeline(p.id)}
                             >
-                              Remove
+                              {t('projects.remove')}
                             </button>
                           )}
                           <button
                             className="btn-primary"
                             style={{ width: 'auto', marginTop: 0 }}
                             disabled={busy || p.steps.length === 0}
-                            title={p.steps.length === 0 ? 'Add steps in the builder first' : `Run “${p.name}”`}
+                            title={p.steps.length === 0 ? t('projects.addStepsFirst') : t('projects.runNamedTitle', { name: p.name })}
                             onClick={() => runPipeline(p)}
                           >
-                            ▶ Run
+                            {t('projects.runPipeline')}
                           </button>
                         </span>
                       </div>
                       {open && (
                         <div className="pipe-steps">
                           {p.steps.length === 0 ? (
-                            <p className="muted pipe-empty">No steps yet.</p>
+                            <p className="muted pipe-empty">{t('projects.noStepsShort')}</p>
                           ) : (
                             p.steps.map((s, i) => (
                               <div className="pipe-step" key={s.id}>
@@ -509,7 +515,7 @@ export function ProjectDetail() {
                                   {modelLabel(s.provider, s.model)}
                                 </span>
                                 <span className={`mode-tag ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
-                                  {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
+                                  {s.mode === StepMode.Gate ? t('run.gate') : t('run.auto')}
                                 </span>
                               </div>
                             ))
@@ -525,7 +531,7 @@ export function ProjectDetail() {
             {runs.length > 0 && (
               <>
                 <div className="section-head proj-sec">
-                  <h2>Recent runs</h2>
+                  <h2>{t('run.recentRuns')}</h2>
                 </div>
                 <div className="list">
                   {runs.map((r) => (
@@ -538,12 +544,12 @@ export function ProjectDetail() {
                       onKeyDown={(e) => { if (e.key === 'Enter') openRun(r); }}
                     >
                       <div className="grow">
-                        <div className="title">{r.pipelineName ?? 'Run'}</div>
+                        <div className="title">{r.pipelineName ?? t('projects.runFallback')}</div>
                         <div className="sub">{new Date(r.createdAt).toLocaleString()}</div>
                       </div>
-                      <span className={`badge status-${r.status}`}>{STATUS_LABEL[r.status] ?? r.status}</span>
+                      <span className={`badge status-${r.status}`}>{statusLabel(r.status)}</span>
                       <span className="row-actions" onClick={(e) => e.stopPropagation()}>
-                        <button className="txt-btn" onClick={() => openRun(r)}>Open</button>
+                        <button className="txt-btn" onClick={() => openRun(r)}>{t('common.open')}</button>
                       </span>
                     </div>
                   ))}

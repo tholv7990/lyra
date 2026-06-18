@@ -1,5 +1,5 @@
 import { Role, ProjectStatus, ProjectShare, PromptStatus, Provider, StepMode } from '../enums';
-import type { FanOutConfig, PromptMedia, StepCondition } from '../models';
+import type { FanOutConfig, PipelineOrigin, PromptMedia, StepCondition } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
 // The api implements each as a class-validator class that `implements`
@@ -132,6 +132,32 @@ export interface CreatePipelineDto {
   tags?: string[];
   steps?: PipelineStepInput[];
   variables?: PipelineVariableInput[];
+  origin?: PipelineOrigin;
+}
+
+// ===== AI pipeline generation =====
+// The goal a user types; the server reads their prompt library and returns a
+// draft (never persisted) for the builder to pre-fill.
+export interface GeneratePipelineDto {
+  goal: string;
+}
+
+// A proposed step. An empty/absent `promptId` is a GAP — no library prompt fit;
+// `suggestion` describes the prompt the user should supply.
+export interface GeneratedStep {
+  name: string;
+  promptId?: string;
+  provider: Provider;
+  model: string;
+  mode: StepMode;
+  suggestion?: string;
+}
+
+export interface GeneratedPipeline {
+  name: string;
+  description: string;
+  steps: GeneratedStep[];
+  origin: PipelineOrigin;
 }
 
 export interface UpdatePipelineDto {
