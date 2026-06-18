@@ -38,6 +38,10 @@ export class RunStep {
   @Prop({ type: Object })
   fanOut?: { over: string; itemVar?: string };
 
+  // Guard condition — the step is skipped (status 'skipped') when it fails.
+  @Prop({ type: Object })
+  condition?: { variable: string; op: string; value?: string };
+
   @Prop()
   result?: string;
 

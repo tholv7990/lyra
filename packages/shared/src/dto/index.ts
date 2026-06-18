@@ -1,5 +1,5 @@
 import { Role, ProjectStatus, ProjectShare, PromptStatus, Provider, StepMode } from '../enums';
-import type { FanOutConfig, PromptMedia } from '../models';
+import type { FanOutConfig, PromptMedia, StepCondition } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
 // The api implements each as a class-validator class that `implements`
@@ -117,6 +117,7 @@ export interface PipelineStepInput {
   model: string;
   mode: StepMode;
   fanOut?: FanOutConfig;
+  condition?: StepCondition;
 }
 
 export interface PipelineVariableInput {

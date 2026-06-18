@@ -7,6 +7,7 @@ import {
   STEP_DEFS,
   STEP_PROVIDERS,
   fillPrompt,
+  evalCondition,
   type Step,
 } from '@lyra/shared';
 
@@ -79,11 +80,9 @@ function now() {
 // Validate that `index` is the step to run right now. Throws (StepLockedError /
 // RunTransitionError) on anything invalid; returns the step otherwise. Pure —
 // no mutation, so the service can check before doing async work.
-export function assertRunnable(
-  state: RunState,
-  index: number,
-  keysPresent: Set<string>,
-): Step {
+// The ordering/status checks shared by run + skip (no key/lock check). Throws
+// (RunTransitionError) on anything invalid; returns the step otherwise.
+export function assertStepPosition(state: RunState, index: number): Step {
   if (state.status === RunStatus.AwaitingGate) {
     throw new RunTransitionError('Approve the current gate before running more steps');
   }
@@ -98,10 +97,28 @@ export function assertRunnable(
   if (step.status === StepStatus.Done) {
     throw new RunTransitionError('Step is already done');
   }
+  return step;
+}
+
+export function assertRunnable(
+  state: RunState,
+  index: number,
+  keysPresent: Set<string>,
+): Step {
+  const step = assertStepPosition(state, index);
   if (isLocked(step, keysPresent)) {
     throw new StepLockedError(providerOf(step));
   }
   return step;
+}
+
+// True when the step has a guard condition that fails — i.e. it should be skipped
+// rather than run. A skipped step makes no provider call (so it needs no key).
+export function shouldSkip(
+  step: Step,
+  vars: Record<string, string | undefined>,
+): boolean {
+  return !!step.condition && !evalCondition(step.condition, vars);
 }
 
 // Mark the step running (before the provider call).
@@ -134,6 +151,19 @@ export function completeStep(
     state.status =
       state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
   }
+}
+
+// A guard condition failed — bypass the step (no provider call) and advance, like
+// an auto step completing (a skipped step never gates).
+export function skipStep(state: RunState, index: number): void {
+  const step = state.steps[index];
+  step.status = StepStatus.Skipped;
+  step.result = undefined;
+  step.error = undefined;
+  step.finishedAt = now();
+  state.currentStep = index + 1;
+  state.status =
+    state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
 }
 
 // Record a provider failure: the step errors and the run halts in error.

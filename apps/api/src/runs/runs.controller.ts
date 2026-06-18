@@ -9,7 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import type { Asset as AssetModel, Run as RunModel, User } from '@lyra/shared';
+import type { Asset as AssetModel, Run as RunModel, StepCondition, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
@@ -77,6 +77,7 @@ export class RunsController {
           model: s.model,
           mode: s.mode,
           fanOut: s.fanOut,
+          condition: s.condition as StepCondition | undefined,
         })),
       },
       user.id,
@@ -114,6 +115,7 @@ export class RunsController {
           model: s.model,
           mode: s.mode,
           fanOut: s.fanOut,
+          condition: s.condition as StepCondition | undefined,
         })),
       },
       user.id,

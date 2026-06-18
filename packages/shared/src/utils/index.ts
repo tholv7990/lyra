@@ -1,4 +1,5 @@
 import { MediaType, Role, ProjectStatus, ProjectShare } from '../enums';
+import type { StepCondition } from '../models';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 import { MEDIA_ALLOWED_EXT, MEDIA_ALLOWED_MIME } from '../constants/media';
 
@@ -51,6 +52,43 @@ export function fillPrompt(
     if (v) out = out.split(`{${key}}`).join(v);
   }
   return out;
+}
+
+// Evaluate a step's guard condition against the run's variables. Returns whether
+// the step should RUN (true); a false result means the step is SKIPPED. String
+// comparisons are case-insensitive + trimmed; gt/lt parse numbers (a non-number
+// yields NaN, so the comparison is false → the step is skipped).
+export function evalCondition(
+  cond: StepCondition,
+  vars: Record<string, string | undefined>,
+): boolean {
+  const left = (vars[cond.variable] ?? '').trim();
+  const right = (cond.value ?? '').trim();
+  const lc = left.toLowerCase();
+  const rc = right.toLowerCase();
+  switch (cond.op) {
+    case 'exists':
+      return left !== '';
+    case 'empty':
+      return left === '';
+    case 'eq':
+      return lc === rc;
+    case 'ne':
+      return lc !== rc;
+    case 'contains':
+      return right !== '' && lc.includes(rc);
+    case 'gt':
+      return toFiniteNumber(left) > toFiniteNumber(right);
+    case 'lt':
+      return toFiniteNumber(left) < toFiniteNumber(right);
+    default:
+      return true;
+  }
+}
+
+function toFiniteNumber(s: string): number {
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : NaN;
 }
 
 // Resolve a step's run-time chaining placeholders: {input} = the previous step's

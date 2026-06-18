@@ -30,6 +30,7 @@ export enum StepStatus {
   Queued = 'queued',
   Running = 'running',
   Waiting = 'waiting',
+  Skipped = 'skipped', // guard condition not met — step bypassed, run continued
   Done = 'done',
   Error = 'error',
 }

@@ -3,6 +3,7 @@ import type {
   Step,
   RunStatus,
   StepStatus,
+  StepCondition,
   StepMode,
   StepKey,
   UserRef,
@@ -24,6 +25,13 @@ function toStep(s: RunStep): Step {
     model: s.model,
     prompt: s.prompt,
     fanOut: s.fanOut ? { over: s.fanOut.over, itemVar: s.fanOut.itemVar } : undefined,
+    condition: s.condition
+      ? {
+          variable: s.condition.variable,
+          op: s.condition.op as StepCondition['op'],
+          value: s.condition.value,
+        }
+      : undefined,
     result: s.result,
     assetIds: s.assetIds,
     usage: s.usage,

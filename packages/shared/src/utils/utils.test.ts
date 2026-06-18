@@ -3,6 +3,7 @@ import {
   canViewProject,
   canEditProject,
   canManageKeys,
+  evalCondition,
   fillPrompt,
   resolveStepRefs,
   promptVarsForStep,
@@ -300,5 +301,32 @@ describe('model catalog', () => {
     expect(looksLikeModelId('GPT-5.5 Pro')).toBe(false);
     expect(looksLikeModelId('DeepSeek')).toBe(false);
     expect(looksLikeModelId('')).toBe(false);
+  });
+});
+
+describe('evalCondition', () => {
+  const vars = { product: 'Runner X', stock: '12', empty: '', note: 'Hello World' };
+  it('eq / ne are case-insensitive + trimmed', () => {
+    expect(evalCondition({ variable: 'product', op: 'eq', value: 'runner x' }, vars)).toBe(true);
+    expect(evalCondition({ variable: 'product', op: 'ne', value: 'runner x' }, vars)).toBe(false);
+    expect(evalCondition({ variable: 'product', op: 'eq', value: 'Other' }, vars)).toBe(false);
+  });
+  it('contains', () => {
+    expect(evalCondition({ variable: 'note', op: 'contains', value: 'world' }, vars)).toBe(true);
+    expect(evalCondition({ variable: 'note', op: 'contains', value: 'bye' }, vars)).toBe(false);
+    // empty operand never matches
+    expect(evalCondition({ variable: 'note', op: 'contains', value: '' }, vars)).toBe(false);
+  });
+  it('exists / empty', () => {
+    expect(evalCondition({ variable: 'product', op: 'exists' }, vars)).toBe(true);
+    expect(evalCondition({ variable: 'empty', op: 'exists' }, vars)).toBe(false);
+    expect(evalCondition({ variable: 'missing', op: 'exists' }, vars)).toBe(false);
+    expect(evalCondition({ variable: 'empty', op: 'empty' }, vars)).toBe(true);
+    expect(evalCondition({ variable: 'product', op: 'empty' }, vars)).toBe(false);
+  });
+  it('gt / lt parse numbers; non-numbers never pass', () => {
+    expect(evalCondition({ variable: 'stock', op: 'gt', value: '5' }, vars)).toBe(true);
+    expect(evalCondition({ variable: 'stock', op: 'lt', value: '5' }, vars)).toBe(false);
+    expect(evalCondition({ variable: 'product', op: 'gt', value: '5' }, vars)).toBe(false);
   });
 });

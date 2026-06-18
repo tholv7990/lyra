@@ -17,6 +17,7 @@ export const STATUS_LABEL: Record<string, string> = {
   queued: 'Queued',
   running: 'Running',
   waiting: 'Awaiting approval',
+  skipped: 'Skipped',
   done: 'Done',
   error: 'Error',
 };

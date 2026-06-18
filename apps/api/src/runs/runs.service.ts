@@ -9,6 +9,7 @@ import {
   type Provider,
   type Run as RunModel,
   type Step,
+  type StepCondition,
   type StepMode,
 } from '@lyra/shared';
 import { Run, RunDocument } from './run.schema';
@@ -22,9 +23,12 @@ import { ProviderRegistry } from './providers/provider.registry';
 import type { StepRunOutput } from './providers/step-provider.interface';
 import {
   assertRunnable,
+  assertStepPosition,
   beginStep,
   completeStep,
   failStep,
+  skipStep,
+  shouldSkip,
   approveGateAt,
   stopRun,
   resetRun,
@@ -57,6 +61,7 @@ export interface PipelineRunInput {
     model: string;
     mode: StepMode;
     fanOut?: { over: string; itemVar?: string };
+    condition?: StepCondition;
   }[];
 }
 
@@ -93,6 +98,7 @@ export class RunsService extends BaseRepository<Run> {
         model: ps.model,
         mode: ps.mode,
         fanOut: ps.fanOut,
+        condition: ps.condition,
         status: StepStatus.Idle,
         // Store the raw template — project/custom/system vars and {input}/{step:Name}
         // resolve at run time from the run's variable snapshot + prior outputs.
@@ -259,6 +265,12 @@ export class RunsService extends BaseRepository<Run> {
   async runStep(doc: RunDocument, index: number, actorId: string) {
     const present = await this.keysPresent(doc.workspaceId);
     const state = toState(doc);
+    // A step whose guard condition fails is skipped — no provider call, no key.
+    if (state.steps[index] && shouldSkip(state.steps[index], doc.variables ?? {})) {
+      this.guard(() => assertStepPosition(state, index));
+      skipStep(state, index);
+      return this.persist(doc, state, actorId);
+    }
     this.guard(() => assertRunnable(state, index, present));
     beginStep(state, index);
     try {
@@ -300,6 +312,11 @@ export class RunsService extends BaseRepository<Run> {
     const state = toState(doc);
     while (state.status === 'idle' && state.currentStep < state.steps.length) {
       const index = state.currentStep;
+      // Skip a step whose guard condition fails, then continue with the next.
+      if (shouldSkip(state.steps[index], doc.variables ?? {})) {
+        skipStep(state, index);
+        continue;
+      }
       if (isLocked(state.steps[index], present)) break;
       beginStep(state, index);
       try {

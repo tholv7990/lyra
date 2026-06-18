@@ -2,6 +2,7 @@ import type {
   Pipeline as PipelineModel,
   PipelineStep,
   PipelineVariable,
+  StepCondition,
   UserRef,
 } from '@lyra/shared';
 import type { PipelineDocument } from './pipeline.schema';
@@ -27,6 +28,13 @@ export function toPipeline(
         model: s.model,
         mode: s.mode,
         fanOut: s.fanOut ? { over: s.fanOut.over, itemVar: s.fanOut.itemVar } : undefined,
+        condition: s.condition
+          ? {
+              variable: s.condition.variable,
+              op: s.condition.op as StepCondition['op'],
+              value: s.condition.value,
+            }
+          : undefined,
       }),
     ),
     variables: (p.variables ?? []).map(

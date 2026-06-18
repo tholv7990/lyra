@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   MaxLength,
@@ -14,12 +15,16 @@ import {
   StepMode,
   TAG_MAX,
   TAG_MAX_LEN,
+  type ConditionOp,
   type CreatePipelineDto,
   type FanOutConfig,
   type PipelineStepInput,
   type PipelineVariableInput,
+  type StepCondition,
   type UpdatePipelineDto,
 } from '@lyra/shared';
+
+const CONDITION_OPS: ConditionOp[] = ['eq', 'ne', 'contains', 'exists', 'empty', 'gt', 'lt'];
 
 export class FanOutBody implements FanOutConfig {
   @IsString()
@@ -29,6 +34,19 @@ export class FanOutBody implements FanOutConfig {
   @IsOptional()
   @IsString()
   itemVar?: string;
+}
+
+export class ConditionBody implements StepCondition {
+  @IsString()
+  @MinLength(1)
+  variable!: string;
+
+  @IsIn(CONDITION_OPS)
+  op!: ConditionOp;
+
+  @IsOptional()
+  @IsString()
+  value?: string;
 }
 
 export class PipelineVariableBody implements PipelineVariableInput {
@@ -75,6 +93,11 @@ export class PipelineStepBody implements PipelineStepInput {
   @ValidateNested()
   @Type(() => FanOutBody)
   fanOut?: FanOutBody;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ConditionBody)
+  condition?: ConditionBody;
 }
 
 export class CreatePipelineBody implements CreatePipelineDto {

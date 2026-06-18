@@ -4360,6 +4360,7 @@
 .rn-dot.status-done { background: #2da44e; }
 .rn-dot.status-error { background: var(--danger); }
 .rn-dot.status-waiting { background: #d4a72c; }
+.rn-dot.status-skipped { background: var(--ink-tertiary); }
 .rn-dot.status-queued { background: var(--primary); }
 .rn-dot.status-running {
   width: 14px;
@@ -6308,6 +6309,10 @@
 .badge.status-error {
   color: var(--danger);
   border-color: rgba(229, 72, 77, 0.3);
+}
+.badge.status-skipped {
+  color: var(--ink-subtle);
+  border-color: var(--hairline);
 }
 
 /* ===== Workbench steps ===== */

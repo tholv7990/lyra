@@ -113,6 +113,17 @@ export interface FanOutConfig {
   itemVar?: string; // token for the current item (default 'item')
 }
 
+export type ConditionOp = 'eq' | 'ne' | 'contains' | 'exists' | 'empty' | 'gt' | 'lt';
+
+// A guard condition on a step: evaluated against the run's variables at run time.
+// If it fails, the step is SKIPPED (no provider call) and the run continues. This
+// is the linear, no-DAG form of branching — "run this step only when …".
+export interface StepCondition {
+  variable: string; // run-variable key to test (e.g. 'product', 'in_stock')
+  op: ConditionOp;
+  value?: string; // operand (omit for exists/empty)
+}
+
 export interface Step {
   index: number;
   key?: StepKey; // fixed pipeline only; composable pipeline steps omit it
@@ -124,6 +135,7 @@ export interface Step {
   model: string;
   prompt: string;
   fanOut?: FanOutConfig; // when set, the step maps over a run collection
+  condition?: StepCondition; // guard — skip the step when it fails
   result?: string;
   assetIds?: string[];
   usage?: { tokens?: number; costUsd?: number };
@@ -266,6 +278,7 @@ export interface PipelineStep {
   model: string;
   mode: StepMode;
   fanOut?: FanOutConfig; // map this step over a run collection (parallel, N items)
+  condition?: StepCondition; // guard — skip this step when it fails
 }
 
 // A user-defined variable for a pipeline. Any step prompt can reference it as

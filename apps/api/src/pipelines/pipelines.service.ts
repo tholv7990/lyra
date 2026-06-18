@@ -51,6 +51,13 @@ export class PipelinesService extends BaseRepository<Pipeline> {
       const fanOut = s.fanOut?.over?.trim()
         ? { over: s.fanOut.over.trim(), itemVar: s.fanOut.itemVar?.trim() || undefined }
         : undefined;
+      const condition = s.condition?.variable?.trim()
+        ? {
+            variable: s.condition.variable.trim(),
+            op: s.condition.op,
+            value: s.condition.value?.trim() || undefined,
+          }
+        : undefined;
       return {
         id: s.id || randomUUID(),
         name: s.name,
@@ -59,6 +66,7 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         model: s.model,
         mode: s.mode,
         fanOut,
+        condition,
       };
     });
   }

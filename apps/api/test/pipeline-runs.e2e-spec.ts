@@ -256,4 +256,34 @@ describe('Pipeline runs (e2e)', () => {
     ).body;
     expect(run.steps[0].prompt).toBe('');
   });
+
+  it('skips a step whose guard fails, runs one whose guard holds', async () => {
+    const promptId = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Cond', content: 'Brand {product}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    // project (set in beforeAll) has variable product = 'Runner X'
+    const pipelineId = await makePipeline([
+      newStep({ name: 'Maybe', promptId, condition: { variable: 'product', op: 'eq', value: 'Nope' } }),
+      newStep({ name: 'Always', promptId, condition: { variable: 'product', op: 'exists' } }),
+    ]);
+    const run = (
+      await http()
+        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+        .set(auth(token))
+        .expect(201)
+    ).body;
+    expect(run.steps[0].condition).toEqual({ variable: 'product', op: 'eq', value: 'Nope' });
+
+    const done = (
+      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+    ).body;
+    expect(done.status).toBe('done');
+    expect(done.steps[0].status).toBe('skipped'); // product !== 'Nope'
+    expect(done.steps[1].status).toBe('done'); // product exists
+    expect(done.steps[1].result).toContain('Brand Runner X');
+  });
 });

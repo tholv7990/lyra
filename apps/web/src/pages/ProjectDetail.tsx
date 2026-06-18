@@ -31,6 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
   running: 'Running',
   waiting: 'Awaiting approval',
   awaiting_gate: 'Awaiting approval',
+  skipped: 'Skipped',
   done: 'Done',
   error: 'Error',
 };

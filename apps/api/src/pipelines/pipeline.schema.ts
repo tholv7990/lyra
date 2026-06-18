@@ -16,6 +16,10 @@ export class PipelineStepItem {
   // When set, this step maps its prompt over a named run collection (parallel).
   @Prop({ type: Object })
   fanOut?: { over: string; itemVar?: string };
+
+  // Guard condition — the step is skipped when it fails.
+  @Prop({ type: Object })
+  condition?: { variable: string; op: string; value?: string };
 }
 const PipelineStepItemSchema = SchemaFactory.createForClass(PipelineStepItem);
 
