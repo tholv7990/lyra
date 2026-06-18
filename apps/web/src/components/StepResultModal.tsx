@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
+import { XIcon } from '../layout/icons';
 
 // One past execution of this step (per-run history). Assets are fetched lazily
 // when a version is selected; only the text/status travel in the list.
@@ -140,7 +141,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
           <div className="srm-meta">
             {provider && <span className="srm-pm">{provider} · {step.model}</span>}
             <button type="button" className="srm-x" onClick={onClose} aria-label={t('common.close')}>
-              ×
+              <XIcon width={15} height={15} />
             </button>
           </div>
         </div>

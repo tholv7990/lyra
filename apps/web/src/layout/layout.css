@@ -2259,9 +2259,9 @@
   border-color: rgba(0, 0, 0, 0.1);
 }
 .badge.vis-shared {
-  color: #0a6ed1;
-  background: rgba(10, 132, 255, 0.1);
-  border-color: rgba(10, 132, 255, 0.25);
+  color: var(--info);
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+  border-color: color-mix(in srgb, var(--info) 25%, transparent);
 }
 .badge.vis-workspace {
   color: #1f9d57;
@@ -2269,9 +2269,9 @@
   border-color: rgba(45, 164, 78, 0.28);
 }
 .badge.step-count {
-  color: #6a6a76;
-  background: #f7f7f9;
-  border-color: rgba(0, 0, 0, 0.1);
+  color: var(--ink-muted);
+  background: var(--surface-1);
+  border-color: var(--hairline-strong);
 }
 
 /* ===== Confirm dialog ===== */
@@ -3052,14 +3052,14 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #6f6bb8;
+  color: var(--ink-muted);
   cursor: pointer;
   justify-self: center;
 }
 
 .prow-eye:hover {
-  background: transparent;
-  color: #5852a3;
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .prow-meta {
@@ -3168,14 +3168,14 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #0a6ed1;
+  color: var(--ink-muted);
   cursor: pointer;
 }
 
 .prow-chat:hover {
   border-color: transparent;
-  background: transparent;
-  color: #075aaa;
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .prow-open {
@@ -3186,14 +3186,14 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #0a6ed1;
+  color: var(--ink-muted);
   cursor: pointer;
 }
 
 .prow-open:hover {
   border-color: transparent;
-  background: transparent;
-  color: #075aaa;
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .prow-edit-action {
@@ -3204,14 +3204,14 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #6f6bb8;
+  color: var(--ink-muted);
   cursor: pointer;
 }
 
 .prow-edit-action:hover {
   border-color: transparent;
-  background: transparent;
-  color: #5852a3;
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .prow-delete {
@@ -3227,8 +3227,8 @@
 }
 
 .prow-delete:hover {
-  border-color: rgba(229, 72, 77, 0.16);
-  background: rgba(229, 72, 77, 0.1);
+  border-color: color-mix(in srgb, var(--danger) 16%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
   color: var(--danger);
 }
 
@@ -4978,8 +4978,8 @@
   background: #fdf1f1;
 }
 .run-error-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.run-error-main strong { color: #b42318; font-size: 14px; }
-.run-error-main span { color: #912018; font-size: 13px; word-break: break-word; }
+.run-error-main strong { color: var(--danger); font-size: 14px; }
+.run-error-main span { color: var(--danger); font-size: 13px; word-break: break-word; }
 .run-error-retry { flex-shrink: 0; }
 
 /* the deliverable — the last step's output */
@@ -5046,10 +5046,10 @@
   text-overflow: ellipsis;
 }
 .run-tl-status { font-size: 12px; color: var(--ink-muted); flex-shrink: 0; }
-.run-tl-status.st-error { color: #e5484d; font-weight: 500; }
-.run-tl-status.st-done { color: #2da44e; }
+.run-tl-status.st-error { color: var(--danger); font-weight: 500; }
+.run-tl-status.st-done { color: var(--success); }
 .run-tl-status.st-running,
-.run-tl-status.st-waiting { color: #b58a0c; }
+.run-tl-status.st-waiting { color: var(--warning); }
 .run-tl-meta {
   display: flex;
   gap: 10px;
@@ -6805,9 +6805,9 @@
   background: var(--primary-tint);
 }
 .mode-tag.fanout {
-  color: #0a6ed1;
-  border-color: rgba(10, 132, 255, 0.3);
-  background: rgba(10, 132, 255, 0.1);
+  color: var(--info);
+  border-color: color-mix(in srgb, var(--info) 30%, transparent);
+  background: color-mix(in srgb, var(--info) 10%, transparent);
 }
 .mode-tag.cond {
   color: #8957e5;
@@ -7085,16 +7085,20 @@
   white-space: nowrap;
 }
 .srm-x {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
   border: 0;
   background: transparent;
   cursor: pointer;
-  font-size: 22px;
-  line-height: 1;
   color: var(--ink-tertiary);
-  padding: 0 2px;
+  border-radius: var(--radius-md);
 }
 .srm-x:hover {
   color: var(--ink);
+  background: var(--surface-2);
 }
 
 .srm-versions {

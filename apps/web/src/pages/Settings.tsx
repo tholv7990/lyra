@@ -6,7 +6,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LanguageSelect, ThemeSegment } from '../components/PrefControls';
-import { CheckIcon, RefreshIcon, TrashIcon } from '../layout/icons';
+import { CheckIcon, RefreshIcon, XIcon } from '../layout/icons';
 
 // `keyUrl` points at each provider's API-key console so a new user can find
 // their key without leaving the flow. Image reuses the OpenAI key (no separate
@@ -230,7 +230,7 @@ export function Settings() {
                         </button>
                         {existing && (
                           <button className="icon-btn-danger" title="Remove key" onClick={() => setToRemove(p.id)}>
-                            <TrashIcon width={16} height={16} />
+                            <XIcon width={16} height={16} />
                           </button>
                         )}
                       </div>

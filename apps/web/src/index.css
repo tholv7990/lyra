@@ -24,6 +24,7 @@
   --danger: #e5484d;
   --success: #2da44e;
   --warning: #d4a72c;
+  --info: #0a84ff;
   /* Section accents — the Home hub tiles + the Get-started checklist. Saturated
      hues that read on both themes (used as the icon ink + a low-alpha tint). */
   --accent-chats: #f59e0b;
@@ -100,6 +101,7 @@
   --danger: #f0686d;
   --success: #3fb950;
   --warning: #e0b54a;
+  --info: #4c9dff;
   --disabled-bg: #26262d;
   --disabled-ink: rgba(235, 235, 245, 0.3);
   --surface-hover: rgba(255, 255, 255, 0.06);
