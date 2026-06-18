@@ -1,25 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Channel } from '@lyra/shared';
+import type { Channel, ConnectorCredentialInfo } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import './connectors.css';
 
 const GLYPH: Record<string, string> = {
-  tiktok: '♪', instagram: '◎', youtube: '▶', facebook: 'f', x: '𝕏',
+  tiktok: '♪', instagram: '◎', youtube: '▶', facebook: 'f', x: '𝕏', bluesky: '🦋', mastodon: '🐘',
 };
 const cls = (platform: string) => (GLYPH[platform] ? platform : 'generic');
 const glyph = (platform: string) => GLYPH[platform] ?? '◆';
 
-// Built-ins → Connections. Manage the Postiz API key + the channels connected
-// through Postiz; Cobalt (media import) is an infra-level status. All calls go via
-// the thin proxy (mock-backed until the microservice exists).
+// Built-ins → Connections. Manage the Postiz API key (stored encrypted, per
+// workspace) and view the channels connected in Postiz. Connecting/removing
+// channels happens in the Postiz UI (its public API can't), so we link out.
 export function Connections() {
   const { t } = useTranslation();
   const { current } = useWorkspace();
   const ws = current?.id;
 
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [cred, setCred] = useState<ConnectorCredentialInfo | null>(null);
   const [keyInput, setKeyInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,15 +28,14 @@ export function Connections() {
   const load = useCallback(async () => {
     if (!ws) return;
     try {
+      setCred(await connectorsApi.credentialStatus(ws));
       setChannels((await connectorsApi.channels(ws)).channels);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('connectors.error'));
     }
   }, [ws, t]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   async function act(fn: () => Promise<unknown>) {
     if (!ws) return;
@@ -57,16 +57,10 @@ export function Connections() {
       await load();
     });
 
-  const connect = () =>
+  const openPostiz = () =>
     void act(async () => {
       const { url } = await connectorsApi.connectLink(ws!, 'postiz');
       window.open(url, '_blank', 'noopener');
-    });
-
-  const remove = (id: string) =>
-    void act(async () => {
-      await connectorsApi.removeChannel(ws!, id);
-      await load();
     });
 
   return (
@@ -78,7 +72,12 @@ export function Connections() {
       <div className="cx-section">
         <div className="cx-sec-head">
           <span className="cx-sec-title">{t('connectors.publishing')}</span>
-          <span className="cx-badge-ok">● Postiz {t('connectors.connected')}</span>
+          <span className={cred?.connected ? 'cx-badge-ok' : 'cx-badge-off'}>
+            ● Postiz{' '}
+            {cred?.connected
+              ? `${t('connectors.connected')} ····${cred.last4 ?? ''}`
+              : t('connectors.notConnected')}
+          </span>
         </div>
 
         <div className="cx-keyrow">
@@ -87,13 +86,14 @@ export function Connections() {
             className="cx-input"
             type="password"
             value={keyInput}
-            placeholder="pos_…"
+            placeholder="postiz key…"
             onChange={(e) => setKeyInput(e.target.value)}
           />
           <button className="cx-btn" disabled={busy || !keyInput.trim()} onClick={saveKey}>
             {t('connectors.save')}
           </button>
         </div>
+        <p className="cx-note">{t('connectors.postizKeyHint')}</p>
 
         <div className="cx-label">{t('connectors.connectedChannels')}</div>
         <div className="cx-grid">
@@ -104,13 +104,10 @@ export function Connections() {
                 <div className="cx-name">{c.displayName}</div>
                 <div className="cx-plat">{c.platform}</div>
               </div>
-              <button className="cx-x" title={t('connectors.remove')} disabled={busy} onClick={() => remove(c.id)}>
-                ×
-              </button>
             </div>
           ))}
-          <button className="cx-add" disabled={busy} onClick={connect}>
-            ＋ {t('connectors.connectChannel')}
+          <button className="cx-add" disabled={busy} onClick={openPostiz}>
+            ＋ {t('connectors.manageInPostiz')} ↗
           </button>
         </div>
       </div>

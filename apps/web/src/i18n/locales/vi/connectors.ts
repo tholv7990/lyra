@@ -14,6 +14,10 @@ export default {
     'Tải media đã sẵn sàng. Cấu hình ở cấp workspace — không cần đăng nhập từng tài khoản. Dán liên kết trong Tải media để lấy video hoặc ảnh.',
   connected: 'đã kết nối',
   remove: 'Xóa',
+  notConnected: 'chưa kết nối',
+  manageInPostiz: 'Quản lý kênh trong Postiz',
+  postizKeyHint:
+    'Tạo khóa này trong Postiz của bạn (Settings → Public API). Kênh được kết nối bên trong Postiz, sau đó hiển thị ở đây.',
 
   // Publish composer
   publishTitle: 'Đăng bài',

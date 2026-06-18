@@ -14,6 +14,10 @@ export default {
     'Media import is ready. Configured at the workspace level — no per-account login. Paste a link in Import media to pull video or images.',
   connected: 'connected',
   remove: 'Remove',
+  notConnected: 'not connected',
+  manageInPostiz: 'Manage channels in Postiz',
+  postizKeyHint:
+    'Generate this in your Postiz instance (Settings → Public API). Channels are connected inside Postiz, then appear here.',
 
   // Publish composer
   publishTitle: 'Publish',
