@@ -11,8 +11,24 @@ The workbench SPA. Keep it thin: no business logic in components, server is the 
 
 ## UI / design
 
-- Honor the tokens in [docs/lyra-design-system.md](../../docs/lyra-design-system.md): pure-black canvas, single warm orange accent (`#FF6B1A`), pill CTAs with the orange glow, 18px card radii, Inter with negative display tracking. Orange is scarce — brand mark, primary CTA, focus, active only.
-- The `frontend-design` plugin is installed; pair it with the design-system doc for new screens.
+- **The UI is LIGHT + Linear-style.** The dark "pure-black canvas / pill CTAs /
+  orange glow" spec in `docs/lyra-design-system.md` is **superseded** — do not
+  follow it. The live system is:
+  - **Tokens:** `src/index.css` `:root` (what components read; full
+    `[data-theme=dark]` overrides) + `src/styles/tokens.css` (Tailwind `@theme`
+    layer). Always style via `var(--…)` tokens — never hardcode hex/px. Use
+    `--ink`/`--ink-muted`, `--surface-1..4`, `--hairline`, `--primary`,
+    `--success`/`--warning`/`--danger`, `--accent-*`, `--radius-*`, `--text-*`,
+    `--shadow-*`. New status/section colors belong in the token block (and the
+    dark block), not inline.
+  - **Spec:** [docs/lyra-linear-audit.md](../../docs/lyra-linear-audit.md) — Linear's
+    geometry/type/elevation measured from Figma, and how Lyra matches it (light +
+    orange `#FF6B1A`). `scripts/figma-mcp.sh` re-pulls specs from the Figma MCP.
+  - Orange is scarce — brand mark, primary CTA, focus, active only.
+  - **i18n:** all user-facing copy goes through `t('…')` with keys in
+    `src/i18n/locales/{en,vi}/*` — add BOTH locales.
+- The `frontend-design` plugin is installed; pair it with `lyra-linear-audit.md`
+  (not the superseded dark doc) for new screens.
 
 ## Build & test
 

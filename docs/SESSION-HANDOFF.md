@@ -1,3 +1,66 @@
+# Session handoff — June 19, 2026 (overnight) — 🎨 UX redesign pass started
+
+> **You said "redesign to follow Linear + make it simple to use" then went to
+> sleep ("follow your recommendation, no need to ask").** I did the part that
+> needs neither the gated plugins nor Figma. The **e2e is still PAUSED** (your
+> call — services left running, resume map below). **Branch `dev`: 4 new
+> unpushed commits on top of the publish-v2 work. Nothing pushed.**
+
+## ▶ What shipped overnight (4 commits — full plan: docs/superpowers/specs/2026-06-19-lyra-ux-redesign-plan.md)
+- `b47c782` **token consistency** — `--warning` + `--accent-*` tokens; run dots /
+  flow borders / "done" badge now read `--success`/`--warning`; deduped the 3
+  `STATUS_COLOR` maps; Home tile accents tokenized. **Fixes a dark-mode bug**
+  (draft/public badge text was too dark on dark).
+- `22473ad` **Home "Get started" onboarding** (headline) — dismissible checklist
+  above the hub: keys → prompt → pipeline → project (the order *is* the mental
+  model). Progress bar, done-checks, primary CTA on the first incomplete step.
+  Pure logic unit-tested. **This is the #1 UX-audit gap, now closed.**
+- `ed559e5` **Settings "Get a key ↗" links** — deep-links to each provider's key
+  console; completes onboarding step 1.
+- docs commit — UX-redesign plan + fixed the stale `apps/web/CLAUDE.md` (it still
+  pointed at the superseded dark design doc).
+
+Web gate green every commit (`type-check`, `lint`, **38 tests**, `build`). The
+`:5173` dev server HMR'd it live → **dev.getlyras.app already shows the new Home
+onboarding**. Toggle dark mode to see the badge-contrast fix.
+
+## ▶ To finish the redesign the way you asked (needs YOU)
+1. Install the design skills (I can't run `/plugin`): `taste-skill` + `impeccable`
+   (commands below in "3 Claude plugins").
+2. Connect a **Figma MCP** (or hand me Linear refs). Bridge already exists:
+   `scripts/figma-mcp.sh`. Then I run the full per-screen pass, Figma-validated.
+3. Decide two product-naming calls I left alone: rename "Chats"? disambiguate the
+   "Draft/Public" labels? (See the plan doc.)
+
+---
+
+# Session handoff — June 19, 2026 (⏸️ E2E ON HOLD — resume here)
+
+> **Postiz publish v2 is BUILT, reviewed, gated, and API-verified. Only the live-post e2e is paused mid-way.** Branch **dev**: **11 unpushed commits** (`135408a..4169442`, publish v2 + docs), local only — **nothing pushed**. Commit/push only when the user asks. Never paste secrets in chat.
+
+## ▶ What "keep going" means now: finish the publish v2 live-post e2e
+Build is done (see "Publish v2" below). The **live Bluesky post** is the last unverified step.
+
+**Environment is left RUNNING (resume instantly):**
+- **Postiz** `:5000` — self-hosted, **pinned `v2.11.3`** in `docker-compose.yml` (UNCOMMITTED edit; `:latest`=v2.12+ hard-requires a Temporal server the template lacks → backend crashes on `TemporalRegister.onModuleInit` `ECONNREFUSED ::1:7233`). Public API base = **`http://localhost:5000/api`** (→ `/api/public/v1/...`).
+- **connectors-service** — run **locally** (not docker): `PORT=9100 CONNECTORS_SERVICE_TOKEN=e2e-test-token-local POSTIZ_API_URL=http://localhost:5000/api POSTIZ_PUBLIC_URL=http://localhost:5000 node apps/connectors-service/dist/main.js`.
+- **Lyra api** `:3001` — **REAL mode**: `apps/api/.env` got `CONNECTORS_SERVICE_URL=http://localhost:9100` + `CONNECTORS_SERVICE_TOKEN=e2e-test-token-local` (UNCOMMITTED; comment out to restore mock mode). Web `:5173` + mongo up.
+- ✅ **Verified Steps 1–3:** Postiz public API works (401 w/o key), connectors-service↔Postiz wired + guards pass, api real-mode key-gating confirmed (`GET channels` no-key → friendly 400). **Finding (follow-up):** connectors-service surfaces a bad Postiz key as a generic **500** (should be a clean 4xx); upstream body is NOT leaked.
+
+**▶ Remaining (Steps 4–5, needs the user):** create Postiz admin at `localhost:5000/auth` (LOCAL account, not postiz.com) → connect a **Bluesky** channel (handle + app-password) → copy **Settings → Public API** key → paste in **Lyra → Connections** (browser, not chat) → then publish: `GET credentials`→connected, `GET channels`→real Bluesky channel, `POST publish`→capture live post URL. Tester login: `tholv.7990@gmail.com` (⚠️ user pasted pw in chat — **remind them to rotate**), workspace `6a309b8efe9ec7c83515dad5`.
+
+## Open threads to raise tomorrow
+- **Per-project channels (design decision):** user wants social channels scoped to **projects**, not workspace. Agreed model: **connect once = workspace "account pool"; each project selects its subset** (`project.channels`); project-scoped publish; dovetails with the deferred publish-as-pipeline-step. Brainstorm + build AFTER the e2e. See [[per-project-channels-model]].
+- **3 Claude plugins to install (user wants these — vetted real + benign):** "taste-skill" and "impeccable" were NOT compliments — they're real repos. All three are `.claude-plugin` marketplaces; install is **USER-typed `/plugin` slash commands** (I can't run them; it's the path-safe, conflict-free method — a manual file-copy half-breaks impeccable's `node .claude/skills/impeccable/scripts/*.mjs` relative paths). Commands:
+    - **impeccable** (pbakaus, frontend design/audit skill, Apache-2.0): `/plugin marketplace add pbakaus/impeccable` → `/plugin install impeccable@impeccable`
+    - **taste-skill** (leonxlnx, "anti-slop frontend" design skills): `/plugin marketplace add leonxlnx/taste-skill` → `/plugin install taste-skill@taste-skill`
+    - **headroom** (chopratejas, context-compression *startup hooks* — changes Claude Code's context handling; likely needs `pip install "headroom-ai[all]"`, python3.13/pip present): `/plugin marketplace add chopratejas/headroom` → `/plugin install headroom@headroom-marketplace`. ⚠️ behavior-altering — install with the user present.
+
+## Publish v2 (DONE — the 11 commits)
+connectors-service `publish/` module (Postiz client+mappers, JobStore, PublishService partial-failure, controller) → shared `ConnectorCredentialInfo` → api encrypted per-workspace `ConnectorCredential` store + real credentials routes + `X-Connector-Key` forwarding → web Connections (real key state + "Manage in Postiz") → compose wiring. Spec/plan: `docs/superpowers/{specs,plans}/2026-06-18-connectors-microservice-publish*.md`. Gate GREEN 16/16. Final review: general=READY; **security review found 2 Important (SSRF on media fetch + Postiz error-leak) → FIXED (`safeFetch` + sanitized errors) → re-review SECURE TO MERGE**.
+
+---
+
 # Session handoff — June 18, 2026
 
 > Open this file first in the next session. Branch: **dev**.
