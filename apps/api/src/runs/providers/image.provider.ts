@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AssetStorageService } from '../../assets/asset-storage.service';
 import type { StepProvider, StepRunContext, StepRunOutput } from './step-provider.interface';
 
 const IMAGES_URL = 'https://api.openai.com/v1/images/generations';
@@ -11,6 +12,8 @@ const MAX_PROMPT = 4000;
 // object storage. (Cloudflare R2 is the proper later path for large media.)
 @Injectable()
 export class ImageStepProvider implements StepProvider {
+  constructor(private readonly storage: AssetStorageService) {}
+
   async execute(ctx: StepRunContext): Promise<StepRunOutput> {
     if (!ctx.apiKey) {
       throw new Error('Image generation needs the workspace OpenAI key — set it in Settings.');
@@ -43,11 +46,13 @@ export class ImageStepProvider implements StepProvider {
       throw new Error('Image generation returned no image.');
     }
 
+    // Store durably (R2 when configured) — returns an R2 URL or an inline data: URL.
+    const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.png`;
+    const url = await this.storage.store(Buffer.from(b64, 'base64'), 'image/png', key);
+
     return {
       result: `Generated 1 image with ${model}.`,
-      assets: [
-        { type: 'image', url: `data:image/png;base64,${b64}`, meta: { role: 'generated', model } },
-      ],
+      assets: [{ type: 'image', url, meta: { role: 'generated', model } }],
       usage: { tokens: 0 },
     };
   }
