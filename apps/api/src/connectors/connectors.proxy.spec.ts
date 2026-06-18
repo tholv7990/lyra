@@ -1,4 +1,4 @@
-import { ConnectorsProxy } from './connectors.proxy';
+import { ConnectorsProxy, rewriteDownload } from './connectors.proxy';
 
 function proxy(url?: string) {
   const config = { get: (k: string) => (k === 'CONNECTORS_SERVICE_URL' ? url : 'tok') };
@@ -46,5 +46,16 @@ describe('ConnectorsProxy (forward mode — service URL set)', () => {
     expect(init.headers['X-Workspace-Id']).toBe('ws1');
     expect(init.headers['X-User-Id']).toBe('u1');
     expect(init.headers.Authorization).toContain('Bearer');
+  });
+});
+
+describe('rewriteDownload', () => {
+  it('rewrites service fileIds to Lyra file URLs', () => {
+    const out = rewriteDownload('ws1', { items: [{ fileId: 'abc', filename: 'v.mp4' }] });
+    expect(out.items[0]).toEqual({ url: '/workspaces/ws1/connectors/files/abc', filename: 'v.mp4' });
+  });
+  it('passes through absolute urls (mock mode)', () => {
+    const out = rewriteDownload('ws1', { items: [{ url: 'https://example.com/x', filename: 'm.zip' }] });
+    expect(out.items[0]).toEqual({ url: 'https://example.com/x', filename: 'm.zip' });
   });
 });

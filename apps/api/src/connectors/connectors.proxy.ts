@@ -3,6 +3,20 @@ import { ConfigService } from '@nestjs/config';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
+// Map the service's download response (fileId-based) to browser-facing Lyra file
+// URLs; leave absolute urls (mock mode) untouched.
+export function rewriteDownload(
+  workspaceId: string,
+  body: { items?: { fileId?: string; url?: string; filename: string }[] },
+): { items: { url: string; filename: string }[] } {
+  const items = (body.items ?? []).map((it) =>
+    it.fileId
+      ? { url: `/workspaces/${workspaceId}/connectors/files/${it.fileId}`, filename: it.filename }
+      : { url: it.url ?? '', filename: it.filename },
+  );
+  return { items };
+}
+
 // Thin proxy: forward to the connectors microservice when CONNECTORS_SERVICE_URL is
 // set, else return deterministic mock data so the UI works with no microservice
 // (env-gated, mirroring the R2 inline-vs-R2 fallback). No connector logic lives here.
@@ -32,6 +46,14 @@ export class ConnectorsProxy {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     return (await res.json()) as Record<string, unknown>;
+  }
+
+  async streamFile(path: string): Promise<{ status: number; headers: Headers; body: ReadableStream | null }> {
+    const base = this.config.get<string>('CONNECTORS_SERVICE_URL');
+    if (!base) return { status: 404, headers: new Headers(), body: null }; // mock mode: no real files
+    const token = this.config.get<string>('CONNECTORS_SERVICE_TOKEN') ?? '';
+    const res = await fetch(`${base.replace(/\/+$/, '')}/${path}`, { headers: { Authorization: `Bearer ${token}` } });
+    return { status: res.status, headers: res.headers, body: res.body };
   }
 
   // Deterministic mock for the env-gated fallback (no microservice running).
