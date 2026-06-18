@@ -730,6 +730,13 @@
   max-width: 260px;
 }
 
+/* Right-side actions in the Pipelines section header (Run all · + Add pipeline). */
+.proj-sec-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Attach-pipeline picker anchored under the "+ Add pipeline" button. */
 .proj-add-pipe {
   position: relative;

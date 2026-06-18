@@ -195,6 +195,18 @@ export function ProjectDetail() {
     else void startRun(pipeline.id, {});
   };
 
+  // Composition: launch every assigned pipeline at once, each in the project's
+  // context. Pipelines needing per-run inputs use defaults — run them individually
+  // for custom variables / fan-out items.
+  const runAllPipelines = () =>
+    act(async () => {
+      const created = await api<Run[]>(`/projects/${id}/runs/all`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      if (created.length > 0) setRuns((r) => [...created, ...r]);
+    });
+
   const openRun = (r: Run) => {
     setRun(r);
     setRunView(true);
@@ -350,6 +362,18 @@ export function ProjectDetail() {
 
             <div className="section-head proj-sec">
               <h2>Pipelines</h2>
+              <div className="proj-sec-actions">
+              {assigned.length > 0 && (
+                <button
+                  className="btn-ghost"
+                  style={{ width: 'auto', marginTop: 0 }}
+                  disabled={busy}
+                  onClick={runAllPipelines}
+                  title="Launch every pipeline on this project, each in its context"
+                >
+                  ▶ Run all
+                </button>
+              )}
               {canEdit && unassigned.length > 0 && (
                 <div className="proj-add-pipe">
                   <button
@@ -372,6 +396,7 @@ export function ProjectDetail() {
                   )}
                 </div>
               )}
+              </div>
             </div>
             {assigned.length === 0 ? (
               <div className="prompt-empty">

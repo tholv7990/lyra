@@ -286,4 +286,28 @@ describe('Pipeline runs (e2e)', () => {
     expect(done.steps[1].status).toBe('done'); // product exists
     expect(done.steps[1].result).toContain('Brand Runner X');
   });
+
+  it('runs all of a project’s pipelines at once (composition)', async () => {
+    const promptId = (
+      await http()
+        .post(`/workspaces/${wsId}/prompts`)
+        .set(auth(token))
+        .send({ title: 'Comp', content: 'Brand {product}', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const pA = await makePipeline([newStep({ name: 'A', promptId })]);
+    const pB = await makePipeline([newStep({ name: 'B', promptId })]);
+    await http()
+      .patch(`/projects/${projectId}`)
+      .set(auth(token))
+      .send({ pipelines: [pA, pB] })
+      .expect(200);
+
+    const runs = (
+      await http().post(`/projects/${projectId}/runs/all`).set(auth(token)).send({}).expect(201)
+    ).body as { status: string; pipelineId: string }[];
+    expect(runs).toHaveLength(2);
+    expect(runs.every((r) => r.status === 'done')).toBe(true);
+    expect(runs.map((r) => r.pipelineId).sort()).toEqual([pA, pB].sort());
+  });
 });

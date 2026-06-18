@@ -146,7 +146,11 @@ prompts.
    linear, no DAG; engine + `evalCondition` + e2e + **builder condition editor**).
    Full True/False **routing** (a real DAG) is the larger follow-on.
 4. **Composition** — pipelines that seed/launch other pipelines (one product →
-   separate theme / offer / image / UGC / gift flows).
+   separate theme / offer / image / UGC / gift flows). *v1 landed*: a project
+   **"Run all"** (`POST /projects/:id/runs/all` + button) launches every assigned
+   pipeline at once in the project's context, each its own run + e2e. Richer forms
+   (named campaigns, per-pipeline inputs, dependencies, nested-step composition)
+   are the follow-on.
 5. **Source / crawl + research data feeds** — Discover stage (find winning
    product); AI ranks over real data, so the feeds are the work.
 6. **Action / Shopify + channel connectors + OAuth** — Store + Distribute stages

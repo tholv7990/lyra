@@ -15,9 +15,11 @@ import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
 import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from '../pipelines/pipelines.service';
+import type { PipelineDocument } from '../pipelines/pipeline.schema';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { AssetsService } from '../assets/assets.service';
 import { RunsService } from './runs.service';
+import type { PipelineRunInput } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
 import type { RunDocument } from './run.schema';
@@ -45,6 +47,36 @@ export class RunsController {
     private readonly assets: AssetsService,
   ) {}
 
+  // Build the run-creation input for a pipeline in a project's context — shared by
+  // the single-pipeline run and the "run all pipelines" composition endpoint.
+  private projectRunInput(
+    project: ProjectDocument,
+    pipeline: PipelineDocument,
+    body: RunPipelineBody,
+  ): PipelineRunInput {
+    return {
+      projectId: project._id.toString(),
+      workspaceId: project.workspaceId,
+      pipelineId: pipeline._id.toString(),
+      pipelineName: pipeline.name,
+      projectVariables: Object.fromEntries(
+        (project.variables ?? []).map((v) => [v.key, v.value]),
+      ),
+      note: pipeline.description ?? '',
+      variables: mergeCustomVars(pipeline.variables, body.variables),
+      collections: body.collections,
+      steps: pipeline.steps.map((s) => ({
+        name: s.name,
+        promptId: s.promptId,
+        provider: s.provider,
+        model: s.model,
+        mode: s.mode,
+        fanOut: s.fanOut,
+        condition: s.condition as StepCondition | undefined,
+      })),
+    };
+  }
+
   // Create a run by executing a composable pipeline in this project's context.
   @Post('projects/:id/pipelines/:pipelineId/runs')
   @UseGuards(ProjectAccessGuard)
@@ -59,30 +91,35 @@ export class RunsController {
       throw new NotFoundException('Pipeline not found');
     }
     const run = await this.runs.createForPipeline(
-      {
-        projectId: project._id.toString(),
-        workspaceId: project.workspaceId,
-        pipelineId: pipeline._id.toString(),
-        pipelineName: pipeline.name,
-        projectVariables: Object.fromEntries(
-          (project.variables ?? []).map((v) => [v.key, v.value]),
-        ),
-        note: pipeline.description ?? '',
-        variables: mergeCustomVars(pipeline.variables, body.variables),
-        collections: body.collections,
-        steps: pipeline.steps.map((s) => ({
-          name: s.name,
-          promptId: s.promptId,
-          provider: s.provider,
-          model: s.model,
-          mode: s.mode,
-          fanOut: s.fanOut,
-          condition: s.condition as StepCondition | undefined,
-        })),
-      },
+      this.projectRunInput(project, pipeline, body),
       user.id,
     );
     return this.runs.toView(run);
+  }
+
+  // Composition: launch every pipeline assigned to this project at once — one run
+  // each, seeded with the project's context (+ optional shared variables/collections),
+  // executed through to its first gate / completion. "One product → many flows."
+  @Post('projects/:id/runs/all')
+  @UseGuards(ProjectAccessGuard)
+  async createForAllPipelines(
+    @CurrentProject() project: ProjectDocument,
+    @Body() body: RunPipelineBody,
+    @CurrentUser() user: User,
+  ): Promise<RunModel[]> {
+    const out: RunModel[] = [];
+    for (const pipelineId of project.pipelines ?? []) {
+      const pipeline = await this.pipelines.findActiveById(pipelineId);
+      if (!pipeline || pipeline.workspaceId !== project.workspaceId || pipeline.steps.length === 0) {
+        continue; // skip dangling / cross-workspace / empty pipelines
+      }
+      const runDoc = await this.runs.createForPipeline(
+        this.projectRunInput(project, pipeline, body),
+        user.id,
+      );
+      out.push(await this.runs.runAll(runDoc, user.id));
+    }
+    return out;
   }
 
   // Test-run a pipeline from the builder — no project. {note} is filled from the
