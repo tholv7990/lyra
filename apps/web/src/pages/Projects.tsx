@@ -6,7 +6,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { PencilIcon, ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
+import { ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
 
 const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
@@ -56,6 +56,8 @@ export function Projects() {
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, { name: string; description: string }>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const wsId = current?.id;
 
@@ -126,6 +128,44 @@ export function Projects() {
       setError(err instanceof Error ? err.message : t('projects.deleteFailed'));
     } finally {
       setDeleting(false);
+    }
+  }
+
+  function draftFor(p: Project) {
+    return drafts[p.id] ?? { name: p.name, description: p.description ?? '' };
+  }
+
+  function setDraft(p: Project, patch: Partial<{ name: string; description: string }>) {
+    setDrafts((current) => ({
+      ...current,
+      [p.id]: { ...draftFor(p), ...patch },
+    }));
+  }
+
+  async function saveInline(p: Project) {
+    if (!canEdit(p) || savingId === p.id) return;
+    const draft = draftFor(p);
+    const name = draft.name.trim();
+    const description = draft.description;
+    if (!name) {
+      setDrafts((current) => ({ ...current, [p.id]: { name: p.name, description: p.description ?? '' } }));
+      return;
+    }
+    if (name === p.name && description === (p.description ?? '')) return;
+    setSavingId(p.id);
+    setError(null);
+    try {
+      const updated = await api<Project>(`/projects/${p.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name, description }),
+      });
+      setProjects((list) => list.map((item) => (item.id === updated.id ? updated : item)));
+      setDrafts((current) => ({ ...current, [updated.id]: { name: updated.name, description: updated.description ?? '' } }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('projects.saveFailed'));
+      setDrafts((current) => ({ ...current, [p.id]: { name: p.name, description: p.description ?? '' } }));
+    } finally {
+      setSavingId(null);
     }
   }
 
@@ -206,22 +246,65 @@ export function Projects() {
       ) : (
         <>
         <div className="ptable t-project">
-          {pageItems.map((p) => (
+          {pageItems.map((p) => {
+            const editable = canEdit(p);
+            const draft = draftFor(p);
+            return (
             <div
               className="prow"
               key={p.id}
             >
               <div className="prow-namecell">
-                <button
-                  type="button"
-                  className="prow-name"
-                  onClick={() => navigate(`/projects/${p.id}`)}
-                  title={p.name}
-                >
-                  <span className="nm">{p.name}</span>
-                </button>
+                {editable ? (
+                  <input
+                    className="prow-name prow-title-input"
+                    value={draft.name}
+                    disabled={savingId === p.id}
+                    aria-label={t('projects.namePlaceholder')}
+                    onChange={(e) => setDraft(p, { name: e.target.value })}
+                    onBlur={() => void saveInline(p)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                      if (e.key === 'Escape') {
+                        setDrafts((current) => ({ ...current, [p.id]: { name: p.name, description: p.description ?? '' } }));
+                        e.currentTarget.blur();
+                      }
+                    }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className="prow-name"
+                    onClick={() => navigate(`/projects/${p.id}`)}
+                    title={p.name}
+                  >
+                    <span className="nm">{p.name}</span>
+                  </button>
+                )}
                 <span className="prow-sniprow">
-                  <span className="snip">{p.description || t('projects.noDescription')}</span>
+                  {editable ? (
+                    <textarea
+                      className="prow-desc-input"
+                      value={draft.description}
+                      disabled={savingId === p.id}
+                      rows={2}
+                      placeholder={t('projects.descriptionPlaceholder')}
+                      aria-label={t('projects.descriptionLabel')}
+                      onChange={(e) => setDraft(p, { description: e.target.value })}
+                      onBlur={() => void saveInline(p)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setDrafts((current) => ({ ...current, [p.id]: { name: p.name, description: p.description ?? '' } }));
+                          e.currentTarget.blur();
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span className="snip">{p.description || t('projects.noDescription')}</span>
+                  )}
                 </span>
               </div>
               <span className="prow-status">
@@ -248,17 +331,6 @@ export function Projects() {
                 {canEdit(p) && (
                   <button
                     type="button"
-                    className="prow-edit-action"
-                    onClick={() => navigate(`/projects/${p.id}/edit`)}
-                    title={t('common.edit')}
-                    aria-label={`${t('common.edit')} ${p.name}`}
-                  >
-                    <PencilIcon width={14} height={14} />
-                  </button>
-                )}
-                {canEdit(p) && (
-                  <button
-                    type="button"
                     className="prow-delete"
                     onClick={() => setToDelete(p)}
                     title={t('common.delete')}
@@ -269,7 +341,8 @@ export function Projects() {
                 )}
               </span>
             </div>
-          ))}
+          );
+          })}
         </div>
         {totalPages > 1 && (
           <div className="pager">

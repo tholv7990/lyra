@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
+  labelColor,
   providerNeedsKey,
   keyProviderFor,
   ProjectStatus,
-  ProjectShare,
   StepMode,
   StepStatus,
   type ApiKeyInfo,
@@ -42,6 +42,32 @@ const STATUS_KEY: Record<string, string> = {
   error: 'run.status_error',
 };
 
+const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
+  [ProjectStatus.Draft]: 'projects.statusDraft',
+  [ProjectStatus.Public]: 'projects.statusPublic',
+};
+
+function fmtDate(iso: string) {
+  const parts = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).formatToParts(new Date(iso));
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
+  return [month, day, year].filter(Boolean).join(' ');
+}
+
+function initial(name?: string) {
+  return name?.trim().charAt(0).toUpperCase() || '?';
+}
+
+function avatarStyle(name?: string): CSSProperties {
+  const c = labelColor(name || 'User', []);
+  return { color: c, background: `${c}16` };
+}
+
 // Distinct collection names the pipeline's fan-out steps map over.
 function fanOutNames(p: Pipeline): string[] {
   return [...new Set(p.steps.filter((s) => s.fanOut?.over).map((s) => s.fanOut!.over))];
@@ -51,10 +77,6 @@ export function ProjectDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const shareLabel = (p: Project): string => {
-    if (p.status !== ProjectStatus.Public) return t('projects.statusDraft');
-    return p.shared === ProjectShare.All ? t('projects.shareEveryone') : t('projects.shareChosen');
-  };
   const statusLabel = (status: string): string =>
     STATUS_KEY[status] ? t(STATUS_KEY[status]) : status;
   const { user } = useAuth();
@@ -64,6 +86,8 @@ export function ProjectDetail() {
   const isMobile = useIsMobile();
   const modelLabel = (p: Provider, m: string) => catalog[p]?.find((o) => o.id === m)?.label ?? m;
   const [project, setProject] = useState<Project | null>(null);
+  const [nameDraft, setNameDraft] = useState('');
+  const [descriptionDraft, setDescriptionDraft] = useState('');
   const [closedPipes, setClosedPipes] = useState<Set<string>>(new Set());
   const togglePipe = (pid: string) =>
     setClosedPipes((s) => {
@@ -83,6 +107,7 @@ export function ProjectDetail() {
   const [adding, setAdding] = useState(false); // attach-pipeline picker open
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [savingMeta, setSavingMeta] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -109,6 +134,12 @@ export function ProjectDetail() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!project) return;
+    setNameDraft(project.name);
+    setDescriptionDraft(project.description ?? '');
+  }, [project?.id, project?.name, project?.description]);
 
   // Load the run's media whenever the run changes (e.g. after a step renders).
   useEffect(() => {
@@ -164,6 +195,42 @@ export function ProjectDetail() {
       setBusy(false);
     }
   }
+
+  async function saveProjectMeta(patch: Partial<Pick<Project, 'name' | 'description'>>) {
+    if (!id || !project || !canEdit || savingMeta) return;
+    setSavingMeta(true);
+    setError(null);
+    try {
+      const updated = await api<Project>(`/projects/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      });
+      setProject(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('projects.saveFailed'));
+      setNameDraft(project.name);
+      setDescriptionDraft(project.description ?? '');
+    } finally {
+      setSavingMeta(false);
+    }
+  }
+
+  const commitName = () => {
+    if (!project) return;
+    const next = nameDraft.trim();
+    if (!next) {
+      setNameDraft(project.name);
+      return;
+    }
+    if (next !== project.name) void saveProjectMeta({ name: next });
+  };
+
+  const commitDescription = () => {
+    if (!project) return;
+    if (descriptionDraft !== (project.description ?? '')) {
+      void saveProjectMeta({ description: descriptionDraft });
+    }
+  };
 
   const canEdit =
     !!user &&
@@ -378,28 +445,79 @@ export function ProjectDetail() {
           /* ---- Dashboard ---- */
           <>
             <div className="proj-head">
-              <div className="proj-head-top">
-                <p className="proj-product">
-                  {project.description || t('projects.noDescription')}
-                </p>
-                {canEdit && (
-                  <Link className="btn-ghost proj-edit" style={{ width: 'auto', marginTop: 0 }} to={`/projects/${project.id}/edit`}>
-                    {t('common.edit')}
-                  </Link>
+              <div className="proj-title-row">
+                {canEdit ? (
+                  <input
+                    className="proj-title-input"
+                    value={nameDraft}
+                    disabled={savingMeta}
+                    aria-label={t('projects.namePlaceholder')}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onBlur={commitName}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                      if (e.key === 'Escape') {
+                        setNameDraft(project.name);
+                        e.currentTarget.blur();
+                      }
+                    }}
+                  />
+                ) : (
+                  <h1 className="proj-title-static">{project.name}</h1>
+                )}
+              </div>
+              <div className="proj-desc-row">
+                {canEdit ? (
+                  <textarea
+                    className="proj-desc-input"
+                    value={descriptionDraft}
+                    disabled={savingMeta}
+                    rows={2}
+                    placeholder={t('projects.descriptionPlaceholder')}
+                    aria-label={t('projects.descriptionLabel')}
+                    onChange={(e) => setDescriptionDraft(e.target.value)}
+                    onBlur={commitDescription}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setDescriptionDraft(project.description ?? '');
+                        e.currentTarget.blur();
+                      }
+                    }}
+                  />
+                ) : (
+                  <p className="proj-product">{project.description || t('projects.noDescription')}</p>
                 )}
               </div>
               <div className="proj-meta">
-                <span className={`badge status-${project.status}`}>{shareLabel(project)}</span>
+                <span className={`badge status-${project.status}`}>{t(PROJECT_STATUS_KEY[project.status])}</span>
+                <span className="proj-summary-item">
+                  <strong>{assigned.length}</strong>
+                  {t('projects.pipelineCount', { count: assigned.length })}
+                </span>
+                <span className="proj-summary-item">
+                  <strong>{project.variables.length}</strong>
+                  {t('projects.variableCount', { count: project.variables.length })}
+                </span>
+                <span className="proj-summary-user" title={t('projects.createdByName', { name: project.createdBy.name })}>
+                  <span className="prow-updated-icon" style={avatarStyle(project.createdBy.name)} aria-hidden="true">
+                    {initial(project.createdBy.name)}
+                  </span>
+                </span>
                 <span className="dot">·</span>
                 <span>
                   {t('projects.createdByOn', {
-                    date: new Date(project.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                    date: fmtDate(project.createdAt),
                     name: project.createdBy.name,
                   })}
                 </span>
               </div>
             </div>
 
+            <div className="proj-vars-panel">
+              <div className="proj-vars-title">{t('projects.variablesLabel')}</div>
             {project.variables.length > 0 && (
               <div className="proj-vars-view">
                 {project.variables.map((v) => (
@@ -410,6 +528,15 @@ export function ProjectDetail() {
                 ))}
               </div>
             )}
+              {project.variables.length === 0 && (
+                <p className="proj-vars-empty-view">{t('projects.noVariables')}</p>
+              )}
+              {canEdit && (
+                <Link className="txt-btn proj-vars-edit" to={`/projects/${project.id}/edit`}>
+                  {t('projects.editVariables')}
+                </Link>
+              )}
+            </div>
 
             {error && <p className="error">{error}</p>}
 
