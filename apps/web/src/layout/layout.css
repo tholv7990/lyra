@@ -2219,7 +2219,7 @@
 }
 
 .badge {
-  font-size: 11px;
+  font-size: var(--text-micro);
   font-weight: 500;
   padding: 2px 8px;
   border-radius: 980px;
@@ -2964,7 +2964,7 @@
 }
 
 .ptable-head {
-  font-size: 10.5px;
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -3034,7 +3034,7 @@
 .prow-sniprow .snip {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--text-mini);
   color: var(--ink-muted);
   overflow: hidden;
   display: -webkit-box;
@@ -3118,7 +3118,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: var(--text-mini);
   color: var(--ink-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -3134,7 +3134,7 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font-size: 12.5px;
+  font-size: var(--text-mini);
   color: var(--ink-muted);
   white-space: nowrap;
 }
@@ -3286,8 +3286,23 @@
   min-height: 34px;
   resize: none;
   color: var(--ink-muted);
-  font-size: 12px;
+  font-size: var(--text-mini);
   line-height: normal;
+}
+
+/* The Projects list shows its name/description as inline-edit fields by default
+   (the other lists show static text + click-to-edit). The global iOS anti-zoom
+   rule bumps every <input>/<textarea> to 16px below 820px, which made these two
+   fields render LARGER than the equivalent static text (.nm 14px / .snip 12px)
+   on the Prompts/Pipelines lists. Pin them to the static-text sizes so all three
+   list pages match at every viewport width. */
+@media (max-width: 820px) {
+  .ptable.t-project .prow-title-input {
+    font-size: 14px !important;
+  }
+  .ptable.t-project .prow-desc-input {
+    font-size: var(--text-mini) !important;
+  }
 }
 
 .ptable.t-project .prow-title-input:hover,
