@@ -127,7 +127,11 @@ services:
       PORT: "9100"
       CONNECTORS_SERVICE_TOKEN: "change-me-shared-token"
       FILE_TTL_MS: "900000"
-    depends_on: []
+      JOB_TTL_MS: "900000"
+      POSTIZ_API_URL: "http://postiz:5000"
+      POSTIZ_PUBLIC_URL: "http://localhost:5000"
+    depends_on:
+      - postiz
 
 volumes:
   mongo_data:
