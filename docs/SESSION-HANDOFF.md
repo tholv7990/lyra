@@ -1,7 +1,35 @@
 # Session handoff — June 18, 2026
 
 > Open this file first in the next session. Branch: **dev**.
-> **Everything is committed** — working tree is clean, `origin/dev` is at `ff37844`. No uncommitted work, no active blocked task. Continue from the user's next request.
+> **Updated by Codex on June 18, 2026:** the working tree now has uncommitted UI/chat fixes plus unrelated run-rating planning files. Do **not** assume the old "`Everything is committed`" state. Continue from the user's next request, preserving uncommitted work you did not make.
+
+## Latest Codex changes after `ff37844`
+
+The user iterated on the prompt/pipeline/project UI and then asked for a specific chat bridge fix:
+
+- Prompt library **Open in chat** no longer auto-submits. It either opens an existing conversation history for that prompt, or opens `/chats` with the composer prefilled so the user manually sends.
+- Existing prompt history is found through `POST /workspaces/:id/conversations/prompt-history`.
+  - Primary match: `Conversation.originPromptId`.
+  - Legacy fallback: latest conversation where the first user message exactly equals the prompt content, for chats created before `originPromptId` was persisted.
+- New manual sends from a prompt draft carry `originPromptId`, so future opens return to the same history.
+- Browser verification: clicking **Open Finding cozyclaw competitor in chat** opened `http://localhost:5173/chats/6a339a93020dcefe1188339a` and displayed the existing user prompt plus assistant response instead of a blank draft or auto-submit.
+- Checks run green:
+  - `pnpm.cmd --filter @lyra/web test -- src/pages/Chats.test.ts src/pages/Prompts.test.ts`
+  - `pnpm.cmd --filter @lyra/shared build`
+  - `pnpm.cmd --filter @lyra/web type-check`
+  - `pnpm.cmd --filter @lyra/api type-check`
+  - `pnpm.cmd --filter @lyra/web lint`
+  - `pnpm.cmd --filter @lyra/api lint`
+  - `pnpm.cmd --filter @lyra/shared lint`
+
+Files changed for the chat bridge fix:
+- `apps/web/src/pages/Prompts.tsx`
+- `apps/web/src/pages/Chats.tsx`
+- `apps/web/src/pages/Chats.test.ts`
+- `apps/api/src/conversations/{conversations.controller.ts,conversations.service.ts,conversation.views.ts,dto/conversations.dto.ts}`
+- `packages/shared/src/{dto/index.ts,models/index.ts}`
+
+Important: `packages/shared/src/models/index.ts` also contains unrelated run-rating edits already present in the worktree. Do not revert them unless the user explicitly asks.
 
 The big theme of this session: a complete **AI pipeline + copilot** stack on top of the composable-pipelines model, plus **i18n (EN/VI)**, **dark mode**, and **real image generation**. Design spec: [docs/specs/2026-06-18-lyra-ai-pipeline-copilot-design.md](specs/2026-06-18-lyra-ai-pipeline-copilot-design.md).
 

@@ -26,6 +26,7 @@ import { ConversationsService } from './conversations.service';
 import type { ConversationDocument } from './conversation.schema';
 import {
   CreateConversationBody,
+  FindPromptConversationBody,
   SendChatMessageBody,
   UpdateConversationBody,
 } from './dto/conversations.dto';
@@ -68,6 +69,17 @@ export class ConversationsController {
   ): Promise<ConversationSummary[]> {
     const docs = await this.convos.listForUser(workspaceId, user.id);
     return this.convos.toSummaries(docs);
+  }
+
+  @Post('workspaces/:id/conversations/prompt-history')
+  @UseGuards(WorkspaceGuard)
+  async findPromptHistory(
+    @Param('id') workspaceId: string,
+    @Body() body: FindPromptConversationBody,
+    @CurrentUser() user: User,
+  ): Promise<ConversationSummary | null> {
+    const doc = await this.convos.findForPrompt(workspaceId, user.id, body.promptId, body.content);
+    return doc ? this.convos.toSummaries([doc])[0] : null;
   }
 
   @Get('conversations/:id')

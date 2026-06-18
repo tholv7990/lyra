@@ -6,7 +6,10 @@
 > `apps/web/src/pages/Chats.tsx`. Chats are top-level, multi-turn, per-user,
 > stream over SSE, auto-persist every turn, stamp each message with
 > provider/model, and bridge back to the prompt library through **Save as
-> prompt**. Library prompts use **Open in chat** with the composer prefilled.
+> prompt**. Library prompts use **Open in chat** as a history-aware bridge:
+> if a conversation already exists for that prompt, it opens the existing thread;
+> otherwise it opens `/chats` with the composer prefilled and waits for a manual
+> send. It must never auto-submit.
 > Do not rebuild `/prompts/:id/try` or `prompt-tests`.
 
 ---

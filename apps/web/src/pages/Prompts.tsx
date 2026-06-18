@@ -6,6 +6,7 @@ import {
   Provider,
   defaultModel,
   labelColor,
+  type ConversationSummary,
   type Paged,
   type ProviderCount,
   type PromptAuthorCount,
@@ -217,15 +218,32 @@ export function Prompts() {
   // provider·model carried in nav state. The conversation is created lazily on the
   // first send — so tapping a prompt doesn't litter history with empty chats, and
   // Back returns cleanly to the prompt list (no double-create on a slow mobile tap).
-  function openInChat(p: Prompt) {
+  async function openInChat(p: Prompt) {
     const prov = p.provider ?? Provider.Anthropic;
+    const from = { label: t('prompts.breadcrumb'), to: '/prompts', record: p.title };
+    try {
+      const existing = await api<ConversationSummary | null>(
+        `/workspaces/${wsId}/conversations/prompt-history`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ promptId: p.id, content: p.content }),
+        },
+      );
+      if (existing) {
+        navigate(`/chats/${existing.id}`, { state: { from } });
+        return;
+      }
+    } catch {
+      // If lookup fails, still let the user open a draft chat.
+    }
     navigate('/chats', {
       state: {
         seed: p.content,
         provider: prov,
         model: p.model ?? defaultModel(prov),
+        originPromptId: p.id,
         // origin breadcrumb: the chat shows "Prompts / <title>" and links back here
-        from: { label: t('prompts.breadcrumb'), to: '/prompts', record: p.title },
+        from,
       },
     });
   }
@@ -464,7 +482,7 @@ export function Prompts() {
                   <span className="prow-actions">
                     <button
                       className="prow-chat"
-                      onClick={() => openInChat(p)}
+                      onClick={() => void openInChat(p)}
                       title={t('prompts.openInChat')}
                       aria-label={t('prompts.openInChatNamed', { title: p.title })}
                     >

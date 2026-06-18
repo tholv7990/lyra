@@ -12,6 +12,7 @@ import { Type } from 'class-transformer';
 import {
   Provider,
   type CreateConversationDto,
+  type FindPromptConversationDto,
   type SendChatMessageDto,
   type UpdateConversationDto,
 } from '@lyra/shared';
@@ -65,4 +66,14 @@ export class UpdateConversationBody implements UpdateConversationDto {
   @IsOptional()
   @IsBoolean()
   starred?: boolean;
+}
+
+export class FindPromptConversationBody implements FindPromptConversationDto {
+  @IsString()
+  @MinLength(1)
+  promptId!: string;
+
+  @IsString()
+  @MinLength(1)
+  content!: string;
 }

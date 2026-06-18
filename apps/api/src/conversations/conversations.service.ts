@@ -83,6 +83,23 @@ export class ConversationsService extends BaseRepository<Conversation> {
     );
   }
 
+  findForPrompt(workspaceId: string, userId: string, promptId: string, content: string) {
+    return this.model
+      .findOne(
+        this.active({
+          workspaceId,
+          createdBy: userId,
+          $or: [
+            { originPromptId: promptId },
+            { 'messages.0.role': 'user', 'messages.0.content': content },
+          ],
+        }),
+        null,
+        { sort: { updatedAt: -1, createdAt: -1 } },
+      )
+      .exec();
+  }
+
   // Validate provider/model and return the decrypted key — throws (-> 4xx)
   // before any streaming starts.
   async prepareRun(workspaceId: string, provider: Provider, model: string): Promise<string> {

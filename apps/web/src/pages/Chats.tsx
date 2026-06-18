@@ -44,6 +44,7 @@ function initials(name?: string) {
 // Where this chat was opened from (e.g. a library prompt). Drives the breadcrumb
 // "‹ Prompts / <title>" and the in-chat back link, so there's a one-tap way back.
 type ChatOrigin = { label: string; to: string; record: string };
+type ChatSeedState = { seed?: string; provider?: Provider; model?: string; originPromptId?: string } | null;
 
 export function updateMessageContent(
   messages: ConversationMessage[],
@@ -51,6 +52,18 @@ export function updateMessageContent(
   content: string,
 ) {
   return messages.map((m) => (m.id === id ? { ...m, content } : m));
+}
+
+export function seedChatDraft(st: ChatSeedState, fallbackProvider: Provider) {
+  if (!st?.seed) return null;
+  const provider = st.provider ?? fallbackProvider;
+  const draft: { input: string; provider: Provider; model: string; originPromptId?: string } = {
+    input: st.seed,
+    provider,
+    model: st.model ?? defaultModel(provider),
+  };
+  if (st.originPromptId) draft.originPromptId = st.originPromptId;
+  return draft;
 }
 
 const IconCopy = () => (
@@ -111,17 +124,12 @@ export function Chats() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef(true);
   const idRef = useRef(0);
+  const originPromptIdRef = useRef<string | null>(null);
   // The conversation whose messages we already hold locally (we just created it),
   // so the load effect won't refetch it — idempotent, so StrictMode's double effect
   // invocation can't issue a stray GET the way a one-shot "skip" flag would.
   const ownIdRef = useRef<string | null>(null);
   const seedUsedRef = useRef(false);
-  const pendingSeedRef = useRef<{ text: string; provider: Provider; model: string } | null>(null);
-  // True while a seeded ("Open in chat") send owns the still-id-less canvas, so the
-  // load effect won't blank the thread out from under it — notably under StrictMode's
-  // double effect invocation in dev, which would otherwise re-run setMessages([]).
-  const seedActiveRef = useRef(false);
-
   const loadList = useCallback(() => {
     if (!wsId) return;
     api<ConversationSummary[]>(`/workspaces/${wsId}/conversations`)
@@ -135,15 +143,10 @@ export function Chats() {
   useEffect(() => {
     if (!id) {
       ownIdRef.current = null;
-      // Don't reset while a seeded send is mid-flight on this canvas.
-      if (!seedActiveRef.current) {
-        setMessages([]);
-        setTitle(t('chats.newChat'));
-      }
+      setMessages([]);
+      setTitle(t('chats.newChat'));
       return;
     }
-    // We have an id now — the seed flow (if any) is committed; allow future resets.
-    seedActiveRef.current = false;
     // Already holding this chat's messages locally (we just created it) — don't refetch.
     if (ownIdRef.current === id) return;
     ownIdRef.current = null;
@@ -155,6 +158,7 @@ export function Chats() {
         setTitle(c.title);
         setProvider(c.provider);
         setModel(c.model);
+        originPromptIdRef.current = c.originPromptId ?? null;
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : t('chats.couldNotLoad')));
     return () => {
@@ -162,20 +166,16 @@ export function Chats() {
     };
   }, [id]);
 
-  // "Open in chat" passes the prompt body + provider·model as navigation state.
-  // Stash it (with the prompt's own provider·model) so the auto-run below sends it
-  // as the first message — the prompt + its answer land in the thread, no manual send.
-  // Also select the model in the picker for any follow-up turns.
+  // "Open in chat" passes the prompt body + provider model as navigation state.
+  // Prefill the composer and picker; the user still chooses when to send.
   useEffect(() => {
-    const st = location.state as { seed?: string; provider?: Provider; model?: string } | null;
-    if (st?.seed && !seedUsedRef.current) {
+    const draft = seedChatDraft(location.state as ChatSeedState, provider);
+    if (draft && !seedUsedRef.current) {
       seedUsedRef.current = true;
-      const prov = st.provider ?? provider;
-      const mdl = st.model ?? defaultModel(prov);
-      pendingSeedRef.current = { text: st.seed, provider: prov, model: mdl };
-      seedActiveRef.current = true;
-      setProvider(prov);
-      setModel(mdl);
+      setInput(draft.input);
+      setProvider(draft.provider);
+      setModel(draft.model);
+      originPromptIdRef.current = draft.originPromptId ?? null;
     }
   }, [location.state, provider]);
 
@@ -229,13 +229,13 @@ export function Chats() {
 
   function newChat() {
     setShowHistory(false);
-    seedActiveRef.current = false;
     if (!id) {
       // already on a fresh canvas
       setMessages([]);
       setTitle(t('chats.newChat'));
       setInput('');
       setAttachments([]);
+      originPromptIdRef.current = null;
       return;
     }
     navigate('/chats');
@@ -274,7 +274,11 @@ export function Chats() {
         try {
           const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
             method: 'POST',
-            body: JSON.stringify({ provider: sendProvider, model: sendModel }),
+            body: JSON.stringify({
+              provider: sendProvider,
+              model: sendModel,
+              originPromptId: originPromptIdRef.current ?? undefined,
+            }),
           });
           cid = convo.id;
           createdNow = true;
@@ -347,18 +351,6 @@ export function Chats() {
   );
 
   function stop() { abortRef.current?.abort(); }
-
-  // Fire a seeded ("Open in chat") prompt once, on a fresh canvas. We pass the
-  // prompt's own provider·model explicitly to `send`, so this doesn't depend on the
-  // picker state having propagated — it just turns the prompt into the first user
-  // message and streams the answer. Defined after `send` so it can reference it.
-  useEffect(() => {
-    const seed = pendingSeedRef.current;
-    if (seed && wsId && !id && !streaming) {
-      pendingSeedRef.current = null;
-      void send(seed.text, [], { provider: seed.provider, model: seed.model });
-    }
-  }, [wsId, id, streaming, send]);
 
   function copy(text: string) {
     void navigator.clipboard?.writeText(text);

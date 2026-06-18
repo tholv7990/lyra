@@ -75,6 +75,7 @@ export function toConversationSummary(c: ConversationDocument): ConversationSumm
     title: c.title,
     provider: c.provider,
     model: c.model,
+    originPromptId: c.originPromptId,
     starred: c.starred ?? false,
     messageCount: msgs.length,
     lastMessageAt: last ? iso(last.createdAt) : undefined,
