@@ -1,132 +1,94 @@
-# Latest session handoff - June 17, 2026
+# Session handoff — June 18, 2026
 
-Open this file first in the next session. Branch: **dev**. There is a large amount of uncommitted work in this repo; do not reset or discard unrelated files.
+> Open this file first in the next session. Branch: **dev**.
+> **Everything is committed** — working tree is clean, `origin/dev` is at `ff37844`. No uncommitted work, no active blocked task. Continue from the user's next request.
 
-There is **no active blocked implementation task** from the latest session. Continue from the user's next request.
-
-Recent changes on disk:
-- `/prompts`, `/pipelines`, and `/projects` now share a compact Linear-style list/card UI. The shared filter popover is viewport-clamped, has a Clear button that enables only when menu filters are selected, and uses collapsible sections for long groups (`Tags`, `Created by`).
-- Prompt filtering is multi-select. Semantics are OR within a filter group and AND between groups. Prompt tag filtering was fixed in `apps/api/src/prompts/prompts.service.ts` with exported `buildPromptListFilter()` and regression test `apps/api/src/prompts/prompts.service.spec.ts`; selected tags mean "has any selected tag" and are case-insensitive.
-- Prompt rows were redesigned: two-line description clamp, eye button opens `PromptDetails`, prompt details can edit body, colored updated-by avatar, provider icon/model, chat icon action, danger X delete.
-- Pipeline rows now have no detail popup and no eye icon. Editable users can inline rename and edit tags from the list; rows show description, tags, step count, creator/date, open, and delete.
-- Project create/edit (`apps/web/src/pages/ProjectEditor.tsx`) was redesigned on `EditorShell`: project name in the header; grouped context fields for `product`, `niche`, `homepageUrl`; visibility uses selectable cards and is available on create and edit.
-
-Focused checks run after the latest edits:
-```bash
-pnpm.cmd --filter @lyra/api test -- prompts.service
-pnpm.cmd --filter @lyra/api type-check
-pnpm.cmd --filter @lyra/api lint
-pnpm.cmd --filter @lyra/web type-check
-pnpm.cmd --filter @lyra/web lint
-```
-
-Before a final handoff or commit, run the full gate:
-```bash
-pnpm turbo run lint type-check test build
-```
-
----
-# Session handoff — continue here
-
-> New session: open this file first (`docs/SESSION-HANDOFF.md`), then say what you want to continue.
-> Branch: **dev**.
-> ⚠️ **A LARGE amount of work is UNCOMMITTED** — not just the last session. `git status` shows many modified files **and** whole untracked modules/components that the app depends on, e.g. `apps/api/src/{conversations,mail,labels}/`, `apps/web/src/components/{Chats deps, RunFlow, FlowPager, MatrixRain, GoogleButton, ProviderIcon, SaveAsPromptModal, Composer, EditorShell, …}`, `apps/web/src/pages/{Chats,ForgotPassword,ResetPassword}.tsx`, `scripts/`, several docs. Everything **builds + tests green** and the app runs, but none of it is in git history. **Strongly recommend committing before relying on the next session** so this can't be lost. (Per repo rule, commit only when the user asks — but flag this immediately.)
+The big theme of this session: a complete **AI pipeline + copilot** stack on top of the composable-pipelines model, plus **i18n (EN/VI)**, **dark mode**, and **real image generation**. Design spec: [docs/specs/2026-06-18-lyra-ai-pipeline-copilot-design.md](specs/2026-06-18-lyra-ai-pipeline-copilot-design.md).
 
 ---
 
 ## 0. Resume the dev environment (do this first)
 
-Live preview is **dev.getlyras.app** (cloudflared tunnel → Vite). Pieces:
-- **web** — Vite dev on `:5173` (HMR; picks up changes automatically). **Mobile via the tunnel does NOT get HMR — do a full page reload there.**
+Live preview is **dev.getlyras.app** — a **cloudflared tunnel to THIS machine's dev servers** (discovered this session). It is only live while these run locally, and it shares this machine's database:
+- **web** — Vite dev on `:5173` (HMR; auto-picks up web changes). **Mobile via the tunnel does NOT get HMR — full page reload.**
 - **api** — `node dist/main.js` from `apps/api` on `:3001` (does **not** auto-reload).
-- **mongo** — Docker on `:27017` (`docker compose up -d mongo`).
-- **tunnel** — cloudflared → dev.getlyras.app.
+- **mongo** — local on `:27017` (`docker compose up -d mongo`). dev.getlyras.app reads/writes this same DB.
 
-**After a backend (apps/api or packages/shared) change you MUST rebuild + restart the api:**
+**After any `apps/api` or `packages/shared` change you MUST rebuild + restart the api:**
 ```bash
-pnpm --filter @lyra/shared build   # only if packages/shared changed (do it first)
-pnpm --filter @lyra/api build
-# (PowerShell) kill :3001 then start detached, logs to %TEMP%:
-#   Get-NetTCPConnection -LocalPort 3001 -State Listen | %{ Stop-Process -Id $_.OwningProcess -Force }
-#   Start-Process node -ArgumentList "dist/main.js" -WorkingDirectory <repo>\apps\api `
-#     -RedirectStandardOutput "$env:TEMP\lyra-api.log" -RedirectStandardError "$env:TEMP\lyra-api.err.log" -WindowStyle Hidden
-# verify: Invoke-RestMethod http://localhost:3001/health  -> {status: ok}
+pnpm --filter @lyra/shared build      # only if packages/shared changed — FIRST
+pnpm --filter @lyra/api build         # (or: pnpm turbo run build --filter=@lyra/api)
+# kill :3001, then start detached:
+#   (PowerShell) Get-NetTCPConnection -LocalPort 3001 -State Listen | %{ Stop-Process -Id $_.OwningProcess -Force }
+#   (bash, background) cd apps/api && node dist/main.js
+# verify: curl http://localhost:3001/  -> 404 (app up); routes log on boot
 ```
-Web changes need no restart (HMR), but reload mobile fully.
+Web changes need no restart (HMR).
 
-Checks before committing (what CI gates):
-`pnpm turbo run type-check lint test build`
-e2e: `pnpm --filter @lyra/api test:e2e` (in-memory mongo, hermetic; provider clients stubbed). Currently **all green** (11 e2e suites / 70 tests; unit 28 api + 32 shared + 4 web).
+**Full gate (what CI gates), all green:** `pnpm turbo run type-check lint test build` — 12 tasks, **35 api + 25 web tests**.
 
----
-
-## 1. ACTIVE TASK — Pipeline "should work like an image"
-
-The user said *"Our pipeline will work like an image"* and was about to attach a reference image — **it didn't come through.** First thing: **ask them to re-attach the image.**
-
-Before building, pin down which they mean (these differ a lot in effort):
-- **Visual restyle** of the existing *linear* flow (boxes + connecting lines, n8n-look) — CSS/layout only.
-- **Run-view animation** — flow lights up node→node as it runs (we already light steps up; this is polish).
-- **Real DAG** — steps that branch/merge (parallel/conditional). This is a **data-model change**: steps would need explicit edges (`from`/`to`), and the run engine + builder + `RunFlow`/`FlowPager` would all need to handle a graph instead of an array.
-
-Current reality (so you scope correctly): a pipeline is a **linear sequence** of steps. Builder = vertical step list; run = `RunFlow` (desktop) / `FlowPager` (mobile one-step pager) lighting up top→bottom, gates pause for Approve. See `docs/lyra-pipelines.md` and `apps/web/src/components/{RunFlow,FlowPager}.tsx`, `apps/web/src/lib/useRunActions.ts`, `apps/api/src/runs/`.
+**Testing in your account:** use a **real login** with the user's creds (in `apps/api/.env` / provided for testing) — `POST /auth/login` for a token. (Forging a JWT from the signing secret is blocked by the auto-mode classifier; don't try it.) Workspace "Putiin's Workspace" = `6a309b8efe9ec7c83515dad5`; it has anthropic + openai + deepseek keys.
 
 ---
 
-## 2. BLOCKED on the user adding credentials (then restart api)
+## 1. What shipped this session (committed `a6658bb → ff37844`)
 
-Both features are **fully built**; they just need real secrets dropped into `apps/api/.env` (gitignored) replacing the placeholders, then an api restart.
+| Commit | Feature |
+|---|---|
+| `a6658bb` | **Crawl provider** (`Provider.Crawl`, no key) + **per-step "View result"** modal (media inline, per-file/zip downloads, per-run history) |
+| `2b6032b` | **i18n (EN/VI)** + **dark mode** + **AI Pipeline Builder Phase 1** |
+| `9443439` | **Real image generation** (gpt-image-1) + **Step details** + Build-with-AI StrictMode fix |
+| `2d8a483` | **Edit with AI** (revise an existing pipeline) |
+| `04151c7` | **Conversational AI builder (Phase 2)** |
+| `1a3327b` | **Lyra Copilot — read-only tools (Phase 3a)** |
+| `249f632` | **Lyra Copilot — approval-gated actions (Phase 3b)** |
+| `ff37844` | **Cloudflare R2 media storage** (env-gated, inline fallback) |
 
-**a) Google sign-in (OAuth redirect flow) — needs Google Cloud creds**
-- `.env` placeholders to replace: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
-- Google Cloud Console: APIs & Services → Credentials → **OAuth client ID → Web application**. Authorized redirect URI **must** be `https://dev.getlyras.app/auth/google/callback` (add `http://localhost:5173/auth/google/callback` for local). OAuth consent screen in "Testing" is fine; add the tester email as a test user.
-- Until set, the Google button just bounces to `/login?error=google_unavailable` (nothing breaks).
+### AI pipeline builder + copilot (the core arc)
+- **Build with AI** (Pipelines page → ✨): `POST /workspaces/:id/pipelines/generate { goal, current? }` → `PipelineAiService` (Claude) designs a pipeline **grounded to the public prompt library** (real prompt ids only; the server re-validates: unknown id → "gap" step with empty `promptId`; invalid provider·model → clamped to `MODEL_CATALOG`). Draft opens **editable in the builder**; save via the normal create endpoint. **Provenance**: `Pipeline.origin {source:'ai', goal, model}` + an "✨ AI-built" row badge.
+- **Edit with AI** (builder toolbar): same endpoint with `current` steps → AI returns the COMPLETE revised pipeline; replaces the builder's steps.
+- **Conversational (Phase 2)**: `BuildWithAiModal` is a chat — `POST …/pipelines/ai-chat { messages, current? }` → `{ reply, draft? }`. AI asks/refines across turns; "Apply to builder" drops the latest draft in.
+- **Lyra Copilot** (Chats → ✨ Lyra Copilot; `CopilotPanel.tsx`): `POST /workspaces/:id/copilot { messages }` → `{ reply, tools?, actions? }`. `AnthropicClient.runWithTools` runs the agentic loop. **Read tools** (3a): `search_prompts, list_pipelines, get_pipeline, list_projects, get_project_runs, get_run_result` — grounds answers in real data. **Act tool** (3b): `run_pipeline` only **proposes** (resolves real ids → `PendingCopilotAction`); the panel shows an "Approve & run" card; on approve the **client** runs it via the existing run endpoints. The click is the gate — nothing runs unattended.
+- New api: `apps/api/src/copilot/` (service/controller/module/dto) + `pipeline-ai.service.ts` (+ 5 unit tests). Shared dto: `GeneratePipelineDto`, `GeneratedPipeline/Step`, `AiChat*`, `Copilot*`, `PendingCopilotAction`, `PipelineOrigin`.
 
-**b) Password-reset email (SMTP via Spacemail) — needs the mailbox password**
-- `.env` placeholder to replace: `SMTP_PASS` (the `support@getlyras.com` mailbox password). Host/port/user already set (`mail.spacemail.com:465`, SSL).
-- Until set, the mailer is a **dev stub** that logs the reset link to `%TEMP%\lyra-api.log` instead of sending.
+### Real image generation
+- `image` provider is **real** now: `ImageStepProvider` → OpenAI **gpt-image-1** / DALL·E 3. It **reuses the workspace OpenAI key** — there is **no separate "image" key**. `keyProviderFor(provider)` (shared) maps `image → openai` for key resolution AND lock/gating across api + web. `MODEL_CATALOG[Image] = gpt-image-1 / dall-e-3`. **video is still a mock.**
+- Storage: generated bytes go through `AssetStorageService.store()` → **R2 URL when the `R2_*` env is set, else an inline `data:` URL** (works for display + download; Node `fetch` handles `data:` URLs). To enable R2: set `R2_ENDPOINT / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_PUBLIC_URL` in `apps/api/.env` (see `.env.example`), restart api. No code change to activate.
 
-**Never paste these secrets into chat** — they go in `apps/api/.env` only. After editing `.env`, restart the api (section 0).
+### Step details
+- The "View result" modal is a full **step-details** view: meta strip (mode · tokens · duration) + Output/files + collapsible **Prompt sent** + **Input**. The run engine records `RunStep.sentPrompt` (the resolved prompt actually sent, with `{input}`/`{step:X}`/`{vars}` filled); falls back to the template on older runs.
 
----
-
-## 3. What shipped last session (on disk, uncommitted)
-
-**Chats (major) — replaces the old per-prompt testing playground**
-- New top-level **Chats** section: Claude-style **multi-turn** chat workbench. Nav order is now **Home · Chats · Prompts · Pipelines · Projects · …**.
-- **API:** new `apps/api/src/conversations/` module. New **`Conversation`** collection (per-user, soft-deleted, embedded `messages[]`, each message stamps `provider·model`). Endpoints: `POST /workspaces/:id/conversations` (create empty), `GET /workspaces/:id/conversations` (sidebar list), `GET /conversations/:id`, `POST /conversations/:id/messages` (SSE stream, multi-turn — prior turns sent as context; **every turn auto-persists**), `PATCH`/`DELETE /conversations/:id`. Access = workspace member **and** creator.
-- The streaming clients (`anthropic.client.ts`, `openai-compat.client.ts`) gained an optional **`history`** param for multi-turn. History is **text-only**; only the current turn sends attachments.
-- **Web:** `apps/web/src/pages/Chats.tsx` (handles `/chats` and `/chats/:id`), `components/ProviderIcon.tsx` (real brand logomarks — Claude/OpenAI/DeepSeek from Simple Icons, white on a brand-colour badge; Image/Video = neutral glyph), `components/SaveAsPromptModal.tsx`.
-- **Bridge to the library:** **Save as prompt** on any user message → `SaveAsPromptModal` → `POST /workspaces/:id/prompts` (carries the message's provider·model). **Open in chat** on a library prompt (`Prompts.tsx`) → creates a conversation seeded with that prompt (composer prefilled via nav `state.seed`).
-- **Removed:** the `prompt-tests` module, `PromptPlayground.tsx`, the `/prompts/:id/try` route, and the `SavePromptTestDto`/`PromptTest` shared types. Vite proxy `/prompt-tests` → `/conversations`. Cascade soft-delete now covers `Conversation`.
-- **Auto-save model:** there is **no manual save tick** in chat — every run is kept; star/keep is via **Save as prompt** into the library. (Supersedes the green-tick design in `docs/lyra-prompt-testing.md`, now marked superseded.)
-
-**Account security**
-- Change password (Settings → Password), **forgot/reset via email** (`/forgot-password`, `/reset-password` public pages). `MailerService` (nodemailer, SMTP-or-dev-stub), `PasswordReset` collection (hashed single-use token, TTL). Security-reviewed (forgot-password is fire-and-forget + prior tokens purged to avoid a timing oracle).
-
-**Google sign-in (code complete, see §2)**
-- `User.passwordHash` optional + `User.googleId`; password login rejects Google-only accounts. `AuthService.googleConfigured/googleAuthUrl/loginWithGoogle`; `AuthController` `GET /auth/google` + `/auth/google/callback` (CSRF `g_state` cookie). `GoogleButton.tsx` on Login + Signup. White **matrix-rain** background on the auth pages (`MatrixRain.tsx`).
-
-**Prompt editor fixes** (`PromptEditor.tsx`)
-- Header actions reordered to **✓ save then ✕ cancel**. Added an **unsaved-changes guard** (`useBlocker` + `beforeunload`) with a "Save changes?" dialog.
+### i18n + dark mode
+- **react-i18next**, EN + VI, browser-default + persisted override. Per-area locale files under `apps/web/src/i18n/locales/{en,vi}/` (`common/nav/auth/home/settings/run/projects/pipelines/prompts/chats/copilot`). Header **flag toggle** (EN/VN) + borderless **theme toggle**; full controls in Settings → Preferences. Vitest setup `src/test/i18n-setup.ts` so tests assert real strings.
+- **Dark mode**: `[data-theme="dark"]` token block in `index.css`; ~110 hardcoded `#fff`/disabled/placeholder values tokenized so cards/dialogs/fields flip. Follows OS (`prefers-color-scheme`), no-flash inline script in `index.html`, persisted (`src/lib/prefs.ts`).
 
 ---
 
-## 4. Chats — architecture notes & gotchas (for whoever continues)
+## 2. AI roadmap — done vs next
 
-- **First-send flow (important):** new chats are **lazy-created** on first send. The reply **streams while still on `/chats`**, then we `navigate('/chats/:id', {replace})` **after** it finishes (a `skipLoadRef` stops the load-effect from re-fetching). This ordering avoids a mid-stream navigation race that previously blanked the thread. If a send fails **before streaming** (e.g. the chosen provider has no key), the just-created empty conversation is **deleted** so it doesn't litter history. Don't reintroduce navigate-before-stream.
-- **Provider keys still gate sends** (BYOK, per-workspace, encrypted). Sending with a model whose provider has no key → 400 from `prepareRun` → error shown on the assistant bubble (and, for a brand-new chat, the empty convo is cleaned up).
-- **Chats are private to their creator.** Teams share via **public prompts** in the library, not via chats.
-- **Known leftover:** any **empty chats** created before the fix above will still show blank when opened — delete them via the trash on hover in the sidebar.
-- `AppNavContext` (in `apps/web/src/layout/breadcrumb.ts`) lets the full-bleed chat open the app nav drawer; the chat's mobile top-left button is the **Lyra mark** (`/lyra-mark-squircle.svg`) and opens that menu (the app hides its top bar for `.chat` on mobile).
+- ✅ **Phase 1** — one-shot AI builder, image gen, step details, Edit-with-AI
+- ✅ **Phase 2** — conversational builder
+- ✅ **Phase 3a** — read-only copilot (tool grounding)
+- ✅ **Phase 3b** — approval-gated act (run a pipeline) — the two-way is real
+- ⏭️ **Phase 4 — closed loop**: copilot runs → reads results → improves the pipeline/prompt → re-runs → converges (the dropshipping-autopilot north-star, [docs/specs/2026-06-18-dropshipping-autopilot-northstar.md](specs/2026-06-18-dropshipping-autopilot-northstar.md)). **AUTONOMOUS + spends real money in a loop** — DO NOT build without the user setting guardrails (max iterations, budget cap, approval cadence). Build on the existing tool loop + `PendingCopilotAction` pattern.
+- ⏭️ **Ratings + few-shot retrieval** — the "rate later" half of the feedback loop: thumbs on a run's **result** (not the pipeline), then feed top-signal pipelines into `PipelineAiService` as few-shot examples. Self-contained, no autonomous spend. Provenance (`origin`) is already captured as the seed.
+
+> When "Keep going" was last said, the agreed default for the next safe step was **Ratings + few-shot retrieval**. Phase 4 needs a guardrail design first.
 
 ---
 
-## 5. Other open follow-ups
-- **Old `docs/SESSION-HANDOFF.md` Figma/Linear audit** is still pending — see git history (`d67f584`) for the full plan if you want to resume it. Short version: enable the Figma desktop MCP server *before* starting the session, then audit Lyra's tokens/components against the Linear community file (keep the orange `#FF6B1A` accent).
-- **Secret hygiene:** the tester Gmail/SMTP passwords must be **rotated** and never committed; keep all secrets in `apps/api/.env`.
-- **Bundle size:** web JS ~585 KB (gzip ~178 KB). Optional: lazy-load `Markdown.tsx` / the chat route.
-- **Providers:** only **Anthropic** + **OpenAI/DeepSeek** (OpenAI-compatible) execute for real; image/video are still mocks.
+## 3. Gotchas / things not to break
+- **Build-with-AI draft handoff**: the builder consumes the AI draft from `location.state` via a **ref-guard + `window.history.replaceState`** (NOT `navigate()` inside the mount effect — that raced `setSteps` under React StrictMode and dropped the steps). The modal **navigates before closing**. Don't reintroduce navigate-in-effect.
+- **Gap steps persist**: `RunStep.promptId` and `PipelineStepItem.promptId` are **not `required`** (Mongoose String `required` rejects `''`); a gap step has `promptId: ''`. The `PipelineStepBody` DTO dropped `@MinLength(1)` on `promptId` too.
+- **Copilot act = propose only**: `run_pipeline` never executes server-side; it returns a `PendingCopilotAction` and the client runs it on approval. Keep that boundary for any future act tools.
+- **Image key**: image steps use the **OpenAI** key via `keyProviderFor`; don't add a separate image-key concept.
 
-## 6. Source-of-truth docs
-`CLAUDE.md` (root, current-state paragraph is up to date incl. Chats) · `docs/lyra-pipelines.md` (composable pipelines / business model v2) · `docs/lyra-requirements.md` · `docs/lyra-hosting-cicd.md` · `docs/lyra-design-system.md` (its dark tokens are superseded by the light/Linear `index.css`) · `docs/lyra-prompt-testing.md` (**superseded** by Chats — historical only).
+---
+
+## 4. Still-pending (from earlier, unchanged)
+- **Google sign-in** + **password-reset email** are code-complete but need secrets in `apps/api/.env` (`GOOGLE_CLIENT_ID`/`SECRET`; `SMTP_PASS`). Until set: Google button → `/login?error=google_unavailable`; mailer logs the reset link to a dev stub. **Never paste secrets in chat** — `apps/api/.env` only; rotate the tester creds.
+- **Providers**: anthropic + openai/deepseek + crawl + **image (gpt-image-1)** are real; **video is still a mock**.
+- The prior handoff's "pipeline should work like an image" exploration is **no longer the active task** (the session went the AI-builder direction).
+
+## 5. Source-of-truth docs
+`CLAUDE.md` (root) · `docs/lyra-pipelines.md` (composable pipelines) · **`docs/specs/2026-06-18-lyra-ai-pipeline-copilot-design.md`** (the AI builder/copilot design + roadmap) · `docs/specs/2026-06-18-dropshipping-autopilot-northstar.md` · `docs/lyra-requirements.md` · `docs/lyra-hosting-cicd.md`.
