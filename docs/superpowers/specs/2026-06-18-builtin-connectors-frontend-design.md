@@ -29,7 +29,7 @@ Two sections (mockup: `connections.html`):
 - **Publishing** — a masked **Postiz API key** field (Update), and **connected channels**
   as cards (platform icon + name, removable), plus a **"Connect a channel"** button that
   opens the Postiz instance to authorize. Header badge shows Postiz connected/mock.
-- **Media import** — **Cobalt** shown as an infra-level "connected" status (no per-account
+- **Media import** — shown as an infra-level "connected" status (the engine is yt-dlp, not surfaced in the UI; no per-account
   login; just a note pointing to the Import tool).
 
 | UI action | api call |

@@ -11,7 +11,7 @@ export default {
   connectChannel: 'Connect a channel',
   mediaImport: 'Media import',
   cobaltNote:
-    'Self-hosted Cobalt powers the Import tool. Configured at the workspace level — no per-account login. Paste a link in Import media to pull video/image.',
+    'Media import is ready. Configured at the workspace level — no per-account login. Paste a link in Import media to pull video or images.',
   connected: 'connected',
   remove: 'Remove',
 

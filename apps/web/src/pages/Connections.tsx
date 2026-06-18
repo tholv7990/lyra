@@ -118,7 +118,7 @@ export function Connections() {
       <div className="cx-section">
         <div className="cx-sec-head">
           <span className="cx-sec-title">{t('connectors.mediaImport')}</span>
-          <span className="cx-badge-ok">● Cobalt {t('connectors.connected')}</span>
+          <span className="cx-badge-ok">● {t('connectors.connected')}</span>
         </div>
         <p className="cx-note">{t('connectors.cobaltNote')}</p>
       </div>

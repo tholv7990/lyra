@@ -11,7 +11,7 @@ export default {
   connectChannel: 'Kết nối một kênh',
   mediaImport: 'Tải media',
   cobaltNote:
-    'Cobalt tự lưu trữ cung cấp cho công cụ Tải media. Cấu hình ở cấp workspace — không cần đăng nhập từng tài khoản. Dán liên kết trong Tải media để lấy video/ảnh.',
+    'Tải media đã sẵn sàng. Cấu hình ở cấp workspace — không cần đăng nhập từng tài khoản. Dán liên kết trong Tải media để lấy video hoặc ảnh.',
   connected: 'đã kết nối',
   remove: 'Xóa',
 

@@ -10,7 +10,7 @@
 
 | Decision | Choice |
 |---|---|
-| Where connector logic lives | **A separate microservice** (owns the registry + Postiz/Cobalt + credentials). Not in Lyra's api. |
+| Where connector logic lives | **A separate microservice** (owns the registry + Postiz + yt-dlp + credentials). Not in Lyra's api. |
 | What Lyra builds | **The UI** + a **thin proxy** in Lyra's api (`/workspaces/:id/connectors/*`). |
 | Browser → microservice path | **(A) Thin proxy** — browser → Lyra api (JWT + WorkspaceGuard) → microservice. No CORS; auth + service token stay server-side. |
 | Works before microservice exists? | **Yes** — the proxy returns a deterministic **mock** when `CONNECTORS_SERVICE_URL` is unset (env-gated, like R2's inline fallback). |
@@ -21,12 +21,12 @@
 ```
 Lyra web ──(api wrapper, JWT)──▶ Lyra api  /workspaces/:id/connectors/*
                                    │  (JwtAuthGuard + WorkspaceGuard)
-                                   ├─ CONNECTORS_SERVICE_URL set? ──▶ connectors microservice ──▶ Postiz (publish) / Cobalt (download)
+                                   ├─ CONNECTORS_SERVICE_URL set? ──▶ connectors microservice ──▶ Postiz (publish) / yt-dlp (download)
                                    └─ unset ──▶ built-in MOCK responses
 ```
 
-- **Lyra owns:** the React UI + a thin proxy controller. **No** connector logic, **no** Postiz/Cobalt calls, **no** scraper deps in Lyra.
-- **The microservice (separate, NOT built here):** the connector registry, Postiz/Cobalt integration, credential storage, publish/download.
+- **Lyra owns:** the React UI + a thin proxy controller. **No** connector logic, **no** Postiz + yt-dlp calls, **no** scraper deps in Lyra.
+- **The microservice (separate, NOT built here):** the connector registry, Postiz + yt-dlp integration, credential storage, publish/download.
 - **The proxy is where auth lives:** it authenticates the user, enforces workspace access, then forwards the **verified** `workspaceId`/`userId` to the microservice with a service token — the microservice never faces the browser.
 
 ## The contract (Lyra proxy ↔ microservice)
@@ -44,7 +44,7 @@ Lyra forwards to `${CONNECTORS_SERVICE_URL}` with `Authorization: Bearer ${CONNE
 > [2026-06-18-builtin-connectors-backend-architecture.md](2026-06-18-builtin-connectors-backend-architecture.md);
 > this doc covers the UI + proxy that consume it.
 
-**Download (Cobalt-backed in the microservice):**
+**Download (yt-dlp-backed in the microservice):**
 - `POST .../resolve { url }` → `{ items: MediaItem[] }` where `MediaItem { index, type: 'video'|'image'|'audio', thumbUrl?, filename? }`
 - `POST .../download { url, indices?: number[] }` → `{ items: { url, filename }[] }` (proxied download URLs the browser fetches)
 
@@ -55,7 +55,7 @@ Shapes (`Channel`, `Receipt`, `MediaItem`) live in `@lyra/shared` (interfaces); 
 A `connectors` controller, routes above, guarded by `JwtAuthGuard` + `WorkspaceGuard`. Each handler:
 - **If `CONNECTORS_SERVICE_URL` set** → `fetch`-forward to the microservice (inject service token + workspaceId), return its JSON.
 - **Else** → return a deterministic **mock** (mock channels; `publish` → all-ok receipts; `resolve` → 1–2 mock items; `download` → mock urls). So the UI is fully exercisable with no microservice.
-No connector/Postiz/Cobalt logic in Lyra — only forward-or-mock.
+No connector/Postiz + yt-dlp logic in Lyra — only forward-or-mock.
 
 ## UI surfaces (Lyra web — standalone tools)
 
