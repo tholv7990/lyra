@@ -8,11 +8,14 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LanguageSelect, ThemeSegment } from '../components/PrefControls';
 import { CheckIcon, RefreshIcon, TrashIcon } from '../layout/icons';
 
-const PROVIDERS: { id: Provider; label: string; hint: string }[] = [
-  { id: Provider.OpenAI, label: 'OpenAI', hint: 'GPT-5.5 — Find sources' },
-  { id: Provider.Anthropic, label: 'Anthropic', hint: 'Claude — Brain steps' },
-  { id: Provider.DeepSeek, label: 'DeepSeek', hint: 'Crawl & extract' },
-  { id: Provider.Image, label: 'Image', hint: 'Image generation' },
+// `keyUrl` points at each provider's API-key console so a new user can find
+// their key without leaving the flow. Image reuses the OpenAI key (no separate
+// image key — see keyProviderFor in shared); Video is still a mock, no key.
+const PROVIDERS: { id: Provider; label: string; hint: string; keyUrl?: string }[] = [
+  { id: Provider.OpenAI, label: 'OpenAI', hint: 'GPT-5.5 — Find sources', keyUrl: 'https://platform.openai.com/api-keys' },
+  { id: Provider.Anthropic, label: 'Anthropic', hint: 'Claude — Brain steps', keyUrl: 'https://console.anthropic.com/settings/keys' },
+  { id: Provider.DeepSeek, label: 'DeepSeek', hint: 'Crawl & extract', keyUrl: 'https://platform.deepseek.com/api_keys' },
+  { id: Provider.Image, label: 'Image', hint: 'Image generation — uses your OpenAI key', keyUrl: 'https://platform.openai.com/api-keys' },
   { id: Provider.Video, label: 'Video', hint: 'Video / UGC' },
 ];
 const LABEL: Record<Provider, string> = Object.fromEntries(
@@ -192,10 +195,20 @@ export function Settings() {
                       {p.label}
                       <span className="key-set">
                         <span className={`key-dot ${existing ? 'on' : ''}`} />
-                        {existing ? `Key set ···· ${existing.last4}` : 'Not set'}
+                        {existing ? `Key set ···· ${existing.last4}` : t('settings.notSet')}
                       </span>
                     </div>
-                    <div className="sub">{p.hint}</div>
+                    <div className="sub">
+                      {p.hint}
+                      {!existing && p.keyUrl && (
+                        <>
+                          {' · '}
+                          <a className="key-getlink" href={p.keyUrl} target="_blank" rel="noreferrer">
+                            {t('settings.getKey')} ↗
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {canManage && (
                     <div className="key-row-form">

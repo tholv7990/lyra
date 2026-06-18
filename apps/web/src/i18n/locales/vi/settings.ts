@@ -4,6 +4,7 @@ export default {
   providerKeysHint: 'Dùng khóa API của riêng bạn — lưu mã hóa theo từng workspace.',
   set: 'Đã đặt',
   notSet: 'Chưa đặt',
+  getKey: 'Lấy khóa',
   saveKey: 'Lưu',
   remove: 'Gỡ bỏ',
   loadingKeys: 'Đang tải khóa…',

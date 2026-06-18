@@ -4,6 +4,7 @@ export default {
   providerKeysHint: 'Bring your own API keys — stored encrypted, per workspace.',
   set: 'Set',
   notSet: 'Not set',
+  getKey: 'Get a key',
   saveKey: 'Save',
   remove: 'Remove',
   loadingKeys: 'Loading keys…',

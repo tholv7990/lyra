@@ -2060,6 +2060,18 @@
   color: var(--ink-muted);
 }
 
+/* "Get a key ↗" deep-link to the provider's key console, shown only when the
+   key is missing — guides onboarding step 1 without leaving the page. */
+.key-getlink {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.key-getlink:hover {
+  text-decoration: underline;
+}
+
 .key-row-form {
   display: flex;
   align-items: center;
