@@ -24,7 +24,17 @@ export class DownloadController {
   @Get('files/:id')
   file(@Param('id') id: string, @Res() res: Response) {
     const path = this.svc.pathFor(id);
-    res.setHeader('Content-Disposition', `attachment; filename="${basename(path)}"`);
-    createReadStream(path).pipe(res);
+    const name = basename(path);
+    const ascii = name.replace(/["\\]/g, '_');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+    );
+    const stream = createReadStream(path);
+    stream.on('error', () => {
+      if (!res.headersSent) res.status(500).end();
+      else res.destroy();
+    });
+    stream.pipe(res);
   }
 }
