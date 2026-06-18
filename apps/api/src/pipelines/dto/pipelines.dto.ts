@@ -122,6 +122,15 @@ export class GeneratePipelineBody implements GeneratePipelineDto {
   @MinLength(1)
   @MaxLength(4000)
   goal!: string;
+
+  // Present when revising an existing pipeline ("Edit with AI") — the current
+  // steps the AI rewrites against the instruction.
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => PipelineStepBody)
+  current?: PipelineStepBody[];
 }
 
 export class CreatePipelineBody implements CreatePipelineDto {

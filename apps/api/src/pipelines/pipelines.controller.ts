@@ -73,7 +73,7 @@ export class PipelinesController {
     @Param('id') workspaceId: string,
     @Body() body: GeneratePipelineBody,
   ): Promise<GeneratedPipeline> {
-    return this.pipelineAi.generate(workspaceId, body.goal);
+    return this.pipelineAi.generate(workspaceId, body.goal, body.current);
   }
 
   @Get('workspaces/:id/pipelines')

@@ -19,6 +19,14 @@ export default {
   aiBuilt: 'AI-built',
   needsPrompt: 'Needs a prompt',
 
+  // AI edit (revise an existing pipeline)
+  editWithAi: 'Edit with AI',
+  editWithAiTitle: 'Edit this pipeline with AI',
+  editWithAiHint:
+    'Describe the change — AI revises the whole pipeline from your prompt library. Review it before saving.',
+  editGoalPlaceholder: 'e.g. Add an image-generation step after branding; make step 2 a gate',
+  revise: 'Revise',
+
   // List states
   loading: 'Loading pipelines…',
   noMatch: 'No pipelines match your search.',

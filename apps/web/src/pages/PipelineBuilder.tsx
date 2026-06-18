@@ -40,6 +40,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
 import { EditorShell } from '../components/EditorShell';
+import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { RunFlow } from '../components/RunFlow';
 import { useFlowPager } from '../components/FlowPager';
 import { PromptPicker } from '../components/PromptPicker';
@@ -103,6 +104,24 @@ export function PipelineBuilder() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState<PipelineOrigin | null>(null);
+  const [aiEditOpen, setAiEditOpen] = useState(false); // "Edit with AI" modal
+
+  // Apply an AI revision to the open builder — replaces the steps (gap steps
+  // arrive with an empty promptId, badged "needs a prompt"); name/description and
+  // provenance are left as the user set them.
+  function applyAiDraft(draft: GeneratedPipeline) {
+    setSteps(
+      draft.steps.map((s) => ({
+        id: uuid(),
+        name: s.name,
+        promptId: s.promptId ?? '',
+        provider: s.provider,
+        model: s.model,
+        mode: s.mode,
+      })),
+    );
+    setDirty(true);
+  }
 
   // Pre-fill a new pipeline from an AI-generated draft handed over via router
   // state (the "Build with AI" modal). Applied exactly once via a ref guard, then
@@ -486,6 +505,17 @@ export function PipelineBuilder() {
       actions={
         runMode ? undefined : (
           <>
+            {canEdit && (
+              <button
+                className="lin-ai-btn"
+                style={{ marginTop: 0 }}
+                onClick={() => setAiEditOpen(true)}
+                title={t('pipelines.editWithAi')}
+              >
+                <span aria-hidden>✨</span>
+                <span className="lin-ai-txt">{t('pipelines.editWithAi')}</span>
+              </button>
+            )}
             {!isNew && (
               <button
                 className="btn-primary"
@@ -746,6 +776,21 @@ export function PipelineBuilder() {
 
       {detailPrompt && (
         <PromptDetails prompt={detailPrompt} labels={labels} onClose={() => setDetailPrompt(null)} />
+      )}
+
+      {aiEditOpen && wsId && (
+        <BuildWithAiModal
+          wsId={wsId}
+          current={steps.map((s) => ({
+            name: s.name,
+            promptId: s.promptId,
+            provider: s.provider,
+            model: s.model,
+            mode: s.mode,
+          }))}
+          onApply={applyAiDraft}
+          onClose={() => setAiEditOpen(false)}
+        />
       )}
 
       {askRunVars && (

@@ -19,6 +19,14 @@ export default {
   aiBuilt: 'Tạo bởi AI',
   needsPrompt: 'Cần một prompt',
 
+  // AI edit (revise an existing pipeline)
+  editWithAi: 'Sửa bằng AI',
+  editWithAiTitle: 'Sửa pipeline này bằng AI',
+  editWithAiHint:
+    'Mô tả thay đổi — AI sẽ chỉnh sửa toàn bộ pipeline từ thư viện prompt của bạn. Xem lại trước khi lưu.',
+  editGoalPlaceholder: 'vd. Thêm bước tạo ảnh sau bước branding; đặt bước 2 thành cổng duyệt',
+  revise: 'Chỉnh sửa',
+
   // List states
   loading: 'Đang tải pipeline…',
   noMatch: 'Không có pipeline nào khớp với tìm kiếm của bạn.',

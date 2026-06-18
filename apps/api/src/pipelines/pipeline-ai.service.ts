@@ -6,6 +6,7 @@ import {
   StepMode,
   type GeneratedPipeline,
   type GeneratedStep,
+  type PipelineStepInput,
 } from '@lyra/shared';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
 import { PromptsService } from '../prompts/prompts.service';
@@ -37,7 +38,11 @@ export class PipelineAiService {
     private readonly keys: KeysService,
   ) {}
 
-  async generate(workspaceId: string, goal: string): Promise<GeneratedPipeline> {
+  async generate(
+    workspaceId: string,
+    goal: string,
+    current?: PipelineStepInput[],
+  ): Promise<GeneratedPipeline> {
     const apiKey = await this.keys.getDecrypted(workspaceId, Provider.Anthropic);
     if (!apiKey) {
       throw new BadRequestException(
@@ -64,7 +69,7 @@ export class PipelineAiService {
     const completion = await this.anthropic.complete({
       apiKey,
       model,
-      system: this.designerPrompt(catalog),
+      system: this.designerPrompt(catalog, current),
       prompt: goal.trim(),
       maxTokens: 2000,
     });
@@ -81,7 +86,7 @@ export class PipelineAiService {
     };
   }
 
-  private designerPrompt(catalog: CatalogItem[]): string {
+  private designerPrompt(catalog: CatalogItem[], current?: PipelineStepInput[]): string {
     const list = catalog
       .map((c) =>
         [
@@ -95,6 +100,29 @@ export class PipelineAiService {
           .join('\n'),
       )
       .join('\n');
+
+    // Revise mode: when the builder sends the current steps, frame the goal as an
+    // edit instruction and show the AI the existing pipeline to rewrite.
+    const byTitle = new Map(catalog.map((c) => [c.id, c.title]));
+    const task =
+      current && current.length
+        ? [
+            'CURRENT PIPELINE (the user wants to revise this):',
+            current
+              .map((s, i) => {
+                const title = s.promptId
+                  ? byTitle.get(s.promptId) ?? `prompt ${s.promptId}`
+                  : '(no prompt — gap)';
+                return `${i + 1}. ${s.name} [${s.provider}/${s.model}] ${s.mode} — uses: ${title}`;
+              })
+              .join('\n'),
+            '',
+            "The user's message is an INSTRUCTION to revise this pipeline. Return the COMPLETE revised pipeline: keep steps that still fit; add, modify, remove, or reorder as needed to satisfy the instruction.",
+          ]
+        : [
+            'Design a pipeline that accomplishes the user goal. Order steps logically (e.g. source/gather -> transform/brief -> generate/render). Keep it concise — only the steps the goal needs.',
+          ];
+
     return [
       'You design Lyra pipelines: a short, ordered sequence of steps, where each step runs ONE library prompt on a model.',
       '',
@@ -103,7 +131,7 @@ export class PipelineAiService {
       'CATALOG:',
       list,
       '',
-      'Design a pipeline that accomplishes the user goal. Order steps logically (e.g. source/gather -> transform/brief -> generate/render). Keep it concise — only the steps the goal needs.',
+      ...task,
       '',
       'For each step choose:',
       '- promptId: an id from the catalog. If NO catalog prompt fits a step the goal genuinely needs, set promptId to "" and describe the missing prompt in "suggestion".',
