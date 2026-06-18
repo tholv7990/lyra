@@ -4,6 +4,7 @@ export default {
   filter: '+ Bộ lọc',
   status: 'Trạng thái',
   createdBy: 'Người tạo',
+  createdByName: 'Tạo bởi {{name}}',
   newProject: 'Dự án mới',
   loadingProjects: 'Đang tải dự án…',
   emptyTitle: 'Tạo dự án đầu tiên của bạn',

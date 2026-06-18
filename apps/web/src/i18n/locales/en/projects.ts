@@ -4,6 +4,7 @@ export default {
   filter: '+ Filter',
   status: 'Status',
   createdBy: 'Created by',
+  createdByName: 'Created by {{name}}',
   newProject: 'New project',
   loadingProjects: 'Loading projects…',
   emptyTitle: 'Create your first project',

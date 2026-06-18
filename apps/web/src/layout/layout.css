@@ -2888,6 +2888,24 @@
   color: #075aaa;
 }
 
+.prow-edit-action {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #6f6bb8;
+  cursor: pointer;
+}
+
+.prow-edit-action:hover {
+  border-color: transparent;
+  background: transparent;
+  color: #5852a3;
+}
+
 .prow-delete {
   width: 28px;
   height: 28px;
@@ -2941,7 +2959,7 @@
 
 .ptable.t-project .ptable-head,
 .ptable.t-project .prow {
-  grid-template-columns: 420px 108px minmax(120px, 1fr) 96px 150px;
+  grid-template-columns: minmax(260px, 1fr) 96px 150px 96px;
 }
 
 @media (max-width: 1060px) and (min-width: 761px) {
@@ -2963,7 +2981,7 @@
   }
   .ptable.t-project .ptable-head,
   .ptable.t-project .prow {
-    grid-template-columns: 320px 96px minmax(120px, 1fr) 84px 132px;
+    grid-template-columns: minmax(220px, 1fr) 88px 132px 92px;
     gap: 10px;
   }
 }
@@ -2993,6 +3011,14 @@
       "snippet snippet snippet"
       "tags status status"
       "date provider provider";
+  }
+  .ptable.t-project .prow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name actions"
+      "snippet snippet"
+      "status status"
+      "date date";
   }
   .prow-namecell {
     display: contents;
@@ -3043,6 +3069,12 @@
   }
   .prow-provider {
     max-width: 190px;
+  }
+  .ptable.t-project .prow-status {
+    justify-self: start;
+  }
+  .ptable.t-project .prow-actions {
+    width: 92px;
   }
 }
 

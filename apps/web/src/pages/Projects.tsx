@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { canEditProject, labelColor, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { ProjectsIcon, PlusIcon } from '../layout/icons';
+import { PencilIcon, ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
 
 const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
@@ -18,7 +18,24 @@ const STATUS_COLOR: Record<ProjectStatus, string> = {
 };
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const parts = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).formatToParts(new Date(iso));
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
+  return [month, day, year].filter(Boolean).join(' ');
+}
+
+function initial(name?: string) {
+  return name?.trim().charAt(0).toUpperCase() || '?';
+}
+
+function avatarStyle(name?: string): CSSProperties {
+  const c = labelColor(name || 'User', []);
+  return { color: c, background: `${c}16` };
 }
 
 const PAGE_SIZE = 10;
@@ -193,23 +210,63 @@ export function Projects() {
             <div
               className="prow"
               key={p.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate(`/projects/${p.id}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/projects/${p.id}`); }}
             >
-              <div className="prow-name">
-                <span className="nm">{p.name}</span>
+              <div className="prow-namecell">
+                <button
+                  type="button"
+                  className="prow-name"
+                  onClick={() => navigate(`/projects/${p.id}`)}
+                  title={p.name}
+                >
+                  <span className="nm">{p.name}</span>
+                </button>
+                <span className="prow-sniprow">
+                  <span className="snip">{p.description || t('projects.noDescription')}</span>
+                </span>
               </div>
-              <span>
+              <span className="prow-status">
                 <span className={`badge status-${p.status}`}>{t(STATUS_KEY[p.status])}</span>
               </span>
-              <span className="prow-date" style={{ whiteSpace: 'normal' }}>{p.description || '—'}</span>
-              <span className="prow-date">{fmtDate(p.updatedAt)}</span>
+              <span className="prow-facts">
+                <span className="prow-date" title={t('projects.createdByName', { name: p.createdBy.name })}>
+                  <span className="prow-updated-icon" style={avatarStyle(p.createdBy.name)} aria-hidden="true">
+                    {initial(p.createdBy.name)}
+                  </span>
+                  {fmtDate(p.updatedAt)}
+                </span>
+              </span>
               <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
-                <Link className="txt-btn" to={`/projects/${p.id}`}>{t('common.open')}</Link>
-                {canEdit(p) && <Link className="txt-btn" to={`/projects/${p.id}/edit`}>{t('common.edit')}</Link>}
-                {canEdit(p) && <button className="txt-btn danger" onClick={() => setToDelete(p)}>{t('common.delete')}</button>}
+                <button
+                  type="button"
+                  className="prow-open"
+                  onClick={() => navigate(`/projects/${p.id}`)}
+                  title={t('common.open')}
+                  aria-label={`${t('common.open')} ${p.name}`}
+                >
+                  <ProjectsIcon width={15} height={15} />
+                </button>
+                {canEdit(p) && (
+                  <button
+                    type="button"
+                    className="prow-edit-action"
+                    onClick={() => navigate(`/projects/${p.id}/edit`)}
+                    title={t('common.edit')}
+                    aria-label={`${t('common.edit')} ${p.name}`}
+                  >
+                    <PencilIcon width={14} height={14} />
+                  </button>
+                )}
+                {canEdit(p) && (
+                  <button
+                    type="button"
+                    className="prow-delete"
+                    onClick={() => setToDelete(p)}
+                    title={t('common.delete')}
+                    aria-label={`${t('common.delete')} ${p.name}`}
+                  >
+                    <XIcon width={14} height={14} />
+                  </button>
+                )}
               </span>
             </div>
           ))}
