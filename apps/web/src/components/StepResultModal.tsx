@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Asset, Step } from '@lyra/shared';
+import { StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
 
 // One past execution of this step (per-run history). Assets are fetched lazily
@@ -19,9 +19,19 @@ interface StepResultModalProps {
   step: Step;
   // The current step's assets (already loaded by the run view).
   assets: Asset[];
+  // What fed into the step (previous step's output / the run note).
+  input?: string;
   // Prior runs of the same pipeline for this step, newest first.
   history?: StepHistoryEntry[];
   onClose: () => void;
+}
+
+// "1.4s" / "850ms" between two ISO timestamps, or null if not both present.
+function duration(startedAt?: string, finishedAt?: string): string | null {
+  if (!startedAt || !finishedAt) return null;
+  const ms = new Date(finishedAt).getTime() - new Date(startedAt).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
 
 interface Version {
@@ -36,10 +46,13 @@ interface Version {
 // A focused, result-only view of a single step — decoupled from the prompt.
 // Shows the output text (copyable), any image/video/audio inline, per-file and
 // zip downloads, and a per-run version switcher when the step has history.
-export function StepResultModal({ runId, step, assets, history = [], onClose }: StepResultModalProps) {
+export function StepResultModal({ runId, step, assets, input, history = [], onClose }: StepResultModalProps) {
   const { t } = useTranslation();
   const title = step.name?.trim() || t('run.step', { n: step.index + 1 });
   const provider = step.provider ?? '';
+  const promptSent = (step.sentPrompt || step.prompt || '').trim();
+  const dur = duration(step.startedAt, step.finishedAt);
+  const tokens = step.usage?.tokens;
 
   const versions = useMemo<Version[]>(
     () => [
@@ -132,6 +145,16 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
           </div>
         </div>
 
+        <div className="srm-metastrip">
+          <span className={`mode-tag ${step.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
+            {step.mode === StepMode.Gate ? t('run.gate') : t('run.auto')}
+          </span>
+          {typeof tokens === 'number' && tokens > 0 && (
+            <span className="srm-meta-chip">{t('run.tokens', { n: tokens })}</span>
+          )}
+          {dur && <span className="srm-meta-chip">{dur}</span>}
+        </div>
+
         {versions.length > 1 && (
           <div className="srm-versions">
             <span className="srm-versions-label">{t('run.version')}</span>
@@ -207,6 +230,20 @@ export function StepResultModal({ runId, step, assets, history = [], onClose }: 
           ) : shownAssets && shownAssets.length === 0 ? (
             <p className="srm-empty">{t('run.noResult')}</p>
           ) : null}
+
+          {/* Full detail for the current run: the exact prompt sent + the input. */}
+          {current.key === 'current' && promptSent && (
+            <details className="srm-section">
+              <summary>{t('run.promptSent')}</summary>
+              <pre className="srm-result srm-section-pre">{promptSent}</pre>
+            </details>
+          )}
+          {current.key === 'current' && input?.trim() && (
+            <details className="srm-section">
+              <summary>{t('run.input')}</summary>
+              <pre className="srm-result srm-section-pre">{input}</pre>
+            </details>
+          )}
         </div>
       </div>
     </div>

@@ -1,9 +1,10 @@
-import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   defaultModel,
   providerNeedsKey,
+  keyProviderFor,
   Provider,
   PromptStatus,
   StepMode,
@@ -104,13 +105,17 @@ export function PipelineBuilder() {
   const [origin, setOrigin] = useState<PipelineOrigin | null>(null);
 
   // Pre-fill a new pipeline from an AI-generated draft handed over via router
-  // state (the "Build with AI" modal). Gap steps arrive with an empty promptId
-  // and are badged "needs a prompt". Runs once; the router state is then cleared
-  // so a refresh doesn't re-apply the draft.
+  // state (the "Build with AI" modal). Applied exactly once via a ref guard, then
+  // the raw history state is cleared (window.history, NOT navigate — navigating
+  // here under StrictMode raced the setSteps and dropped the draft). Gap steps
+  // arrive with an empty promptId and are badged "needs a prompt".
   const location = useLocation();
+  const draftApplied = useRef(false);
   useEffect(() => {
+    if (draftApplied.current || !isNew) return;
     const draft = (location.state as { draft?: GeneratedPipeline } | null)?.draft;
-    if (!isNew || !draft) return;
+    if (!draft) return;
+    draftApplied.current = true;
     setName(draft.name);
     setDescription(draft.description);
     setSteps(
@@ -125,8 +130,9 @@ export function PipelineBuilder() {
     );
     setOrigin(draft.origin);
     setDirty(true);
-    navigate('.', { replace: true, state: null });
-  }, []);
+    // clear so a refresh doesn't re-apply the draft (doesn't remount the route)
+    window.history.replaceState(null, '');
+  }, [location.state, isNew]);
 
   // Test-from-builder (no project): run the sequence; {note} fills from the
   // pipeline note. Project-context runs live on the project page.
@@ -529,7 +535,7 @@ export function PipelineBuilder() {
         <RunFlow
           run={run}
           busy={runActions.busy}
-          hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(p)}
+          hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(keyProviderFor(p as Provider))}
           onRunStep={runActions.runStep}
           onApprove={runActions.approve}
           onSavePrompt={runActions.savePrompt}

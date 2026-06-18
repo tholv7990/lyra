@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
   providerNeedsKey,
+  keyProviderFor,
   ProjectStatus,
   ProjectShare,
   StepMode,
@@ -347,7 +348,7 @@ export function ProjectDetail() {
                 <RunFlow
                   run={run}
                   busy={busy}
-                  hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(p)}
+                  hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(keyProviderFor(p as Provider))}
                   onRunStep={runStep}
                   onApprove={approve}
                   onSavePrompt={savePrompt}

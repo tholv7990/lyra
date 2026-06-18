@@ -46,6 +46,17 @@ export function providerNeedsKey(provider: Provider): boolean {
   return !NO_KEY_PROVIDERS.includes(provider);
 }
 
+// Some providers authenticate with another provider's key. The image provider
+// runs OpenAI's gpt-image-1, so image steps reuse the workspace's OpenAI key —
+// no separate "image" key. Used for key resolution AND lock/gating everywhere.
+const KEY_PROVIDER: Partial<Record<Provider, Provider>> = {
+  [Provider.Image]: Provider.OpenAI,
+};
+
+export function keyProviderFor(provider: Provider): Provider {
+  return KEY_PROVIDER[provider] ?? provider;
+}
+
 // Substitute {key} tokens with values. Each key in `vars` whose value is
 // non-blank replaces every {key} occurrence; missing/blank keys leave the token
 // in place. {step:Name} is never touched (its colon isn't part of a {key}). Used

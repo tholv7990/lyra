@@ -137,9 +137,12 @@ export interface CreatePipelineDto {
 
 // ===== AI pipeline generation =====
 // The goal a user types; the server reads their prompt library and returns a
-// draft (never persisted) for the builder to pre-fill.
+// draft (never persisted) for the builder to pre-fill. When `current` is given,
+// the AI revises that existing pipeline to satisfy the instruction instead of
+// designing from scratch ("Edit with AI" in the builder).
 export interface GeneratePipelineDto {
   goal: string;
+  current?: PipelineStepInput[];
 }
 
 // A proposed step. An empty/absent `promptId` is a GAP — no library prompt fit;

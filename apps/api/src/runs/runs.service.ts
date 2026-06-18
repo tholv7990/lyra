@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   fillPrompt,
+  keyProviderFor,
   resolveStepRefs,
   STEP_DEFS,
   StepStatus,
@@ -190,7 +191,8 @@ export class RunsService extends BaseRepository<Run> {
   ): Promise<StepRunOutput> {
     const step = state.steps[index];
     const provider = providerOf(step);
-    const apiKey = (await this.keys.getDecrypted(doc.workspaceId, provider)) ?? '';
+    // Some providers auth with another's key (image steps use the OpenAI key).
+    const apiKey = (await this.keys.getDecrypted(doc.workspaceId, keyProviderFor(provider))) ?? '';
 
     // Fan-out step: map the prompt over a run collection (parallel) instead of a
     // single call.
@@ -201,6 +203,9 @@ export class RunsService extends BaseRepository<Run> {
     // placeholder is used we skip auto-appending prior context.
     const filled = fillPrompt(step.prompt, doc.variables ?? {});
     const { prompt, used } = resolveStepRefs(filled, state.steps, index);
+    // Record the exact prompt sent (shown in step details). Mutating `step`
+    // (a reference into `state`) persists when the run state is saved.
+    step.sentPrompt = prompt;
     const stepForRun = { ...step, prompt };
     const priorResults = used
       ? []
@@ -228,6 +233,8 @@ export class RunsService extends BaseRepository<Run> {
   ): Promise<StepRunOutput> {
     const step = state.steps[index];
     const cfg = step.fanOut as { over: string; itemVar?: string };
+    // Per-item prompts differ; record the template + what it maps over.
+    step.sentPrompt = `[fan-out over "${cfg.over}"]\n${step.prompt}`;
     const itemVar = cfg.itemVar?.trim() || 'item';
     const items = doc.collections?.[cfg.over] ?? [];
     if (items.length === 0) {

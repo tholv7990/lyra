@@ -3,6 +3,8 @@ export default {
   step: 'Step {{n}}',
   result: 'Result',
   output: 'Output',
+  promptSent: 'Prompt sent',
+  tokens: '{{n}} tokens',
   input: 'Input',
   inputFromPrevious: 'Input · from previous step',
   inputNote: 'Input · note',

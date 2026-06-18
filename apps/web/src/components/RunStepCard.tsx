@@ -219,6 +219,7 @@ export function RunStepCard(props: RunStepCardProps) {
           runId={runId}
           step={step}
           assets={assets ?? []}
+          input={input}
           history={history}
           onClose={() => setShowResult(false)}
         />

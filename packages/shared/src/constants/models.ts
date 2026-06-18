@@ -27,7 +27,10 @@ export const MODEL_CATALOG: Record<Provider, ModelOption[]> = {
     { id: 'deepseek-reasoner', label: 'DeepSeek Reasoner' },
     { id: 'deepseek-chat', label: 'DeepSeek Chat' },
   ],
-  [Provider.Image]: [{ id: 'image-default', label: 'Image (default)' }],
+  [Provider.Image]: [
+    { id: 'gpt-image-1', label: 'GPT Image 1' },
+    { id: 'dall-e-3', label: 'DALL·E 3' },
+  ],
   [Provider.Video]: [{ id: 'video-default', label: 'Video (default)' }],
   // Crawl has no model — it fetches a URL. A placeholder keeps the step's
   // required model non-empty.

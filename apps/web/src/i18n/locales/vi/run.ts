@@ -3,6 +3,8 @@ export default {
   step: 'Bước {{n}}',
   result: 'Kết quả',
   output: 'Kết quả',
+  promptSent: 'Câu lệnh đã gửi',
+  tokens: '{{n}} token',
   input: 'Đầu vào',
   inputFromPrevious: 'Đầu vào · từ bước trước',
   inputNote: 'Đầu vào · ghi chú',

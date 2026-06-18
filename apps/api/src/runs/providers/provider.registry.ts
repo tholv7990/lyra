@@ -3,6 +3,7 @@ import { Provider } from '@lyra/shared';
 import { AnthropicStepProvider } from './anthropic.provider';
 import { OpenAiCompatStepProvider } from './openai-compat.provider';
 import { CrawlStepProvider } from './crawl.provider';
+import { ImageStepProvider } from './image.provider';
 import { MockStepProvider } from './mock.provider';
 import type { StepProvider } from './step-provider.interface';
 
@@ -20,6 +21,7 @@ export class ProviderRegistry {
     anthropic: AnthropicStepProvider,
     openai: OpenAiCompatStepProvider,
     crawl: CrawlStepProvider,
+    image: ImageStepProvider,
     mock: MockStepProvider,
   ) {
     this.impls = {
@@ -27,9 +29,8 @@ export class ProviderRegistry {
       [Provider.OpenAI]: openai,
       [Provider.DeepSeek]: openai,
       [Provider.Crawl]: crawl, // real: fetch a URL → images + text (no key)
-      // image/video still mock until a real render provider is wired
-      [Provider.Image]: mock,
-      [Provider.Video]: mock,
+      [Provider.Image]: image, // real: OpenAI gpt-image-1 (reuses the OpenAI key)
+      [Provider.Video]: mock, // video stays mock until a real render provider is wired
     };
   }
 

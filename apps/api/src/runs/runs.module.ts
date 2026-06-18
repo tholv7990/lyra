@@ -16,6 +16,7 @@ import { AnthropicStepProvider } from './providers/anthropic.provider';
 import { OpenAiCompatClient } from './providers/openai-compat.client';
 import { OpenAiCompatStepProvider } from './providers/openai-compat.provider';
 import { CrawlStepProvider } from './providers/crawl.provider';
+import { ImageStepProvider } from './providers/image.provider';
 import { MockStepProvider } from './providers/mock.provider';
 import { ProviderRegistry } from './providers/provider.registry';
 
@@ -40,6 +41,7 @@ import { ProviderRegistry } from './providers/provider.registry';
     OpenAiCompatClient,
     OpenAiCompatStepProvider,
     CrawlStepProvider,
+    ImageStepProvider,
     MockStepProvider,
     ProviderRegistry,
   ],

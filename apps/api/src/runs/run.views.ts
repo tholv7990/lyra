@@ -24,6 +24,7 @@ function toStep(s: RunStep): Step {
     status: s.status as StepStatus,
     model: s.model,
     prompt: s.prompt,
+    sentPrompt: s.sentPrompt,
     fanOut: s.fanOut ? { over: s.fanOut.over, itemVar: s.fanOut.itemVar } : undefined,
     condition: s.condition
       ? {

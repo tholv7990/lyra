@@ -9,6 +9,7 @@ import {
   fillPrompt,
   evalCondition,
   providerNeedsKey,
+  keyProviderFor,
   type Step,
 } from '@lyra/shared';
 
@@ -57,7 +58,7 @@ export function providerOf(step: Step): Provider {
 
 export function isLocked(step: Step, keysPresent: Set<string>): boolean {
   const provider = providerOf(step);
-  return providerNeedsKey(provider) && !keysPresent.has(provider);
+  return providerNeedsKey(provider) && !keysPresent.has(keyProviderFor(provider));
 }
 
 export function buildSteps(p: ProjectInfo): Step[] {

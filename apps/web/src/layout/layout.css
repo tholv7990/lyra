@@ -6719,9 +6719,50 @@
   margin-left: auto;
 }
 
+.srm-metastrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+.srm-meta-chip {
+  font-size: 12px;
+  color: var(--ink-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
 .srm-body {
   padding: 16px 20px 20px;
   overflow: auto;
+}
+
+/* Collapsible "Prompt sent" / "Input" detail sections. */
+.srm-section {
+  margin-top: 14px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+}
+.srm-section > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  list-style: revert;
+  user-select: none;
+}
+.srm-section > summary:hover {
+  color: var(--ink);
+}
+.srm-section-pre {
+  margin-top: 10px;
 }
 
 .srm-media {

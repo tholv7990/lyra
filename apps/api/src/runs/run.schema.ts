@@ -34,6 +34,12 @@ export class RunStep {
   @Prop({ default: '' })
   prompt!: string;
 
+  // The prompt actually sent to the provider — `prompt` with {input}/{step:X}/
+  // {variables} resolved at run time. Captured per execution; shown in step
+  // details. Absent on older runs (the template is shown as a fallback).
+  @Prop()
+  sentPrompt?: string;
+
   // When set, the step maps its prompt over a named run collection (parallel).
   @Prop({ type: Object })
   fanOut?: { over: string; itemVar?: string };

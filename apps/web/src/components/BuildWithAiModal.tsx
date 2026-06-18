@@ -28,8 +28,10 @@ export function BuildWithAiModal({ wsId, onClose }: Props) {
         method: 'POST',
         body: JSON.stringify({ goal: goal.trim() }),
       });
-      onClose();
+      // Navigate first (carrying the draft), then close — closing first would
+      // unmount this component before the navigation fires.
       navigate('/pipelines/new', { state: { draft } });
+      onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : t('pipelines.generateError'));
     } finally {

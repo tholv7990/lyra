@@ -134,6 +134,7 @@ export interface Step {
   status: StepStatus;
   model: string;
   prompt: string;
+  sentPrompt?: string; // the resolved prompt actually sent (template + filled refs)
   fanOut?: FanOutConfig; // when set, the step maps over a run collection
   condition?: StepCondition; // guard — skip the step when it fails
   result?: string;
