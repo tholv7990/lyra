@@ -22,12 +22,12 @@ interface Tile {
 }
 
 const TILES: Tile[] = [
-  { to: '/chats', icon: ChatsIcon, accent: '#f59e0b', key: 'chats', cta: true },
-  { to: '/prompts', icon: PromptsIcon, accent: '#14b8a6', key: 'prompts', cta: true },
-  { to: '/pipelines', icon: PipelinesIcon, accent: '#5e6ad2', key: 'pipelines', cta: true },
-  { to: '/projects', icon: ProjectsIcon, accent: '#0ea5e9', key: 'projects', cta: true },
-  { to: '/settings', icon: SettingsIcon, accent: '#7c5cff', key: 'keys', cta: true },
-  { icon: MembersIcon, accent: '#ec4899', key: 'members', soon: true },
+  { to: '/chats', icon: ChatsIcon, accent: 'var(--accent-chats)', key: 'chats', cta: true },
+  { to: '/prompts', icon: PromptsIcon, accent: 'var(--accent-prompts)', key: 'prompts', cta: true },
+  { to: '/pipelines', icon: PipelinesIcon, accent: 'var(--accent-pipelines)', key: 'pipelines', cta: true },
+  { to: '/projects', icon: ProjectsIcon, accent: 'var(--accent-projects)', key: 'projects', cta: true },
+  { to: '/settings', icon: SettingsIcon, accent: 'var(--accent-keys)', key: 'keys', cta: true },
+  { icon: MembersIcon, accent: 'var(--accent-members)', key: 'members', soon: true },
 ];
 
 export function Home() {
@@ -56,7 +56,10 @@ export function Home() {
             <>
               <div
                 className="panel-ico"
-                style={{ color: tile.accent, background: `${tile.accent}16` }}
+                style={{
+                  color: tile.accent,
+                  background: `color-mix(in srgb, ${tile.accent} 9%, transparent)`,
+                }}
               >
                 <tile.icon width={20} height={20} />
               </div>

@@ -13,8 +13,8 @@ const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Public]: 'projects.statusPublic',
 };
 const STATUS_COLOR: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: '#d4a72c',
-  [ProjectStatus.Public]: '#2da44e',
+  [ProjectStatus.Draft]: 'var(--warning)',
+  [ProjectStatus.Public]: 'var(--success)',
 };
 
 function fmtDate(iso: string) {

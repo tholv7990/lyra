@@ -24,8 +24,8 @@ import { ProviderIcon } from '../components/ProviderIcon';
 import { ChatsIcon, EyeIcon, PromptsIcon, PlusIcon, XIcon } from '../layout/icons';
 
 const STATUS_COLOR: Record<PromptStatus, string> = {
-  [PromptStatus.Draft]: '#d4a72c',
-  [PromptStatus.Public]: '#2da44e',
+  [PromptStatus.Draft]: 'var(--warning)',
+  [PromptStatus.Public]: 'var(--success)',
 };
 const PROVIDER_LABEL: Record<Provider, string> = {
   [Provider.OpenAI]: 'OpenAI',

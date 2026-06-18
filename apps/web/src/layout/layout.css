@@ -3310,6 +3310,10 @@
   background: rgba(45, 164, 78, 0.12);
   border-color: rgba(45, 164, 78, 0.28);
 }
+/* Dark mode: the bespoke dark-gold/green text above is too dark on a dark
+   surface — fall back to the brighter theme tokens so the labels stay legible. */
+[data-theme='dark'] .badge.status-draft { color: var(--warning); }
+[data-theme='dark'] .badge.status-public { color: var(--success); }
 
 /* ===== Prompt form ===== */
 .prompt-form {
@@ -4546,9 +4550,9 @@
   border-radius: 50%;
   background: var(--surface-3);
 }
-.rn-dot.status-done { background: #2da44e; }
+.rn-dot.status-done { background: var(--success); }
 .rn-dot.status-error { background: var(--danger); }
-.rn-dot.status-waiting { background: #d4a72c; }
+.rn-dot.status-waiting { background: var(--warning); }
 .rn-dot.status-skipped { background: var(--ink-tertiary); }
 .rn-dot.status-queued { background: var(--primary); }
 .rn-dot.status-running {
@@ -4560,9 +4564,9 @@
   animation: spin 0.7s linear infinite;
 }
 /* the whole node tints subtly by state */
-.flow-node.run.status-done { border-left-color: #2da44e; }
+.flow-node.run.status-done { border-left-color: var(--success); }
 .flow-node.run.status-error { border-left-color: var(--danger); }
-.flow-node.run.status-waiting { border-left-color: #d4a72c; }
+.flow-node.run.status-waiting { border-left-color: var(--warning); }
 .flow-node.run.current { box-shadow: 0 0 0 3px var(--primary-tint); border-color: var(--primary); }
 
 /* ===== n8n-style React Flow canvas ===== */
@@ -6492,7 +6496,7 @@
   border-color: var(--primary-tint);
 }
 .badge.status-done {
-  color: #2da44e;
+  color: var(--success);
   border-color: rgba(45, 164, 78, 0.3);
 }
 .badge.status-error {

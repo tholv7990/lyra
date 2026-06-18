@@ -19,8 +19,8 @@ const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Public]: 'projects.statusPublic',
 };
 const STATUS_COLOR: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: '#d4a72c',
-  [ProjectStatus.Public]: '#2da44e',
+  [ProjectStatus.Draft]: 'var(--warning)',
+  [ProjectStatus.Public]: 'var(--success)',
 };
 // Shown beneath the toggle; reflects what the current status actually does.
 // (Member-level sharing is deferred — a public project is visible to everyone.)

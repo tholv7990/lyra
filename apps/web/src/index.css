@@ -23,6 +23,15 @@
   --primary-tint: rgba(255, 107, 26, 0.12);
   --danger: #e5484d;
   --success: #2da44e;
+  --warning: #d4a72c;
+  /* Section accents — the Home hub tiles + the Get-started checklist. Saturated
+     hues that read on both themes (used as the icon ink + a low-alpha tint). */
+  --accent-chats: #f59e0b;
+  --accent-prompts: #14b8a6;
+  --accent-pipelines: #5e6ad2;
+  --accent-projects: #0ea5e9;
+  --accent-keys: #7c5cff;
+  --accent-members: #ec4899;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -90,6 +99,7 @@
   --primary-tint: rgba(255, 107, 26, 0.2);
   --danger: #f0686d;
   --success: #3fb950;
+  --warning: #e0b54a;
   --disabled-bg: #26262d;
   --disabled-ink: rgba(235, 235, 245, 0.3);
   --surface-hover: rgba(255, 255, 255, 0.06);
