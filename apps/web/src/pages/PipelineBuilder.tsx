@@ -6,6 +6,7 @@ import {
   PromptStatus,
   StepMode,
   type ApiKeyInfo,
+  type ConditionOp,
   type Paged,
   type Pipeline,
   type PipelineStep,
@@ -13,6 +14,18 @@ import {
   type Prompt,
   type Run,
 } from '@lyra/shared';
+
+// Friendly labels for the condition operators (builder select).
+const COND_OPS: { op: ConditionOp; label: string }[] = [
+  { op: 'exists', label: 'is set' },
+  { op: 'empty', label: 'is empty' },
+  { op: 'eq', label: 'equals' },
+  { op: 'ne', label: 'is not' },
+  { op: 'contains', label: 'contains' },
+  { op: 'gt', label: 'greater than' },
+  { op: 'lt', label: 'less than' },
+];
+const COND_NEEDS_VALUE = (op: ConditionOp) => op !== 'exists' && op !== 'empty';
 import { api } from '../lib/api';
 import { useModels } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
@@ -193,6 +206,13 @@ export function PipelineBuilder() {
       mode: s.mode,
       fanOut: s.fanOut?.over?.trim()
         ? { over: s.fanOut.over.trim(), itemVar: s.fanOut.itemVar?.trim() || undefined }
+        : undefined,
+      condition: s.condition?.variable?.trim()
+        ? {
+            variable: s.condition.variable.trim(),
+            op: s.condition.op,
+            value: COND_NEEDS_VALUE(s.condition.op) ? s.condition.value?.trim() || undefined : undefined,
+          }
         : undefined,
     };
     setSteps((list) => {
@@ -586,6 +606,71 @@ export function PipelineBuilder() {
                   <p className="muted addstep-fanout-help">
                     Each item fills <code>{'{item}'}</code> (and <code>{'{input}'}</code>) in the prompt. You enter the items when you run.
                   </p>
+                </div>
+              )}
+            </div>
+
+            {/* Condition: run this step only when a run variable matches; else skip. */}
+            <div className="addstep-cond">
+              <label className="addstep-fanout-row">
+                <input
+                  type="checkbox"
+                  checked={!!ed.condition}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing!,
+                      step: {
+                        ...ed,
+                        condition: e.target.checked
+                          ? ed.condition ?? { variable: '', op: 'exists' }
+                          : undefined,
+                      },
+                    })
+                  }
+                />
+                <span><strong>Condition</strong> — run this step only when a variable matches (else skip it)</span>
+              </label>
+              {ed.condition && (
+                <div className="addstep-cond-fields">
+                  <span className="addstep-cond-when">when</span>
+                  <input
+                    className="text-input addstep-cond-var"
+                    placeholder="variable"
+                    value={ed.condition.variable}
+                    onChange={(e) =>
+                      setEditing({
+                        ...editing!,
+                        step: { ...ed, condition: { ...ed.condition!, variable: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') } },
+                      })
+                    }
+                  />
+                  <select
+                    className="text-input addstep-cond-op"
+                    value={ed.condition.op}
+                    onChange={(e) =>
+                      setEditing({
+                        ...editing!,
+                        step: { ...ed, condition: { ...ed.condition!, op: e.target.value as ConditionOp } },
+                      })
+                    }
+                  >
+                    {COND_OPS.map((o) => (
+                      <option key={o.op} value={o.op}>{o.label}</option>
+                    ))}
+                  </select>
+                  {COND_NEEDS_VALUE(ed.condition.op) && (
+                    <input
+                      className="text-input addstep-cond-val"
+                      placeholder="value"
+                      value={ed.condition.value ?? ''}
+                      onChange={(e) =>
+                        setEditing({
+                          ...editing!,
+                          step: { ...ed, condition: { ...ed.condition!, value: e.target.value } },
+                        })
+                      }
+                    />
+                  )}
                 </div>
               )}
             </div>

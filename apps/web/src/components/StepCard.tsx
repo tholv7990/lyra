@@ -52,6 +52,14 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               FAN-OUT
             </span>
           )}
+          {s.condition?.variable && (
+            <span
+              className="mode-tag cond"
+              title={`Run only when ${s.condition.variable} ${s.condition.op}${s.condition.value ? ` ${s.condition.value}` : ''}`}
+            >
+              IF
+            </span>
+          )}
           {p && (
             <span
               className="flow-eye"

@@ -142,9 +142,9 @@ prompts.
    fixed count) de-risks the hardest new engine pieces; everything below reuses them.
 2. **UGC video (single case)** — real video provider; assemble script→scenes→clip.
 3. **Branching / conditions** — the "many cases" primitive. *Guard/skip form
-   landed* (a step carries a `condition`; it's skipped when the guard fails —
-   linear, no DAG; engine + `evalCondition` + e2e). Full True/False **routing**
-   (a real DAG) + a builder condition editor are the larger follow-on.
+   complete* (a step carries a `condition`; it's skipped when the guard fails —
+   linear, no DAG; engine + `evalCondition` + e2e + **builder condition editor**).
+   Full True/False **routing** (a real DAG) is the larger follow-on.
 4. **Composition** — pipelines that seed/launch other pipelines (one product →
    separate theme / offer / image / UGC / gift flows).
 5. **Source / crawl + research data feeds** — Discover stage (find winning
