@@ -145,6 +145,14 @@ export interface Step {
   finishedAt?: string;
 }
 
+// A per-run 👍/👎 verdict on the run's overall output. One per run (last-writer-
+// wins); `by` is the userId that set it. Seeds the AI builder's few-shot retrieval.
+export interface RunRating {
+  value: 'up' | 'down';
+  by: string;
+  at: string; // ISO timestamp
+}
+
 export interface Run extends Audited {
   id: string;
   projectId?: string; // absent for a builder "test run" (no project)
@@ -161,6 +169,7 @@ export interface Run extends Audited {
   status: RunStatus;
   currentStep: number;
   steps: Step[];
+  rating?: RunRating; // overall thumbs on this run's output (optional)
 }
 
 // Media attached to a prompt (sent alongside the prompt to the AI provider).
@@ -261,6 +270,7 @@ export interface ConversationSummary {
   title: string;
   provider: Provider;
   model: string;
+  originPromptId?: string;
   starred: boolean;
   messageCount: number;
   lastMessageAt?: string;

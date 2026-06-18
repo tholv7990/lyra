@@ -30,6 +30,9 @@ export default {
   gate: 'GATE',
   auto: 'AUTO',
   unknownStepRef: 'Unknown step reference',
+  rate: 'Rate this run',
+  rateUp: 'Rate this run good',
+  rateDown: 'Rate this run bad',
   // statuses
   status_idle: 'Idle',
   status_queued: 'Queued',

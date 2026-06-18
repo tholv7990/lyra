@@ -107,6 +107,11 @@ export class Run extends AuditedEntity {
 
   @Prop({ type: [RunStepSchema], default: [] })
   steps!: RunStep[];
+
+  // Per-run thumbs (overall output quality). One verdict per run, last-writer-wins.
+  // Seeds the AI builder's few-shot retrieval (top-rated pipelines as examples).
+  @Prop({ type: Object })
+  rating?: { value: string; by: string; at: string };
 }
 
 export const RunSchema = SchemaFactory.createForClass(Run);

@@ -369,6 +369,19 @@ export class RunsService extends BaseRepository<Run> {
     await doc.save();
     return this.toView(doc);
   }
+
+  // Set or clear the run's overall rating. Allowed only once a step has completed
+  // (rating idle output is meaningless). One verdict per run, last-writer-wins.
+  async rate(doc: RunDocument, value: 'up' | 'down' | null, actorId: string) {
+    if (!doc.steps.some((s) => s.status === StepStatus.Done)) {
+      throw new BadRequestException('Rate a run once it has produced a result.');
+    }
+    doc.rating = value === null ? undefined : { value, by: actorId, at: new Date().toISOString() };
+    doc.markModified('rating');
+    doc.updatedBy = actorId;
+    await doc.save();
+    return this.toView(doc);
+  }
 }
 
 function errMessage(err: unknown): string {

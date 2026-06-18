@@ -3,6 +3,9 @@ import { PipelineAiService } from './pipeline-ai.service';
 import type { AnthropicClient } from '../runs/providers/anthropic.client';
 import type { PromptsService } from '../prompts/prompts.service';
 import type { KeysService } from '../keys/keys.service';
+import type { PipelinesService } from './pipelines.service';
+import type { Model } from 'mongoose';
+import type { Run } from '../runs/run.schema';
 
 const PROMPT = {
   _id: { toString: () => 'p1' },
@@ -23,7 +26,13 @@ function makeService(completionText: string, prompts: unknown[]) {
   const keys = {
     getDecrypted: jest.fn().mockResolvedValue('sk-test'),
   } as unknown as KeysService;
-  return new PipelineAiService(anthropic, promptsSvc, keys);
+  const runModel = {
+    aggregate: jest.fn().mockResolvedValue([]),
+  } as unknown as Model<Run>;
+  const pipelinesSvc = {
+    findActiveById: jest.fn().mockResolvedValue(null),
+  } as unknown as PipelinesService;
+  return new PipelineAiService(anthropic, promptsSvc, keys, runModel, pipelinesSvc);
 }
 
 describe('PipelineAiService.generate', () => {
@@ -80,11 +89,62 @@ describe('PipelineAiService.generate', () => {
       { complete: jest.fn() } as unknown as AnthropicClient,
       { listPublic: jest.fn() } as unknown as PromptsService,
       { getDecrypted: jest.fn().mockResolvedValue(null) } as unknown as KeysService,
+      { aggregate: jest.fn() } as unknown as Model<Run>,
+      { findActiveById: jest.fn() } as unknown as PipelinesService,
     );
     await expect(svc.generate('ws', 'goal')).rejects.toThrow(/Anthropic key/i);
   });
 
   it('errors when the library is empty', async () => {
     await expect(makeService('{}', []).generate('ws', 'goal')).rejects.toThrow(/library is empty/i);
+  });
+
+  it('injects top-rated pipelines as few-shot examples into the system prompt', async () => {
+    const anthropic = {
+      complete: jest.fn().mockResolvedValue({ text: '{"name":"X","description":"","steps":[]}' }),
+    } as unknown as AnthropicClient;
+    const promptsSvc = {
+      listPublic: jest.fn().mockResolvedValue([PROMPT]),
+    } as unknown as PromptsService;
+    const keys = { getDecrypted: jest.fn().mockResolvedValue('sk') } as unknown as KeysService;
+    const runModel = {
+      aggregate: jest.fn().mockResolvedValue([{ _id: 'pipe1' }]),
+    } as unknown as Model<Run>;
+    const pipelinesSvc = {
+      findActiveById: jest.fn().mockResolvedValue({
+        name: 'Best flow',
+        description: 'great',
+        origin: { goal: 'sell sofas' },
+        steps: [{ name: 'Crawl', promptId: 'p1', provider: 'crawl', model: 'fetch', mode: 'auto' }],
+      }),
+    } as unknown as PipelinesService;
+    const svc = new PipelineAiService(anthropic, promptsSvc, keys, runModel, pipelinesSvc);
+
+    await svc.generate('ws', 'goal');
+
+    const system = (anthropic.complete as jest.Mock).mock.calls[0][0].system as string;
+    expect(system).toContain('EXAMPLES OF WELL-RATED PIPELINES');
+    expect(system).toContain('sell sofas'); // the example goal
+    expect(system).toContain('Crawl store'); // the prompt title resolved from the catalog
+  });
+
+  it('omits the examples section when no pipelines qualify', async () => {
+    const anthropic = {
+      complete: jest.fn().mockResolvedValue({ text: '{"name":"X","description":"","steps":[]}' }),
+    } as unknown as AnthropicClient;
+    const promptsSvc = {
+      listPublic: jest.fn().mockResolvedValue([PROMPT]),
+    } as unknown as PromptsService;
+    const keys = { getDecrypted: jest.fn().mockResolvedValue('sk') } as unknown as KeysService;
+    const runModel = { aggregate: jest.fn().mockResolvedValue([]) } as unknown as Model<Run>;
+    const pipelinesSvc = {
+      findActiveById: jest.fn().mockResolvedValue(null),
+    } as unknown as PipelinesService;
+    const svc = new PipelineAiService(anthropic, promptsSvc, keys, runModel, pipelinesSvc);
+
+    await svc.generate('ws', 'goal');
+
+    const system = (anthropic.complete as jest.Mock).mock.calls[0][0].system as string;
+    expect(system).not.toContain('EXAMPLES OF WELL-RATED PIPELINES');
   });
 });

@@ -24,6 +24,7 @@ import { useModels } from '../lib/useModels';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
 import { RunFlow } from '../components/RunFlow';
+import { RunRating } from '../components/RunRating';
 import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
@@ -287,6 +288,16 @@ export function ProjectDetail() {
         }),
       ),
     );
+  const rate = (value: 'up' | 'down' | null) =>
+    run &&
+    act(async () => {
+      const updated = await api<Run>(`/runs/${run.id}/rating`, {
+        method: 'PATCH',
+        body: JSON.stringify({ value }),
+      });
+      setRun(updated);
+      setRuns((rs) => rs.map((r) => (r.id === updated.id ? updated : r)));
+    });
 
   if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (!project) return <p className="empty">{error ?? t('projects.notFound')}</p>;
@@ -328,6 +339,9 @@ export function ProjectDetail() {
               </button>
               <span className="run-bar-proj"><strong>{run.pipelineName ?? t('projects.runFallback')}</strong></span>
               <span className={`badge status-${run.status}`}>{statusLabel(run.status)}</span>
+              {run.steps.some((s) => s.status === StepStatus.Done) && (
+                <RunRating value={run.rating} disabled={busy} onRate={rate} />
+              )}
               <div className="run-view-actions">
                 <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy || run.status === 'done'} onClick={runAll}>
                   {t('run.runAll')}

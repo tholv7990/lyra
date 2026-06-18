@@ -29,7 +29,7 @@ import type { PipelineRunInput } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
 import type { RunDocument } from './run.schema';
-import { RunPipelineBody, UpdatePromptBody } from './dto/runs.dto';
+import { RateRunBody, RunPipelineBody, UpdatePromptBody } from './dto/runs.dto';
 
 // Merge entered values with the pipeline's variable definitions: only keys the
 // pipeline declares are kept; a missing value falls back to the variable default.
@@ -262,6 +262,16 @@ export class RunsController {
     @CurrentUser() user: User,
   ): Promise<RunModel> {
     return this.runs.updatePrompt(run, i, body.prompt, user.id);
+  }
+
+  @Patch('runs/:id/rating')
+  @UseGuards(RunAccessGuard)
+  rate(
+    @CurrentRun() run: RunDocument,
+    @Body() body: RateRunBody,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    return this.runs.rate(run, body.value, user.id);
   }
 
   @Post('runs/:id/steps/:i/run')

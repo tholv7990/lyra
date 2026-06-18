@@ -255,3 +255,16 @@ export interface UpdateConversationDto {
   title?: string;
   starred?: boolean;
 }
+
+// Find the latest chat opened from this prompt. `content` is used only as a
+// legacy fallback for chats created before `originPromptId` was persisted.
+export interface FindPromptConversationDto {
+  promptId: string;
+  content: string;
+}
+
+// ===== Run ratings =====
+// Thumbs on a run's overall output. `value: null` clears the rating (toggle off).
+export interface RateRunDto {
+  value: 'up' | 'down' | null;
+}

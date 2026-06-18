@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import {
   defaultModel,
   isModelAllowed,
@@ -13,6 +15,8 @@ import {
 import { AnthropicClient } from '../runs/providers/anthropic.client';
 import { PromptsService } from '../prompts/prompts.service';
 import { KeysService } from '../keys/keys.service';
+import { Run } from '../runs/run.schema';
+import { PipelinesService } from './pipelines.service';
 
 interface CatalogItem {
   id: string;
@@ -26,6 +30,7 @@ interface CatalogItem {
 const MAX_PROMPTS = 60;
 const SNIPPET_LEN = 400;
 const MAX_STEPS = 12;
+const MAX_EXAMPLES = 3;
 const PROVIDERS = new Set<string>(Object.values(Provider));
 
 // Designs a runnable pipeline from the workspace's prompt library + a goal,
@@ -38,6 +43,8 @@ export class PipelineAiService {
     private readonly anthropic: AnthropicClient,
     private readonly prompts: PromptsService,
     private readonly keys: KeysService,
+    @InjectModel(Run.name) private readonly runModel: Model<Run>,
+    private readonly pipelines: PipelinesService,
   ) {}
 
   async generate(
@@ -66,18 +73,19 @@ export class PipelineAiService {
       model: p.model,
       snippet: (p.content ?? '').replace(/\s+/g, ' ').trim().slice(0, SNIPPET_LEN),
     }));
+    const byId = new Map(catalog.map((c) => [c.id, c]));
+    const examples = await this.topExamples(workspaceId, byId);
 
     const model = defaultModel(Provider.Anthropic);
     const completion = await this.anthropic.complete({
       apiKey,
       model,
-      system: this.designerPrompt(catalog, current),
+      system: this.designerPrompt(catalog, current, examples),
       prompt: goal.trim(),
       maxTokens: 2000,
     });
 
     const parsed = this.parse(completion.text);
-    const byId = new Map(catalog.map((c) => [c.id, c]));
     const steps = this.repairSteps(parsed.steps.slice(0, MAX_STEPS), byId);
 
     return {
@@ -115,6 +123,8 @@ export class PipelineAiService {
       model: p.model,
       snippet: (p.content ?? '').replace(/\s+/g, ' ').trim().slice(0, SNIPPET_LEN),
     }));
+    const byId = new Map(catalog.map((c) => [c.id, c]));
+    const examples = await this.topExamples(workspaceId, byId);
 
     const model = defaultModel(Provider.Anthropic);
     const history = messages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
@@ -122,7 +132,7 @@ export class PipelineAiService {
     const completion = await this.anthropic.complete({
       apiKey,
       model,
-      system: this.chatDesignerPrompt(catalog, current),
+      system: this.chatDesignerPrompt(catalog, current, examples),
       prompt: last?.content?.trim() || '...',
       history,
       maxTokens: 2000,
@@ -131,7 +141,6 @@ export class PipelineAiService {
     const { message, pipeline } = this.chatParse(completion.text);
     let draft: GeneratedPipeline | undefined;
     if (pipeline && pipeline.steps.length) {
-      const byId = new Map(catalog.map((c) => [c.id, c]));
       const steps = this.repairSteps(pipeline.steps.slice(0, MAX_STEPS), byId);
       if (steps.length) {
         const goal = messages.find((m) => m.role === 'user')?.content?.trim().slice(0, 4000) ?? '';
@@ -146,7 +155,56 @@ export class PipelineAiService {
     return { reply: message || 'Okay.', draft };
   }
 
-  private designerPrompt(catalog: CatalogItem[], current?: PipelineStepInput[]): string {
+  // Top-rated pipelines in the workspace by net thumbs (up - down), filtered to
+  // net > 0, tiebroken by up-count then run-count. Read-only — drives few-shot.
+  private async topRatedPipelineIds(workspaceId: string, limit = MAX_EXAMPLES): Promise<string[]> {
+    const rows = await this.runModel.aggregate<{ _id: unknown }>([
+      {
+        $match: {
+          workspaceId,
+          'rating.value': { $in: ['up', 'down'] },
+          pipelineId: { $type: 'string' },
+        },
+      },
+      {
+        $group: {
+          _id: '$pipelineId',
+          up: { $sum: { $cond: [{ $eq: ['$rating.value', 'up'] }, 1, 0] } },
+          down: { $sum: { $cond: [{ $eq: ['$rating.value', 'down'] }, 1, 0] } },
+          runs: { $sum: 1 },
+        },
+      },
+      { $addFields: { net: { $subtract: ['$up', '$down'] } } },
+      { $match: { net: { $gt: 0 } } },
+      { $sort: { net: -1, up: -1, runs: -1 } },
+      { $limit: limit },
+    ]);
+    return rows.map((r) => String(r._id));
+  }
+
+  // A compact few-shot block from the workspace's top-rated pipelines, or '' when
+  // none qualify. Prompt titles resolve from the catalog already loaded; a prompt
+  // not in the public catalog shows "(prompt unavailable)" but keeps the step shape.
+  private async topExamples(workspaceId: string, byId: Map<string, CatalogItem>): Promise<string> {
+    const ids = await this.topRatedPipelineIds(workspaceId);
+    const blocks: string[] = [];
+    for (const id of ids) {
+      const p = await this.pipelines.findActiveById(id);
+      if (!p || !p.steps?.length) continue;
+      const goal = clip(
+        p.origin?.goal || `${p.name}${p.description ? ` — ${p.description}` : ''}`,
+        300,
+      );
+      const lines = p.steps.map((s, i) => {
+        const title = !s.promptId ? '(gap)' : byId.get(s.promptId)?.title ?? '(prompt unavailable)';
+        return `  ${i + 1}. ${s.name} [${s.provider}/${s.model}] ${s.mode} — prompt "${title}" (id: ${s.promptId || 'none'})`;
+      });
+      blocks.push([`Example ${blocks.length + 1} — Goal: ${goal}`, ...lines].join('\n'));
+    }
+    return blocks.join('\n\n');
+  }
+
+  private designerPrompt(catalog: CatalogItem[], current?: PipelineStepInput[], examples = ''): string {
     const list = catalog
       .map((c) =>
         [
@@ -191,6 +249,13 @@ export class PipelineAiService {
       'CATALOG:',
       list,
       '',
+      ...(examples
+        ? [
+            'EXAMPLES OF WELL-RATED PIPELINES IN THIS WORKSPACE (inspiration for structure and prompt selection; you may reuse their prompt ids when they fit the goal):',
+            examples,
+            '',
+          ]
+        : []),
       ...task,
       '',
       'For each step choose:',
@@ -204,7 +269,7 @@ export class PipelineAiService {
     ].join('\n');
   }
 
-  private chatDesignerPrompt(catalog: CatalogItem[], current?: PipelineStepInput[]): string {
+  private chatDesignerPrompt(catalog: CatalogItem[], current?: PipelineStepInput[], examples = ''): string {
     const list = catalog
       .map((c) =>
         [
@@ -243,6 +308,13 @@ export class PipelineAiService {
       list,
       ...currentText,
       '',
+      ...(examples
+        ? [
+            'EXAMPLES OF WELL-RATED PIPELINES IN THIS WORKSPACE (inspiration for structure and prompt selection; you may reuse their prompt ids when they fit the goal):',
+            examples,
+            '',
+          ]
+        : []),
       'Behaviour:',
       '- If the goal is clear enough, propose a pipeline right away. Ask a SHORT clarifying question only when you genuinely cannot proceed.',
       '- When you propose or revise, keep it concise and grounded. Set promptId to "" (a gap) with a "suggestion" when no catalog prompt fits a needed step.',

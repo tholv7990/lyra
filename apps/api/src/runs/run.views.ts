@@ -55,6 +55,9 @@ export function toRun(doc: RunDocument, refs: Map<string, UserRef>): RunModel {
     status: doc.status as RunStatus,
     currentStep: doc.currentStep,
     steps: doc.steps.map(toStep),
+    rating: doc.rating
+      ? { value: doc.rating.value as 'up' | 'down', by: doc.rating.by, at: doc.rating.at }
+      : undefined,
     active: doc.active ?? true,
     createdBy: userRef(doc.createdBy, refs),
     updatedBy: userRef(doc.updatedBy, refs),

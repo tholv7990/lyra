@@ -508,3 +508,40 @@ select.text-input {
     padding: 22px;
   }
 }
+
+/* Per-run thumbs in the run toolbar */
+.run-rating {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.run-rating-btn {
+  width: auto;
+  margin: 0;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.45;
+  filter: grayscale(1);
+  transition: opacity 0.12s ease, filter 0.12s ease, background 0.12s ease;
+}
+
+.run-rating-btn:hover:not(:disabled) {
+  opacity: 0.8;
+  background: var(--surface-hover);
+}
+
+.run-rating-btn.active {
+  opacity: 1;
+  filter: none;
+}
+
+.run-rating-btn:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
