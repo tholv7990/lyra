@@ -26,4 +26,25 @@ export default {
   membersTitle: 'Members',
   membersBody:
     'Invite teammates by email and manage their roles. Use the workspace menu (top-left) to switch or create workspaces.',
+
+  // ===== Get-started onboarding checklist =====
+  gsTitle: 'Get started',
+  gsSubtitle: 'Four steps to your first AI run.',
+  gsProgress: '{{done}} of {{total}}',
+  gsDismiss: 'Dismiss',
+  gsStepDone: 'Done',
+  gsKeysTitle: 'Add a provider key',
+  gsKeysBody:
+    'Connect OpenAI, Anthropic, or another provider so steps can run. Keys are encrypted and never leave the server.',
+  gsKeysCta: 'Add key',
+  gsPromptTitle: 'Craft a prompt',
+  gsPromptBody: 'Chat with any model, then save the best result to your prompt library.',
+  gsPromptCta: 'Open Chats',
+  gsPipelineTitle: 'Build a pipeline',
+  gsPipelineBody:
+    'Chain prompts into a flow — each step picks a model and runs automatically or waits for your approval.',
+  gsPipelineCta: 'Build pipeline',
+  gsProjectTitle: 'Create a project and run',
+  gsProjectBody: 'A project holds your brand context. Assign a pipeline and launch your first run.',
+  gsProjectCta: 'New project',
 } as const;

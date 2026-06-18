@@ -26,4 +26,25 @@ export default {
   membersTitle: 'Thành viên',
   membersBody:
     'Mời đồng đội qua email và quản lý vai trò. Dùng menu workspace (góc trên bên trái) để chuyển hoặc tạo workspace.',
+
+  // ===== Danh sách bắt đầu nhanh =====
+  gsTitle: 'Bắt đầu',
+  gsSubtitle: 'Bốn bước đến lần chạy AI đầu tiên.',
+  gsProgress: '{{done}} / {{total}}',
+  gsDismiss: 'Ẩn',
+  gsStepDone: 'Xong',
+  gsKeysTitle: 'Thêm khóa nhà cung cấp',
+  gsKeysBody:
+    'Kết nối OpenAI, Anthropic hoặc nhà cung cấp khác để các bước có thể chạy. Khóa được mã hóa và không bao giờ rời khỏi máy chủ.',
+  gsKeysCta: 'Thêm khóa',
+  gsPromptTitle: 'Tạo một prompt',
+  gsPromptBody: 'Trò chuyện với bất kỳ model nào, rồi lưu kết quả tốt nhất vào thư viện prompt.',
+  gsPromptCta: 'Mở Trò chuyện',
+  gsPipelineTitle: 'Dựng một pipeline',
+  gsPipelineBody:
+    'Nối các prompt thành một luồng — mỗi bước chọn một model và chạy tự động hoặc chờ bạn phê duyệt.',
+  gsPipelineCta: 'Dựng pipeline',
+  gsProjectTitle: 'Tạo dự án và chạy',
+  gsProjectBody: 'Dự án giữ ngữ cảnh thương hiệu của bạn. Gán một pipeline và khởi chạy lần đầu.',
+  gsProjectCta: 'Dự án mới',
 } as const;

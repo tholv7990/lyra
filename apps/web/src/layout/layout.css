@@ -580,6 +580,198 @@
   border-radius: 980px;
 }
 
+/* ===== Home: Get-started onboarding checklist =====
+   A dismissible card above the hub tiles that walks a new workspace through its
+   first run (keys -> prompt -> pipeline -> project). The order doubles as the
+   product's mental model, so the checklist teaches as it guides. */
+.gs-card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  padding: 18px 20px 12px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+.gs-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.gs-head-text {
+  min-width: 0;
+}
+
+.gs-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.gs-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.gs-progress {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.gs-progress-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gs-bar {
+  width: 128px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.gs-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gs-dismiss {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--ink-tertiary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.gs-dismiss:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.gs-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gs-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  transition: background 0.12s ease;
+}
+
+.gs-step.active {
+  background: var(--primary-tint);
+}
+
+.gs-step-mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border: 1.5px solid var(--hairline-strong);
+  color: var(--ink-muted);
+  background: var(--card);
+}
+
+.gs-step.active .gs-step-mark {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.gs-step.done .gs-step-mark {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+}
+
+.gs-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.gs-step-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gs-step.done .gs-step-title {
+  color: var(--ink-muted);
+}
+
+.gs-step-desc {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  line-height: 1.45;
+}
+
+.gs-step-cta {
+  margin-left: auto;
+  flex: none;
+  text-decoration: none;
+}
+
+.gs-step-done {
+  margin-left: auto;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success);
+  padding-right: 8px;
+}
+
+@media (max-width: 600px) {
+  .gs-head {
+    flex-wrap: wrap;
+  }
+  .gs-progress {
+    order: 3;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    margin-left: 0;
+  }
+  .gs-bar {
+    flex: 1;
+    width: auto;
+  }
+  .gs-step-desc {
+    display: none;
+  }
+}
+
 /* ===== Lists / rows (projects, keys) ===== */
 .section-head {
   display: flex;
