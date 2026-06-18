@@ -1,37 +1,33 @@
 # Session handoff — June 18, 2026
 
 > Open this file first in the next session. Branch: **dev**.
-> **Updated by Codex on June 18, 2026:** the working tree now has uncommitted UI/chat fixes plus unrelated run-rating planning files. Do **not** assume the old "`Everything is committed`" state. Continue from the user's next request, preserving uncommitted work you did not make.
+> **State:** working tree is **clean**. `dev` has **12 unpushed commits** (connectors download-v1, below) — local only, **nothing pushed**. Commit policy: **commit/push only when the user asks**. Never paste secrets in chat (`apps/api/.env` only).
 
-## Latest Codex changes after `ff37844`
+## Most recent session — Connectors microservice **download v1** (yt-dlp) ✅ DONE
 
-The user iterated on the prompt/pipeline/project UI and then asked for a specific chat bridge fix:
+Built **subagent-driven** (plan: [docs/superpowers/plans/2026-06-18-connectors-microservice-download.md](superpowers/plans/2026-06-18-connectors-microservice-download.md); spec: [docs/superpowers/specs/2026-06-18-connectors-microservice-download-design.md](superpowers/specs/2026-06-18-connectors-microservice-download-design.md)). Whole-branch review (opus) = **READY TO MERGE**, 0 critical/important. Full gate green: `pnpm turbo run type-check lint test build` → **16/16** (connectors-service **23/23**, api **46/46**, web **33/33**); `docker compose config` VALID.
 
-- Prompt library **Open in chat** no longer auto-submits. It either opens an existing conversation history for that prompt, or opens `/chats` with the composer prefilled so the user manually sends.
-- Existing prompt history is found through `POST /workspaces/:id/conversations/prompt-history`.
-  - Primary match: `Conversation.originPromptId`.
-  - Legacy fallback: latest conversation where the first user message exactly equals the prompt content, for chats created before `originPromptId` was persisted.
-- New manual sends from a prompt draft carry `originPromptId`, so future opens return to the same history.
-- Browser verification: clicking **Open Finding cozyclaw competitor in chat** opened `http://localhost:5173/chats/6a339a93020dcefe1188339a` and displayed the existing user prompt plus assistant response instead of a blank draft or auto-submit.
-- Checks run green:
-  - `pnpm.cmd --filter @lyra/web test -- src/pages/Chats.test.ts src/pages/Prompts.test.ts`
-  - `pnpm.cmd --filter @lyra/shared build`
-  - `pnpm.cmd --filter @lyra/web type-check`
-  - `pnpm.cmd --filter @lyra/api type-check`
-  - `pnpm.cmd --filter @lyra/web lint`
-  - `pnpm.cmd --filter @lyra/api lint`
-  - `pnpm.cmd --filter @lyra/shared lint`
+**What it is:** a new **`apps/connectors-service`** (NestJS, :9100) that resolves + downloads social/web media via the **yt-dlp** binary (+ ffmpeg) and streams files back through Lyra's thin proxy. The browser only ever talks to Lyra; only Lyra talks to the service (token-gated, server-to-server).
+- **Service** (`apps/connectors-service/src/`): `common/url.ts` SSRF guard (`assertSafeUrl` — blocks loopback/RFC-1918/link-local/IPv4-mapped-IPv6/IPv6-ULA); `download/ytdlp.ts` (argv-array spawn, never a shell; `mapResolveJson`→`MediaItem[]`); `download/file-store.ts` (uuid→path map, ephemeral temp + TTL sweep); `auth/service-token.guard.ts` (fail-closed Bearer gate); `download/` controller+service+dto = `POST /resolve`, `POST /download`, `GET /files/:id`. Dockerfile bundles yt-dlp + ffmpeg.
+- **Lyra api** (`apps/api/src/connectors/`): proxy gained pure `rewriteDownload(ws, body)` (service `fileId` → `/workspaces/:id/connectors/files/:fileId`) + `streamFile()` + a `GET files/:fileId` stream-through behind `WorkspaceGuard`. **Mock mode unchanged** (`CONNECTORS_SERVICE_URL` unset → deterministic mock; publish/jobs/channels still mock).
+- **Web** (`apps/web/src/pages/ImportMedia.tsx`): proxied (relative) file URLs download via authed `downloadFile` (carries JWT); absolute mock URLs via the anchor.
+- **compose** (`docker-compose.yml`): opt-in `connectors` profile — `connectors-service` (builds from its Dockerfile), plus **Postiz** + **Cobalt** still only TEMPLATES (not built; see below).
 
-Files changed for the chat bridge fix:
-- `apps/web/src/pages/Prompts.tsx`
-- `apps/web/src/pages/Chats.tsx`
-- `apps/web/src/pages/Chats.test.ts`
-- `apps/api/src/conversations/{conversations.controller.ts,conversations.service.ts,conversation.views.ts,dto/conversations.dto.ts}`
-- `packages/shared/src/{dto/index.ts,models/index.ts}`
+**Going live (mock → real download), still MANUAL — not yet run:**
+`docker compose --profile connectors up -d connectors-service` → set `CONNECTORS_SERVICE_URL=http://localhost:9100` + matching `CONNECTORS_SERVICE_TOKEN` in `apps/api/.env` → rebuild/restart api → Import UI: paste a public video URL → Fetch → Download.
 
-Important: `packages/shared/src/models/index.ts` also contains unrelated run-rating edits already present in the worktree. Do not revert them unless the user explicitly asks.
+**Follow-up minors (logged, none block merge — see `.git/sdd/progress.md`):** (1) add concurrency cap + `--max-filesize` (spec-listed, dropped); (2) `download.service` `readdir` should filter yt-dlp intermediates/sidecars, not return all temp files; (3) add `.dockerignore` / multi-stage build (image is large; yt-dlp pinned to `latest`); (4) proxy `streamFile` should gate the pipe on HTTP 200 (an expired-TTL 404 JSON body currently pipes through as the "file"); (5) optional: add stream `'error'` handlers to the proxy file route + pre-existing `runs.controller` asset routes (main-api crash hardening).
 
-The big theme of this session: a complete **AI pipeline + copilot** stack on top of the composable-pipelines model, plus **i18n (EN/VI)**, **dark mode**, and **real image generation**. Design spec: [docs/specs/2026-06-18-lyra-ai-pipeline-copilot-design.md](specs/2026-06-18-lyra-ai-pipeline-copilot-design.md).
+### What's NEXT (pick one)
+- **Postiz publish v2** — the OTHER half of connectors. **NOT built**: Postiz is only a commented template in compose and the proxy `publish`/`jobs` endpoints hit the MOCK. Postiz software is **free, self-hosted** (AGPL, runs unmodified behind its HTTP API → no copyleft on Lyra; needs its own Postgres+Redis). Real cost/effort is **per-platform developer apps + app review** (TikTok/Meta/X/LinkedIn; X API has paid tiers). Start with brainstorming → spec → plan.
+- **Download follow-up minors** (the 5 above) — small, fast hardening of v1.
+- **Manual verification** of the real download path (the MANUAL steps above).
+
+---
+
+## Prior session (committed `a6658bb → ff37844`) — AI pipeline + copilot, i18n, dark mode, image gen, R2
+
+Summary kept below for context. The big theme: a complete **AI pipeline + copilot** stack on the composable-pipelines model, plus **i18n (EN/VI)**, **dark mode**, **real image generation**, and **R2 media storage**. Design spec: [docs/specs/2026-06-18-lyra-ai-pipeline-copilot-design.md](specs/2026-06-18-lyra-ai-pipeline-copilot-design.md). (An earlier Codex chat-bridge fix — Prompt-library "Open in chat" no longer auto-submits, matches via `Conversation.originPromptId` + legacy first-message fallback — is also live in `Prompts.tsx`/`Chats.tsx`/`conversations/`.)
 
 ---
 
