@@ -28,6 +28,7 @@ import { Composer } from '../components/Composer';
 import { Markdown } from '../components/Markdown';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { SaveAsPromptModal } from '../components/SaveAsPromptModal';
+import { CopilotPanel } from '../components/CopilotPanel';
 import { ListIcon, PlusIcon, TrashIcon } from '../layout/icons';
 import { useAppNav, useBreadcrumb } from '../layout/breadcrumb';
 
@@ -101,6 +102,7 @@ export function Chats() {
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const [saveFor, setSaveFor] = useState<ConversationMessage | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -401,6 +403,9 @@ export function Chats() {
         <button className="chat-new" onClick={newChat}>
           <PlusIcon /> {t('chats.newChat')}
         </button>
+        <button className="lin-ai-btn chat-copilot" onClick={() => setCopilotOpen(true)} title={t('copilot.title')}>
+          <span aria-hidden>✨</span> <span className="lin-ai-txt">{t('copilot.title')}</span>
+        </button>
         <div className="chat-history-list">
           {list.length === 0 ? (
             <p className="pg-empty">{t('chats.noChatsYet')}</p>
@@ -607,6 +612,8 @@ export function Chats() {
           onSaved={() => setSaveFor(null)}
         />
       )}
+
+      {copilotOpen && wsId && <CopilotPanel wsId={wsId} onClose={() => setCopilotOpen(false)} />}
     </div>
   );
 }

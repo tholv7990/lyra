@@ -7128,6 +7128,16 @@
 .bwa-send {
   flex: none;
 }
+.chat-copilot {
+  width: 100%;
+  justify-content: center;
+  margin: 0 0 8px;
+}
+.copilot-tools {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin-bottom: 4px;
+}
 
 @media (max-width: 560px) {
   .lin-ai-txt {

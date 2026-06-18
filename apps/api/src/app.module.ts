@@ -13,6 +13,7 @@ import { AssetsModule } from './assets/assets.module';
 import { PromptsModule } from './prompts/prompts.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { PipelinesModule } from './pipelines/pipelines.module';
+import { CopilotModule } from './copilot/copilot.module';
 import { ModelsModule } from './models/models.module';
 import { LabelsModule } from './labels/labels.module';
 import { FilesModule } from './files/files.module';
@@ -42,6 +43,7 @@ import { HealthController } from './health.controller';
     PromptsModule,
     ConversationsModule,
     PipelinesModule,
+    CopilotModule,
     ModelsModule,
     LabelsModule,
     FilesModule,

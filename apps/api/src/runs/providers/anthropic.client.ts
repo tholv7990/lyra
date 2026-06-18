@@ -128,6 +128,84 @@ export class AnthropicClient {
     return { text, usage: { tokens } };
   }
 
+  // Agentic tool loop (non-streaming): give the model tools, run a round of
+  // tool_use → execute (via runTool) → tool_result → repeat until it answers in
+  // text (or a safety cap). Used by the read-only Lyra Copilot.
+  async runWithTools(params: {
+    apiKey: string;
+    model: string;
+    system: string;
+    // Conversation as Anthropic messages — content is a string or a block array.
+    messages: { role: 'user' | 'assistant'; content: unknown }[];
+    tools: { name: string; description: string; input_schema: Record<string, unknown> }[];
+    runTool: (name: string, input: unknown) => Promise<string>;
+    maxTokens?: number;
+    maxRounds?: number;
+  }): Promise<{ text: string; toolCalls: string[]; usage: { tokens: number } }> {
+    const messages = [...params.messages];
+    const toolCalls: string[] = [];
+    let tokens = 0;
+
+    for (let round = 0; round < (params.maxRounds ?? 6); round++) {
+      const res = await fetch(ANTHROPIC_URL, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': params.apiKey,
+          'anthropic-version': ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify({
+          model: params.model,
+          max_tokens: params.maxTokens ?? 2048,
+          system: systemBlocks(params.system),
+          tools: params.tools,
+          messages,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        content?: { type: string; text?: string; id?: string; name?: string; input?: unknown }[];
+        stop_reason?: string;
+        usage?: { input_tokens?: number; output_tokens?: number };
+        error?: { message?: string };
+      };
+      if (!res.ok) {
+        throw new Error(body.error?.message ?? `Anthropic request failed (${res.status})`);
+      }
+      tokens += (body.usage?.input_tokens ?? 0) + (body.usage?.output_tokens ?? 0);
+      const content = body.content ?? [];
+
+      if (body.stop_reason === 'tool_use') {
+        messages.push({ role: 'assistant', content });
+        const results: unknown[] = [];
+        for (const block of content) {
+          if (block.type !== 'tool_use') continue;
+          toolCalls.push(block.name ?? 'tool');
+          let result: string;
+          try {
+            result = await params.runTool(block.name ?? '', block.input);
+          } catch (e) {
+            result = `Error: ${e instanceof Error ? e.message : 'tool failed'}`;
+          }
+          results.push({ type: 'tool_result', tool_use_id: block.id, content: result.slice(0, 12000) });
+        }
+        messages.push({ role: 'user', content: results });
+        continue;
+      }
+
+      const text = content
+        .filter((b) => b.type === 'text' && b.text)
+        .map((b) => b.text)
+        .join('\n')
+        .trim();
+      return { text, toolCalls, usage: { tokens } };
+    }
+    return {
+      text: 'I looked into that but hit my tool-use limit — try asking a bit more specifically.',
+      toolCalls,
+      usage: { tokens },
+    };
+  }
+
   // Streaming variant: invokes onDelta for each text chunk and resolves with the
   // full text + token usage. Used by the prompt-testing playground (SSE).
   async stream(

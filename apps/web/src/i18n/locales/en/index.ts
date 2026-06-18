@@ -8,5 +8,6 @@ import projects from './projects';
 import pipelines from './pipelines';
 import prompts from './prompts';
 import chats from './chats';
+import copilot from './copilot';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot };

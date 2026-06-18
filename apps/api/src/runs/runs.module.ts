@@ -45,5 +45,6 @@ import { ProviderRegistry } from './providers/provider.registry';
     MockStepProvider,
     ProviderRegistry,
   ],
+  exports: [RunsService], // Lyra Copilot reads runs
 })
 export class RunsModule {}

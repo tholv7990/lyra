@@ -182,6 +182,18 @@ export interface AiChatResponse {
   draft?: GeneratedPipeline;
 }
 
+// ===== Lyra Copilot (Phase 3a — read-only tools) =====
+// A chat where Claude uses read tools over the workspace (prompts, pipelines,
+// projects, runs) to ground its answers. Ephemeral — not persisted like Chats.
+export interface CopilotChatDto {
+  messages: AiChatTurn[];
+}
+
+export interface CopilotResponse {
+  reply: string;
+  tools?: string[]; // names of the tools the copilot used this turn (for the UI)
+}
+
 export interface UpdatePipelineDto {
   name?: string;
   description?: string;
