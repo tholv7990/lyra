@@ -77,6 +77,9 @@ export async function createPost(
     headers: { Authorization: key, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Postiz post ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) {
+    console.error(`Postiz post ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    throw new Error(`Postiz post failed (status ${res.status})`);
+  }
   return res.json();
 }

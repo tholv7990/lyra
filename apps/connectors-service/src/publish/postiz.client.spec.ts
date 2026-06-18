@@ -1,4 +1,4 @@
-import { mapIntegrations, okReceipt, failReceipt } from './postiz.client';
+import { mapIntegrations, okReceipt, failReceipt, createPost } from './postiz.client';
 
 describe('mapIntegrations', () => {
   it('maps integrations to channels (identifier → platform, lowercased)', () => {
@@ -25,5 +25,36 @@ describe('receipts', () => {
     expect(failReceipt(ch, 'boom')).toEqual({
       platform: 'bluesky', accountId: 'i1', status: 'failed', error: 'boom',
     });
+  });
+});
+
+describe('createPost error sanitization', () => {
+  const mockFetch = jest.fn();
+  beforeEach(() => { (global as unknown as Record<string, unknown>).fetch = mockFetch; });
+  afterEach(() => { jest.clearAllMocks(); });
+
+  it('throws a message containing the status but NOT the upstream body fragment', async () => {
+    const upstreamBody = 'rate limit exceeded for plan basic_v1';
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      text: jest.fn().mockResolvedValue(upstreamBody),
+    });
+
+    await expect(
+      createPost('http://postiz:5000', 'key', 'i1', 'hello', []),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('429'),
+    });
+
+    // The upstream body MUST NOT appear in the thrown message
+    let thrownMessage = '';
+    try {
+      await createPost('http://postiz:5000', 'key', 'i1', 'hello', []);
+    } catch (e) {
+      thrownMessage = e instanceof Error ? e.message : String(e);
+    }
+    expect(thrownMessage).not.toContain('rate limit');
+    expect(thrownMessage).not.toContain('basic_v1');
   });
 });

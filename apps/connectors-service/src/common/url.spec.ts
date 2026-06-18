@@ -1,4 +1,4 @@
-import { assertSafeUrl } from './url';
+import { assertSafeUrl, isPrivateAddress } from './url';
 
 describe('assertSafeUrl', () => {
   it('accepts https/http public URLs', () => {
@@ -57,5 +57,26 @@ describe('assertSafeUrl', () => {
     expect(() => assertSafeUrl('http://[fe80::1]/x')).toThrow();
     expect(() => assertSafeUrl('http://[febf::1]/x')).toThrow();
     expect(() => assertSafeUrl('http://[fe80::1%25eth0]/x')).toThrow();
+  });
+});
+
+describe('isPrivateAddress', () => {
+  it('returns true for private/loopback IPv4 addresses', () => {
+    expect(isPrivateAddress('127.0.0.1')).toBe(true);
+    expect(isPrivateAddress('10.0.0.5')).toBe(true);
+    expect(isPrivateAddress('192.168.1.1')).toBe(true);
+    expect(isPrivateAddress('169.254.169.254')).toBe(true);
+    expect(isPrivateAddress('172.16.0.1')).toBe(true);
+  });
+
+  it('returns true for IPv6 loopback and link-local', () => {
+    expect(isPrivateAddress('::1')).toBe(true);
+    expect(isPrivateAddress('fe80::1')).toBe(true);
+  });
+
+  it('returns false for public IP addresses', () => {
+    expect(isPrivateAddress('8.8.8.8')).toBe(false);
+    expect(isPrivateAddress('93.184.216.34')).toBe(false);
+    expect(isPrivateAddress('2001:4860:4860::8888')).toBe(false);
   });
 });

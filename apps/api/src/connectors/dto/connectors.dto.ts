@@ -1,13 +1,13 @@
-import { IsArray, IsOptional, IsString, MinLength } from 'class-validator';
+import { ArrayMinSize, IsArray, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
 import type { DownloadDto, PublishDto, ResolveDto, SaveCredentialDto } from '@lyra/shared';
 
 export class SaveCredentialBody implements SaveCredentialDto {
-  @IsString() @MinLength(1) connector!: string;
+  @IsString() @MinLength(1) @IsIn(['postiz']) connector!: string;
   @IsString() @MinLength(1) apiKey!: string;
 }
 
 export class PublishBody implements PublishDto {
-  @IsArray() @IsString({ each: true }) channelIds!: string[];
+  @IsArray() @IsString({ each: true }) @ArrayMinSize(1) channelIds!: string[];
   @IsString() caption!: string;
   @IsArray() @IsString({ each: true }) mediaUrls!: string[];
 }

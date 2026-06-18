@@ -10,6 +10,39 @@ function isPrivateIPv4(dotted: string): boolean {
 }
 
 /**
+ * Returns true if the given host string is a private/loopback/link-local address.
+ * Accepts dotted-decimal IPv4, IPv6 literals (with or without brackets), and
+ * the string "localhost". Used by safeFetch for DNS-rebind protection.
+ */
+export function isPrivateAddress(host: string): boolean {
+  const h = stripBrackets(host).toLowerCase();
+
+  // loopback names
+  if (h === 'localhost' || h.endsWith('.localhost')) return true;
+
+  // plain IPv4 private ranges
+  if (isPrivateIPv4(h)) return true;
+
+  // IPv6 loopback
+  if (h === '::1') return true;
+
+  // IPv4-mapped IPv6: ::ffff:XXXX:XXXX
+  const mappedMatch = /^::ffff:([0-9a-f:]+)$/.exec(h);
+  if (mappedMatch) {
+    const dotted = mappedHexToDotted(mappedMatch[1]);
+    if (dotted === null || isPrivateIPv4(dotted) || dotted.startsWith('0.')) return true;
+  }
+
+  // IPv6 ULA (fc00::/7)
+  if (/^f[cd][0-9a-f]{2}:/.test(h)) return true;
+
+  // IPv6 link-local (fe80::/10)
+  if (/^fe[89ab][0-9a-f]:/.test(h)) return true;
+
+  return false;
+}
+
+/**
  * Convert the hex-group tail of an IPv4-mapped IPv6 address to dotted-decimal.
  * The URL constructor normalises dotted-quad inputs to two 16-bit hex groups,
  * e.g. [::ffff:127.0.0.1] → hostname "[::ffff:7f00:1]" → stripped "::ffff:7f00:1".

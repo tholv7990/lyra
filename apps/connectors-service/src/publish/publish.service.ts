@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Channel, PublishJob, Receipt } from '@lyra/shared';
-import { assertSafeUrl } from '../common/url';
+import { safeFetch } from '../common/safe-fetch';
 import { JobStore } from './job-store';
 import * as postiz from './postiz.client';
 
@@ -51,8 +51,7 @@ export class PublishService {
 
     const media: postiz.UploadResult[] = [];
     for (const url of input.mediaUrls) {
-      assertSafeUrl(url);
-      const res = await fetch(url);
+      const res = await safeFetch(url);
       if (!res.ok) throw new Error(`media fetch ${res.status}`);
       const mime = res.headers.get('content-type') ?? 'application/octet-stream';
       const bytes = new Uint8Array(await res.arrayBuffer());
