@@ -26,6 +26,9 @@ export default {
     'Mô tả thay đổi — AI sẽ chỉnh sửa toàn bộ pipeline từ thư viện prompt của bạn. Xem lại trước khi lưu.',
   editGoalPlaceholder: 'vd. Thêm bước tạo ảnh sau bước branding; đặt bước 2 thành cổng duyệt',
   revise: 'Chỉnh sửa',
+  applyToBuilder: 'Áp dụng vào trình dựng',
+  send: 'Gửi',
+  askPlaceholder: 'Mô tả pipeline, hoặc trả lời để tinh chỉnh…',
 
   // List states
   loading: 'Đang tải pipeline…',

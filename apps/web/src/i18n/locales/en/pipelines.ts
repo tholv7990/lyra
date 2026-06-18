@@ -26,6 +26,9 @@ export default {
     'Describe the change — AI revises the whole pipeline from your prompt library. Review it before saving.',
   editGoalPlaceholder: 'e.g. Add an image-generation step after branding; make step 2 a gate',
   revise: 'Revise',
+  applyToBuilder: 'Apply to builder',
+  send: 'Send',
+  askPlaceholder: 'Describe the pipeline, or reply to refine it…',
 
   // List states
   loading: 'Loading pipelines…',

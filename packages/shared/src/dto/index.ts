@@ -163,6 +163,25 @@ export interface GeneratedPipeline {
   origin: PipelineOrigin;
 }
 
+// ===== Conversational AI builder (Phase 2) =====
+// A multi-turn chat that designs/refines a pipeline. Each turn the AI replies in
+// words and, when it has enough, attaches a draft. `current` carries the latest
+// proposed/edited steps so the AI sees the pipeline's current state.
+export interface AiChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface AiChatDto {
+  messages: AiChatTurn[];
+  current?: PipelineStepInput[];
+}
+
+export interface AiChatResponse {
+  reply: string;
+  draft?: GeneratedPipeline;
+}
+
 export interface UpdatePipelineDto {
   name?: string;
   description?: string;

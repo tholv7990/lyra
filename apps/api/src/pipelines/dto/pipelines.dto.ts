@@ -15,6 +15,8 @@ import {
   StepMode,
   TAG_MAX,
   TAG_MAX_LEN,
+  type AiChatDto,
+  type AiChatTurn,
   type ConditionOp,
   type CreatePipelineDto,
   type FanOutConfig,
@@ -125,6 +127,30 @@ export class GeneratePipelineBody implements GeneratePipelineDto {
 
   // Present when revising an existing pipeline ("Edit with AI") — the current
   // steps the AI rewrites against the instruction.
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => PipelineStepBody)
+  current?: PipelineStepBody[];
+}
+
+export class AiChatTurnBody implements AiChatTurn {
+  @IsIn(['user', 'assistant'])
+  role!: 'user' | 'assistant';
+
+  @IsString()
+  @MaxLength(8000)
+  content!: string;
+}
+
+export class AiChatBody implements AiChatDto {
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => AiChatTurnBody)
+  messages!: AiChatTurnBody[];
+
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(40)

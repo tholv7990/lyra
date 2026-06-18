@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import {
   dedupeTags,
+  type AiChatResponse,
   type GeneratedPipeline,
   type Pipeline as PipelineModel,
   type User,
@@ -26,6 +27,7 @@ import {
 } from './decorators/pipeline.decorators';
 import type { PipelineDocument } from './pipeline.schema';
 import {
+  AiChatBody,
   CreatePipelineBody,
   GeneratePipelineBody,
   UpdatePipelineBody,
@@ -74,6 +76,17 @@ export class PipelinesController {
     @Body() body: GeneratePipelineBody,
   ): Promise<GeneratedPipeline> {
     return this.pipelineAi.generate(workspaceId, body.goal, body.current);
+  }
+
+  // Conversational pipeline design — multi-turn. The AI replies in words and,
+  // when it has enough, attaches a draft. Same library grounding as generate.
+  @Post('workspaces/:id/pipelines/ai-chat')
+  @UseGuards(WorkspaceGuard)
+  async aiChat(
+    @Param('id') workspaceId: string,
+    @Body() body: AiChatBody,
+  ): Promise<AiChatResponse> {
+    return this.pipelineAi.chat(workspaceId, body.messages, body.current);
   }
 
   @Get('workspaces/:id/pipelines')
