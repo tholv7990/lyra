@@ -17,6 +17,10 @@
   --ink: #1d1d1f;
   --ink-muted: rgba(60, 60, 67, 0.62);
   --ink-tertiary: rgba(60, 60, 67, 0.3);
+  /* Form placeholder text — high enough contrast to read clearly (≈4:1 on the
+     white field, vs ~1.9:1 for the old --ink-tertiary 0.3) while staying lighter
+     than entered text. One token so every input matches. */
+  --placeholder: rgba(60, 60, 67, 0.66);
   --primary: #ff6b1a;
   --primary-hover: #ff7d35;
   --primary-pressed: #e25a0e;
@@ -94,6 +98,7 @@
   --ink: #f3f3f6;
   --ink-muted: rgba(235, 235, 245, 0.6);
   --ink-tertiary: rgba(235, 235, 245, 0.34);
+  --placeholder: rgba(235, 235, 245, 0.6);
   --primary: #ff6b1a;
   --primary-hover: #ff7d35;
   --primary-pressed: #e25a0e;
@@ -128,6 +133,13 @@ textarea,
 button {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Every placeholder uses the one high-contrast token — covers inputs that don't
+   have a component-specific ::placeholder rule (composer, chats, connectors). */
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
 }
 
 /* iOS Safari zooms in (and breaks the layout) when a focused control has a
@@ -261,7 +273,7 @@ h4 {
 }
 
 .text-input::placeholder {
-  color: var(--ink-tertiary);
+  color: var(--placeholder);
 }
 
 /* Password field with a reveal (eye) toggle. */

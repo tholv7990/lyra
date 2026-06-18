@@ -1314,7 +1314,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.eshell-name::placeholder { color: var(--ink-tertiary); }
+.eshell-name::placeholder { color: var(--placeholder); }
 .eshell-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .eshell-body {
   flex: 1;
@@ -1417,7 +1417,7 @@
 }
 
 .project-input::placeholder {
-  color: var(--ink-tertiary);
+  color: var(--placeholder);
 }
 
 .project-visibility-grid {
@@ -1784,7 +1784,7 @@
   color: var(--ink);
   padding: 2px 0 2px;
 }
-.pe-title::placeholder { color: var(--ink-tertiary); }
+.pe-title::placeholder { color: var(--placeholder); }
 
 /* live preview area (the "answer") — grows and scrolls, like the chat thread */
 .pe-preview-scroll {
@@ -1830,7 +1830,7 @@
   min-height: 120px;
   padding: 4px 0 0;
 }
-.pe-editor::placeholder { color: var(--ink-subtle); }
+.pe-editor::placeholder { color: var(--placeholder); }
 
 /* Write / Preview toggle */
 .pe-tabs {
@@ -3947,7 +3947,7 @@
 }
 
 .tag-input-box input::placeholder {
-  color: var(--ink-tertiary);
+  color: var(--placeholder);
 }
 
 /* Linear label: neutral pill, the colour lives in the dot (not the whole chip). */
@@ -4130,7 +4130,7 @@
   color: var(--ink);
 }
 .labelpick-search input::placeholder {
-  color: var(--ink-tertiary);
+  color: var(--placeholder);
 }
 .labelpick-search kbd {
   flex-shrink: 0;
@@ -4508,7 +4508,7 @@
   padding: 0;
 }
 .pb-note::placeholder {
-  color: var(--ink-tertiary);
+  color: var(--placeholder);
 }
 
 .flow {
