@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { MediaItem } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
+import { downloadFile } from '../lib/api';
 import './connectors.css';
 
 const TYPE_GLYPH: Record<MediaItem['type'], string> = { video: '▶', image: '🖼', audio: '♪' };
@@ -46,7 +47,13 @@ export function ImportMedia() {
     if (!ws) return;
     void connectorsApi
       .download(ws, url.trim(), indices)
-      .then((r) => r.items.forEach((it) => triggerDownload(it.url, it.filename)))
+      .then((r) =>
+        r.items.forEach((it) =>
+          it.url.startsWith('http')
+            ? triggerDownload(it.url, it.filename)        // absolute (mock/external)
+            : void downloadFile(it.url, it.filename),     // proxied Lyra file (authed)
+        ),
+      )
       .catch((err) => setError(err instanceof Error ? err.message : t('connectors.error')));
   };
 
