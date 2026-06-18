@@ -29,6 +29,8 @@ export interface FlowEditData {
   prompts: Prompt[];
   labels: ReadonlyArray<{ name: string; color: string }>;
   modelLabel: (p: Provider, m: string) => string;
+  // promptIds confirmed deleted/inactive (their step is flagged in the builder).
+  missing?: ReadonlySet<string>;
 }
 
 const EditCtx = createContext<FlowEditData | null>(null);

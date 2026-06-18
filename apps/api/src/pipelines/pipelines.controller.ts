@@ -56,6 +56,16 @@ export class PipelinesController {
     return this.pipelines.toViews(await this.pipelines.listForWorkspace(workspaceId));
   }
 
+  // How many pipelines reference a given prompt (drives the delete-prompt warning).
+  @Get('workspaces/:id/pipelines/prompt-usage/:promptId')
+  @UseGuards(WorkspaceGuard)
+  async promptUsage(
+    @Param('id') workspaceId: string,
+    @Param('promptId') promptId: string,
+  ): Promise<{ count: number }> {
+    return { count: await this.pipelines.countUsingPrompt(workspaceId, promptId) };
+  }
+
   @Get('pipelines/:id')
   @UseGuards(PipelineAccessGuard)
   get(@CurrentPipeline() pipeline: PipelineDocument): Promise<PipelineModel> {

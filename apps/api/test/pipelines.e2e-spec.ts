@@ -198,6 +198,44 @@ describe('Pipelines (e2e)', () => {
     expect(proj.pipelines).not.toContain(tempPipeline);
   });
 
+  it('reports how many pipelines use a prompt (delete-warning)', async () => {
+    const usedPrompt = (
+      await http()
+        .post(`/workspaces/${teamId}/prompts`)
+        .set(auth(ownerToken))
+        .send({ title: 'Used', content: 'hi', status: 'public' })
+        .expect(201)
+    ).body.id;
+    await http()
+      .post(`/workspaces/${teamId}/pipelines`)
+      .set(auth(ownerToken))
+      .send({ name: 'Uses it', steps: [step({ promptId: usedPrompt })] })
+      .expect(201);
+
+    const used = (
+      await http()
+        .get(`/workspaces/${teamId}/pipelines/prompt-usage/${usedPrompt}`)
+        .set(auth(ownerToken))
+        .expect(200)
+    ).body;
+    expect(used.count).toBe(1);
+    // a prompt bound to no pipeline reports zero
+    const unusedPrompt = (
+      await http()
+        .post(`/workspaces/${teamId}/prompts`)
+        .set(auth(ownerToken))
+        .send({ title: 'Unused', content: 'hi', status: 'public' })
+        .expect(201)
+    ).body.id;
+    const none = (
+      await http()
+        .get(`/workspaces/${teamId}/pipelines/prompt-usage/${unusedPrompt}`)
+        .set(auth(ownerToken))
+        .expect(200)
+    ).body;
+    expect(none.count).toBe(0);
+  });
+
   it('cascades soft delete from a workspace to its pipelines', async () => {
     const tempWs = (
       await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Temp' }).expect(201)

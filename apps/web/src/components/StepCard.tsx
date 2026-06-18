@@ -18,6 +18,8 @@ export interface StepCardProps {
   prompt?: Prompt;
   labels: Parameters<typeof labelColor>[1];
   modelLabel: (p: Provider, m: string) => string;
+  // The step's bound prompt was deleted/inactive — flag it so it can be re-picked.
+  promptMissing?: boolean;
 }
 
 // One editable step node, shared by the desktop canvas (a React Flow node) and
@@ -25,10 +27,10 @@ export interface StepCardProps {
 // through the FlowCallbacks context (no closure over builder state). Reorder is
 // via the ← / → actions (the old pointer-drag grip is gone — on the canvas you
 // drag to reposition, and ← / → change the sequence).
-export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelLabel }: StepCardProps) {
+export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelLabel, promptMissing }: StepCardProps) {
   const cb = useFlowCallbacks();
   return (
-    <div className="flow-node" style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}>
+    <div className={`flow-node${promptMissing ? ' broken' : ''}`} style={{ '--accent': tagColor(s.name || s.promptId) } as CSSProperties}>
       <div className="flow-node-main" onClick={() => canEdit && cb.onEdit?.(i)}>
         <div className="flow-node-head">
           <span className="flow-num">{i + 1}</span>
@@ -60,6 +62,11 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               IF
             </span>
           )}
+          {promptMissing && (
+            <span className="mode-tag missing" title="This step's prompt was deleted — re-pick a prompt or remove the step">
+              ⚠ PROMPT DELETED
+            </span>
+          )}
           {p && (
             <span
               className="flow-eye"
@@ -87,6 +94,9 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
           )}
         </div>
         {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
+        {promptMissing && (
+          <div className="flow-node-snip broken-hint">Prompt deleted — re-pick a prompt for this step.</div>
+        )}
         <div className="flow-node-sub">
           <ProviderIcon provider={s.provider} size={14} />
           <span>{modelLabel(s.provider, s.model)}</span>

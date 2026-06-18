@@ -113,6 +113,7 @@ export function Prompts() {
   const filterRef = useRef<HTMLDivElement>(null);
 
   const [toDelete, setToDelete] = useState<Prompt | null>(null);
+  const [deleteUsage, setDeleteUsage] = useState<number | null>(null);
   const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
@@ -228,12 +229,25 @@ export function Prompts() {
     });
   }
 
+  // Open the delete confirm, and check how many pipelines use the prompt so we
+  // can warn that those steps would be left empty (the dangling-ref bug class).
+  function askDelete(p: Prompt) {
+    setToDelete(p);
+    setDeleteUsage(null);
+    if (wsId) {
+      api<{ count: number }>(`/workspaces/${wsId}/pipelines/prompt-usage/${p.id}`)
+        .then((r) => setDeleteUsage(r.count))
+        .catch(() => setDeleteUsage(null));
+    }
+  }
+
   async function confirmDelete() {
     if (!toDelete) return;
     setDeleting(true);
     try {
       await api(`/prompts/${toDelete.id}`, { method: 'DELETE' });
       setToDelete(null);
+      setDeleteUsage(null);
       reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not delete prompt');
@@ -458,7 +472,7 @@ export function Prompts() {
                     {editable && (
                       <button
                         className="prow-delete"
-                        onClick={() => setToDelete(p)}
+                        onClick={() => askDelete(p)}
                         title="Delete prompt"
                         aria-label={`Delete ${p.title}`}
                       >
@@ -482,12 +496,21 @@ export function Prompts() {
       <ConfirmDialog
         open={!!toDelete}
         title="Delete prompt?"
-        message={<><strong>{toDelete?.title}</strong> will be removed from the library. This can’t be undone.</>}
+        message={
+          <>
+            <strong>{toDelete?.title}</strong> will be removed from the library. This can’t be undone.
+            {deleteUsage != null && deleteUsage > 0 && (
+              <span className="confirm-warn">
+                ⚠ Used by {deleteUsage} pipeline{deleteUsage === 1 ? '' : 's'} — those steps will be left empty.
+              </span>
+            )}
+          </>
+        }
         confirmLabel="Delete"
         danger
         busy={deleting}
         onConfirm={() => void confirmDelete()}
-        onCancel={() => setToDelete(null)}
+        onCancel={() => { setToDelete(null); setDeleteUsage(null); }}
       />
       {detailPrompt && (
         <PromptDetails

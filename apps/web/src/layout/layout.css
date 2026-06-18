@@ -6409,6 +6409,22 @@
   border-color: rgba(137, 87, 229, 0.3);
   background: rgba(137, 87, 229, 0.1);
 }
+.mode-tag.missing {
+  color: var(--danger);
+  border-color: rgba(229, 72, 77, 0.35);
+  background: rgba(229, 72, 77, 0.1);
+}
+.flow-node.broken { border-color: rgba(229, 72, 77, 0.45); }
+.flow-node-snip.broken-hint { color: var(--danger); font-style: italic; }
+
+/* Warning line inside a confirm dialog (e.g. deleting a prompt a pipeline uses). */
+.confirm-warn {
+  display: block;
+  margin-top: 10px;
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.4;
+}
 
 /* Condition config in the add/edit-step drawer */
 .addstep-cond {

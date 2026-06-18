@@ -7,6 +7,7 @@ export function StepNode({ data }: NodeProps) {
   const d = data as EditNodeData;
   const edit = useFlowEditData();
   const prompt = edit?.prompts.find((p) => p.id === d.step.promptId);
+  const promptMissing = !!d.step.promptId && !!edit?.missing?.has(d.step.promptId);
   return (
     <div className="flow-rf-node">
       <Handle type="target" position={Position.Left} isConnectable={false} />
@@ -17,6 +18,7 @@ export function StepNode({ data }: NodeProps) {
         prompt={prompt}
         labels={edit?.labels ?? []}
         modelLabel={edit?.modelLabel ?? ((_p, m) => m)}
+        promptMissing={promptMissing}
       />
       <Handle type="source" position={Position.Right} isConnectable={false} />
     </div>

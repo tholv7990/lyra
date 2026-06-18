@@ -85,6 +85,7 @@ export function PipelineBuilder() {
   const [name, setName] = useState('');
   useBreadcrumb(isNew ? name.trim() || 'New' : pipeline?.name ?? '…');
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [missingPromptIds, setMissingPromptIds] = useState<Set<string>>(new Set());
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
@@ -129,28 +130,42 @@ export function PipelineBuilder() {
   }, [id, wsId]);
 
   useEffect(() => {
-    const missing = Array.from(new Set(steps.map((s) => s.promptId)))
-      .filter((promptId) => promptId && !prompts.some((p) => p.id === promptId));
+    // Prompts referenced by steps but not loaded — and not already known missing.
+    const missing = Array.from(new Set(steps.map((s) => s.promptId))).filter(
+      (promptId) => promptId && !prompts.some((p) => p.id === promptId) && !missingPromptIds.has(promptId),
+    );
     if (missing.length === 0) return;
     let cancelled = false;
     Promise.all(
       missing.map((promptId) =>
-        api<Prompt>(`/prompts/${promptId}`).catch(() => null),
+        api<Prompt>(`/prompts/${promptId}`)
+          .then((p) => ({ promptId, p }))
+          .catch(() => ({ promptId, p: null as Prompt | null })),
       ),
-    ).then((items) => {
+    ).then((results) => {
       if (cancelled) return;
-      const found = items.filter((p): p is Prompt => !!p);
+      const found = results.map((r) => r.p).filter((p): p is Prompt => !!p);
+      const notFound = results.filter((r) => !r.p).map((r) => r.promptId);
       if (found.length > 0) {
         setPrompts((list) => {
           const existing = new Set(list.map((p) => p.id));
           return [...list, ...found.filter((p) => !existing.has(p.id))];
         });
       }
+      // Confirmed deleted/inactive — record so their steps are flagged (and we
+      // don't re-fetch them every render).
+      if (notFound.length > 0) {
+        setMissingPromptIds((prev) => {
+          const next = new Set(prev);
+          notFound.forEach((promptId) => next.add(promptId));
+          return next;
+        });
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [steps, prompts]);
+  }, [steps, prompts, missingPromptIds]);
 
   const canEdit = useMemo(
     () =>
@@ -385,6 +400,7 @@ export function PipelineBuilder() {
         prompt={prompts.find((x) => x.id === s.promptId)}
         labels={labels}
         modelLabel={modelLabel}
+        promptMissing={!!s.promptId && missingPromptIds.has(s.promptId)}
       />
     </FlowCallbacksProvider>
   );
@@ -529,7 +545,7 @@ export function PipelineBuilder() {
           <FlowCanvas
             graph={buildEditGraph({ steps, canEdit })}
             callbacks={flowCbs}
-            editData={{ prompts, labels, modelLabel }}
+            editData={{ prompts, labels, modelLabel, missing: missingPromptIds }}
           />
         </Suspense>
       )}

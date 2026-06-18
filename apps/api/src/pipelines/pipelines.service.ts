@@ -40,6 +40,12 @@ export class PipelinesService extends BaseRepository<Pipeline> {
     return this.find({ workspaceId }, { sort: { createdAt: -1 } });
   }
 
+  // How many active pipelines have a step bound to this prompt (for the
+  // delete-a-prompt warning — those steps would be left empty).
+  countUsingPrompt(workspaceId: string, promptId: string): Promise<number> {
+    return this.count({ workspaceId, 'steps.promptId': promptId });
+  }
+
   // Assign each step a stable id. Models are refreshed live from the provider,
   // so we only require a non-empty model id (not a static-catalog match) — the
   // step picker offers known ids and the provider rejects a bad one at run time.
