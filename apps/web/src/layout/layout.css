@@ -647,25 +647,6 @@
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.gs-dismiss {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border: none;
-  background: transparent;
-  color: var(--ink-tertiary);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-
-.gs-dismiss:hover {
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
 .gs-steps {
   list-style: none;
   margin: 0;
@@ -1181,6 +1162,53 @@
   display: grid;
   place-items: center;
   transition: background 0.12s ease, color 0.12s ease;
+}
+
+/* ===== <IconButton> — the one shared icon-only button =====
+   Token-driven geometry + semantic variants. Replaces the per-page one-off icon
+   button classes; pair with the canonical action icons (view=eye, delete=X,
+   close=X). */
+.icon-button {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.icon-button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.icon-button:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ib-sm { width: 28px; height: 28px; }
+.ib-md { width: 32px; height: 32px; }
+.ib-lg { width: 36px; height: 36px; }
+.ib-danger { color: var(--danger); }
+.ib-danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+.ib-primary { color: var(--primary); }
+.ib-primary:hover {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+.ib-success { color: var(--success); }
+.ib-success:hover {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
 }
 
 .icon-btn {
@@ -7084,23 +7112,6 @@
   color: var(--ink-muted);
   white-space: nowrap;
 }
-.srm-x {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  color: var(--ink-tertiary);
-  border-radius: var(--radius-md);
-}
-.srm-x:hover {
-  color: var(--ink);
-  background: var(--surface-2);
-}
-
 .srm-versions {
   display: flex;
   align-items: center;

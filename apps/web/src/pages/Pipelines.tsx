@@ -7,6 +7,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EmptyState } from '../components/EmptyState';
 import { LabelPicker } from '../components/LabelPicker';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { PipelinesIcon, PlusIcon, XIcon } from '../layout/icons';
@@ -255,12 +256,12 @@ export function Pipelines() {
       {loading ? (
         <p className="empty">{t('pipelines.loading')}</p>
       ) : pipelines.length === 0 ? (
-        <div className="prompt-empty">
-          <div className="prompt-empty-art"><PipelinesIcon width={26} height={26} /></div>
-          <h3>{t('pipelines.emptyTitle')}</h3>
-          <p>{t('pipelines.emptyBody')}</p>
-          <button className="btn-primary" onClick={() => navigate('/pipelines/new')}>{t('pipelines.newPipeline')}</button>
-        </div>
+        <EmptyState
+          icon={<PipelinesIcon width={26} height={26} />}
+          title={t('pipelines.emptyTitle')}
+          body={t('pipelines.emptyBody')}
+          cta={{ label: t('pipelines.newPipeline'), onClick: () => navigate('/pipelines/new') }}
+        />
       ) : visible.length === 0 ? (
         <p className="empty">{t('pipelines.noMatch')}</p>
       ) : (

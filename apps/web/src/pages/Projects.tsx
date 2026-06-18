@@ -6,6 +6,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EmptyState } from '../components/EmptyState';
 import { ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
 
 const STATUS_KEY: Record<ProjectStatus, string> = {
@@ -235,12 +236,12 @@ export function Projects() {
       {loading ? (
         <p className="empty">{t('projects.loadingProjects')}</p>
       ) : projects.length === 0 ? (
-        <div className="prompt-empty">
-          <div className="prompt-empty-art"><ProjectsIcon width={26} height={26} /></div>
-          <h3>{t('projects.emptyTitle')}</h3>
-          <p>{t('projects.emptyBody')}</p>
-          <button className="btn-primary" onClick={() => navigate('/projects/new')}>{t('projects.newProject')}</button>
-        </div>
+        <EmptyState
+          icon={<ProjectsIcon width={26} height={26} />}
+          title={t('projects.emptyTitle')}
+          body={t('projects.emptyBody')}
+          cta={{ label: t('projects.newProject'), onClick: () => navigate('/projects/new') }}
+        />
       ) : visible.length === 0 ? (
         <p className="empty">{t('projects.noMatch')}</p>
       ) : (

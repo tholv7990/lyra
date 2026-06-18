@@ -18,6 +18,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EmptyState } from '../components/EmptyState';
 import { LabelPicker } from '../components/LabelPicker';
 import { PromptDetails } from '../components/PromptDetails';
 import { ProviderIcon } from '../components/ProviderIcon';
@@ -368,12 +369,12 @@ export function Prompts() {
         <p className="empty">{t('prompts.loadingPrompts')}</p>
       ) : prompts.length === 0 ? (
         !hasFilters ? (
-          <div className="prompt-empty">
-            <div className="prompt-empty-art"><PromptsIcon width={26} height={26} /></div>
-            <h3>{t('prompts.emptyTitle')}</h3>
-            <p>{t('prompts.emptyBody')}</p>
-            <button className="btn-primary" onClick={() => navigate('/prompts/new')}>{t('prompts.emptyCta')}</button>
-          </div>
+          <EmptyState
+            icon={<PromptsIcon width={26} height={26} />}
+            title={t('prompts.emptyTitle')}
+            body={t('prompts.emptyBody')}
+            cta={{ label: t('prompts.emptyCta'), onClick: () => navigate('/prompts/new') }}
+          />
         ) : (
           <p className="empty">{t('prompts.noMatch')}</p>
         )

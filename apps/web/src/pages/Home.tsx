@@ -20,6 +20,7 @@ import {
   CheckIcon,
   XIcon,
 } from '../layout/icons';
+import { IconButton } from '../components/IconButton';
 
 interface Tile {
   to?: string;
@@ -131,9 +132,12 @@ export function Home() {
                 <div className="gs-bar-fill" style={{ width: `${progress.ratio * 100}%` }} />
               </div>
             </div>
-            <button className="gs-dismiss" onClick={dismiss} title={t('home.gsDismiss')} aria-label={t('home.gsDismiss')}>
-              <XIcon width={15} height={15} />
-            </button>
+            <IconButton
+              icon={<XIcon width={15} height={15} />}
+              label={t('home.gsDismiss')}
+              size="sm"
+              onClick={dismiss}
+            />
           </div>
 
           <ol className="gs-steps">
