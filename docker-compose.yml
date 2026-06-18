@@ -116,20 +116,18 @@ services:
   # (or set `image`) when it exists.
   connectors-service:
     profiles: ["connectors"]
-    # build: ./services/connectors        # <- your microservice source (install yt-dlp + ffmpeg in its Dockerfile)
-    image: lyra-connectors-service:dev     # <- or a prebuilt image (with yt-dlp + ffmpeg)
+    build:
+      context: .
+      dockerfile: apps/connectors-service/Dockerfile
     container_name: lyra-connectors-service
     restart: unless-stopped
     ports:
       - "9100:9100"
     environment:
       PORT: "9100"
-      POSTIZ_API_URL: "http://postiz:5000"
-      REDIS_URL: "redis://postiz-redis:6379"
-      CONNECTORS_SERVICE_TOKEN: "change-me-shared-token" # must match apps/api/.env
-      COBALT_API_URL: "http://cobalt:9000/"              # OPTIONAL download fallback
-    depends_on:
-      - postiz
+      CONNECTORS_SERVICE_TOKEN: "change-me-shared-token"
+      FILE_TTL_MS: "900000"
+    depends_on: []
 
 volumes:
   mongo_data:
