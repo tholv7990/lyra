@@ -268,3 +268,21 @@ export interface FindPromptConversationDto {
 export interface RateRunDto {
   value: 'up' | 'down' | null;
 }
+
+// ===== Built-in connectors =====
+export interface SaveCredentialDto {
+  connector: string;
+  apiKey: string;
+}
+export interface PublishDto {
+  channelIds: string[];
+  caption: string;
+  mediaUrls: string[];
+}
+export interface ResolveDto {
+  url: string;
+}
+export interface DownloadDto {
+  url: string;
+  indices?: number[];
+}

@@ -84,12 +84,23 @@
   text-overflow: ellipsis;
 }
 
+/* Sidebar section label (e.g. "Built-ins") above a group of nav items. */
+.nav-group-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-tertiary, #9a9aa2);
+  padding: 4px 12px;
+  margin-top: 12px;
+}
+
 /* Desktop: collapsed icon rail (toggled by the brand button, persisted). */
 @media (min-width: 821px) {
   .app.nav-collapsed .sidebar {
     width: 64px;
   }
   .app.nav-collapsed .nav-txt,
+  .app.nav-collapsed .nav-group-label,
   .app.nav-collapsed .nav-item .soon,
   .app.nav-collapsed .ws-name,
   .app.nav-collapsed .ws-trigger .ws-chevron,

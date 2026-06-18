@@ -40,3 +40,6 @@ coverage/
 
 # Temp dump from Figma MCP get_design_context (not source)
 .figma-assets/
+
+# brainstorming visual companion
+.superpowers/

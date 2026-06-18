@@ -22,6 +22,9 @@ import { Chats } from './pages/Chats';
 import { Pipelines } from './pages/Pipelines';
 import { PipelineBuilder } from './pages/PipelineBuilder';
 import { Settings } from './pages/Settings';
+import { Connections } from './pages/Connections';
+import { PublishComposer } from './pages/PublishComposer';
+import { ImportMedia } from './pages/ImportMedia';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -81,6 +84,9 @@ const router = createBrowserRouter([
       { path: 'pipelines', element: <Pipelines /> },
       { path: 'pipelines/new', element: <PipelineBuilder /> },
       { path: 'pipelines/:id', element: <PipelineBuilder /> },
+      { path: 'publish', element: <PublishComposer /> },
+      { path: 'import', element: <ImportMedia /> },
+      { path: 'connections', element: <Connections /> },
       { path: 'settings', element: <Settings /> },
     ],
   },

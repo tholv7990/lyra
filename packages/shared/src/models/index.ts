@@ -334,3 +334,44 @@ export interface Asset {
   meta?: Record<string, unknown>;
   approved?: boolean;
 }
+
+// ===== Built-in connectors (publish + media import) =====
+// Lyra holds the UI + a thin proxy; the connector logic lives in a separate
+// microservice (Postiz for publish, Cobalt for download). These are the shapes
+// the proxy ↔ microservice contract exchanges.
+export interface ConnectorInfo {
+  id: string;
+  label: string;
+  platforms: string[];
+}
+
+export interface Channel {
+  id: string;
+  platform: string; // 'tiktok' | 'instagram' | 'youtube' | 'facebook' | ...
+  displayName: string;
+}
+
+// One published-post outcome per target channel (partial failure tolerated).
+export interface Receipt {
+  platform: string;
+  accountId: string;
+  url?: string;
+  postId?: string;
+  status: 'ok' | 'failed';
+  error?: string;
+}
+
+// Publish runs as a job; the UI polls jobs/:jobId until done/failed.
+export interface PublishJob {
+  jobId: string;
+  status: 'queued' | 'running' | 'done' | 'failed';
+  receipts?: Receipt[];
+}
+
+// One resolved media item from a download/resolve (carousels return many).
+export interface MediaItem {
+  index: number;
+  type: 'video' | 'image' | 'audio';
+  thumbUrl?: string;
+  filename?: string;
+}

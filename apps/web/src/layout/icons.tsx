@@ -172,3 +172,31 @@ export const LogoutIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M11.06 5.64 13.7 7.4a.7.7 0 0 1 0 1.2l-2.64 1.76a.7.7 0 0 1-1.09-.58V8.8H7.4a.8.8 0 0 1 0-1.6h2.57V6.22a.7.7 0 0 1 1.09-.58Z" />
   </svg>
 );
+
+// Paper-plane — the Publish (send to channels) section.
+export const PublishIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M13.6 2.4 1.9 7.1a.6.6 0 0 0 .05 1.12l3.4 1.1 1.1 3.4a.6.6 0 0 0 1.12.05L13.6 2.4Zm-1.5 1.5L6.9 9.1l-.02.02-2.2-.7 7.42-3.0ZM7.5 10.1l-.7-2.2 5.2-5.2-4.5 7.4Z" />
+  </svg>
+);
+
+// Down-arrow into a tray — Import media (download in).
+export const ImportIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M8 1.6a.8.8 0 0 1 .8.8v5.07l1.43-1.43a.8.8 0 1 1 1.13 1.13L8.57 10.1a.8.8 0 0 1-1.13 0L4.64 7.17a.8.8 0 0 1 1.13-1.13L7.2 7.47V2.4A.8.8 0 0 1 8 1.6Z" />
+    <path d="M2.6 9.6a.8.8 0 0 1 .8.8v1.6h9.2v-1.6a.8.8 0 0 1 1.6 0v2a1.2 1.2 0 0 1-1.2 1.2H3a1.2 1.2 0 0 1-1.2-1.2v-2a.8.8 0 0 1 .8-.8Z" />
+  </svg>
+);
+
+// Two interlocking links — Connections.
+export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path
+      d="M6.2 9.8 9.8 6.2M6.5 4.5l1-1a2.7 2.7 0 0 1 3.8 3.8l-1 1M9.5 11.5l-1 1a2.7 2.7 0 0 1-3.8-3.8l1-1"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+  </svg>
+);

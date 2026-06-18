@@ -7,4 +7,8 @@ export default {
   settings: 'Cài đặt',
   logout: 'Đăng xuất',
   account: 'Tài khoản',
+  builtins: 'Tích hợp sẵn',
+  publish: 'Đăng bài',
+  import: 'Tải media',
+  connections: 'Kết nối',
 } as const;

@@ -1,0 +1,50 @@
+import { ConnectorsProxy } from './connectors.proxy';
+
+function proxy(url?: string) {
+  const config = { get: (k: string) => (k === 'CONNECTORS_SERVICE_URL' ? url : 'tok') };
+  return new ConnectorsProxy(config as never);
+}
+
+describe('ConnectorsProxy (mock mode — no service URL)', () => {
+  const p = proxy(undefined);
+
+  it('returns mock channels', async () => {
+    const out = await p.forward('ws', 'u', 'GET', 'channels');
+    expect(Array.isArray(out.channels)).toBe(true);
+    expect((out.channels as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  it('publish returns a jobId, then the job is done with receipts', async () => {
+    const pub = await p.forward('ws', 'u', 'POST', 'publish', {
+      channelIds: ['c1'],
+      caption: 'hi',
+      mediaUrls: [],
+    });
+    expect(pub.jobId).toBeTruthy();
+    const job = await p.forward('ws', 'u', 'GET', `jobs/${pub.jobId as string}`);
+    expect(job.status).toBe('done');
+    expect(Array.isArray(job.receipts)).toBe(true);
+  });
+
+  it('resolve returns media items', async () => {
+    const out = await p.forward('ws', 'u', 'POST', 'resolve', { url: 'https://x' });
+    expect((out.items as unknown[]).length).toBeGreaterThan(0);
+  });
+});
+
+describe('ConnectorsProxy (forward mode — service URL set)', () => {
+  it('forwards to the service with auth + workspace headers', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ json: () => Promise.resolve({ channels: [] }) });
+    (global as unknown as { fetch: jest.Mock }).fetch = fetchMock;
+
+    await proxy('http://svc:9100/').forward('ws1', 'u1', 'GET', 'channels');
+
+    const [calledUrl, init] = fetchMock.mock.calls[0];
+    expect(calledUrl).toBe('http://svc:9100/channels');
+    expect(init.headers['X-Workspace-Id']).toBe('ws1');
+    expect(init.headers['X-User-Id']).toBe('u1');
+    expect(init.headers.Authorization).toContain('Bearer');
+  });
+});

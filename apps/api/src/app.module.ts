@@ -17,6 +17,7 @@ import { CopilotModule } from './copilot/copilot.module';
 import { ModelsModule } from './models/models.module';
 import { LabelsModule } from './labels/labels.module';
 import { FilesModule } from './files/files.module';
+import { ConnectorsModule } from './connectors/connectors.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -47,6 +48,7 @@ import { HealthController } from './health.controller';
     ModelsModule,
     LabelsModule,
     FilesModule,
+    ConnectorsModule,
     AuthModule,
   ],
   controllers: [HealthController],

@@ -9,5 +9,6 @@ import pipelines from './pipelines';
 import prompts from './prompts';
 import chats from './chats';
 import copilot from './copilot';
+import connectors from './connectors';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors };

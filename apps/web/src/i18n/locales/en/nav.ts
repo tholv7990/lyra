@@ -7,4 +7,8 @@ export default {
   settings: 'Settings',
   logout: 'Log out',
   account: 'Account',
+  builtins: 'Built-ins',
+  publish: 'Publish',
+  import: 'Import media',
+  connections: 'Connections',
 } as const;

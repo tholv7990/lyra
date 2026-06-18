@@ -14,6 +14,9 @@ import {
   MembersIcon,
   SettingsIcon,
   LogoutIcon,
+  PublishIcon,
+  ImportIcon,
+  ConnectionsIcon,
 } from './icons';
 import './layout.css';
 
@@ -30,6 +33,9 @@ const MODULES = [
   { path: '/prompts', name: 'Prompts' },
   { path: '/pipelines', name: 'Pipelines' },
   { path: '/projects', name: 'Projects' },
+  { path: '/publish', name: 'Publish' },
+  { path: '/import', name: 'Import media' },
+  { path: '/connections', name: 'Connections' },
   { path: '/settings', name: 'Settings' },
 ];
 function moduleFor(pathname: string) {
@@ -69,6 +75,9 @@ export function AppLayout() {
     '/prompts': 'nav.prompts',
     '/pipelines': 'nav.pipelines',
     '/projects': 'nav.projects',
+    '/publish': 'nav.publish',
+    '/import': 'nav.import',
+    '/connections': 'nav.connections',
     '/settings': 'nav.settings',
   };
   const modLabel = t(NAV_KEY[mod.path] ?? '', { defaultValue: mod.name });
@@ -122,6 +131,21 @@ export function AppLayout() {
               <ProjectsIcon />
               <span className="nav-txt">{t('nav.projects')}</span>
             </NavLink>
+
+            <div className="nav-group-label">{t('nav.builtins')}</div>
+            <NavLink to="/publish" title={t('nav.publish')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <PublishIcon />
+              <span className="nav-txt">{t('nav.publish')}</span>
+            </NavLink>
+            <NavLink to="/import" title={t('nav.import')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ImportIcon />
+              <span className="nav-txt">{t('nav.import')}</span>
+            </NavLink>
+            <NavLink to="/connections" title={t('nav.connections')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ConnectionsIcon />
+              <span className="nav-txt">{t('nav.connections')}</span>
+            </NavLink>
+
             <div className="nav-item disabled" title="Members (soon)">
               <MembersIcon />
               <span className="nav-txt">Members</span>
