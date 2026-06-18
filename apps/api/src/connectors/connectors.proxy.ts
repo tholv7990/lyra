@@ -24,12 +24,18 @@ export function rewriteDownload(
 export class ConnectorsProxy {
   constructor(private readonly config: ConfigService) {}
 
+  // True when a real connectors-service is configured (vs the deterministic mock).
+  usesService(): boolean {
+    return !!this.config.get<string>('CONNECTORS_SERVICE_URL');
+  }
+
   async forward(
     workspaceId: string,
     userId: string,
     method: Method,
     path: string,
     body?: unknown,
+    connectorKey?: string,
   ): Promise<Record<string, unknown>> {
     const base = this.config.get<string>('CONNECTORS_SERVICE_URL');
     if (!base) return this.mock(path);
@@ -42,6 +48,7 @@ export class ConnectorsProxy {
         Authorization: `Bearer ${token}`,
         'X-Workspace-Id': workspaceId,
         'X-User-Id': userId,
+        ...(connectorKey ? { 'X-Connector-Key': connectorKey } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -67,7 +74,6 @@ export class ConnectorsProxy {
       };
     }
     if (path.startsWith('connect-link')) return { url: '#mock-connect' };
-    if (path === 'credentials') return { ok: true };
     if (path === 'publish') return { jobId: 'mock-job-1', status: 'queued' };
     if (path.startsWith('jobs/')) {
       return {
@@ -79,7 +85,6 @@ export class ConnectorsProxy {
         ],
       };
     }
-    if (path.startsWith('channels/')) return { ok: true }; // DELETE channels/:id
     if (path === 'resolve') {
       return {
         items: [

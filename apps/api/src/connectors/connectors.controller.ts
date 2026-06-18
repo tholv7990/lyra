@@ -1,26 +1,41 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { Readable } from 'node:stream';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
-import type { User } from '@lyra/shared';
+import type { ConnectorCredentialInfo, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireManageKeys } from '../workspaces/decorators/require-manage-keys.decorator';
 import { ConnectorsProxy, rewriteDownload } from './connectors.proxy';
+import { ConnectorCredentialsService } from './connector-credentials.service';
 import { DownloadBody, PublishBody, ResolveBody, SaveCredentialBody } from './dto/connectors.dto';
 
+const POSTIZ = 'postiz';
+
 // Thin proxy to the connectors microservice (or its mock). Read + run actions are
-// member-level; managing credentials/links/channels requires canManageKeys (mirrors
-// KeysController). No connector logic here — every handler just forwards.
+// member-level; managing credentials requires canManageKeys. The Postiz key is
+// stored here (encrypted) and forwarded to the service as X-Connector-Key.
 @Controller('workspaces/:id/connectors')
 @UseGuards(WorkspaceGuard)
 export class ConnectorsController {
-  constructor(private readonly proxy: ConnectorsProxy) {}
+  constructor(
+    private readonly proxy: ConnectorsProxy,
+    private readonly credentials: ConnectorCredentialsService,
+  ) {}
 
   @Put('credentials')
   @RequireManageKeys()
-  saveCredential(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: SaveCredentialBody) {
-    return this.proxy.forward(ws, u.id, 'PUT', 'credentials', b);
+  saveCredential(
+    @Param('id') ws: string,
+    @CurrentUser() u: User,
+    @Body() b: SaveCredentialBody,
+  ): Promise<ConnectorCredentialInfo> {
+    return this.credentials.upsert(ws, b.connector, b.apiKey, u.id);
+  }
+
+  @Get('credentials')
+  credentialStatus(@Param('id') ws: string): Promise<ConnectorCredentialInfo> {
+    return this.credentials.status(ws, POSTIZ);
   }
 
   @Get('connect-link')
@@ -30,24 +45,18 @@ export class ConnectorsController {
   }
 
   @Get('channels')
-  channels(@Param('id') ws: string, @CurrentUser() u: User) {
-    return this.proxy.forward(ws, u.id, 'GET', 'channels');
-  }
-
-  @Delete('channels/:channelId')
-  @RequireManageKeys()
-  removeChannel(@Param('id') ws: string, @Param('channelId') c: string, @CurrentUser() u: User) {
-    return this.proxy.forward(ws, u.id, 'DELETE', `channels/${c}`);
+  async channels(@Param('id') ws: string, @CurrentUser() u: User) {
+    return this.proxy.forward(ws, u.id, 'GET', 'channels', undefined, await this.requireKey(ws));
   }
 
   @Post('publish')
-  publish(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: PublishBody) {
-    return this.proxy.forward(ws, u.id, 'POST', 'publish', b);
+  async publish(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: PublishBody) {
+    return this.proxy.forward(ws, u.id, 'POST', 'publish', b, await this.requireKey(ws));
   }
 
   @Get('jobs/:jobId')
-  job(@Param('id') ws: string, @Param('jobId') j: string, @CurrentUser() u: User) {
-    return this.proxy.forward(ws, u.id, 'GET', `jobs/${j}`);
+  async job(@Param('id') ws: string, @Param('jobId') j: string, @CurrentUser() u: User) {
+    return this.proxy.forward(ws, u.id, 'GET', `jobs/${j}`, undefined, await this.requireKey(ws));
   }
 
   @Post('resolve')
@@ -72,5 +81,16 @@ export class ConnectorsController {
     const cl = r.headers.get('content-length');
     if (cl) res.setHeader('Content-Length', cl);
     Readable.fromWeb(r.body as WebReadableStream).pipe(res);
+  }
+
+  // Resolve the workspace's decrypted Postiz key. In real mode a missing key is a
+  // friendly 400 (no keyless call); in mock mode the key is unused, so return
+  // undefined and let the proxy serve mock data.
+  private async requireKey(ws: string): Promise<string | undefined> {
+    const key = await this.credentials.getDecrypted(ws, POSTIZ);
+    if (this.proxy.usesService() && !key) {
+      throw new BadRequestException('Connect Postiz first — add your API key in Connections.');
+    }
+    return key ?? undefined;
   }
 }
