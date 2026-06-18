@@ -8,6 +8,7 @@ const PROVIDER_LABELS: Record<Provider, string> = {
   [Provider.DeepSeek]: 'DeepSeek',
   [Provider.Image]: 'Image',
   [Provider.Video]: 'Video',
+  [Provider.Crawl]: 'Crawl',
 };
 const PROVIDERS = Object.values(Provider);
 

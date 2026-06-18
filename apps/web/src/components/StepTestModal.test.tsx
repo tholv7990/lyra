@@ -19,6 +19,7 @@ describe('StepTestModal', () => {
           [Provider.Anthropic]: [],
           [Provider.Image]: [],
           [Provider.Video]: [],
+          [Provider.Crawl]: [],
         }}
         onClose={() => undefined}
       />,

@@ -11,6 +11,7 @@ import {
   type PromptVar,
   type Step,
 } from '@lyra/shared';
+import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
 
 export const STATUS_LABEL: Record<string, string> = {
   idle: 'Idle',
@@ -40,6 +41,8 @@ export interface RunStepCardProps {
   onRun: () => void;
   onApprove: () => void;
   onSavePrompt: (prompt: string) => void;
+  // The run this step belongs to — needed by the result modal for downloads.
+  runId: string;
   // Composer affordance: variables this step can reference, and every step name
   // in the run (to flag dangling {step:X} references). Optional — when omitted,
   // the card renders exactly as before.
@@ -47,17 +50,20 @@ export interface RunStepCardProps {
   stepNames?: string[];
   // Media this step produced (image/video). Rendered as a thumbnail strip.
   assets?: Asset[];
+  // Prior runs of the same pipeline for this step (per-run result history).
+  history?: StepHistoryEntry[];
 }
 
 export function RunStepCard(props: RunStepCardProps) {
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, vars, stepNames, assets } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, runId, vars, stepNames, assets, history } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
-  const waitingForResult =
-    !step.result &&
-    !step.error &&
-    (step.status === StepStatus.Queued || step.status === StepStatus.Running);
+  const [showResult, setShowResult] = useState(false);
+  // "View result" is a first-class action (decoupled from the prompt): available
+  // whenever this step has produced something, or has prior runs to look back on.
+  const hasResult =
+    !!step.result || !!step.error || (assets?.length ?? 0) > 0 || (history?.length ?? 0) > 0;
 
   // Auto-open the node that needs attention (current / gate / errored).
   const wantsAttention =
@@ -106,18 +112,33 @@ export function RunStepCard(props: RunStepCardProps) {
           </div>
           <div className="flow-node-sub">{step.model}</div>
         </button>
-        {/* primary inline action — visible even when collapsed */}
-        {!locked && step.status === StepStatus.Waiting ? (
+        {/* inline actions — visible even when collapsed. "View result" is a
+            first-class action, independent of the prompt-editing expand. */}
+        {(!locked && (step.status === StepStatus.Waiting || runnable)) || hasResult ? (
           <div className="rn-action">
-            <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onApprove}>
-              Approve
-            </button>
-          </div>
-        ) : !locked && runnable ? (
-          <div className="rn-action">
-            <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onRun}>
-              Run
-            </button>
+            {!locked && step.status === StepStatus.Waiting && (
+              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onApprove}>
+                Approve
+              </button>
+            )}
+            {!locked && runnable && (
+              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onRun}>
+                Run
+              </button>
+            )}
+            {hasResult && (
+              <button
+                type="button"
+                className="btn-ghost rn-view"
+                style={{ width: 'auto', marginTop: 0 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowResult(true);
+                }}
+              >
+                View result
+              </button>
+            )}
           </div>
         ) : null}
       </div>
@@ -189,14 +210,16 @@ export function RunStepCard(props: RunStepCardProps) {
             )}
           </div>
           {step.error && <p className="step-error">{step.error}</p>}
-          {waitingForResult && (
-            <div className="result-box rn-result-pin rn-result-waiting">
-              <span className="rn-result-spinner" aria-hidden />
-              <span>Waiting for result</span>
-            </div>
-          )}
-          {step.result && <pre className="result-box rn-result-pin">{step.result}</pre>}
         </div>
+      )}
+      {showResult && (
+        <StepResultModal
+          runId={runId}
+          step={step}
+          assets={assets ?? []}
+          history={history}
+          onClose={() => setShowResult(false)}
+        />
       )}
     </div>
   );

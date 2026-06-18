@@ -29,6 +29,9 @@ export const MODEL_CATALOG: Record<Provider, ModelOption[]> = {
   ],
   [Provider.Image]: [{ id: 'image-default', label: 'Image (default)' }],
   [Provider.Video]: [{ id: 'video-default', label: 'Video (default)' }],
+  // Crawl has no model — it fetches a URL. A placeholder keeps the step's
+  // required model non-empty.
+  [Provider.Crawl]: [{ id: 'fetch', label: 'Fetch page' }],
 };
 
 export function isModelAllowed(provider: Provider, model: string): boolean {

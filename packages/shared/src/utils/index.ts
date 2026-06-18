@@ -1,4 +1,4 @@
-import { MediaType, Role, ProjectStatus, ProjectShare } from '../enums';
+import { MediaType, Provider, Role, ProjectStatus, ProjectShare } from '../enums';
 import type { StepCondition } from '../models';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 import { MEDIA_ALLOWED_EXT, MEDIA_ALLOWED_MIME } from '../constants/media';
@@ -36,6 +36,14 @@ export function canEditProject(
 
 export function canManageKeys(ctx: MemberCtx): boolean {
   return ctx.role === Role.Owner || ctx.canManageKeys;
+}
+
+// Providers that make no external AI call and therefore need no BYOK key — a
+// step on one is never "locked" by a missing key. Crawl just fetches a URL.
+const NO_KEY_PROVIDERS: Provider[] = [Provider.Crawl];
+
+export function providerNeedsKey(provider: Provider): boolean {
+  return !NO_KEY_PROVIDERS.includes(provider);
 }
 
 // Substitute {key} tokens with values. Each key in `vars` whose value is

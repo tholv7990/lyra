@@ -37,6 +37,15 @@ function NeutralGlyph({ provider }: { provider: Provider }) {
       </g>
     );
   }
+  if (provider === Provider.Crawl) {
+    // globe — Source/crawl step
+    return (
+      <g fill="none" stroke="#fff" strokeWidth="1.6">
+        <circle cx="12" cy="12" r="6.5" />
+        <path d="M5.5 12h13M12 5.5c2 2 2 11 0 13M12 5.5c-2 2-2 11 0 13" />
+      </g>
+    );
+  }
   // video
   return <path d="M9 7.5l8 4.5-8 4.5z" fill="#fff" />;
 }

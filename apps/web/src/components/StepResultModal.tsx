@@ -1,0 +1,236 @@
+import { useEffect, useMemo, useState } from 'react';
+import type { Asset, Step } from '@lyra/shared';
+import { api, downloadFile } from '../lib/api';
+
+// One past execution of this step (per-run history). Assets are fetched lazily
+// when a version is selected; only the text/status travel in the list.
+export interface StepHistoryEntry {
+  runId: string;
+  createdAt: string;
+  status: string;
+  result?: string;
+  error?: string;
+}
+
+interface StepResultModalProps {
+  // The run the live step belongs to (for downloads of the current version).
+  runId: string;
+  step: Step;
+  // The current step's assets (already loaded by the run view).
+  assets: Asset[];
+  // Prior runs of the same pipeline for this step, newest first.
+  history?: StepHistoryEntry[];
+  onClose: () => void;
+}
+
+const STATUS_TEXT: Record<string, string> = {
+  idle: 'Idle',
+  queued: 'Queued',
+  running: 'Running',
+  waiting: 'Awaiting approval',
+  skipped: 'Skipped',
+  done: 'Done',
+  error: 'Error',
+};
+
+interface Version {
+  key: string;
+  runId: string;
+  status: string;
+  result?: string;
+  error?: string;
+  label: string;
+}
+
+// A focused, result-only view of a single step — decoupled from the prompt.
+// Shows the output text (copyable), any image/video/audio inline, per-file and
+// zip downloads, and a per-run version switcher when the step has history.
+export function StepResultModal({ runId, step, assets, history = [], onClose }: StepResultModalProps) {
+  const title = step.name?.trim() || `Step ${step.index + 1}`;
+  const provider = step.provider ?? '';
+
+  const versions = useMemo<Version[]>(
+    () => [
+      { key: 'current', runId, status: step.status, result: step.result, error: step.error, label: 'This run' },
+      ...history.map((h) => ({
+        key: h.runId,
+        runId: h.runId,
+        status: h.status,
+        result: h.result,
+        error: h.error,
+        label: new Date(h.createdAt).toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        }),
+      })),
+    ],
+    [runId, step, history],
+  );
+
+  const [sel, setSel] = useState(0);
+  const current = versions[Math.min(sel, versions.length - 1)];
+
+  // Assets per version: the current run's are already in hand; older runs are
+  // fetched on demand and cached. `undefined` = not yet loaded.
+  const [assetCache, setAssetCache] = useState<Record<string, Asset[]>>({ [runId]: assets });
+  const shownAssets = assetCache[current.runId];
+
+  useEffect(() => {
+    if (assetCache[current.runId]) return;
+    let alive = true;
+    api<Asset[]>(`/runs/${current.runId}/assets`)
+      .then((list) => {
+        if (alive) {
+          setAssetCache((c) => ({ ...c, [current.runId]: list.filter((a) => a.stepIndex === step.index) }));
+        }
+      })
+      .catch(() => {
+        if (alive) setAssetCache((c) => ({ ...c, [current.runId]: [] }));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [current.runId, step.index, assetCache]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(current.result ?? '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard blocked — no-op
+    }
+  }
+
+  const dlOne = (assetId: string, name: string) =>
+    void downloadFile(`/runs/${current.runId}/assets/${assetId}/download`, name);
+  const dlZip = () =>
+    void downloadFile(
+      `/runs/${current.runId}/assets/zip?step=${step.index}`,
+      `step-${step.index + 1}-assets.zip`,
+    );
+
+  return (
+    <div className="dialog-scrim" onClick={onClose}>
+      <div className="dialog srm" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <div className="srm-head">
+          <div className="srm-title">
+            <span className="srm-num">{step.index + 1}</span>
+            <h3>{title}</h3>
+            <span className={`badge status-${current.status}`}>
+              {STATUS_TEXT[current.status] ?? current.status}
+            </span>
+          </div>
+          <div className="srm-meta">
+            {provider && <span className="srm-pm">{provider} · {step.model}</span>}
+            <button type="button" className="srm-x" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </div>
+        </div>
+
+        {versions.length > 1 && (
+          <div className="srm-versions">
+            <span className="srm-versions-label">Version</span>
+            <select
+              className="srm-version-select"
+              value={Math.min(sel, versions.length - 1)}
+              onChange={(e) => setSel(Number(e.target.value))}
+            >
+              {versions.map((v, i) => (
+                <option key={v.key} value={i}>
+                  {v.label}
+                  {i === 0 ? ' · latest' : ''}
+                </option>
+              ))}
+            </select>
+            <span className="srm-version-count">{versions.length} runs</span>
+          </div>
+        )}
+
+        <div className="srm-body">
+          {shownAssets === undefined ? (
+            <div className="srm-media-loading">Loading media…</div>
+          ) : shownAssets.length > 0 ? (
+            <div className="srm-media">
+              <div className="srm-media-bar">
+                <span>
+                  {shownAssets.length} file{shownAssets.length === 1 ? '' : 's'}
+                </span>
+                <button type="button" className="btn-ghost srm-dl-all" onClick={dlZip}>
+                  Download all (.zip)
+                </button>
+              </div>
+              <div className="srm-media-grid">
+                {shownAssets.map((a) => (
+                  <div className="srm-asset" key={a.id}>
+                    {a.type === 'image' ? (
+                      <a href={a.url} target="_blank" rel="noreferrer" title="Open full size">
+                        <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
+                      </a>
+                    ) : a.type === 'video' ? (
+                      <video src={a.url} controls preload="metadata" />
+                    ) : (
+                      <audio src={a.url} controls />
+                    )}
+                    <button
+                      type="button"
+                      className="srm-asset-dl"
+                      onClick={() => dlOne(a.id, fallbackName(a, step.index))}
+                    >
+                      Download
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {current.error ? (
+            <>
+              <div className="srm-result-bar">
+                <span>Error</span>
+              </div>
+              <pre className="srm-result srm-error">{current.error}</pre>
+            </>
+          ) : current.result ? (
+            <>
+              <div className="srm-result-bar">
+                <span>Output</span>
+                <button type="button" className="btn-ghost srm-copy" onClick={copy}>
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <pre className="srm-result">{current.result}</pre>
+            </>
+          ) : shownAssets && shownAssets.length === 0 ? (
+            <p className="srm-empty">No result for this version yet.</p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// A client-side fallback filename (the server's Content-Disposition usually wins).
+function fallbackName(asset: Asset, stepIndex: number): string {
+  try {
+    const seg = new URL(asset.url).pathname.split('/').filter(Boolean).pop();
+    if (seg && /\.[a-z0-9]{2,4}$/i.test(seg)) return decodeURIComponent(seg);
+  } catch {
+    // not a URL
+  }
+  const ext = asset.type === 'video' ? 'mp4' : asset.type === 'audio' ? 'mp3' : 'png';
+  return `step-${stepIndex + 1}-asset.${ext}`;
+}

@@ -20,9 +20,11 @@ export function RunStepNode({ data }: NodeProps) {
         onRun={() => cb.onRunStep?.(i)}
         onApprove={() => cb.onApprove?.(i)}
         onSavePrompt={(p) => cb.onSavePrompt?.(i, p)}
+        runId={d.runId}
         vars={d.vars}
         stepNames={d.stepNames}
         assets={d.assets}
+        history={d.history}
       />
       <Handle type="source" position={Position.Right} isConnectable={false} />
     </div>

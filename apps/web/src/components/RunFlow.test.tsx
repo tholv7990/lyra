@@ -62,15 +62,16 @@ describe('RunFlow', () => {
     expect(html).not.toContain('flow-pager-bar');
   });
 
-  test('renders a pinned waiting result area for the active test step', () => {
+  test('exposes a finished step result behind "View result", not inlined with the prompt', () => {
     vi.stubGlobal('window', { matchMedia: matchMedia(true) });
-    const activeRun = run();
-    activeRun.status = RunStatus.Running;
-    activeRun.steps[0].status = StepStatus.Running;
+    const doneRun = run();
+    doneRun.status = RunStatus.Done;
+    doneRun.steps[0].status = StepStatus.Done;
+    doneRun.steps[0].result = 'BRIEF-OUTPUT-TEXT';
 
     const html = renderToStaticMarkup(
       <RunFlow
-        run={activeRun}
+        run={doneRun}
         busy={false}
         hasKey={() => true}
         onRunStep={() => undefined}
@@ -80,7 +81,10 @@ describe('RunFlow', () => {
       />,
     );
 
-    expect(html).toContain('rn-result-pin');
-    expect(html).toContain('Waiting for result');
+    // The result is a first-class action, decoupled from the prompt editor…
+    expect(html).toContain('View result');
+    // …and is no longer pinned inline — it opens in the modal on click.
+    expect(html).not.toContain('rn-result-pin');
+    expect(html).not.toContain('BRIEF-OUTPUT-TEXT');
   });
 });

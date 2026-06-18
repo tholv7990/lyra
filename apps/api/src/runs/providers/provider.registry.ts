@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Provider } from '@lyra/shared';
 import { AnthropicStepProvider } from './anthropic.provider';
 import { OpenAiCompatStepProvider } from './openai-compat.provider';
+import { CrawlStepProvider } from './crawl.provider';
 import { MockStepProvider } from './mock.provider';
 import type { StepProvider } from './step-provider.interface';
 
@@ -18,13 +19,15 @@ export class ProviderRegistry {
   constructor(
     anthropic: AnthropicStepProvider,
     openai: OpenAiCompatStepProvider,
+    crawl: CrawlStepProvider,
     mock: MockStepProvider,
   ) {
     this.impls = {
       [Provider.Anthropic]: anthropic,
       [Provider.OpenAI]: openai,
       [Provider.DeepSeek]: openai,
-      // image/video still mock until their phase
+      [Provider.Crawl]: crawl, // real: fetch a URL → images + text (no key)
+      // image/video still mock until a real render provider is wired
       [Provider.Image]: mock,
       [Provider.Video]: mock,
     };

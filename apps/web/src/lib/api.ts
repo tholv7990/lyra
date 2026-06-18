@@ -127,6 +127,50 @@ export async function api<T = unknown>(
   return (await res.json()) as T;
 }
 
+// Download a binary response (single file or zip) through the authed API and
+// save it to disk. Mirrors api()'s auth (Bearer + workspace header) and the
+// single 401→refresh→retry, but reads a Blob and triggers a browser save —
+// the server proxies cross-origin assets so the download forces and carries auth.
+export async function downloadFile(path: string, fallbackName: string): Promise<void> {
+  const doFetch = () =>
+    fetch(`${API_URL}${path}`, {
+      credentials: 'include',
+      headers: {
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(currentWorkspaceId ? { 'X-Workspace-Id': currentWorkspaceId } : {}),
+      },
+    });
+
+  let res = await doFetch();
+  if (res.status === 401) {
+    const ok = await refreshSession();
+    if (ok) res = await doFetch();
+  }
+  if (!res.ok) throw new ApiError(res.status, res.statusText);
+
+  const blob = await res.blob();
+  const name =
+    filenameFromDisposition(res.headers.get('Content-Disposition')) ?? fallbackName;
+  saveBlob(blob, name);
+}
+
+function filenameFromDisposition(cd: string | null): string | null {
+  if (!cd) return null;
+  const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function saveBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // POST a request and consume a Server-Sent Events stream, invoking onEvent for
 // each parsed `data:` payload. Errors before the stream opens (4xx) throw an
 // ApiError; errors mid-stream arrive as events for the caller to handle.

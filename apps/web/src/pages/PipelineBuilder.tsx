@@ -2,6 +2,7 @@ import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   defaultModel,
+  providerNeedsKey,
   Provider,
   PromptStatus,
   StepMode,
@@ -489,7 +490,7 @@ export function PipelineBuilder() {
         <RunFlow
           run={run}
           busy={runActions.busy}
-          hasKey={(p) => keysSet.has(p)}
+          hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(p)}
           onRunStep={runActions.runStep}
           onApprove={runActions.approve}
           onSavePrompt={runActions.savePrompt}

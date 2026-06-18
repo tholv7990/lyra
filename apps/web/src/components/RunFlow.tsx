@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { promptVarsForStep, BUILTIN_VAR_LABELS, type Asset, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
 import { RunStepCard, providerOf } from './RunStepCard';
+import type { StepHistoryEntry } from './StepResultModal';
 import { buildRunGraph } from './flow/buildGraph';
 
 const FlowCanvas = lazy(() => import('./FlowCanvas'));
@@ -16,6 +17,9 @@ interface RunFlowProps {
   mobileLayout?: 'pager' | 'flow';
   // Media produced by the run's steps (from GET /runs/:id/assets), shown per step.
   assets?: Asset[];
+  // Per-run result history for a step (prior runs of the same pipeline). When
+  // omitted (e.g. the builder test-run), the result modal shows the current run only.
+  historyForStep?: (index: number) => StepHistoryEntry[];
 }
 
 // The unified run view (n8n-style): the pipeline rendered as the same vertical
@@ -31,6 +35,7 @@ export function RunFlow({
   onSavePrompt,
   mobileLayout = 'pager',
   assets = [],
+  historyForStep,
 }: RunFlowProps) {
   const pager = useFlowPager(run.steps.length);
   const { isMobile, setPage } = pager;
@@ -57,9 +62,11 @@ export function RunFlow({
       onRun={() => onRunStep(step.index)}
       onApprove={() => onApprove(step.index)}
       onSavePrompt={(p) => onSavePrompt(step.index, p)}
+      runId={run.id}
       vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
       stepNames={stepNames}
       assets={assetsFor(step.index)}
+      history={historyForStep?.(step.index)}
     />
   );
 
@@ -92,7 +99,7 @@ export function RunFlow({
     );
   }
 
-  const graph = buildRunGraph({ run, hasKey, assets });
+  const graph = buildRunGraph({ run, hasKey, assets, historyForStep });
   return (
     <Suspense fallback={<div className="flow-canvas loading">Loading canvas…</div>}>
       <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt }} />

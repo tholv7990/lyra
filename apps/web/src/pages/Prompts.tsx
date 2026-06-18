@@ -35,6 +35,7 @@ const PROVIDER_LABEL: Record<Provider, string> = {
   [Provider.DeepSeek]: 'DeepSeek',
   [Provider.Image]: 'Image',
   [Provider.Video]: 'Video',
+  [Provider.Crawl]: 'Crawl',
 };
 const PAGE_SIZE = 15;
 

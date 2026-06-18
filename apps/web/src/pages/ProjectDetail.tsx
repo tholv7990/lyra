@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
+  providerNeedsKey,
   ProjectStatus,
   ProjectShare,
   StepMode,
+  StepStatus,
   type ApiKeyInfo,
   type Asset,
   type Pipeline,
@@ -20,6 +22,7 @@ import { useModels } from '../lib/useModels';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
 import { RunFlow } from '../components/RunFlow';
+import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { ProviderIcon } from '../components/ProviderIcon';
@@ -116,6 +119,34 @@ export function ProjectDetail() {
       cancelled = true;
     };
   }, [run]);
+
+  // Per-run result history for a step: the same step (by index) across prior
+  // runs of this pipeline in this project, newest first. Matched by name when
+  // both have one (guards against misalignment if the pipeline was edited).
+  const historyForStep = useCallback(
+    (i: number): StepHistoryEntry[] => {
+      if (!run) return [];
+      const name = run.steps[i]?.name;
+      return runs
+        .filter((r) => r.id !== run.id && r.pipelineId === run.pipelineId)
+        .map((r) => ({ r, s: r.steps[i] }))
+        .filter(
+          ({ s }) =>
+            !!s &&
+            (!!s.result || s.status === StepStatus.Error) &&
+            (!name || !s.name || s.name === name),
+        )
+        .sort((a, b) => (a.r.createdAt < b.r.createdAt ? 1 : -1))
+        .map(({ r, s }) => ({
+          runId: r.id,
+          createdAt: r.createdAt,
+          status: s!.status,
+          result: s!.result,
+          error: s!.error,
+        }));
+    },
+    [run, runs],
+  );
 
   async function act<T>(fn: () => Promise<T>) {
     setBusy(true);
@@ -313,12 +344,13 @@ export function ProjectDetail() {
                 <RunFlow
                   run={run}
                   busy={busy}
-                  hasKey={(p) => keysSet.has(p)}
+                  hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(p)}
                   onRunStep={runStep}
                   onApprove={approve}
                   onSavePrompt={savePrompt}
                   mobileLayout="flow"
                   assets={runAssets}
+                  historyForStep={historyForStep}
                 />
                 <RunSummary run={run} busy={busy} onRetry={runStep} />
               </>

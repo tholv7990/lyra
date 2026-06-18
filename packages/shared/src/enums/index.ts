@@ -57,6 +57,7 @@ export enum Provider {
   Anthropic = 'anthropic',
   Image = 'image',
   Video = 'video',
+  Crawl = 'crawl', // Source step: fetch a URL → product images + text (no API key)
 }
 
 export enum PromptStatus {
