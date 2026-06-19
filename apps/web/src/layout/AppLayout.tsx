@@ -6,6 +6,7 @@ import { initials } from '../lib/format';
 import { BrandLogo } from '../components/BrandLogo';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
 import { WorkspaceMenu } from './WorkspaceMenu';
+import { NotificationBell } from './NotificationBell';
 import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadcrumb';
 import {
   HomeIcon,
@@ -219,6 +220,7 @@ export function AppLayout() {
               )}
             </nav>
             <div className="topbar-actions">
+              <NotificationBell />
               <LanguageToggleButton />
               <ThemeToggleButton />
             </div>

@@ -8069,3 +8069,34 @@
     min-width: 72px;
   }
 }
+
+.notif { position: relative; display: inline-flex; }
+.notif-badge {
+  position: absolute; top: 0; right: 0;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  display: grid; place-items: center;
+  font-size: var(--text-micro); font-weight: 600; line-height: 1;
+  color: var(--on-accent); background: var(--primary);
+  border-radius: 999px; pointer-events: none;
+}
+.notif-pop {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  width: 320px; max-width: calc(100vw - 24px);
+  max-height: 70vh; overflow-y: auto;
+  background: var(--surface-1); border: 1px solid var(--hairline);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+  padding: 6px; z-index: var(--z-dropdown, 50);
+}
+.notif-item { display: flex; gap: 10px; padding: 10px; }
+.notif-item + .notif-item { border-top: 1px solid var(--hairline); }
+.notif-avatar {
+  flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm);
+  display: grid; place-items: center; font-size: var(--text-mini); font-weight: 600;
+}
+.notif-body { min-width: 0; }
+.notif-text { margin: 0 0 8px; font-size: var(--text-sm); color: var(--ink); }
+.notif-actions { display: flex; gap: 6px; }
+.notif-actions .btn-primary,
+.notif-actions .btn-ghost { margin-top: 0; padding: 4px 10px; font-size: var(--text-mini); }
+.notif-empty { margin: 0; padding: 24px 12px; text-align: center; color: var(--ink-muted); font-size: var(--text-sm); }
+.notif-error { margin: 4px 0 0; padding: 0 10px; color: var(--danger); font-size: var(--text-mini); }
