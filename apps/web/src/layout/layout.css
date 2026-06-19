@@ -1803,18 +1803,25 @@
 }
 .pe-titlerow .pe-title { flex: 1; width: auto; min-width: 0; }
 .pe-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-/* "Open in chat" (try the draft) — a small inline ghost button, not full-width. */
-.pe-try {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: auto;
-  margin-top: 0;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
+/* Flat header actions — just the colored glyph, no chip background/border. */
+.pe-actions .icon-btn-success,
+.pe-actions .icon-btn-danger {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
-.pe-try:disabled { opacity: 0.5; cursor: not-allowed; }
+.pe-actions .icon-btn-success { color: var(--success); }
+.pe-actions .icon-btn-danger { color: var(--danger); }
+.pe-actions .icon-btn-success:hover {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+.pe-actions .icon-btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.pe-actions .icon-btn-success:disabled {
+  background: transparent;
+  color: var(--ink-tertiary);
+}
 .pe-error { margin: 6px 2px 0; }
 
 /* The read-only title text + ✎ edit-name button are the mobile top-menu
@@ -2123,10 +2130,6 @@
   .pe-titlerow.renaming .pe-title-text,
   .pe-titlerow.renaming .pe-rename-btn { display: none; }
   .pe-titlerow .pe-title { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; padding: 0; }
-
-  /* keep the title-bar compact: the Try button collapses to its icon */
-  .pe-try-text { display: none; }
-  .pe-try { padding: 6px 9px; }
 
   /* the page is full-bleed now, so each section carries its own gutters */
   .pe-row { padding: 10px 14px; margin: 0; }

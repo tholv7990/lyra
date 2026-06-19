@@ -19,7 +19,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
 import { Composer } from '../components/Composer';
 import { Markdown } from '../components/Markdown';
-import { ChatsIcon, CheckIcon, PencilIcon, XIcon } from '../layout/icons';
+import { CheckIcon, PencilIcon, XIcon } from '../layout/icons';
 import { TypeSelect } from '../components/TypeSelect';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
@@ -185,25 +185,6 @@ export function PromptEditor() {
     saveAbortRef.current?.abort();
   }
 
-  // Try the draft WITHOUT saving: open it in a fresh chat with the current
-  // content + provider·model. Same nav-state shape as the Prompts list "Open in
-  // chat" — the conversation is created lazily on the first send.
-  function tryInChat() {
-    if (!form.content.trim()) return;
-    navigate('/chats', {
-      state: {
-        seed: form.content,
-        provider: form.provider,
-        model: form.model,
-        from: {
-          label: t('prompts.breadcrumb'),
-          to: '/prompts',
-          record: form.title.trim() || t('prompts.untitled'),
-        },
-      },
-    });
-  }
-
   if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (denied) {
     return <p className="empty">{t('prompts.onlyEditOwn')}</p>;
@@ -249,17 +230,6 @@ export function PromptEditor() {
         />
         <div className="pe-actions">
           <button
-            type="button"
-            className="btn-ghost pe-try"
-            title={t('prompts.openInChat')}
-            aria-label={t('prompts.openInChat')}
-            onClick={tryInChat}
-            disabled={!form.content.trim()}
-          >
-            <ChatsIcon width={15} height={15} />
-            <span className="pe-try-text">{t('prompts.openInChat')}</span>
-          </button>
-          <button
             type="submit"
             className="icon-btn-success"
             title={isEdit ? t('prompts.saveChanges') : t('prompts.createPrompt')}
@@ -282,8 +252,8 @@ export function PromptEditor() {
 
       {error && <p className="error pe-error">{error}</p>}
 
-      {/* Output type (metadata only: badge + filter, doesn't change how the
-          prompt runs). */}
+      {/* Output type (metadata only) + visibility toggle — one row. The toggle's
+          own "Public" text labels it, so no separate status label. */}
       <div className="pe-row">
         <div className="pe-field pe-type">
           <span className="pe-field-label" id="pe-type-label">{t('prompts.typeLabel')}</span>
@@ -293,9 +263,20 @@ export function PromptEditor() {
             labelledBy="pe-type-label"
           />
         </div>
+        <div className="pe-field pe-status">
+          <label className="pe-toggle" title={t('prompts.publicHint')}>
+            <span className="pe-toggle-text">{t('prompts.publicLabel')}</span>
+            <input
+              type="checkbox"
+              checked={form.status === PromptStatus.Public}
+              onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
+            />
+            <span className="pe-track"><span className="pe-knob" /></span>
+          </label>
+        </div>
       </div>
 
-      {/* Label picker (left) + status toggle (right) in one row. */}
+      {/* Labels */}
       <div className="pe-row">
         <div className="pe-field pe-tags">
           <span className="pe-field-label">{t('prompts.label')}</span>
@@ -307,18 +288,6 @@ export function PromptEditor() {
               onCreate={createLabel}
             />
           </div>
-        </div>
-        <div className="pe-field pe-status">
-          <span className="pe-field-label">{t('prompts.status')}</span>
-          <label className="pe-toggle" title={t('prompts.publicHint')}>
-            <span className="pe-toggle-text">{t('prompts.publicLabel')}</span>
-            <input
-              type="checkbox"
-              checked={form.status === PromptStatus.Public}
-              onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
-            />
-            <span className="pe-track"><span className="pe-knob" /></span>
-          </label>
         </div>
       </div>
 
