@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   NotFoundException,
+  Param,
   Post,
 } from '@nestjs/common';
-import type { User, WorkspaceView } from '@lyra/shared';
+import type { MyInvite, User, WorkspaceView } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { InvitesService } from './invites.service';
 import { WorkspacesService } from './workspaces.service';
@@ -36,5 +38,30 @@ export class InvitesController {
     const membership = await this.memberships.findFor(workspaceId, user.id);
     if (!ws || !membership) throw new NotFoundException('Workspace not found');
     return this.workspaces.toView(ws, membership.role, membership.canManageKeys);
+  }
+
+  // The current user's pending invites, for the notification bell.
+  @Get('mine')
+  listMine(@CurrentUser() user: User): Promise<MyInvite[]> {
+    return this.invites.listMine({ id: user.id, email: user.email });
+  }
+
+  // Accept in-app (no token): authorized by the user's email matching the invite.
+  @Post(':id/accept')
+  @HttpCode(204)
+  async acceptById(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    await this.invites.acceptById(id, { id: user.id, email: user.email });
+  }
+
+  @Post(':id/decline')
+  @HttpCode(204)
+  async decline(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ): Promise<void> {
+    await this.invites.decline(id, { id: user.id, email: user.email });
   }
 }
