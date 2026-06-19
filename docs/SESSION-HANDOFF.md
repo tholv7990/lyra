@@ -26,6 +26,9 @@ the user asked me to *plan*, not build. Read the docs, then greenlight.
    (multi-provider + fallback) → build in Lyra's own `ProviderRegistry`:
    **[superpowers/plans/2026-06-20-multi-provider-fallback.md](superpowers/plans/2026-06-20-multi-provider-fallback.md)**
    (note: CLAUDE.md is stale — OpenAI/DeepSeek/Image are already *real*, only Video/Crawl mock).
+   **Shipped (user asked, default OFF):** a `NINEROUTER_ENABLED` switch in `compatBaseUrl`
+   routes OpenAI/DeepSeek through a self-hosted 9router for *learning* — only the route
+   changes (workspace key still the bearer), instant revert. See `docs/lyra-9router-integration.md`.
 2. **Durability + crawler polish + cookies + git gc** — all planned in
    **[superpowers/plans/2026-06-20-crawler-ops-pending.md](superpowers/plans/2026-06-20-crawler-ops-pending.md)**:
    sync `codex-dev` to origin/dev + run servers from the main tree + a process manager

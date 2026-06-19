@@ -101,6 +101,9 @@ invariant 7. Specced in
    covers "front an OpenAI-compatible gateway" for the cases where that's appropriate.
 2. **Dev workflow:** optionally run 9router locally for Claude Code token savings —
    personal, not committed to Lyra.
-3. No code shipped from this evaluation by design — forcing a 9router integration
-   would violate invariant 7 / multi-tenancy. (User granted "just do it"; the honest
-   application of that grant is *not* to build the unsafe thing.)
+3. **Update — learning switch shipped at the user's request (after this eval).** A
+   **default-OFF** `NINEROUTER_ENABLED` env switch now lets 9router be tried on a
+   single-tenant box without affecting normal operation:
+   [../../lyra-9router-integration.md](../../lyra-9router-integration.md). It changes
+   only the *route* (the workspace's own key is still the bearer); enabling it on a
+   multi-tenant deploy still violates invariant 7 — hence default-OFF + learning-only.

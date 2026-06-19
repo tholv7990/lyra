@@ -8,14 +8,28 @@ export const OPENAI_COMPAT_BASE: Partial<Record<Provider, string>> = {
   [Provider.DeepSeek]: 'https://api.deepseek.com/v1',
 };
 
-// Resolve the base URL per call. When LITELLM_BASE is set, OpenAI + DeepSeek
-// traffic routes through the local LiteLLM gateway (which forwards to OpenAI,
-// Ollama, etc. — see docs/lyra-litellm-gateway.md); otherwise the official APIs.
-// Read at call time, not module load: LITELLM_BASE is loaded from .env into
-// process.env at bootstrap, after this module is first imported.
+// True when 9router routing is switched on (NINEROUTER_ENABLED=true). A learning/
+// experimental integration — flip the env var off to fully disable. See
+// docs/lyra-9router-integration.md. Read at call time so the switch is honoured
+// without a rebuild.
+export function nineRouterEnabled(): boolean {
+  return process.env.NINEROUTER_ENABLED?.trim().toLowerCase() === 'true';
+}
+
+// Resolve the base URL per call. Precedence for OpenAI + DeepSeek:
+//   1. 9router gateway, when the NINEROUTER_ENABLED switch is on (learning mode);
+//   2. LITELLM_BASE gateway (self-hosted models/fallbacks — docs/lyra-litellm-gateway.md);
+//   3. the official APIs.
+// Only the *route* changes — the workspace's own decrypted key still flows as the
+// bearer. Read at call time, not module load (env is populated at bootstrap, after
+// this module is first imported).
 export function compatBaseUrl(provider: Provider): string | undefined {
+  const isCompat = provider === Provider.OpenAI || provider === Provider.DeepSeek;
+  if (isCompat && nineRouterEnabled()) {
+    return process.env.NINEROUTER_BASE_URL?.trim() || 'http://localhost:20128/v1';
+  }
   const gateway = process.env.LITELLM_BASE?.trim();
-  if (gateway && (provider === Provider.OpenAI || provider === Provider.DeepSeek)) {
+  if (gateway && isCompat) {
     return gateway;
   }
   return OPENAI_COMPAT_BASE[provider];
