@@ -137,7 +137,7 @@ export class InvitesService extends BaseRepository<Invite> {
     user: { id: string; email: string },
   ): Promise<void> {
     const invite = await this.findById(inviteId);
-    if (!invite || invite.status !== 'pending') {
+    if (!invite || invite.status !== 'pending' || invite.expiresAt.getTime() <= Date.now()) {
       throw new NotFoundException('Invite not found');
     }
     if (invite.email !== user.email.toLowerCase()) {

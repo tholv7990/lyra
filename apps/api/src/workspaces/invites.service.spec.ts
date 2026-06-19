@@ -74,6 +74,12 @@ describe('InvitesService in-app accept/decline', () => {
     expect(patch).toHaveBeenCalledWith('i1', expect.objectContaining({ status: 'declined', active: false }));
   });
 
+  it('decline 404s an expired invite', async () => {
+    const { s } = makeService();
+    jest.spyOn(s, 'findById').mockResolvedValue(inviteDoc({ expiresAt: new Date(Date.now() - 1000) }) as never);
+    await expect(s.decline('i1', { id: 'u', email: 'a@x.com' })).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('listMine maps to MyInvite with workspace name + inviter', async () => {
     const { s } = makeService();
     jest.spyOn(s, 'listForEmail').mockResolvedValue([inviteDoc()] as never);
