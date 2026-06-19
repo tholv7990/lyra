@@ -65,6 +65,23 @@ describe('ConnectorsProxy (forward mode — service URL set)', () => {
     expect((err as HttpException).getStatus()).toBe(502);
   });
 
+  it('uses a helpful import message when resolve fails upstream with a generic 5xx', async () => {
+    (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ statusCode: 500, message: 'Internal server error' }),
+    });
+    const err = await proxy('http://svc:9100/')
+      .forward('ws1', 'u1', 'POST', 'resolve', {
+        url: 'https://www.youtube.com/watch?v=sYeY8f0hHxI&t=1072s',
+      })
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(HttpException);
+    expect((err as HttpException).getResponse()).toBe(
+      'Could not resolve media from this link. Check that the URL is public and supported.',
+    );
+  });
+
   it('propagates a 4xx upstream status as-is (e.g. missing key → 401)', async () => {
     (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({
       ok: false,

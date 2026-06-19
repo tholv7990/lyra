@@ -17,6 +17,14 @@ export function rewriteDownload(
   return { items };
 }
 
+function connectorErrorMessage(path: string, data: Record<string, unknown>): string {
+  const message = typeof data.message === 'string' ? data.message : '';
+  if (path === 'resolve' && (!message || message === 'Internal server error')) {
+    return 'Could not resolve media from this link. Check that the URL is public and supported.';
+  }
+  return message || 'connector service request failed';
+}
+
 // Thin proxy: forward to the connectors microservice when CONNECTORS_SERVICE_URL is
 // set, else return deterministic mock data so the UI works with no microservice
 // (env-gated, mirroring the R2 inline-vs-R2 fallback). No connector logic lives here.
@@ -58,8 +66,7 @@ export class ConnectorsProxy {
     // undefined). Propagate a real status — client errors (4xx) as-is, server
     // errors (5xx) as 502 Bad Gateway.
     if (!res.ok) {
-      const message =
-        typeof data.message === 'string' ? data.message : 'connector service request failed';
+      const message = connectorErrorMessage(path, data);
       const status = res.status >= 400 && res.status < 500 ? res.status : 502;
       throw new HttpException(message, status);
     }

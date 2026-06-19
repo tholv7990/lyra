@@ -4,9 +4,31 @@ import type { MediaItem } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import { downloadFile } from '../lib/api';
+import { RefreshIcon } from '../layout/icons';
 import './connectors.css';
 
 const TYPE_GLYPH: Record<MediaItem['type'], string> = { video: '▶', image: '🖼', audio: '♪' };
+
+export interface FetchButtonStateInput {
+  hasWorkspace: boolean;
+  workspaceLoading: boolean;
+  url: string;
+  busy: boolean;
+}
+
+export function fetchButtonState(input: FetchButtonStateInput) {
+  const waiting = input.busy || input.workspaceLoading;
+  return {
+    disabled: waiting || !input.hasWorkspace || !input.url.trim(),
+    labelKey: waiting ? 'loading' : 'fetch',
+    spin: waiting,
+    ...(input.workspaceLoading
+      ? { statusKey: 'preparingWorkspace' }
+      : input.busy
+        ? { statusKey: 'resolvingMedia' }
+        : {}),
+  } as const;
+}
 
 function triggerDownload(url: string, filename: string) {
   const a = document.createElement('a');
@@ -23,7 +45,7 @@ function triggerDownload(url: string, filename: string) {
 // it → preview the items → download. Mock-backed until the microservice exists.
 export function ImportMedia() {
   const { t } = useTranslation();
-  const { current } = useWorkspace();
+  const { current, loading: workspaceLoading } = useWorkspace();
   const ws = current?.id;
 
   const [url, setUrl] = useState('');
@@ -32,8 +54,15 @@ export function ImportMedia() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchState = fetchButtonState({
+    hasWorkspace: Boolean(ws),
+    workspaceLoading,
+    url,
+    busy,
+  });
+
   const fetchMedia = () => {
-    if (!ws || !url.trim() || busy) return;
+    if (fetchState.disabled || !ws) return;
     setBusy(true);
     setError(null);
     connectorsApi
@@ -70,10 +99,17 @@ export function ImportMedia() {
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') fetchMedia(); }}
         />
-        <button className="cx-btn-primary" disabled={busy || !url.trim()} onClick={fetchMedia}>
-          {busy ? t('connectors.loading') : t('connectors.fetch')}
+        <button
+          className="cx-btn-primary cx-fetch-btn"
+          disabled={fetchState.disabled}
+          aria-busy={fetchState.spin}
+          onClick={fetchMedia}
+        >
+          {fetchState.spin && <RefreshIcon className="cx-spin" />}
+          {t(`connectors.${fetchState.labelKey}`)}
         </button>
       </div>
+      {fetchState.statusKey && <p className="cx-status">{t(`connectors.${fetchState.statusKey}`)}</p>}
       <div className="cx-plats">{t('connectors.supported')}</div>
       {error && <p className="cx-error">{error}</p>}
 

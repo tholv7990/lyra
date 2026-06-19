@@ -44,6 +44,8 @@ export default {
     'Paste a social link to pull the video or images. For content you own or have rights to use.',
   urlPlaceholder: 'Paste a TikTok / Instagram / YouTube / X / Facebook link…',
   fetch: 'Fetch',
+  preparingWorkspace: 'Preparing workspace before fetching…',
+  resolvingMedia: 'Resolving media from this link…',
   supported: 'Works with TikTok · Instagram · YouTube · X · Facebook',
   resolved: 'Resolved · {{count}} item',
   resolved_other: 'Resolved · {{count}} items',
