@@ -535,6 +535,7 @@ export function Prompts() {
           labels={labels}
           canEdit={canEdit(detailPrompt)}
           onSaveContent={(content) => patchPrompt(detailPrompt, { content })}
+          onOpenInChat={() => void openInChat(detailPrompt)}
           onClose={() => setDetailPrompt(null)}
         />
       )}

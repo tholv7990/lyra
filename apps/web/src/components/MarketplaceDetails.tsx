@@ -1,29 +1,24 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type MarketplacePrompt } from '@lyra/shared';
-import { Markdown } from './Markdown';
-import { ChatsIcon, CheckIcon, CopyIcon, PlusIcon, XIcon } from '../layout/icons';
+import { PromptCodeBlock } from './PromptCodeBlock';
+import { PlusIcon, XIcon } from '../layout/icons';
 
 type AdoptState = 'idle' | 'busy' | 'done';
 
-// Read-only full view of a catalog prompt (opened by the eye icon / title on a
-// marketplace card). Reuses the shared .dialog / .pd-* modal shell from
-// PromptDetails — a catalog item is CC0 and not editable, so the actions are
-// copy / open-in-chat / adopt.
+// Full view of a catalog prompt (opened by the eye icon / title on a marketplace
+// card), laid out like prompts.chat's detail: title · author meta · colored tags ·
+// the prompt in a code-block (copy + open-in-chat) · adopt. CC0, so not editable.
 export function MarketplaceDetails({
   prompt,
   state,
-  copied,
   onAdopt,
-  onCopy,
   onOpenInChat,
   onClose,
 }: {
   prompt: MarketplacePrompt;
   state: AdoptState;
-  copied: boolean;
   onAdopt: () => void;
-  onCopy: () => void;
   onOpenInChat: () => void;
   onClose: () => void;
 }) {
@@ -90,21 +85,14 @@ export function MarketplaceDetails({
           </div>
         )}
 
-        <div className="pd-body">
-          <Markdown>{prompt.content}</Markdown>
-        </div>
+        <PromptCodeBlock
+          content={prompt.content}
+          label={t('common.prompt')}
+          onRun={onOpenInChat}
+          runLabel={t('marketplace.openInChat')}
+        />
 
         <div className="mkt-details-foot">
-          <div className="mkt-details-left">
-            <button type="button" className="btn-ghost mkt-details-act" onClick={onCopy}>
-              {copied ? <CheckIcon width={15} height={15} /> : <CopyIcon width={15} height={15} />}
-              {copied ? t('marketplace.copied') : t('marketplace.copy')}
-            </button>
-            <button type="button" className="btn-ghost mkt-details-act" onClick={onOpenInChat}>
-              <ChatsIcon width={15} height={15} />
-              {t('marketplace.openInChat')}
-            </button>
-          </div>
           {done ? (
             <span className="mkt-added">{t('marketplace.added')}</span>
           ) : (

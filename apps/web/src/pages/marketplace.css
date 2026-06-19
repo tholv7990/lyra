@@ -260,19 +260,12 @@
    footer is marketplace-specific. */
 .mkt-details-foot {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  gap: 10px;
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--hairline);
 }
-.mkt-details-left {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.mkt-details-act,
 .mkt-details-add {
   display: inline-flex;
   align-items: center;
@@ -320,10 +313,9 @@
     width: 100%;
   }
   .mkt-details-foot {
-    flex-direction: column-reverse;
     align-items: stretch;
   }
-  .mkt-details-left {
+  .mkt-details-add {
     justify-content: center;
   }
 }

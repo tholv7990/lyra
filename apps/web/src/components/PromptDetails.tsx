@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
-import { Markdown } from './Markdown';
+import { PromptCodeBlock } from './PromptCodeBlock';
 import { ProviderIcon } from './ProviderIcon';
 import { CheckIcon, XIcon } from '../layout/icons';
 
@@ -29,12 +29,14 @@ export function PromptDetails({
   labels,
   canEdit = false,
   onSaveContent,
+  onOpenInChat,
   onClose,
 }: {
   prompt: Prompt;
   labels: LabelInfo[];
   canEdit?: boolean;
   onSaveContent?: (content: string) => void | Promise<void>;
+  onOpenInChat?: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -126,9 +128,16 @@ export function PromptDetails({
               onChange={(e) => setContent(e.target.value)}
             />
           </label>
+        ) : prompt.content.trim() ? (
+          <PromptCodeBlock
+            content={prompt.content}
+            label={t('common.prompt')}
+            onRun={onOpenInChat}
+            runLabel={t('prompts.openInChat')}
+          />
         ) : (
           <div className="pd-body">
-            {prompt.content.trim() ? <Markdown>{prompt.content}</Markdown> : <p className="muted">{t('prompts.noContent')}</p>}
+            <p className="muted">{t('prompts.noContent')}</p>
           </div>
         )}
       </div>

@@ -270,9 +270,7 @@ export function Marketplace() {
         <MarketplaceDetails
           prompt={detail}
           state={adopt[detail.id] ?? 'idle'}
-          copied={copied === detail.id}
           onAdopt={() => void adoptPrompt(detail)}
-          onCopy={() => copyPrompt(detail)}
           onOpenInChat={() => openInChat(detail)}
           onClose={() => setDetail(null)}
         />
