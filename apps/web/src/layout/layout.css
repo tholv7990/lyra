@@ -6091,6 +6091,11 @@
   gap: 12px;
   padding: 12px 16px;
 }
+/* Close the chat — returns to where it was opened from (or home). */
+.chat-close {
+  margin-left: auto;
+  flex-shrink: 0;
+}
 
 .chat-top h2 {
   font-size: 15px;

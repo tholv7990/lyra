@@ -34,7 +34,7 @@ import { Markdown } from '../components/Markdown';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { SaveAsPromptModal } from '../components/SaveAsPromptModal';
 import { CopilotPanel } from '../components/CopilotPanel';
-import { PlusIcon, TrashIcon } from '../layout/icons';
+import { PlusIcon, TrashIcon, XIcon } from '../layout/icons';
 import { useAppNav, useBreadcrumb } from '../layout/breadcrumb';
 
 function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
@@ -542,6 +542,14 @@ export function Chats() {
               <span className="pg-name">{origin ? origin.record : id ? title : t('chats.newChat')}</span>
             </div>
           </div>
+          <button
+            className="cicon chat-close"
+            onClick={() => navigate(origin?.to ?? '/')}
+            aria-label={t('common.close')}
+            title={t('common.close')}
+          >
+            <XIcon />
+          </button>
         </header>
 
         {error && <p className="error" style={{ margin: '0 16px' }}>{error}</p>}
