@@ -10,6 +10,38 @@ Built and verified: **Phase 0** (monorepo + auth), **Phase 1** (workspaces/membe
 
 Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` interface + `ProviderRegistry`); only Anthropic is real — openai/deepseek/image/video still use `MockStepProvider`. Wiring a real provider = add its impl + map it in the registry (one line).
 
+## Recent UI/API updates (June 19, 2026 — evening)
+
+- **Marketplace is a prompts.chat-style card gallery** (`apps/web/src/pages/Marketplace.tsx`,
+  `marketplace.css`, `components/{MarketplaceDetails,PromptCodeBlock}.tsx`): each card =
+  title · `type` pill · source `category` pill · 2-line `description` · a monospace prompt
+  **code-block** · colored tag chips · footer (Copy / Open-in-chat / View / Add). Toolbar is
+  **Search · ✨AI · + Filter** — the AI button ranks the search text; the **Type/Category/Tags**
+  filter popover mirrors Prompts (`GET /workspaces/:id/marketplace/facets`; list filters via
+  repeated `?type=`/`?category=`/`?tag=`). `MarketplacePrompt` gained `description` + `category`
+  (shared model + schema + `marketplace.views`). The catalog is a curated **~138 dropshipping-only**
+  set in the **dev DB only** (imported from `data/prompts_2026-06-19.csv` via the untracked
+  `import-rich.cjs`) — **do NOT run the admin "Catalog sync"**, it re-pulls the live old-format
+  CSV and would overwrite it. See `marketplace-category-import-plan` memory.
+- **Library prompts now have a `type`** (`PromptType` = text/image/audio/video — shared enum,
+  api schema/DTO + list filter; **metadata only**, badge + filter). The editor picks it via a
+  `TypeSelect` icon+text dropdown (`apps/web/src/lib/promptType.tsx`) and has an **Open-in-chat**
+  "Try" button; the editor header was decluttered (flat ✓/✕, Type+Status on one row). A `category`
+  field was briefly added then removed — tags cover it for the library.
+- **`PromptDetails` is a read view** now (marketplace-style): the prompt in the shared
+  `PromptCodeBlock` (Copy + Open-in-chat), meta = creator · date · provider·model · **status pill** ·
+  **type badge**, colored tag chips + parsed `{variable}` chips. **Inline-edit removed** — edit via the
+  full `PromptEditor`. Below it, **`PromptHistory`** is a vertical run-history timeline of every chat
+  opened from the prompt (`POST /workspaces/:id/conversations/prompt-history-list` → `listForPrompt`).
+- **Chats auto-persist is now toggleable**: an **Auto-save** switch + a **Save to history** button
+  replace the old header buttons. Auto-save ON → a prompt-opened chat links to that prompt's history on
+  creation (`originPromptId`); OFF → it saves as a normal chat and links only on **Save to history**
+  (PATCH `originPromptId`; `UpdateConversationDto` accepts it). The composer border is Lyra-orange.
+  **(This supersedes "every turn auto-persists (no manual save)" in the current-state section above.)**
+- Earlier additions now in the system: a **Prompt Marketplace** (`apps/api/src/marketplace`, global
+  CC0 catalog, adopt → real Prompt) and an env-allowlisted **super-admin** panel (`/admin`,
+  `SUPER_ADMIN_EMAILS`); both were aligned to the shared design system.
+
 ## Recent UI/API updates (June 17, 2026)
 
 - Library pages (`/prompts`, `/pipelines`, `/projects`) now share a compact
@@ -35,7 +67,7 @@ Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` inter
 - [docs/lyra-prompt-testing.md](docs/lyra-prompt-testing.md) — **superseded.** The per-prompt testing playground it describes was replaced by **Chats** (top-level, multi-turn, auto-persisted conversations in `apps/api/src/conversations` + `apps/web/src/pages/Chats.tsx`); good prompts are promoted to the library via **Save as prompt**. Read the doc only for historical context.
 - [docs/lyra-requirements.md](docs/lyra-requirements.md) — business + technical requirements, data model, API surface, resolved decisions, **build-phase order (§B8)**. (Fixed 8-step run model is superseded by lyra-pipelines.md.)
 - [docs/lyra-getting-started.md](docs/lyra-getting-started.md) — the concrete kickoff: exact bootstrap commands, root config files, and **copy-paste-ready `@lyra/shared` contracts (§5)**. Build Phase 0 (Monorepo + Auth) from this.
-- [docs/lyra-design-system.md](docs/lyra-design-system.md) — the dark, Apple-style design tokens for the web UI. Honor these tokens when building React components.
+- [docs/lyra-design-system-actions.md](docs/lyra-design-system-actions.md) — **the enforceable UI rules** (style only via `apps/web/src/index.css` `:root` tokens, never hardcode; reuse shared primitives; canonical affordances view=eye / delete=X / close=X). This + [docs/lyra-linear-audit.md](docs/lyra-linear-audit.md) (Linear geometry/type from Figma, light + orange `#FF6B1A`) are the LIVE design source. **[docs/lyra-design-system.md](docs/lyra-design-system.md) (the dark, Apple-style tokens) is SUPERSEDED** — the UI is light/Linear; read it for history only.
 - [docs/lyra-hosting-cicd.md](docs/lyra-hosting-cicd.md) — hosting topology, GitHub Actions CI, Dockerfile, required Mongo indexes, deploy flow.
 
 > Note: the getting-started doc predates the Anthropic provider correction. The pipeline uses **5 providers** (openai, anthropic, deepseek, image, video), not 4 — the Brain steps (brief/insight/prompts/qa) run on Claude.

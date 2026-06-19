@@ -1,3 +1,35 @@
+# Session handoff — June 19, 2026 (evening) — Prompt-library UX + Marketplace rebuilt (prompts.chat-style) + Chats auto-save
+
+> **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through `fc0d24c`. Tree clean except the intentional `docker-compose.yml` pin (keep uncommitted), gitignored `apps/api/.env`, and **untracked `data/`** (the prompts.chat rich export + `import-rich.cjs`). Commit/push only when the user asks.
+
+## ✅ Shipped this session (all on origin/dev; web gate green each commit: type-check, lint, ~39 tests, build)
+
+**Landing** — `402992f` real generated section images (local WebP, `apps/web/public/landing`); `b3ecb44` dark-mode nav color + edge padding (token-driven `color-mix` bg).
+
+**Marketplace → prompts.chat-style card gallery** (`apps/web/src/pages/Marketplace.tsx` + `marketplace.css`, `components/{MarketplaceDetails,PromptCodeBlock}.tsx`, `apps/api/src/marketplace/*`)
+- `a3ff954` replaced the Linear rows with a **card gallery**: card = title · type badge · monospace **code-block** (clamped 4 lines) · colored tag chips · footer (Copy / Open-in-chat / View / Add). `d307c7a` colored tag chips; `3014938` readable contributor.
+- `8bc863b`/`82a80d7` shared **`PromptCodeBlock`** (monospace block under a header bar: label + Copy + optional Open-in-chat) — reused by the marketplace AND the library prompt detail.
+- `2bb0403` **`category` + `description`** added to `MarketplacePrompt` (shared model + api schema + `marketplace.views`) and shown on the card (category pill + 2-line desc) + detail.
+- `3c6afed` **Type / Category / Tags filter popover** (mirrors the Prompts filter) + `GET /workspaces/:id/marketplace/facets` (distinct categories+tags) + list filters via repeated `?type=`/`?category=`/`?tag=`. `MarketplaceFacets` in shared. Dropped the "For developers" toggle.
+- `fc0d24c` removed the AI **hero**; the toolbar is now **Search · ✨AI · + Filter** — the `✨AI` button (new `SparkleIcon`, brand-orange) AI-ranks the search-box text.
+- **Catalog data lives in the dev DB, NOT git.** `marketplaceprompts` holds a curated **~138 dropshipping-only** set imported from the rich export `data/prompts_2026-06-19.csv` (native `category_name`/`tags`/`description`) via `import-rich.cjs` (untracked, re-runnable). Curation = drop IT/edu/off-domain by category + NSFW, require a commerce+no-IT signal for ambiguous categories (Image/Video Gen, Creative, Business, none). ⚠️ **Do NOT run the admin "Catalog sync"** — it re-pulls the live OLD-format `prompts.csv` (no category/desc) and would overwrite this. See `[[marketplace-category-import-plan]]`.
+
+**Prompt library** (`apps/web/src/pages/{Prompts,PromptEditor}.tsx`, `components/{PromptDetails,PromptHistory,TypeSelect}.tsx`)
+- `d575d16`/`220b0d8` **`type`** on Prompt — shared `PromptType` (text/image/audio/video), api schema/DTO/filter. Metadata only (badge + filter); the editor picks it via a **`TypeSelect`** icon+text dropdown (colored glyphs, `lib/promptType.tsx`). (A `category` field was added in `e874d82` then **removed** in `220b0d8` — tags cover it.)
+- `e874d82` colored type icons + an **Open-in-chat** "Try" button in the editor; `101ea7c` decluttered the editor header (flat ✓/✕, Type+Status on one row, dropped the "Status" label).
+- `c956619` **`PromptDetails` is now a read view** (marketplace-style): the prompt in a `PromptCodeBlock` (Copy + Open-in-chat), meta = creator · date · provider·model · **status pill** · **type badge**, colored tag chips, parsed `{variable}` chips. **Inline-edit removed** (edit via the full editor). Below it, **`PromptHistory`** — a vertical run-history timeline of every chat opened from this prompt, via `POST /workspaces/:id/conversations/prompt-history-list` (`listForPrompt`). Fixed the `prompts.type.undefined` badge (defaults to text).
+
+**Chats** (`apps/web/src/pages/Chats.tsx`, `apps/api/src/conversations/*`)
+- `5ad096f` the two header buttons are replaced by an **Auto-save** switch + a **Save to history** button. Auto-save ON → a chat opened from a library prompt links to that prompt's history on creation (`originPromptId`). OFF → the chat still saves as a normal chat but only links to the prompt's history when the user clicks **Save to history** (PATCH `originPromptId`; `UpdateConversationDto` now accepts it; pending source stashed per-session for reload). The chat **composer border is now Lyra-orange**.
+
+## 🔜 Next (requested, NOT started)
+- **Prompts / Pipelines / Projects pages → card galleries** like the marketplace (replace the `.ptable`/`.prow` list rows with `.mkt-grid`/`.mkt-card`-style cards). This handoff was written as the prerequisite doc-update before that redesign.
+
+## ⏸️ Still paused (unchanged)
+- Postiz publish-v2 live-post e2e; per-project channels (`[[per-project-channels-model]]`).
+
+---
+
 # Session handoff — June 19, 2026 (latest) — design-consistency pass shipped + design plugins enabled
 
 > **Read this first.** Branch **dev** is now **PUSHED** to `origin/dev` (user asked) — through commit `da4e071`. Working tree clean except the intentional **`docker-compose.yml`** Postiz `v2.11.3` pin (keep uncommitted) and gitignored `apps/api/.env`. Commit/push policy still: only when the user asks.
