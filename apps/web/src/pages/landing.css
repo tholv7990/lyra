@@ -16,6 +16,12 @@
   --l-hairline: rgba(40, 22, 10, 0.09);
   --l-hairline-strong: rgba(40, 22, 10, 0.14);
   --l-hairline-faint: rgba(40, 22, 10, 0.05);
+  /* Frosted-glass surfaces (cards/pills over imagery). These MUST flip in dark
+     so light text never lands on a light card — the old hardcoded white glass
+     was the white-on-white bug. */
+  --l-glass: rgba(255, 255, 255, 0.62);
+  --l-glass-strong: rgba(255, 255, 255, 0.92);
+  --l-glass-line: rgba(255, 255, 255, 0.7);
 
   /* --- Ink (warm near-black, never pure) --- */
   --l-ink: #211913;
@@ -77,9 +83,14 @@
   --l-hairline: rgba(255, 226, 206, 0.1);
   --l-hairline-strong: rgba(255, 226, 206, 0.16);
   --l-hairline-faint: rgba(255, 226, 206, 0.06);
+  --l-glass: rgba(24, 17, 12, 0.62);
+  --l-glass-strong: rgba(20, 14, 10, 0.86);
+  --l-glass-line: rgba(255, 226, 206, 0.12);
   --l-ink: #fff6ef;
   --l-ink-muted: #cdbbae;
-  --l-ink-subtle: #9f8b7d;
+  /* Lifted from #9f8b7d so small caption text clears AA (4.5:1) on the warmer
+     dark surfaces (surface-2/3), where the old value fell to ~4.4:1. */
+  --l-ink-subtle: #b6a89a;
   --l-primary-deep: #ffb27d;
   --l-primary-tint: rgba(255, 107, 26, 0.18);
   --l-primary-line: rgba(255, 138, 76, 0.36);
@@ -373,8 +384,8 @@
   position: relative;
   border-radius: var(--l-radius-lg);
   padding: 16px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: var(--l-glass);
+  border: 1px solid var(--l-glass-line);
   box-shadow: var(--l-shadow-2);
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
@@ -810,10 +821,10 @@
   left: 18px;
   right: 18px;
   bottom: 18px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--l-glass-strong);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--l-glass-line);
   border-radius: var(--l-radius);
   padding: 16px 18px;
   box-shadow: 0 12px 34px rgba(40, 22, 10, 0.2);
@@ -924,10 +935,10 @@
   font-size: 12.5px;
   font-weight: 600;
   color: var(--l-ink);
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--l-glass-strong);
   backdrop-filter: blur(10px) saturate(160%);
   -webkit-backdrop-filter: blur(10px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--l-glass-line);
   border-radius: var(--l-radius-pill);
   padding: 7px 13px;
   box-shadow: 0 6px 18px rgba(40, 22, 10, 0.18);
