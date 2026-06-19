@@ -3,8 +3,6 @@ export default {
   subtitle: 'People in {{workspace}}',
   loading: 'Loading…',
   error: 'Something went wrong. Try again.',
-  personalNote:
-    "This is a personal workspace — it's just you. Create or switch to a team workspace from the top-left menu to invite people.",
   peopleCount: 'People ({{count}})',
   emptyTitle: 'No members yet',
   emptyBody: 'Invite teammates by email to collaborate in this workspace.',

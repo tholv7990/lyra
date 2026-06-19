@@ -27,7 +27,6 @@ export function Members() {
   const { current } = useWorkspace();
   const wsId = current?.id;
   const isOwner = current?.role === Role.Owner;
-  const isTeam = current?.type === 'team';
 
   const [members, setMembers] = useState<MemberView[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -40,14 +39,14 @@ export function Members() {
     setError(null);
     try {
       setMembers(await api<MemberView[]>(`/workspaces/${wsId}/members`));
-      // Pending invites are an owner-only endpoint and only meaningful for teams.
-      setInvites(isOwner && isTeam ? await api<Invite[]>(`/workspaces/${wsId}/invites`) : []);
+      // Pending invites are an owner-only endpoint.
+      setInvites(isOwner ? await api<Invite[]>(`/workspaces/${wsId}/invites`) : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('members.error'));
     } finally {
       setLoading(false);
     }
-  }, [wsId, isOwner, isTeam, t]);
+  }, [wsId, isOwner, t]);
 
   useEffect(() => {
     void load();
@@ -62,8 +61,6 @@ export function Members() {
         <p>{t('members.subtitle', { workspace: current.name })}</p>
       </header>
 
-      {!isTeam && <p className="mem-note">{t('members.personalNote')}</p>}
-
       {error && (
         <p className="error" role="alert">
           {error}
@@ -74,7 +71,7 @@ export function Members() {
         <p className="empty">{t('members.loading')}</p>
       ) : (
         <>
-          {isOwner && isTeam && <InviteForm wsId={wsId!} onInvited={load} />}
+          {isOwner && <InviteForm wsId={wsId!} onInvited={load} />}
 
           <section aria-labelledby="mem-people-title">
             <h2 id="mem-people-title" className="mem-subhead">
@@ -103,7 +100,7 @@ export function Members() {
             )}
           </section>
 
-          {isOwner && isTeam && invites.length > 0 && (
+          {isOwner && invites.length > 0 && (
             <PendingInvites wsId={wsId!} invites={invites} onChanged={load} onError={setError} />
           )}
         </>

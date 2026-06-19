@@ -3,8 +3,6 @@ export default {
   subtitle: 'Mọi người trong {{workspace}}',
   loading: 'Đang tải…',
   error: 'Đã xảy ra lỗi. Hãy thử lại.',
-  personalNote:
-    'Đây là không gian làm việc cá nhân — chỉ có bạn. Tạo hoặc chuyển sang một không gian làm việc nhóm từ menu góc trên bên trái để mời người khác.',
   peopleCount: 'Mọi người ({{count}})',
   emptyTitle: 'Chưa có thành viên',
   emptyBody: 'Mời đồng đội qua email để cùng cộng tác trong không gian làm việc này.',
