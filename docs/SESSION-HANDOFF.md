@@ -1,3 +1,36 @@
+# Session handoff — June 19, 2026 (late) — Members area (bell + page) shipped · "Crawler" rename · Crawler debug (yt-dlp/ffmpeg installed; JS-challenge/deno still pending)
+
+> **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through **`f8abebf`**. All work below is on dev + **deployed** to dev.getlyras.app (local `pnpm dev` HMR off the main tree). A parallel **Codex agent** shares this tree (it did a big i18n pass this session); reconcile via `git merge origin/dev` — it builds on top of pushed commits, so merges have been **clean** (see `[[concurrent-codex-claude-tree]]`). Gate green every commit: `pnpm turbo run type-check lint test build` (16/16; web 41, api ~110, connectors-service 49, shared 50). Work done in worktree **`.claude/worktrees/notification-bell`** on branch **`feat/members-page`**. **Commit/push only when the user asks** (this session the user asked repeatedly).
+
+## ✅ Shipped this session (all on origin/dev `f8abebf`, deployed)
+- **Dead-code cleanup** — removed the unused `conversations/prompt-history-list` route + `listForPrompt`, and orphaned `chats.*` i18n keys.
+- **Prompt-access guard spec** (`apps/api/src/prompts/guards/prompt-access.guard.spec.ts`, 6 cases) + **permission-normalization design spec** (`docs/superpowers/specs/2026-06-19-resource-edit-permission-normalization-design.md` — `canEditOwned` + workspace-Owner edit/delete override on prompts; **APPROVED, NOT BUILT**). See `[[prompt-permissions-creator-only]]`.
+- **Notification bell** (Members-area increment 1) — built subagent-driven (plan: `docs/superpowers/plans/2026-06-19-notification-bell.md`). Shared `MyInvite` + `'declined'` invite status; api `GET /invites/mine`, `POST /invites/:id/accept|decline` (authorized by **email match** — `invite.email === user.email`, since the email-link token isn't available in-app); `materialize` DRY'd; `useInvites` hook; `NotificationBell` in `topbar-actions`. **Dep-free** (no RTL/jsdom — see `[[web-tests-no-rtl]]`).
+- **Members page** (increment 2) — `apps/web/src/pages/Members.tsx` (+ `members.css`), route `/members`, nav item enabled (SOON stub dropped). Card gallery; owner invites (email + Owner/Member role → copyable accept link, no mailer) / changes role / removes / revokes pending invites. `.lin-toolbar` (search + role filter + `+` invite). **Team-only**: nav link gated on `current?.type === 'team'`, page redirects home on a personal workspace (api endpoints already existed). See `[[members-area-roadmap]]`.
+- **Workspace type icon** — `PersonIcon` added; `WorkspaceMenu` shows name **+** team/personal icon (`MembersIcon`/`PersonIcon`).
+- **"Import media" → "Crawler"** rename (nav/home/connectors i18n, en+vi).
+- Reconciled cleanly with **Codex's i18n refactor** (`a63c009`) → merge `35452aa`.
+
+## 🐞 Crawler (Built-ins → media download) — debugged, PARTIALLY fixed
+The page is `apps/web/src/pages/ImportMedia.tsx` → Lyra api proxy (`apps/api/src/connectors/connectors.proxy.ts`, `CONNECTORS_SERVICE_URL=http://localhost:9100`) → **`apps/connectors-service`** (NestJS :9100) which spawns **yt-dlp** (+ ffmpeg).
+- **Root cause of "Fetch does nothing":** yt-dlp + ffmpeg were **not installed** → service 500. **FIXED:** installed `yt-dlp` 2026.06.09 + `ffmpeg` 8.1.1 via **winget**. Popular videos now resolve.
+- **Error-surfacing FIX (`f8abebf`):** connectors-service `download.controller.ts` now wraps yt-dlp errors → `UnprocessableEntity(422)` with the parsed reason via `ytDlpReason()` (`ytdlp.ts`); Lyra's proxy forwards 4xx messages, so the UI shows e.g. *"This video is not available"* instead of a generic 500. Verified (422).
+- **⏭️ STILL OPEN — the user's priority:** some public videos (e.g. `sYeY8f0hHxI`, `ATOB4EE8SfU`) report *"This video is not available"* — **NOT truly unavailable**. Proven by **ytdlp.online** downloading the exact video with **yt-dlp 2026.06.18** + **`[jsc:deno]`**. YouTube now gates them behind **JS challenges (nsig)** that need a **JS runtime**. Mine (2026.06.09 + bundled `yt_dlp_ejs`) fails the challenge. **NEXT:** `yt-dlp --update-to nightly` (or reinstall ≥2026.06.18) **+ install `deno`** (`winget install DenoLand.Deno`) → restart :9100 with deno on PATH → retest `sYeY8f0hHxI`. Optional follow-up: yt-dlp cookie support (`--cookies-from-browser`) for the user's own logged-in/region videos (region locks are IP-based — only a proxy fixes those).
+
+## ⚠️ Environment state the new session needs
+- **yt-dlp/ffmpeg are NOT on the harness shells' default PATH** (winget updated the registry PATH, but harness-spawned shells inherit a stale PATH). Use full paths or prepend:
+  - yt-dlp dir: `C:\Users\Admin\AppData\Local\Microsoft\WinGet\Packages\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe`
+  - ffmpeg dir: `C:\Users\Admin\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin`
+- **`:9100` connectors-service is currently running from the WORKTREE dist** (the error-surfacing fix), PID may change. Restart recipe (PowerShell): stop the `:9100` listener, set `$env:PORT=9100; $env:CONNECTORS_SERVICE_TOKEN="e2e-test-token-local"; $env:POSTIZ_API_URL="http://localhost:5000/api"; $env:POSTIZ_PUBLIC_URL="http://localhost:5000"`, prepend the yt-dlp+ffmpeg(+deno) dirs to `$env:PATH`, then `Start-Process node -ArgumentList "dist/main.js" -WorkingDirectory "<connectors-service dir>" -RedirectStandardOutput/Error <log>`. **Durability:** once it works, rebuild the **main-tree** `apps/connectors-service` and run :9100 from there (not the worktree), and add `deno` to its Dockerfile (which already bundles yt-dlp+ffmpeg).
+- Running: api `:3001` (REAL mode), web `:5173`, mongo + postiz (docker). dev.getlyras.app = main-tree HMR; api is `nest --watch` (auto-restarts on code change). `apps/api/.env` has `CONNECTORS_SERVICE_URL=http://localhost:9100` (UNCOMMITTED; comment out → mock mode).
+- git: `git gc` would clear a "too many unreachable loose objects" warning when convenient.
+
+## ⏸️ Other pending (not started)
+- Permission-normalization (canEditOwned / Owner override on prompts) — spec approved, **unbuilt**.
+- Members-area increment 3 — **Viewer** role (enum + `canCreate` gating + role picker). See `[[members-area-roadmap]]`.
+
+---
+
 # Session handoff — June 19, 2026 (night) — card galleries everywhere · CSS tokenized · Chat-as-assistant (Prompt owns saved answers) · landing/auth/admin dark-mode fixes
 
 > **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through **`fb387e2`** (all 16 commits below are up). Working tree clean except three **intentionally-untracked** paths: `data/` (the prompts.chat rich export), `import-rich.cjs` (re-runnable marketplace importer), and `.codex-dev/` (a parallel **Codex agent's git worktree** — not our tree; ignore it, but see `[[concurrent-codex-claude-tree]]`). **Commit/push only when the user asks.** Web gate stayed green every commit: `pnpm turbo run type-check lint test build` (web ~38 tests; api 103 tests).
