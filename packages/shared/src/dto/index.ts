@@ -282,6 +282,7 @@ export interface SendChatMessageDto {
 export interface UpdateConversationDto {
   title?: string;
   starred?: boolean;
+  originPromptId?: string; // link the chat to a library prompt's history (manual save)
 }
 
 // Find the latest chat opened from this prompt. `content` is used only as a

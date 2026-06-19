@@ -29,7 +29,7 @@ import { Markdown } from '../components/Markdown';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { SaveAsPromptModal } from '../components/SaveAsPromptModal';
 import { CopilotPanel } from '../components/CopilotPanel';
-import { ListIcon, PlusIcon, TrashIcon } from '../layout/icons';
+import { PlusIcon, TrashIcon } from '../layout/icons';
 import { useAppNav, useBreadcrumb } from '../layout/breadcrumb';
 
 function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
@@ -125,6 +125,22 @@ export function Chats() {
   const atBottomRef = useRef(true);
   const idRef = useRef(0);
   const originPromptIdRef = useRef<string | null>(null);
+  // Auto-save: when on, a chat opened from a library prompt is linked to that
+  // prompt's history on creation. When off, the chat still saves as a normal chat
+  // but the user links it manually via the "Save to history" button. Per-browser.
+  const [autoSave, setAutoSave] = useState(() => {
+    try { return localStorage.getItem('lyra.chat.autosave') !== 'off'; } catch { return true; }
+  });
+  const autoSaveRef = useRef(autoSave);
+  autoSaveRef.current = autoSave;
+  // The library prompt this chat is about + whether it's linked to that prompt's
+  // history yet (drives the manual Save button).
+  const [sourcePromptId, setSourcePromptId] = useState<string | null>(null);
+  const [linked, setLinked] = useState(false);
+  const setSource = (pid: string | null) => {
+    originPromptIdRef.current = pid;
+    setSourcePromptId(pid);
+  };
   // The conversation whose messages we already hold locally (we just created it),
   // so the load effect won't refetch it — idempotent, so StrictMode's double effect
   // invocation can't issue a stray GET the way a one-shot "skip" flag would.
@@ -158,7 +174,17 @@ export function Chats() {
         setTitle(c.title);
         setProvider(c.provider);
         setModel(c.model);
-        originPromptIdRef.current = c.originPromptId ?? null;
+        if (c.originPromptId) {
+          setSource(c.originPromptId);
+          setLinked(true);
+        } else {
+          // Unlinked chat: recover the pending source prompt (stashed when
+          // auto-save was off) so the Save button still shows this session.
+          let pend: string | null = null;
+          try { pend = sessionStorage.getItem(`lyra.chat.pendingPrompt.${id}`); } catch { /* ignore */ }
+          setSource(pend);
+          setLinked(false);
+        }
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : t('chats.couldNotLoad')));
     return () => {
@@ -175,7 +201,8 @@ export function Chats() {
       setInput(draft.input);
       setProvider(draft.provider);
       setModel(draft.model);
-      originPromptIdRef.current = draft.originPromptId ?? null;
+      setSource(draft.originPromptId ?? null);
+      setLinked(false);
     }
   }, [location.state, provider]);
 
@@ -235,7 +262,8 @@ export function Chats() {
       setTitle(t('chats.newChat'));
       setInput('');
       setAttachments([]);
-      originPromptIdRef.current = null;
+      setSource(null);
+      setLinked(false);
       return;
     }
     navigate('/chats');
@@ -272,16 +300,23 @@ export function Chats() {
       let createdNow = false;
       if (!cid) {
         try {
+          // Auto-save on (and opened from a prompt) → link to the prompt's history
+          // now; otherwise create a plain chat and let the user link it manually.
+          const willLink = autoSaveRef.current && !!originPromptIdRef.current;
           const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
             method: 'POST',
             body: JSON.stringify({
               provider: sendProvider,
               model: sendModel,
-              originPromptId: originPromptIdRef.current ?? undefined,
+              originPromptId: willLink ? originPromptIdRef.current : undefined,
             }),
           });
           cid = convo.id;
           createdNow = true;
+          setLinked(willLink);
+          if (!willLink && originPromptIdRef.current) {
+            try { sessionStorage.setItem(`lyra.chat.pendingPrompt.${cid}`, originPromptIdRef.current); } catch { /* ignore */ }
+          }
         } catch (e) {
           patchLast({ error: e instanceof Error ? e.message : t('chats.couldNotStart') });
           setStreaming(false);
@@ -351,6 +386,24 @@ export function Chats() {
   );
 
   function stop() { abortRef.current?.abort(); }
+
+  // Manual "Save to history": link this chat to the library prompt it was opened
+  // from (sets originPromptId so it shows in the prompt's history timeline).
+  async function saveToHistory() {
+    const pid = originPromptIdRef.current;
+    if (!id || !pid || linked) return;
+    try {
+      await api(`/conversations/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ originPromptId: pid }),
+      });
+      setLinked(true);
+      try { sessionStorage.removeItem(`lyra.chat.pendingPrompt.${id}`); } catch { /* ignore */ }
+      loadList();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('chats.couldNotSave'));
+    }
+  }
 
   function copy(text: string) {
     void navigator.clipboard?.writeText(text);
@@ -445,17 +498,29 @@ export function Chats() {
             </div>
           </div>
           <div className="chat-top-actions">
-            <button className="icon-btn" onClick={newChat} title={t('chats.newChat')} aria-label={t('chats.newChat')}>
-              <PlusIcon />
-            </button>
-            <button
-              className="icon-btn chat-history-btn"
-              onClick={() => setShowHistory((s) => !s)}
-              title={t('chats.title')}
-              aria-label={t('chats.title')}
-            >
-              <ListIcon />
-            </button>
+            {id && sourcePromptId && !linked && (
+              <button
+                type="button"
+                className="chat-save-btn"
+                onClick={() => void saveToHistory()}
+                title={t('chats.saveToHistoryHint')}
+              >
+                {t('chats.saveToHistory')}
+              </button>
+            )}
+            <label className="pe-toggle chat-autosave" title={t('chats.autoSaveHint')}>
+              <span className="pe-toggle-text">{t('chats.autoSave')}</span>
+              <input
+                type="checkbox"
+                checked={autoSave}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setAutoSave(v);
+                  try { localStorage.setItem('lyra.chat.autosave', v ? 'on' : 'off'); } catch { /* ignore */ }
+                }}
+              />
+              <span className="pe-track"><span className="pe-knob" /></span>
+            </label>
           </div>
         </header>
 

@@ -66,6 +66,10 @@ export class UpdateConversationBody implements UpdateConversationDto {
   @IsOptional()
   @IsBoolean()
   starred?: boolean;
+
+  @IsOptional()
+  @IsString()
+  originPromptId?: string;
 }
 
 export class FindPromptConversationBody implements FindPromptConversationDto {

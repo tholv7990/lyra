@@ -166,6 +166,8 @@ export class ConversationsController {
     const patch: Record<string, unknown> = { updatedBy: user.id };
     if (body.title !== undefined) patch.title = body.title.trim() || 'New chat';
     if (body.starred !== undefined) patch.starred = body.starred;
+    // Manual "save to history": link this chat to a library prompt.
+    if (body.originPromptId !== undefined) patch.originPromptId = body.originPromptId;
     const updated = await this.convos.findByIdAndUpdate(convo._id.toString(), patch);
     return this.convos.toView(updated!);
   }
