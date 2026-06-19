@@ -194,7 +194,7 @@ export function Landing() {
             </div>
 
             {/* Campaign-flow preview: a single product carried Find → Publish.
-                Photographic (picsum), not a div-mock of the app UI. */}
+                Local gpt-image-1 generated assets (/public/landing), not a div-mock. */}
             <div
               className="l-campaign"
               aria-label="A campaign moving through Lyra: a winning product, branded, made into creative, then published to channels"
@@ -206,7 +206,7 @@ export function Landing() {
 
               <figure className="l-campaign-hero">
                 <img
-                  src="https://picsum.photos/seed/lyra-campaign-hero/800/520"
+                  src="/landing/lyra-campaign-hero.webp"
                   width={800}
                   height={520}
                   loading="eager"
@@ -219,7 +219,7 @@ export function Landing() {
               <div className="l-campaign-row">
                 <figure className="l-campaign-thumb">
                   <img
-                    src="https://picsum.photos/seed/lyra-campaign-found/360/360"
+                    src="/landing/lyra-campaign-found.webp"
                     width={360}
                     height={360}
                     loading="lazy"
@@ -230,7 +230,7 @@ export function Landing() {
                 </figure>
                 <figure className="l-campaign-thumb">
                   <img
-                    src="https://picsum.photos/seed/lyra-campaign-ugc/360/360"
+                    src="/landing/lyra-campaign-ugc.webp"
                     width={360}
                     height={360}
                     loading="lazy"
@@ -241,7 +241,7 @@ export function Landing() {
                 </figure>
                 <figure className="l-campaign-thumb">
                   <img
-                    src="https://picsum.photos/seed/lyra-campaign-ad/360/360"
+                    src="/landing/lyra-campaign-ad.webp"
                     width={360}
                     height={360}
                     loading="lazy"
@@ -307,7 +307,7 @@ export function Landing() {
               {MAKE.map((m) => (
                 <figure className={`l-make ${m.cls} l-reveal`} key={m.label}>
                   <img
-                    src={`https://picsum.photos/seed/${m.seed}/${m.w}/${m.h}`}
+                    src={`/landing/${m.seed}.webp`}
                     width={m.w}
                     height={m.h}
                     loading="lazy"
@@ -376,7 +376,7 @@ export function Landing() {
                 <div className="l-feature-collage">
                   <div className="span-rows">
                     <img
-                      src="https://picsum.photos/seed/lyra-pipe-main/700/900"
+                      src="/landing/lyra-pipe-main.webp"
                       width={700}
                       height={900}
                       loading="lazy"
@@ -386,7 +386,7 @@ export function Landing() {
                   </div>
                   <div>
                     <img
-                      src="https://picsum.photos/seed/lyra-pipe-brief/500/400"
+                      src="/landing/lyra-pipe-brief.webp"
                       width={500}
                       height={400}
                       loading="lazy"
@@ -396,7 +396,7 @@ export function Landing() {
                   </div>
                   <div>
                     <img
-                      src="https://picsum.photos/seed/lyra-pipe-render/500/400"
+                      src="/landing/lyra-pipe-render.webp"
                       width={500}
                       height={400}
                       loading="lazy"
@@ -429,7 +429,7 @@ export function Landing() {
               <div className="l-feature-visual l-reveal">
                 <div className="l-feature-photo">
                   <img
-                    src="https://picsum.photos/seed/lyra-library-brand/900/700"
+                    src="/landing/lyra-library-brand.webp"
                     width={900}
                     height={700}
                     loading="lazy"
@@ -466,11 +466,11 @@ export function Landing() {
                   </svg>
                 </span>
                 <span className="l-crawl-tiles">
-                  <img src="https://picsum.photos/seed/lyra-crawl-a/240/240" width={240} height={240} loading="lazy" alt="Imported reference frame pulled from a product video" />
+                  <img src="/landing/lyra-crawl-a.webp" width={240} height={240} loading="lazy" alt="Imported reference frame pulled from a product video" />
                   {/* TODO: swap for real brand asset */}
-                  <img src="https://picsum.photos/seed/lyra-crawl-b/240/240" width={240} height={240} loading="lazy" alt="Second imported reference frame from the same clip" />
+                  <img src="/landing/lyra-crawl-b.webp" width={240} height={240} loading="lazy" alt="Second imported reference frame from the same clip" />
                   {/* TODO: swap for real brand asset */}
-                  <img src="https://picsum.photos/seed/lyra-crawl-c/240/240" width={240} height={240} loading="lazy" alt="Third imported reference frame from the same clip" />
+                  <img src="/landing/lyra-crawl-c.webp" width={240} height={240} loading="lazy" alt="Third imported reference frame from the same clip" />
                   {/* TODO: swap for real brand asset */}
                 </span>
               </div>
@@ -496,7 +496,7 @@ export function Landing() {
               <div className="l-feature-visual l-reveal">
                 <div className="l-publish">
                   <img
-                    src="https://picsum.photos/seed/lyra-publish-campaign/900/720"
+                    src="/landing/lyra-publish-campaign.webp"
                     width={900}
                     height={720}
                     loading="lazy"
@@ -539,7 +539,7 @@ export function Landing() {
                   aria-label="A pipeline run paused at an approval gate, holding a generated image for review"
                 >
                   <img
-                    src="https://picsum.photos/seed/lyra-gate-render/900/720"
+                    src="/landing/lyra-gate-render.webp"
                     width={900}
                     height={720}
                     loading="lazy"
