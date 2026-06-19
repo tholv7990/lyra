@@ -10,11 +10,13 @@ export function toMarketplacePrompt(
   return {
     id: p._id.toString(),
     title: p.title,
+    description: p.description || undefined,
     content: p.content,
     type: p.type,
     forDevs: p.forDevs ?? false,
     contributor: p.contributor,
     source: p.source,
+    category: p.category || undefined,
     variables: p.variables ?? [],
     tags: p.tags ?? [],
     createdAt: iso(p.createdAt),

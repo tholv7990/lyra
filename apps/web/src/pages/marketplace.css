@@ -124,6 +124,37 @@
   border-color: var(--hairline-strong);
 }
 
+/* Source category pill — a quiet accent tint, distinct from the neutral type pill. */
+.mkt-cat {
+  color: var(--accent-prompts);
+  background: color-mix(in srgb, var(--accent-prompts) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-prompts) 28%, transparent);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Short description — a 2-line summary above the code-block (prompts.chat card). */
+.mkt-card-desc {
+  margin: 0;
+  cursor: pointer;
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  line-height: var(--lh-body);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mkt-details-desc {
+  margin: 12px 0 0;
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  line-height: var(--lh-body);
+}
+
 /* Prompt preview as a monospace code-block, clamped to 4 lines + ellipsis
    (a block <p>, so the clamp is reliable). Full text lives in the modal. */
 .mkt-card-code {

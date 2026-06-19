@@ -397,11 +397,13 @@ export interface ConnectorCredentialInfo {
 export interface MarketplacePrompt {
   id: string;
   title: string;
+  description?: string; // short summary (from the source), shown above the body
   content: string;
   type: 'text' | 'structured';
   forDevs: boolean;
   contributor?: string;
   source: string; // e.g. 'prompts.chat'
+  category?: string; // source category (e.g. 'Marketing', 'Image Generation')
   variables: string[]; // placeholder names parsed from the body
   tags: string[];
   createdAt: string;

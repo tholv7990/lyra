@@ -53,11 +53,13 @@ export function MarketplaceDetails({
           <span>{contributor ? t('marketplace.by', { name: contributor }) : t('marketplace.byUnknown')}</span>
           <span className="pd-dot">·</span>
           <span>{t('marketplace.openSource', { source: prompt.source })}</span>
-          {prompt.forDevs && <span className="badge mkt-dev">{t('marketplace.devBadge')}</span>}
+          {prompt.category && <span className="badge mkt-cat">{prompt.category}</span>}
           <span className="badge mkt-type">
             {prompt.type === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
           </span>
         </div>
+
+        {prompt.description && <p className="mkt-details-desc">{prompt.description}</p>}
 
         {prompt.tags.length > 0 && (
           <div className="mkt-details-tags">

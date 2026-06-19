@@ -13,6 +13,9 @@ export class MarketplacePrompt {
   @Prop({ required: true, unique: true, index: true })
   title!: string;
 
+  @Prop()
+  description?: string;
+
   @Prop({ required: true })
   content!: string;
 
@@ -31,6 +34,10 @@ export class MarketplacePrompt {
 
   @Prop({ required: true, default: 'prompts.chat' })
   source!: string;
+
+  // Source category (prompts.chat taxonomy, e.g. 'Marketing', 'Image Generation').
+  @Prop()
+  category?: string;
 
   // Placeholder names parsed from the body (parsePromptVariables).
   @Prop({ type: [String], default: [] })

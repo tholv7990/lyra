@@ -312,7 +312,7 @@ function Card({ prompt, rank, state, copied, onAdopt, onView, onCopy, onOpenInCh
           <span className="nm">{prompt.title}</span>
         </button>
         <span className="mkt-card-badges">
-          {prompt.forDevs && <span className="badge mkt-dev">{t('marketplace.devBadge')}</span>}
+          {prompt.category && <span className="badge mkt-cat">{prompt.category}</span>}
           <span className="badge mkt-type">
             {prompt.type === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
           </span>
@@ -325,6 +325,8 @@ function Card({ prompt, rank, state, copied, onAdopt, onView, onCopy, onOpenInCh
           {rank.reason && <span className="mkt-rank-reason">{rank.reason}</span>}
         </div>
       )}
+
+      {prompt.description && <p className="mkt-card-desc" onClick={onView}>{prompt.description}</p>}
 
       {/* Prompt preview in a monospace code-block (prompts.chat's signature look);
           a plain block clamps reliably, title + eye are the accessible openers. */}
