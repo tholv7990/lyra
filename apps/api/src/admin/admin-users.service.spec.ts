@@ -304,10 +304,8 @@ describe('AdminUsersService', () => {
       const docs = [
         { _id: 'u1', email: 'a@x.com', name: 'A', active: true, createdAt: new Date() },
       ];
-      const users = {
-        ...findChain(docs),
-        countDocuments: jest.fn().mockReturnValue(execOf(1)),
-      };
+      const users = findChain(docs);
+      users.countDocuments = jest.fn().mockReturnValue(execOf(1));
       const memberships = {
         aggregate: jest.fn().mockReturnValue(execOf([{ _id: 'u1', count: 1 }])),
       };
