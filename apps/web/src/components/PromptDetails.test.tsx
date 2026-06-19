@@ -4,9 +4,9 @@ import { describe, expect, test, vi } from 'vitest';
 import { PromptStatus, PromptType, Provider, type Prompt } from '@lyra/shared';
 import { PromptDetails } from './PromptDetails';
 
-// PromptHistory reads the active workspace; with none, it stays empty (no fetch).
-vi.mock('../workspace/useWorkspace', () => ({
-  useWorkspace: () => ({ current: undefined }),
+// PromptDetails reads the current user for the delete-result affordance.
+vi.mock('../auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1', name: 'Putiin' } }),
 }));
 
 const prompt: Prompt = {

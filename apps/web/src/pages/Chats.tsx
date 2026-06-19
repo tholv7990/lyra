@@ -17,9 +17,13 @@ import {
   type Conversation,
   type ConversationMessage,
   type ConversationSummary,
+  type Prompt,
   type PromptMedia,
+  type SavedResult,
 } from '@lyra/shared';
 import { api, streamSSE } from '../lib/api';
+import { saveResult, deleteResult } from '../lib/promptResults';
+import { SavedResults } from '../components/SavedResults';
 import { initials } from '../lib/format';
 import { useModels, type ModelCatalog } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
@@ -121,22 +125,20 @@ export function Chats() {
   const atBottomRef = useRef(true);
   const idRef = useRef(0);
   const originPromptIdRef = useRef<string | null>(null);
-  // Auto-save: when on, a chat opened from a library prompt is linked to that
-  // prompt's history on creation. When off, the chat still saves as a normal chat
-  // but the user links it manually via the "Save to history" button. Per-browser.
-  const [autoSave, setAutoSave] = useState(() => {
-    try { return localStorage.getItem('lyra.chat.autosave') !== 'off'; } catch { return true; }
-  });
-  const autoSaveRef = useRef(autoSave);
-  autoSaveRef.current = autoSave;
-  // The library prompt this chat is about + whether it's linked to that prompt's
-  // history yet (drives the manual Save button).
+  // The library prompt this chat is about (its parent). When set, answers can be
+  // saved to it; a chat opened from a prompt is always linked to it on creation.
   const [sourcePromptId, setSourcePromptId] = useState<string | null>(null);
-  const [linked, setLinked] = useState(false);
   const setSource = (pid: string | null) => {
     originPromptIdRef.current = pid;
     setSourcePromptId(pid);
   };
+  // The parent prompt's saved results (the rail), the prompt owner (for delete
+  // permission), which assistant messages we've already saved, and the in-flight
+  // result delete.
+  const [results, setResults] = useState<SavedResult[]>([]);
+  const [promptOwnerId, setPromptOwnerId] = useState<string | null>(null);
+  const [savedMsgIds, setSavedMsgIds] = useState<Set<string>>(new Set());
+  const [deletingResultId, setDeletingResultId] = useState<string | null>(null);
   // The conversation whose messages we already hold locally (we just created it),
   // so the load effect won't refetch it — idempotent, so StrictMode's double effect
   // invocation can't issue a stray GET the way a one-shot "skip" flag would.
@@ -170,17 +172,8 @@ export function Chats() {
         setTitle(c.title);
         setProvider(c.provider);
         setModel(c.model);
-        if (c.originPromptId) {
-          setSource(c.originPromptId);
-          setLinked(true);
-        } else {
-          // Unlinked chat: recover the pending source prompt (stashed when
-          // auto-save was off) so the Save button still shows this session.
-          let pend: string | null = null;
-          try { pend = sessionStorage.getItem(`lyra.chat.pendingPrompt.${id}`); } catch { /* ignore */ }
-          setSource(pend);
-          setLinked(false);
-        }
+        // The parent prompt this chat belongs to (if any) gates answer-saving.
+        setSource(c.originPromptId ?? null);
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : t('chats.couldNotLoad')));
     return () => {
@@ -198,9 +191,27 @@ export function Chats() {
       setProvider(draft.provider);
       setModel(draft.model);
       setSource(draft.originPromptId ?? null);
-      setLinked(false);
     }
   }, [location.state, provider]);
+
+  // Load the parent prompt's saved results (the rail) whenever the chat's parent
+  // prompt changes. Cleared when the chat has no parent.
+  useEffect(() => {
+    if (!sourcePromptId) {
+      setResults([]);
+      setPromptOwnerId(null);
+      return;
+    }
+    let cancelled = false;
+    api<Prompt>(`/prompts/${sourcePromptId}`)
+      .then((p) => {
+        if (cancelled) return;
+        setResults(p.results);
+        setPromptOwnerId(p.createdBy.id);
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [sourcePromptId]);
 
   // Track the chat's origin (e.g. the prompt it was opened from) so the breadcrumb
   // reads "Prompts / <title>". `send` re-passes it through its replace-navigate, so
@@ -259,7 +270,6 @@ export function Chats() {
       setInput('');
       setAttachments([]);
       setSource(null);
-      setLinked(false);
       return;
     }
     navigate('/chats');
@@ -296,23 +306,17 @@ export function Chats() {
       let createdNow = false;
       if (!cid) {
         try {
-          // Auto-save on (and opened from a prompt) → link to the prompt's history
-          // now; otherwise create a plain chat and let the user link it manually.
-          const willLink = autoSaveRef.current && !!originPromptIdRef.current;
+          // A chat opened from a prompt is linked to it on creation (its parent).
           const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
             method: 'POST',
             body: JSON.stringify({
               provider: sendProvider,
               model: sendModel,
-              originPromptId: willLink ? originPromptIdRef.current : undefined,
+              originPromptId: originPromptIdRef.current ?? undefined,
             }),
           });
           cid = convo.id;
           createdNow = true;
-          setLinked(willLink);
-          if (!willLink && originPromptIdRef.current) {
-            try { sessionStorage.setItem(`lyra.chat.pendingPrompt.${cid}`, originPromptIdRef.current); } catch { /* ignore */ }
-          }
         } catch (e) {
           patchLast({ error: e instanceof Error ? e.message : t('chats.couldNotStart') });
           setStreaming(false);
@@ -383,21 +387,66 @@ export function Chats() {
 
   function stop() { abortRef.current?.abort(); }
 
-  // Manual "Save to history": link this chat to the library prompt it was opened
-  // from (sets originPromptId so it shows in the prompt's history timeline).
-  async function saveToHistory() {
-    const pid = originPromptIdRef.current;
-    if (!id || !pid || linked) return;
+  // Save an assistant answer as a child of the parent prompt. Gated on having a
+  // parent (the button is disabled otherwise — Save as prompt is the gateway).
+  async function saveAnswer(m: ConversationMessage) {
+    if (!sourcePromptId || !m.content) return;
     try {
-      await api(`/conversations/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ originPromptId: pid }),
+      const updated = await saveResult(sourcePromptId, {
+        output: m.content,
+        provider: m.provider,
+        model: m.model,
+        sourceConversationId: id,
       });
-      setLinked(true);
-      try { sessionStorage.removeItem(`lyra.chat.pendingPrompt.${id}`); } catch { /* ignore */ }
-      loadList();
+      setResults(updated.results);
+      setSavedMsgIds((s) => new Set(s).add(m.id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('chats.couldNotSave'));
+      setError(e instanceof Error ? e.message : t('prompts.errSave'));
+    }
+  }
+
+  // After "Save as prompt" creates the parent: link this chat to it, attach the
+  // triggering answer as the first saved result, and surface the rail.
+  async function afterSaveAsPrompt(prompt: Prompt, fromMsg: ConversationMessage) {
+    setSaveFor(null);
+    setSource(prompt.id);
+    setPromptOwnerId(prompt.createdBy.id);
+    setResults(prompt.results);
+    if (id) {
+      try {
+        await api(`/conversations/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ originPromptId: prompt.id }),
+        });
+      } catch { /* ignore */ }
+    }
+    const idx = messages.findIndex((x) => x.id === fromMsg.id);
+    const answer = idx >= 0 ? messages[idx + 1] : undefined;
+    if (answer && answer.role === 'assistant' && answer.content) {
+      try {
+        const updated = await saveResult(prompt.id, {
+          output: answer.content,
+          provider: answer.provider,
+          model: answer.model,
+          sourceConversationId: id,
+        });
+        setResults(updated.results);
+        setSavedMsgIds((s) => new Set(s).add(answer.id));
+      } catch { /* ignore */ }
+    }
+    loadList();
+  }
+
+  async function onDeleteResult(rid: string) {
+    if (!sourcePromptId) return;
+    setDeletingResultId(rid);
+    try {
+      const updated = await deleteResult(sourcePromptId, rid);
+      setResults(updated.results);
+    } catch {
+      /* ignore */
+    } finally {
+      setDeletingResultId(null);
     }
   }
 
@@ -437,7 +486,7 @@ export function Chats() {
   }
 
   return (
-    <div className={`chat ${showHistory ? 'history-open' : ''}`}>
+    <div className={`chat ${showHistory ? 'history-open' : ''} ${sourcePromptId ? 'has-results' : ''}`}>
       {showHistory && <div className="chat-scrim" onClick={() => setShowHistory(false)} />}
 
       <aside className="chat-history">
@@ -492,31 +541,6 @@ export function Chats() {
               )}
               <span className="pg-name">{origin ? origin.record : id ? title : t('chats.newChat')}</span>
             </div>
-          </div>
-          <div className="chat-top-actions">
-            {id && sourcePromptId && !linked && (
-              <button
-                type="button"
-                className="chat-save-btn"
-                onClick={() => void saveToHistory()}
-                title={t('chats.saveToHistoryHint')}
-              >
-                {t('chats.saveToHistory')}
-              </button>
-            )}
-            <label className="pe-toggle chat-autosave" title={t('chats.autoSaveHint')}>
-              <span className="pe-toggle-text">{t('chats.autoSave')}</span>
-              <input
-                type="checkbox"
-                checked={autoSave}
-                onChange={(e) => {
-                  const v = e.target.checked;
-                  setAutoSave(v);
-                  try { localStorage.setItem('lyra.chat.autosave', v ? 'on' : 'off'); } catch { /* ignore */ }
-                }}
-              />
-              <span className="pe-track"><span className="pe-knob" /></span>
-            </label>
           </div>
         </header>
 
@@ -621,6 +645,20 @@ export function Chats() {
                       {done && (
                         <div className="cactions">
                           <button className="cicon" onClick={() => copy(m.content)} title={copied ? t('common.copied') : t('common.copy')}><IconCopy /></button>
+                          {sourcePromptId ? (
+                            <button
+                              className="cmsg-save"
+                              onClick={() => void saveAnswer(m)}
+                              disabled={savedMsgIds.has(m.id)}
+                              title={t('prompts.saveAnswerHint')}
+                            >
+                              <IconBookmark /> {savedMsgIds.has(m.id) ? t('prompts.answerSaved') : t('prompts.saveAnswer')}
+                            </button>
+                          ) : (
+                            <button className="cmsg-save" disabled title={t('prompts.saveAnswerDisabled')}>
+                              <IconBookmark /> {t('prompts.saveAnswer')}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -652,6 +690,17 @@ export function Chats() {
         </div>
       </main>
 
+      {sourcePromptId && (
+        <aside className="chat-results">
+          <SavedResults
+            results={results}
+            onDelete={onDeleteResult}
+            canDelete={(r) => !!user && (r.createdBy.id === user.id || promptOwnerId === user.id)}
+            deletingId={deletingResultId}
+          />
+        </aside>
+      )}
+
       {saveFor && wsId && (
         <SaveAsPromptModal
           wsId={wsId}
@@ -662,7 +711,7 @@ export function Chats() {
           labels={labels}
           onCreateLabel={createLabel}
           onClose={() => setSaveFor(null)}
-          onSaved={() => setSaveFor(null)}
+          onSaved={(prompt) => void afterSaveAsPrompt(prompt, saveFor)}
         />
       )}
 

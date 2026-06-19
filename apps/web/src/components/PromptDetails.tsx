@@ -1,9 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PromptStatus, labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
+import { useNavigate } from 'react-router-dom';
+import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
 import { fmtDate, initial } from '../lib/format';
+import { useAuth } from '../auth/useAuth';
+import { deleteResult } from '../lib/promptResults';
 import { PromptCodeBlock } from './PromptCodeBlock';
-import { PromptHistory } from './PromptHistory';
+import { SavedResults } from './SavedResults';
 import { ProviderIcon } from './ProviderIcon';
 import { XIcon } from '../layout/icons';
 
@@ -30,8 +33,31 @@ export function PromptDetails({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const isPublic = prompt.status === PromptStatus.Public;
   const vars = promptVars(prompt.content);
+
+  // Local copy so deleting a result updates the list without a re-fetch.
+  const [results, setResults] = useState<SavedResult[]>(prompt.results);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Re-sync the local copy when a different prompt is shown.
+  useEffect(() => { setResults(prompt.results); }, [prompt.id]);
+
+  const canDelete = (r: SavedResult) =>
+    !!user && (r.createdBy.id === user.id || prompt.createdBy.id === user.id);
+
+  async function onDeleteResult(id: string) {
+    setDeletingId(id);
+    try {
+      const updated = await deleteResult(prompt.id, id);
+      setResults(updated.results);
+    } catch {
+      // leave the list as-is on failure
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -114,7 +140,13 @@ export function PromptDetails({
           </div>
         )}
 
-        <PromptHistory promptId={prompt.id} content={prompt.content} />
+        <SavedResults
+          results={results}
+          onOpenChat={(cid) => { onClose(); navigate(`/chats/${cid}`); }}
+          onDelete={onDeleteResult}
+          canDelete={canDelete}
+          deletingId={deletingId}
+        />
         </div>
       </div>
     </div>
