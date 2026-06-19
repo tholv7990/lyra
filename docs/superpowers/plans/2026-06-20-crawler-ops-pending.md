@@ -72,7 +72,10 @@ multi-tenant (shared session = shared identity). Document the limitation.
 
 ---
 
-## C. Progress-bar polish — one smooth % across the video+audio passes
+## C. Progress-bar polish — one smooth % across the video+audio passes — ✅ SHIPPED 2026-06-20
+
+Done as described below (`ProgressTracker` in `ytdlp.ts`, unit-tested; verified live:
+`0 → 20.8 → 42.4 → 65.6 → 96.2 → 100`, no reset). Original plan retained for reference.
 
 **Problem:** for merged formats (`bv+ba`) yt-dlp downloads two files, so the bar ramps
 0→100 twice then merges. Today the web shows the latest per-file pct.

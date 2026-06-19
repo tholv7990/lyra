@@ -84,6 +84,31 @@ export function parsePercents(chunk: string): number[] {
   return [...chunk.matchAll(/\[download\]\s+([\d.]+)%/g)].map((m) => parseFloat(m[1]));
 }
 
+// A merged format (bv+ba) downloads two files, so raw per-file % ramps 0→100
+// twice. This folds the per-file % into ONE monotonic 0–100 across all files:
+// it reads the file count from "Downloading N format(s): 399+251" (the +-joined
+// ids) and tracks which file is current via "[download] Destination:" lines.
+// overall = (fileIdx + currentPct/100) / files. Capped at 99.9 until done (the
+// merge phase emits no %). If the format line never appears, files stays 1 →
+// effectively passthrough (the single-file case). Stateful — one per download.
+export class ProgressTracker {
+  private files = 1;
+  private idx = -1; // current file index; first "Destination:" makes it 0
+
+  // Feed a raw stdout chunk; returns the overall % if this chunk had progress.
+  push(chunk: string): number | undefined {
+    const fmt = chunk.match(/Downloading\s+\d+\s+format\(s\):\s*([0-9a-zA-Z+._-]+)/);
+    if (fmt) this.files = fmt[1].split('+').length;
+    const dests = chunk.match(/\[download\]\s+Destination:/g);
+    if (dests) this.idx += dests.length;
+    const pcts = parsePercents(chunk);
+    if (pcts.length === 0) return undefined;
+    const cur = pcts[pcts.length - 1];
+    const overall = ((Math.max(this.idx, 0) + cur / 100) / this.files) * 100;
+    return Math.min(99.9, Math.max(0, overall));
+  }
+}
+
 // Spawn yt-dlp with an argv array (no shell). Not unit-tested (integration).
 // ponytail: 10-min spawn cap covers large/long downloads (e.g. 1080p of a 1h
 // video ~1GB). Sync download, no queue — move to a BullMQ job if downloads
@@ -97,10 +122,14 @@ export function runYtDlp(
     const ps = spawn('yt-dlp', args, { timeout: timeoutMs });
     let stdout = '';
     let stderr = '';
+    const tracker = onProgress ? new ProgressTracker() : null;
     ps.stdout.on('data', (d) => {
       const s = String(d);
       stdout += s;
-      if (onProgress) for (const pct of parsePercents(s)) onProgress(pct);
+      if (tracker) {
+        const pct = tracker.push(s);
+        if (pct !== undefined) onProgress!(pct);
+      }
     });
     ps.stderr.on('data', (d) => (stderr += d));
     ps.on('error', reject);

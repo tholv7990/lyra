@@ -7,6 +7,7 @@ import {
   qualitiesFromFormats,
   parsePercents,
   isTransient,
+  ProgressTracker,
 } from './ytdlp';
 
 describe('typeFromExt', () => {
@@ -80,6 +81,25 @@ describe('parsePercents', () => {
   });
   it('returns [] for non-progress output', () => {
     expect(parsePercents('[youtube] extracting...\n[Merger] Merging formats')).toEqual([]);
+  });
+});
+
+describe('ProgressTracker', () => {
+  it('folds a 2-file (bv+ba) download into one monotonic 0–100', () => {
+    const t = new ProgressTracker();
+    expect(t.push('[info] vid: Downloading 1 format(s): 399+251\n')).toBeUndefined(); // learns files=2
+    expect(t.push('[download] Destination: vid.f399.mp4\n[download]   0.0% of 10MiB\n')).toBe(0); // file 0 @0% → 0
+    expect(t.push('[download]  50.0% of 10MiB\n')).toBe(25); // file 0 @50% → 25
+    expect(t.push('[download] 100% of 10MiB\n')).toBe(50); // file 0 done → 50
+    expect(t.push('[download] Destination: vid.f251.webm\n[download]   0.0% of 1MiB\n')).toBe(50); // file 1 @0% → 50
+    expect(t.push('[download]  50.0% of 1MiB\n')).toBe(75); // file 1 @50% → 75
+    expect(t.push('[download] 100% of 1MiB\n')).toBeCloseTo(99.9); // capped until done
+    expect(t.push('[Merger] Merging formats into "vid.webm"\n')).toBeUndefined(); // no % during merge
+  });
+  it('passes through a single progressive file (no format line)', () => {
+    const t = new ProgressTracker();
+    expect(t.push('[download] Destination: vid.mp4\n[download]  42.0% of 5MiB\n')).toBe(42);
+    expect(t.push('[download]  80.0% of 5MiB\n')).toBe(80);
   });
 });
 
