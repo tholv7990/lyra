@@ -12,7 +12,7 @@ export default {
   aiButton: 'AI',
   builtins: 'Tích hợp sẵn',
   publish: 'Đăng bài',
-  import: 'Tải media',
+  import: 'Trình thu thập',
   connections: 'Kết nối',
   members: 'Thành viên',
   admin: 'Quản trị',

@@ -38,8 +38,8 @@ export default {
   viewPost: 'View post',
   noChannels: 'No channels connected yet — add one in Connections.',
 
-  // Import media
-  importTitle: 'Import media',
+  // Crawler
+  importTitle: 'Crawler',
   importSubtitle:
     'Paste a social link to pull the video or images. For content you own or have rights to use.',
   urlPlaceholder: 'Paste a TikTok / Instagram / YouTube / X / Facebook link…',

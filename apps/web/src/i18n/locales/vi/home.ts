@@ -23,10 +23,10 @@ export default {
   projectsBody:
     'Mỗi dự án cho một thương hiệu, sản phẩm hoặc cửa hàng. Nó cung cấp ngữ cảnh chạy ({product}, {niche}, {homepage}) và là nơi bạn gán pipeline và khởi chạy.',
   projectsCta: 'Mở dự án',
-  importTitle: 'Tải media',
+  importTitle: 'Trình thu thập',
   importBody:
     'Crawl một link công khai TikTok, Instagram, YouTube, X hoặc Facebook để lấy video và hình ảnh — nội dung bạn sở hữu hoặc có quyền sử dụng.',
-  importCta: 'Tải media',
+  importCta: 'Mở Trình thu thập',
   publishTitle: 'Đăng bài',
   publishBody:
     'Soạn một lần và đăng lên mọi kênh đã kết nối cùng lúc — tích hợp sẵn. Bạn luôn xem lại trước khi đăng.',

@@ -12,7 +12,7 @@ export default {
   aiButton: 'AI',
   builtins: 'Built-ins',
   publish: 'Publish',
-  import: 'Import media',
+  import: 'Crawler',
   connections: 'Connections',
   members: 'Members',
   admin: 'Admin',

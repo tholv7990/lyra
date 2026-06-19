@@ -38,8 +38,8 @@ export default {
   viewPost: 'Xem bài',
   noChannels: 'Chưa có kênh nào — thêm trong Kết nối.',
 
-  // Import media
-  importTitle: 'Tải media',
+  // Crawler
+  importTitle: 'Trình thu thập',
   importSubtitle:
     'Dán liên kết mạng xã hội để lấy video hoặc ảnh. Dành cho nội dung bạn sở hữu hoặc có quyền dùng.',
   urlPlaceholder: 'Dán liên kết TikTok / Instagram / YouTube / X / Facebook…',

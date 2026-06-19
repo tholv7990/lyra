@@ -23,10 +23,10 @@ export default {
   projectsBody:
     'A project per brand, product, or store. It supplies the run context ({product}, {niche}, {homepage}) and is where you assign pipelines and launch runs.',
   projectsCta: 'Open projects',
-  importTitle: 'Import media',
+  importTitle: 'Crawler',
   importBody:
     'Crawl a public TikTok, Instagram, YouTube, X, or Facebook link to pull its video and images — content you own or have the rights to use.',
-  importCta: 'Import media',
+  importCta: 'Open Crawler',
   publishTitle: 'Publish',
   publishBody:
     'Compose once and post to every connected channel at once — built in. You always review before anything goes out.',
