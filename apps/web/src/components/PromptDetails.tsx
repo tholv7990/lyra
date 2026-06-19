@@ -96,7 +96,6 @@ export function PromptDetails({
             </>
           )}
           <span className="badge mkt-type">{t(`prompts.type.${prompt.type}`)}</span>
-          {prompt.category && <span className="badge prompt-category">{prompt.category}</span>}
         </div>
         {error && <p className="error">{error}</p>}
         {prompt.tags.length > 0 && (

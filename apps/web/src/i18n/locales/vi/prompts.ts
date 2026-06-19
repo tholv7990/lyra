@@ -8,7 +8,6 @@ export default {
   filter: 'Bộ lọc',
   filterStatus: 'Trạng thái',
   filterType: 'Loại',
-  filterCategory: 'Danh mục',
   filterTags: 'Thẻ',
   filterProvider: 'Nhà cung cấp',
   filterCreatedBy: 'Người tạo',
@@ -63,11 +62,6 @@ export default {
     audio: 'Âm thanh',
     video: 'Video',
   },
-
-  // Category — top-level taxonomy (PromptCategory). Values are proper nouns,
-  // shown as-is (not translated); only the field/option labels are localized.
-  categoryLabel: 'Danh mục',
-  categoryNone: 'Không',
 
   // PromptEditor
   newTitle: 'Mới',

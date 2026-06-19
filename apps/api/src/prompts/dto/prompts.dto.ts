@@ -12,7 +12,6 @@ import {
 import { Type } from 'class-transformer';
 import {
   MediaType,
-  PromptCategory,
   PromptStatus,
   PromptType,
   Provider,
@@ -63,11 +62,6 @@ export class CreatePromptBody implements CreatePromptDto {
   @IsEnum(PromptType)
   type?: PromptType;
 
-  // Optional metadata. @IsOptional lets `null` through so the web can clear it.
-  @IsOptional()
-  @IsEnum(PromptCategory)
-  category?: PromptCategory;
-
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -107,11 +101,6 @@ export class UpdatePromptBody implements UpdatePromptDto {
   @IsOptional()
   @IsEnum(PromptType)
   type?: PromptType;
-
-  // Optional metadata. @IsOptional lets `null` through so the web can clear it.
-  @IsOptional()
-  @IsEnum(PromptCategory)
-  category?: PromptCategory;
 
   @IsOptional()
   @IsArray()

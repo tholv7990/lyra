@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   Provider,
-  PromptCategory,
   PromptStatus,
   PromptType,
   tagKey,
@@ -26,7 +25,6 @@ export interface PromptListOptions {
   statuses?: PromptStatus[];
   tags?: string[];
   types?: PromptType[];
-  categories?: PromptCategory[];
   createdBy?: string[];
   providers?: Provider[];
   q?: string;
@@ -39,7 +37,7 @@ export function buildPromptListFilter(
   userId: string,
   opts: Pick<
     PromptListOptions,
-    'statuses' | 'tags' | 'types' | 'categories' | 'createdBy' | 'providers' | 'q'
+    'statuses' | 'tags' | 'types' | 'createdBy' | 'providers' | 'q'
   >,
 ): Record<string, unknown> {
   const filter: Record<string, unknown> = {
@@ -54,13 +52,6 @@ export function buildPromptListFilter(
   // ANDed with the other groups.
   if (opts.types?.length) {
     filter.type = { $in: opts.types.map((t) => new RegExp(`^${escapeRegex(t)}$`, 'i')) };
-  }
-  // Category filter mirrors the type filter exactly: any-selected (OR within
-  // group), case-insensitive, ANDed with the other groups.
-  if (opts.categories?.length) {
-    filter.category = {
-      $in: opts.categories.map((c) => new RegExp(`^${escapeRegex(c)}$`, 'i')),
-    };
   }
   if (opts.createdBy?.length) filter.createdBy = { $in: opts.createdBy };
   if (opts.providers?.length) filter.provider = { $in: opts.providers };
