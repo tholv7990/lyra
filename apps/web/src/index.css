@@ -29,6 +29,17 @@
   --success: #2da44e;
   --warning: #d4a72c;
   --info: #0a84ff;
+  /* Text/icons on a filled accent (primary/success/danger) — white in both
+     themes since the fill stays colored. One token for every on-color label. */
+  --on-accent: #ffffff;
+  /* Error surface — soft red wash + border for inline error cards/banners. */
+  --danger-tint: #f1c9c9;
+  --danger-wash: #fdf1f1;
+  /* Code block — intentionally dark in BOTH themes (a terminal-style block), so
+     these are theme-independent and only defined here. */
+  --code-bg: #1d1f23;
+  --code-ink: #e6e6e6;
+  --code-ink-muted: #cfcfcf;
   /* Section accents — the Home hub tiles + the Get-started checklist. Saturated
      hues that read on both themes (used as the icon ink + a low-alpha tint). */
   --accent-chats: #f59e0b;
@@ -107,6 +118,10 @@
   --success: #3fb950;
   --warning: #e0b54a;
   --info: #4c9dff;
+  /* Error surface, dark variants — a desaturated red border + near-black red
+     wash that read as "error" on the dark canvas (light pinks would glare). */
+  --danger-tint: #5a2a2c;
+  --danger-wash: #2a1618;
   --disabled-bg: #26262d;
   --disabled-ink: rgba(235, 235, 245, 0.3);
   --surface-hover: rgba(255, 255, 255, 0.06);

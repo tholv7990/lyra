@@ -89,7 +89,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ink-tertiary, #9a9aa2);
+  color: var(--ink-tertiary);
   padding: 4px 12px;
   margin-top: 12px;
 }
@@ -265,8 +265,9 @@
   width: 22px;
   height: 22px;
   border-radius: 6px;
+  /* Intentional brand asset — the workspace-avatar orange gradient. */
   background: linear-gradient(160deg, #ff8a3d, var(--primary));
-  color: #fff;
+  color: var(--on-accent);
   font-size: 11px;
   font-weight: 700;
   display: grid;
@@ -696,7 +697,7 @@
 .gs-step.done .gs-step-mark {
   border-color: var(--success);
   background: var(--success);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .gs-step-body {
@@ -1150,7 +1151,7 @@
 }
 
 .key-dot.on {
-  background: #2da44e;
+  background: var(--success);
   box-shadow: 0 0 0 3px rgba(45, 164, 78, 0.16);
 }
 
@@ -1217,13 +1218,13 @@
 }
 
 .icon-btn {
-  background: var(--surface-2, rgba(120, 120, 128, 0.12));
+  background: var(--surface-2);
   color: var(--ink-muted);
   border: 1px solid var(--hairline);
 }
 
 .icon-btn:hover {
-  background: var(--surface-3, rgba(120, 120, 128, 0.2));
+  background: var(--surface-3);
   color: var(--ink);
 }
 
@@ -2157,7 +2158,7 @@
 .pw-ok {
   margin: 0;
   font-size: 13px;
-  color: #2da44e;
+  color: var(--success);
 }
 /* "Forgot password?" link on the login card */
 .auth-aux {
@@ -2373,7 +2374,7 @@
 
 .icon-btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .icon-btn-primary:hover {
@@ -2381,7 +2382,7 @@
 }
 
 .icon-btn-primary:disabled {
-  background: #e8e8ea;
+  background: var(--disabled-bg);
   color: rgba(60, 60, 67, 0.4);
   cursor: not-allowed;
 }
@@ -2393,7 +2394,7 @@
 
 .icon-btn-danger:hover {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .icon-btn-success {
@@ -2403,11 +2404,11 @@
 
 .icon-btn-success:hover {
   background: var(--success);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .icon-btn-success:disabled {
-  background: #e8e8ea;
+  background: var(--disabled-bg);
   color: rgba(60, 60, 67, 0.4);
   cursor: not-allowed;
 }
@@ -2448,9 +2449,9 @@
 
 /* ===== Visibility badges (colored by type) ===== */
 .badge.vis-private {
-  color: #6a6a76;
-  background: #f0f0f3;
-  border-color: rgba(0, 0, 0, 0.1);
+  color: var(--ink-muted);
+  background: var(--surface-2);
+  border-color: var(--hairline-strong);
 }
 .badge.vis-shared {
   color: var(--info);
@@ -2458,7 +2459,7 @@
   border-color: color-mix(in srgb, var(--info) 25%, transparent);
 }
 .badge.vis-workspace {
-  color: #1f9d57;
+  color: var(--success);
   background: rgba(45, 164, 78, 0.12);
   border-color: rgba(45, 164, 78, 0.28);
 }
@@ -2584,16 +2585,6 @@
     border-color 0.14s ease,
     box-shadow 0.14s ease,
     transform 0.14s ease;
-}
-
-.project-card.vis-private {
-  border-left-color: #c9c9d0;
-}
-.project-card.vis-shared {
-  border-left-color: #0a84ff;
-}
-.project-card.vis-workspace {
-  border-left-color: #2da44e;
 }
 
 .project-card:hover {
@@ -2896,7 +2887,7 @@
   place-items: center;
   border-radius: 999px;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -3105,7 +3096,7 @@
   border: none;
   border-radius: var(--radius-control);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button);
   transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
@@ -3695,7 +3686,7 @@
   border-color: rgba(212, 167, 44, 0.32);
 }
 .badge.status-public {
-  color: #1f9d57;
+  color: var(--success);
   background: rgba(45, 164, 78, 0.12);
   border-color: rgba(45, 164, 78, 0.28);
 }
@@ -5064,6 +5055,8 @@
 .rn-var-warn {
   margin: 6px 0 0;
   font-size: 12px;
+  /* Intentional bespoke warning ink: a darker burnt-orange than --warning for
+     readable 12px hint text on a light surface (no semantic warning-ink token). */
   color: #b54708;
 }
 
@@ -5142,10 +5135,10 @@
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
-  border: 1px solid #f1c9c9;
-  border-left: 3px solid #e5484d;
+  border: 1px solid var(--danger-tint);
+  border-left: 3px solid var(--danger);
   border-radius: 12px;
-  background: #fdf1f1;
+  background: var(--danger-wash);
 }
 .run-error-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .run-error-main strong { color: var(--danger); font-size: 14px; }
@@ -5205,7 +5198,7 @@
   border-bottom: 1px solid var(--hairline);
 }
 .run-tl-row:last-child { border-bottom: none; }
-.run-tl-row.err { background: #fef6f6; }
+.run-tl-row.err { background: var(--danger-wash); }
 .run-tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .run-tl-name {
   flex: 1;
@@ -6037,7 +6030,7 @@
 }
 
 .pg-star {
-  color: #d4a72c;
+  color: var(--warning);
   margin-left: auto;
   font-size: 12px;
 }
@@ -6441,8 +6434,8 @@
 .md-code { position: relative; margin: 0 0 12px; }
 .md-code pre {
   margin: 0;
-  background: #1d1f23;
-  color: #e6e6e6;
+  background: var(--code-bg);
+  color: var(--code-ink);
   border-radius: 10px;
   padding: 12px 13px;
   overflow-x: auto;
@@ -6457,7 +6450,7 @@
   right: 8px;
   font-size: 11px;
   font-weight: 500;
-  color: #cfcfcf;
+  color: var(--code-ink-muted);
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 6px;
@@ -6467,7 +6460,7 @@
   transition: opacity 0.12s ease, background 0.12s ease;
 }
 .md-code:hover .md-copy { opacity: 1; }
-.md-copy:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.md-copy:hover { background: rgba(255, 255, 255, 0.2); color: var(--on-accent); }
 
 .cactions {
   display: flex;
@@ -6496,7 +6489,7 @@
 }
 
 .cicon.on {
-  color: #d4a72c;
+  color: var(--warning);
 }
 
 .cicon.danger:hover {
@@ -6574,12 +6567,12 @@
   width: 18px;
   height: 18px;
   background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .att-x.on-thumb:hover {
   background: rgba(0, 0, 0, 0.78);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 /* composer reused inside the create-prompt modal: fill the modal width */
@@ -6929,7 +6922,7 @@
   border: none;
   border-radius: 50%;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
@@ -7174,7 +7167,7 @@
 }
 .badge.status-running,
 .badge.status-queued {
-  color: var(--color-info, #0a84ff);
+  color: var(--info);
   border-color: rgba(10, 132, 255, 0.3);
 }
 .badge.status-waiting,
@@ -7243,7 +7236,7 @@
 
 .step.current .step-num {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .step-title {
@@ -7277,6 +7270,8 @@
   border-color: color-mix(in srgb, var(--info) 30%, transparent);
   background: color-mix(in srgb, var(--info) 10%, transparent);
 }
+/* Intentional bespoke purple for the flow-builder "conditional" tag — there is
+   no general-purpose purple semantic token; reads on both themes. */
 .mode-tag.cond {
   color: #8957e5;
   border-color: rgba(137, 87, 229, 0.3);
@@ -7343,7 +7338,7 @@
 .addstep-fanout-field > span { font-size: 12.5px; color: var(--ink-muted); font-weight: 600; }
 .addstep-fanout-help { margin: 0; font-size: 12px; }
 .addstep-fanout-help code {
-  color: var(--primary-pressed, #e25a0e);
+  color: var(--primary-pressed);
   background: var(--primary-tint);
   border-radius: 4px;
   padding: 0 3px;
@@ -7666,6 +7661,8 @@
   width: 100%;
   height: 130px;
   object-fit: cover;
+  /* Intentional true black: letterbox backing behind media thumbnails while
+     they load; theme-neutral by design. */
   background: #000;
   display: block;
 }
@@ -7916,7 +7913,7 @@
 .bwa-msg.user {
   align-self: flex-end;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
   border-bottom-right-radius: 4px;
 }
 .bwa-msg.assistant {

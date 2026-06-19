@@ -7,7 +7,7 @@
 .cx-section { background: var(--card); border: 1px solid var(--hairline); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
 .cx-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .cx-sec-title { font-weight: 700; font-size: var(--text-small); color: var(--ink); }
-.cx-badge-ok { color: #1a8f4c; font-size: var(--text-mini); }
+.cx-badge-ok { color: var(--success); font-size: var(--text-mini); }
 .cx-label { font-size: var(--text-micro); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-tertiary); margin: 4px 0 10px; }
 
 .cx-keyrow { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -15,7 +15,7 @@
 .cx-input { flex: 1; min-width: 180px; padding: 8px 10px; border: 1px solid var(--hairline); border-radius: 8px; font-size: var(--text-small); color: var(--ink); background: var(--surface-1); }
 .cx-btn { padding: 8px 13px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--card); font-size: var(--text-mini); cursor: pointer; color: var(--ink); }
 .cx-btn:disabled { opacity: .5; cursor: default; }
-.cx-btn-primary { background: var(--primary); color: #fff; border: none; border-radius: 9px; padding: 10px 18px; font-size: var(--text-small); font-weight: 600; cursor: pointer; }
+.cx-btn-primary { background: var(--primary); color: var(--on-accent); border: none; border-radius: 9px; padding: 10px 18px; font-size: var(--text-small); font-weight: 600; cursor: pointer; }
 .cx-btn-primary:disabled { opacity: .55; cursor: default; }
 
 .cx-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -26,7 +26,9 @@
 .cx-add { display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed var(--hairline-strong); border-radius: 10px; padding: 11px; color: var(--primary); font-size: var(--text-small); font-weight: 600; cursor: pointer; background: none; }
 .cx-note { font-size: var(--text-small); color: var(--ink-muted); line-height: 1.55; margin: 0; }
 
-.cx-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; flex: none; }
+.cx-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--on-accent); font-size: 14px; flex: none; }
+/* Platform brand colors — intentional literals (official TikTok/X/Instagram/
+   YouTube/Facebook brand identities), not theme tokens. */
 .cx-ic.tiktok, .cx-dot.tiktok, .cx-ic.x, .cx-dot.x { background: #111; }
 .cx-ic.instagram, .cx-dot.instagram { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
 .cx-ic.youtube, .cx-dot.youtube { background: #ff0000; }
@@ -36,7 +38,7 @@
 .cx-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .cx-chip { display: flex; align-items: center; gap: 7px; border: 1px solid var(--hairline); border-radius: 999px; padding: 6px 12px; font-size: var(--text-small); cursor: pointer; color: var(--ink-muted); background: var(--card); }
 .cx-chip.on { border-color: var(--primary); background: var(--primary-tint); color: var(--primary); font-weight: 600; }
-.cx-dot { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; flex: none; }
+.cx-dot { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: var(--on-accent); font-size: 10px; flex: none; }
 
 .cx-ta { width: 100%; min-height: 90px; border: 1px solid var(--hairline); border-radius: 10px; padding: 12px; font-size: var(--text-normal); color: var(--ink); resize: none; line-height: 1.55; box-sizing: border-box; font-family: inherit; background: var(--card); }
 .cx-meta { display: flex; justify-content: flex-end; font-size: var(--text-micro); color: var(--ink-tertiary); margin-top: 6px; }
@@ -47,13 +49,13 @@
 .cx-add-media { width: 64px; height: 64px; border-radius: 10px; border: 1px dashed var(--hairline-strong); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 22px; cursor: pointer; background: none; }
 .cx-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; border-top: 1px solid var(--hairline); padding-top: 14px; gap: 12px; flex-wrap: wrap; }
 .cx-gate { font-size: var(--text-mini); color: var(--ink-muted); }
-.cx-gate b { color: var(--primary-pressed, #c2410c); }
+.cx-gate b { color: var(--primary-pressed); }
 
 .cx-rcpt { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--hairline); font-size: var(--text-small); }
 .cx-rcpt:first-of-type { border-top: none; }
 .cx-rname { color: var(--ink); font-weight: 600; }
-.cx-ok { color: #1a8f4c; font-size: var(--text-mini); }
-.cx-fail { color: #d33; font-size: var(--text-mini); }
+.cx-ok { color: var(--success); font-size: var(--text-mini); }
+.cx-fail { color: var(--danger); font-size: var(--text-mini); }
 .cx-rlink { margin-left: auto; color: var(--primary); font-size: var(--text-mini); text-decoration: none; }
 .cx-rerr { margin-left: auto; color: var(--ink-tertiary); font-size: var(--text-mini); }
 
@@ -65,13 +67,13 @@
 .cx-mthumb { height: 168px; display: flex; align-items: center; justify-content: center; font-size: 40px; background: var(--surface-1); }
 .cx-mthumb img { width: 100%; height: 100%; object-fit: cover; }
 .cx-tfoot { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; font-size: var(--text-mini); color: var(--ink-muted); }
-.cx-tbadge { background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 5px; position: absolute; top: 8px; left: 8px; }
+.cx-tbadge { background: rgba(0,0,0,0.6); color: var(--on-accent); font-size: 10px; padding: 2px 6px; border-radius: 5px; position: absolute; top: 8px; left: 8px; }
 .cx-tdl { color: var(--primary); cursor: pointer; font-weight: 600; background: none; border: none; font-size: 14px; }
-.cx-error { color: #d33; font-size: var(--text-small); margin-top: 10px; }
+.cx-error { color: var(--danger); font-size: var(--text-small); margin-top: 10px; }
 .cx-empty { color: var(--ink-muted); font-size: var(--text-small); }
 
 @media (max-width: 600px) {
   .cx-grid { grid-template-columns: 1fr; }
   .cx-mgrid { grid-template-columns: repeat(2, 1fr); }
 }
-.cx-badge-off { color: var(--text-muted, #888); font-size: 12px; }
+.cx-badge-off { color: var(--ink-muted); font-size: var(--text-mini); }
