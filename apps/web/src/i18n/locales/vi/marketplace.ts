@@ -37,6 +37,10 @@ export default {
   add: 'Thêm vào thư viện',
   adding: 'Đang thêm…',
   added: 'Đã thêm ✓',
+
+  // Adopt confirmation
+  confirmAddTitle: 'Thêm vào thư viện?',
+  confirmAddBody: 'Thao tác này sao chép “{{title}}” vào thư viện prompt của workspace dưới dạng bản nháp có thể chỉnh sửa.',
   openSource: 'Nguồn: {{source}}',
 
   // States

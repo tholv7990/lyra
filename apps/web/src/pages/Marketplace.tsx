@@ -13,6 +13,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { marketplaceApi } from '../lib/marketplace';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
 import { MarketplaceDetails } from '../components/MarketplaceDetails';
@@ -72,6 +73,9 @@ export function Marketplace() {
 
   // The catalog prompt shown in the detail modal (null = closed).
   const [detail, setDetail] = useState<MarketplacePrompt | null>(null);
+
+  // Pending adopt — gates the "Add" action behind a confirm to avoid accidents.
+  const [confirmAdopt, setConfirmAdopt] = useState<MarketplacePrompt | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filterCount = types.length + categories.length + tags.length;
@@ -205,7 +209,7 @@ export function Marketplace() {
       rank={rank}
       state={adopt[p.id] ?? 'idle'}
       copied={copied === p.id}
-      onAdopt={() => void adoptPrompt(p)}
+      onAdopt={() => setConfirmAdopt(p)}
       onView={() => setDetail(p)}
       onCopy={() => copyPrompt(p)}
       onOpenInChat={() => openInChat(p)}
@@ -404,11 +408,23 @@ export function Marketplace() {
         <MarketplaceDetails
           prompt={detail}
           state={adopt[detail.id] ?? 'idle'}
-          onAdopt={() => void adoptPrompt(detail)}
+          onAdopt={() => setConfirmAdopt(detail)}
           onOpenInChat={() => openInChat(detail)}
           onClose={() => setDetail(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!confirmAdopt}
+        title={t('marketplace.confirmAddTitle')}
+        message={t('marketplace.confirmAddBody', { title: confirmAdopt?.title ?? '' })}
+        confirmLabel={t('marketplace.add')}
+        onConfirm={() => {
+          if (confirmAdopt) void adoptPrompt(confirmAdopt);
+          setConfirmAdopt(null);
+        }}
+        onCancel={() => setConfirmAdopt(null)}
+      />
 
       {toast && (
         <div className="mkt-toast" role="status" aria-live="polite">

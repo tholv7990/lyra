@@ -39,6 +39,10 @@ export default {
   added: 'Added ✓',
   openSource: 'Source: {{source}}',
 
+  // Adopt confirmation
+  confirmAddTitle: 'Add to your library?',
+  confirmAddBody: 'This copies “{{title}}” into your workspace prompts as an editable draft.',
+
   // States
   loading: 'Loading catalog…',
   emptyTitle: 'Nothing in the catalog yet',
