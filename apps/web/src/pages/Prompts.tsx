@@ -21,7 +21,6 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { LabelPicker } from '../components/LabelPicker';
 import { PromptDetails } from '../components/PromptDetails';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { ChatsIcon, EyeIcon, PromptsIcon, PlusIcon, XIcon } from '../layout/icons';
@@ -100,7 +99,7 @@ export function Prompts() {
   const { current } = useWorkspace();
   const navigate = useNavigate();
   const wsId = current?.id;
-  const { labels, createLabel } = useLabels(wsId);
+  const { labels } = useLabels(wsId);
   const statusLabel = (s: PromptStatus) =>
     s === PromptStatus.Public ? t('prompts.statusPublic') : t('prompts.statusDraft');
 
@@ -127,7 +126,6 @@ export function Prompts() {
   const [deleteUsage, setDeleteUsage] = useState<number | null>(null);
   const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filterCount =
@@ -158,7 +156,7 @@ export function Prompts() {
   // Filter vocabularies (tags / creators / providers) are loaded from dedicated
   // endpoints that span the WHOLE visible library — never derived from the
   // current filtered/paginated page — so the filter options stay stable as you
-  // narrow other filters. Refreshed after an inline edit changes a tag/provider.
+  // narrow other filters.
   const loadVocab = useCallback(() => {
     if (!wsId) return;
     api<TagCount[]>(`/workspaces/${wsId}/prompts/tags`).then(setVocab).catch(() => undefined);
@@ -200,34 +198,8 @@ export function Prompts() {
       .catch(() => undefined);
   }
 
-  async function patchPrompt(p: Prompt, body: Record<string, unknown>) {
-    try {
-      const updated = await api<Prompt>(`/prompts/${p.id}`, { method: 'PATCH', body: JSON.stringify(body) });
-      setPrompts((list) => list.map((x) => (x.id === updated.id ? updated : x)));
-      setDetailPrompt((current) => (current?.id === updated.id ? updated : current));
-      // A tag/provider/status edit can change the vocabularies — refresh them
-      // from the full-library endpoints so the filter options stay correct.
-      loadVocab();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('prompts.errUpdate'));
-      throw err;
-    }
-  }
-
-  function toggleStatus(p: Prompt) {
-    void patchPrompt(p, {
-      status: p.status === PromptStatus.Public ? PromptStatus.Draft : PromptStatus.Public,
-    });
-  }
-
   function toggleFilterValue<T>(list: T[], value: T): T[] {
     return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
-  }
-
-  function commitTitle(p: Prompt) {
-    const val = editing?.val.trim() ?? '';
-    setEditing(null);
-    if (val && val !== p.title) void patchPrompt(p, { title: val });
   }
 
   // Open a prompt in a new chat: go to the chat page with the prompt's content +
@@ -405,123 +377,97 @@ export function Prompts() {
         )
       ) : (
         <>
-          <div className="ptable">
+          <div className="lib-grid">
             {prompts.map((p) => {
               const editable = canEdit(p);
               return (
-                <div className="prow" key={p.id}>
-                  {editing?.id === p.id ? (
-                    <input
-                      className="prow-edit"
-                      autoFocus
-                      value={editing.val}
-                      onChange={(e) => setEditing({ id: p.id, val: e.target.value })}
-                      onBlur={() => commitTitle(p)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') { e.preventDefault(); commitTitle(p); }
-                        else if (e.key === 'Escape') setEditing(null);
-                      }}
-                    />
-                  ) : (
-                    <div className="prow-namecell">
-                      <button
-                        type="button"
-                        className="prow-name"
-                        title={editable ? t('prompts.clickToRename') : p.title}
-                        onClick={() => (editable ? setEditing({ id: p.id, val: p.title }) : openInChat(p))}
-                      >
-                        <span className="nm">{p.title}</span>
-                      </button>
-                      {p.content && (
-                        <span className="prow-sniprow">
-                          <span className="snip">{p.content}</span>
+                <article className="lib-card prompt-card" key={p.id}>
+                  <div className="lib-card-head">
+                    <button
+                      type="button"
+                      className="lib-card-title"
+                      title={p.title}
+                      onClick={() => openInChat(p)}
+                    >
+                      <span className="nm">{p.title}</span>
+                    </button>
+                    <span className="lib-card-badges">
+                      <span className="badge mkt-type">{t(`prompts.type.${p.type}`)}</span>
+                      <span className={`badge status-${p.status}`}>{statusLabel(p.status)}</span>
+                    </span>
+                  </div>
+
+                  {p.content && (
+                    <p
+                      className="lib-card-body prompt-card-body"
+                      onClick={() => setDetailPrompt(p)}
+                      title={t('prompts.viewFullPrompt')}
+                    >
+                      {p.content}
+                    </p>
+                  )}
+
+                  {p.tags.length > 0 && (
+                    <div className="lib-card-tags">
+                      {p.tags.slice(0, 3).map((tag) => (
+                        <span key={tag} className="tag-chip ro">
+                          <span className="tdot" style={{ background: labelColor(tag, labels) }} />
+                          {tag}
                         </span>
-                      )}
+                      ))}
+                      {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
                     </div>
                   )}
 
-                  <IconButton
-                    className="prow-eye"
-                    size="sm"
-                    icon={<EyeIcon width={15} height={15} />}
-                    label={t('prompts.viewFullPromptFor', { title: p.title })}
-                    onClick={() => setDetailPrompt(p)}
-                  />
-
-                  <span className="prow-tags">
-                    {editable ? (
-                      <LabelPicker
-                        value={p.tags}
-                        labels={labels}
-                        onChange={(tags) => void patchPrompt(p, { tags })}
-                        onCreate={createLabel}
-                      />
-                    ) : (
-                      <>
-                        {p.tags.slice(0, 3).map((t) => (
-                          <span key={t} className="tag-chip ro">
-                            <span className="tdot" style={{ background: labelColor(t, labels) }} />
-                            {t}
-                          </span>
-                        ))}
-                        {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
-                      </>
-                    )}
-                  </span>
-
-                  <span className="prow-status">
-                    <span className="badge mkt-type">{t(`prompts.type.${p.type}`)}</span>
-                    {editable ? (
-                      <button
-                        type="button"
-                        className={`badge status-${p.status} badge-btn`}
-                        onClick={() => toggleStatus(p)}
-                        title={t('prompts.toggleStatus')}
-                      >
-                        {statusLabel(p.status)}
-                      </button>
-                    ) : (
-                      <span className={`badge status-${p.status}`}>{statusLabel(p.status)}</span>
-                    )}
-                  </span>
-
-                  <span className="prow-facts">
-                    {p.provider && p.model && (
-                      <span className="prow-provider">
-                        <ProviderIcon provider={p.provider} size={14} />
-                        {p.model}
-                      </span>
-                    )}
-                    <span className="prow-date" title={t('prompts.updatedBy', { name: p.updatedBy.name })}>
+                  <div className="lib-card-foot">
+                    <span className="lib-card-meta">
                       <span
                         className="prow-updated-icon"
-                        style={avatarStyle(p.updatedBy.name)}
+                        style={avatarStyle(p.createdBy.name)}
                         aria-hidden="true"
                       >
-                        {initial(p.updatedBy.name)}
+                        {initial(p.createdBy.name)}
                       </span>
-                      {fmtDate(p.updatedAt)}
+                      <span className="prompt-card-by">{p.createdBy.name}</span>
+                      <span className="prompt-card-sep" aria-hidden="true">·</span>
+                      <span className="prompt-card-date" title={t('prompts.updatedBy', { name: p.updatedBy.name })}>
+                        {fmtDate(p.updatedAt)}
+                      </span>
+                      {p.provider && p.model && (
+                        <>
+                          <span className="prompt-card-sep" aria-hidden="true">·</span>
+                          <span className="prow-provider">
+                            <ProviderIcon provider={p.provider} size={14} />
+                            {p.model}
+                          </span>
+                        </>
+                      )}
                     </span>
-                  </span>
-
-                  <span className="prow-actions">
-                    <IconButton
-                      size="sm"
-                      icon={<ChatsIcon width={15} height={15} />}
-                      label={t('prompts.openInChatNamed', { title: p.title })}
-                      onClick={() => void openInChat(p)}
-                    />
-                    {editable && (
+                    <div className="lib-card-actions">
                       <IconButton
                         size="sm"
-                        variant="danger"
-                        icon={<XIcon width={14} height={14} />}
-                        label={t('prompts.deletePromptNamed', { title: p.title })}
-                        onClick={() => askDelete(p)}
+                        icon={<EyeIcon width={15} height={15} />}
+                        label={t('prompts.viewFullPromptFor', { title: p.title })}
+                        onClick={() => setDetailPrompt(p)}
                       />
-                    )}
-                  </span>
-                </div>
+                      <IconButton
+                        size="sm"
+                        icon={<ChatsIcon width={15} height={15} />}
+                        label={t('prompts.openInChatNamed', { title: p.title })}
+                        onClick={() => void openInChat(p)}
+                      />
+                      {editable && (
+                        <IconButton
+                          size="sm"
+                          variant="danger"
+                          icon={<XIcon width={14} height={14} />}
+                          label={t('prompts.deletePromptNamed', { title: p.title })}
+                          onClick={() => askDelete(p)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </article>
               );
             })}
           </div>

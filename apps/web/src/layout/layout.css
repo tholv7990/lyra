@@ -3269,26 +3269,187 @@
   justify-self: start;
 }
 
-.prow-tags .more {
+/* ===== Library card gallery — shared shell for the Prompts / Pipelines /
+   Projects card views (modeled on the marketplace .mkt-card). Page-specific
+   inner content layers on top. ===== */
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+.lib-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.lib-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-sm);
+}
+.lib-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.lib-card-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: var(--text-normal);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.lib-card-title:hover {
+  color: var(--primary);
+}
+.lib-card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.lib-card-body {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  line-height: var(--lh-body);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.lib-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lib-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+}
+.lib-card-meta {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-micro);
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lib-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+@media (max-width: 560px) {
+  .lib-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prow-tags .more,
+.lib-card-tags .more {
   font-size: 11px;
   color: var(--ink-tertiary);
 }
 
-.prow-tags .labelpick-add {
+.prow-tags .labelpick-add,
+.lib-card-tags .labelpick-add {
   height: 22px;
   gap: 4px;
   padding: 0 7px;
   font-size: 12px;
 }
 
-.prow-tags .labelpick-add .icon {
+.prow-tags .labelpick-add .icon,
+.lib-card-tags .labelpick-add .icon {
   width: 12px;
   height: 12px;
 }
 
-.prow-tags .labelpick-add:not(.empty) {
+.prow-tags .labelpick-add:not(.empty),
+.lib-card-tags .labelpick-add:not(.empty) {
   width: 22px;
   padding: 0;
+}
+
+/* ===== Prompts card gallery — page-specific bits layered on .lib-card.
+   The prompt content preview is a monospace code-block (matches the
+   marketplace / prompts.chat signature look); the foot meta packs creator ·
+   date · provider·model on one wrap-safe line. ===== */
+.prompt-card-body {
+  cursor: pointer;
+  padding: 12px;
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: var(--text-mini);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+/* Foot meta is allowed to wrap so the provider·model never overflows the card. */
+.prompt-card .lib-card-meta {
+  flex-wrap: wrap;
+  white-space: normal;
+  row-gap: 4px;
+}
+
+.prompt-card-by {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-card-sep {
+  color: var(--ink-tertiary);
+}
+
+.prompt-card-date {
+  white-space: nowrap;
+}
+
+.prompt-card .prow-provider {
+  font-size: var(--text-micro);
+}
+
+/* ===== Pipelines card gallery — page-specific bits layered on .lib-card.
+   The body previews the flow as step names joined with chevrons; the head
+   carries a step-count badge (+ optional AI-built pill). ===== */
+
+/* Flow preview — step names chained with a › separator, clamped to two lines.
+   A quieter weight than the prompt code-block: this is a glanceable summary. */
+.pip-flow {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .prow-facts {
@@ -3366,99 +3527,13 @@
   width: 100%;
 }
 
-/* inline edit: clickable status badge + name input */
-.badge-btn {
+/* Read-only description doubles as an opener (navigates to the project). */
+.pcard .lib-card-body {
   cursor: pointer;
-  font-family: inherit;
-}
-.badge-btn:hover {
-  filter: brightness(0.97);
-}
-.prow-edit {
-  width: 100%;
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-control);
-  padding: 6px 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-  background: var(--card);
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 
-.ptable.t-project .prow-title-input,
-.ptable.t-project .prow-desc-input {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--ink);
-  font-family: inherit;
-  outline: none;
-}
-
-.ptable.t-project .prow-title-input {
-  padding: 0;
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: normal;
-}
-
-.ptable.t-project .prow-desc-input {
-  display: block;
-  padding: 0;
-  margin: 0;
-  min-height: 34px;
-  resize: none;
-  color: var(--ink-muted);
-  font-size: var(--text-mini);
-  line-height: normal;
-}
-
-/* The Projects list shows its name/description as inline-edit fields by default
-   (the other lists show static text + click-to-edit). The global iOS anti-zoom
-   rule bumps every <input>/<textarea> to 16px below 820px, which made these two
-   fields render LARGER than the equivalent static text (.nm 14px / .snip 12px)
-   on the Prompts/Pipelines lists. Pin them to the static-text sizes so all three
-   list pages match at every viewport width. */
-@media (max-width: 820px) {
-  .ptable.t-project .prow-title-input {
-    font-size: 14px !important;
-  }
-  .ptable.t-project .prow-desc-input {
-    font-size: var(--text-mini) !important;
-  }
-}
-
-.ptable.t-project .prow-title-input:hover,
-.ptable.t-project .prow-title-input:focus,
-.ptable.t-project .prow-desc-input:hover,
-.ptable.t-project .prow-desc-input:focus {
-  border-color: var(--hairline);
-  background: var(--card);
-  box-shadow: var(--focus-ring);
-}
-
-.ptable.t-project .prow-title-input:disabled,
-.ptable.t-project .prow-desc-input:disabled {
-  opacity: 0.72;
-  cursor: wait;
-}
-
-/* per-list column layouts */
-.ptable.t-pipeline .ptable-head,
-.ptable.t-pipeline .prow {
-  grid-template-columns: 420px minmax(120px, 1fr) 86px 150px 64px;
-}
-
-.ptable.t-project .ptable-head,
-.ptable.t-project .prow {
-  grid-template-columns: minmax(260px, 1fr) 96px 150px 96px;
-}
-
+/* per-list column layouts (Prompts list rows; Projects/Pipelines are card
+   galleries now). */
 @media (max-width: 1060px) and (min-width: 761px) {
   .ptable-head,
   .prow {
@@ -3471,25 +3546,13 @@
       64px;
     gap: 10px;
   }
-  .ptable.t-pipeline .ptable-head,
-  .ptable.t-pipeline .prow {
-    grid-template-columns: 320px minmax(120px, 1fr) 78px 132px 64px;
-    gap: 10px;
-  }
-  .ptable.t-project .ptable-head,
-  .ptable.t-project .prow {
-    grid-template-columns: minmax(220px, 1fr) 88px 132px 92px;
-    gap: 10px;
-  }
 }
 
 @media (max-width: 760px) {
   .ptable-head {
     display: none;
   }
-  .prow,
-  .ptable.t-pipeline .prow,
-  .ptable.t-project .prow {
+  .prow {
     display: grid;
     grid-template-columns: auto minmax(130px, 1fr) 64px;
     grid-template-areas:
@@ -3501,20 +3564,6 @@
     column-gap: 10px;
     row-gap: 9px;
     padding: 14px 12px;
-  }
-  .ptable.t-pipeline .prow {
-    grid-template-areas:
-      "name name actions"
-      "snippet snippet snippet"
-      "tags status status"
-      "date provider provider";
-  }
-  .ptable.t-project .prow {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "name actions"
-      "snippet status"
-      "date date";
   }
   .prow-namecell {
     display: contents;
@@ -3565,13 +3614,6 @@
   }
   .prow-provider {
     max-width: 190px;
-  }
-  .ptable.t-project .prow-status {
-    justify-self: end;
-    align-self: center;
-  }
-  .ptable.t-project .prow-actions {
-    width: 92px;
   }
 }
 

@@ -8,7 +8,6 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { LabelPicker } from '../components/LabelPicker';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { PipelinesIcon, PlusIcon, XIcon } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
@@ -81,7 +80,7 @@ export function Pipelines() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { current } = useWorkspace();
-  const { labels, createLabel } = useLabels(current?.id);
+  const { labels } = useLabels(current?.id);
   const navigate = useNavigate();
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +93,6 @@ export function Pipelines() {
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Pipeline | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
   const [aiOpen, setAiOpen] = useState(false); // "Build with AI" modal
 
   const wsId = current?.id;
@@ -145,25 +143,6 @@ export function Pipelines() {
   }, [filterMenu]);
 
   const canEdit = (p: Pipeline) => !!user && (p.createdBy.id === user.id || current?.role === 'owner');
-
-  async function patchPipeline(p: Pipeline, body: Record<string, unknown>) {
-    try {
-      const updated = await api<Pipeline>(`/pipelines/${p.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      });
-      setPipelines((list) => list.map((x) => (x.id === updated.id ? updated : x)));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('pipelines.updateError'));
-      throw err;
-    }
-  }
-
-  function commitName(p: Pipeline) {
-    const patch = pipelineNamePatch(p.name, editing?.val ?? '');
-    setEditing(null);
-    if (patch) void patchPipeline(p, patch);
-  }
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -268,96 +247,72 @@ export function Pipelines() {
         <p className="empty">{t('pipelines.noMatch')}</p>
       ) : (
         <>
-        <div className="ptable t-pipeline">
-          {pageItems.map((p) => (
-            <div
-              className="prow"
-              key={p.id}
-            >
-              {editing?.id === p.id ? (
-                <input
-                  className="lin-title-input"
-                  autoFocus
-                  value={editing.val}
-                  onChange={(e) => setEditing({ id: p.id, val: e.target.value })}
-                  onBlur={() => commitName(p)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); commitName(p); }
-                    else if (e.key === 'Escape') setEditing(null);
-                  }}
-                />
-              ) : (
-                <div className="prow-namecell">
-                  <button
-                    type="button"
-                    className="prow-name"
-                    title={canEdit(p) ? t('pipelines.clickToRename') : p.name}
-                    onClick={() => (canEdit(p) ? setEditing({ id: p.id, val: p.name }) : navigate(`/pipelines/${p.id}`))}
-                  >
-                    <span className="nm">{p.name}</span>
-                  </button>
-                  {p.description && (
-                    <span className="prow-sniprow">
-                      <span className="snip">{p.description}</span>
+        <div className="lib-grid">
+          {pageItems.map((p) => {
+            const flow = p.steps.map((s) => s.name?.trim()).filter(Boolean).join(' › ');
+            return (
+            <article className="lib-card pip-card" key={p.id}>
+              <div className="lib-card-head">
+                <button
+                  type="button"
+                  className="lib-card-title"
+                  title={p.name}
+                  onClick={() => navigate(`/pipelines/${p.id}`)}
+                >
+                  <span className="nm">{p.name}</span>
+                </button>
+                <span className="lib-card-badges">
+                  <span className="badge step-count">{t('pipelines.steps', { count: p.steps.length })}</span>
+                  {p.origin?.source === 'ai' && (
+                    <span className="badge ai-built" title={p.origin.goal || t('pipelines.aiBuilt')}>
+                      ✨ {t('pipelines.aiBuilt')}
                     </span>
                   )}
+                </span>
+              </div>
+
+              {flow && <p className="lib-card-body pip-flow">{flow}</p>}
+
+              {p.tags.length > 0 && (
+                <div className="lib-card-tags">
+                  {p.tags.slice(0, 3).map((tag) => (
+                    <span key={tag} className="tag-chip ro">
+                      <span className="tdot" style={{ background: labelColor(tag, labels) }} />
+                      {tag}
+                    </span>
+                  ))}
+                  {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
                 </div>
               )}
-              <span className="prow-tags">
-                {canEdit(p) ? (
-                  <LabelPicker
-                    value={p.tags}
-                    labels={labels}
-                    onChange={(tags) => void patchPipeline(p, { tags })}
-                    onCreate={createLabel}
-                  />
-                ) : (
-                  <>
-                    {p.tags.slice(0, 3).map((t) => (
-                      <span key={t} className="tag-chip ro">
-                        <span className="tdot" style={{ background: labelColor(t, labels) }} />
-                        {t}
-                      </span>
-                    ))}
-                    {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
-                  </>
-                )}
-              </span>
-              <span className="prow-status">
-                <span className="badge step-count">{t('pipelines.steps', { count: p.steps.length })}</span>
-                {p.origin?.source === 'ai' && (
-                  <span className="badge ai-built" title={p.origin.goal || t('pipelines.aiBuilt')}>
-                    ✨ {t('pipelines.aiBuilt')}
-                  </span>
-                )}
-              </span>
-              <span className="prow-facts">
-                <span className="prow-date" title={t('pipelines.createdByName', { name: p.createdBy.name })}>
+
+              <div className="lib-card-foot">
+                <span className="lib-card-meta" title={t('pipelines.createdByName', { name: p.createdBy.name })}>
                   <span className="prow-updated-icon" style={avatarStyle(p.createdBy.name)} aria-hidden="true">
                     {initial(p.createdBy.name)}
                   </span>
                   {fmtDate(p.updatedAt)}
                 </span>
-              </span>
-              <span className="prow-actions">
-                <IconButton
-                  size="sm"
-                  icon={<PipelinesIcon width={15} height={15} />}
-                  label={t('pipelines.openNamed', { name: p.name })}
-                  onClick={() => navigate(`/pipelines/${p.id}`)}
-                />
-                {canEdit(p) && (
+                <div className="lib-card-actions">
                   <IconButton
                     size="sm"
-                    variant="danger"
-                    icon={<XIcon width={14} height={14} />}
-                    label={t('pipelines.deleteNamed', { name: p.name })}
-                    onClick={() => setToDelete(p)}
+                    icon={<PipelinesIcon width={15} height={15} />}
+                    label={t('pipelines.openNamed', { name: p.name })}
+                    onClick={() => navigate(`/pipelines/${p.id}`)}
                   />
-                )}
-              </span>
-            </div>
-          ))}
+                  {canEdit(p) && (
+                    <IconButton
+                      size="sm"
+                      variant="danger"
+                      icon={<XIcon width={14} height={14} />}
+                      label={t('pipelines.deleteNamed', { name: p.name })}
+                      onClick={() => setToDelete(p)}
+                    />
+                  )}
+                </div>
+              </div>
+            </article>
+            );
+          })}
         </div>
         {totalPages > 1 && (
           <div className="pager">
