@@ -1,4 +1,4 @@
-import { PromptStatus, PromptType, Provider } from '@lyra/shared';
+import { PromptCategory, PromptStatus, PromptType, Provider } from '@lyra/shared';
 import { buildPromptListFilter } from './prompts.service';
 import { toPrompt } from './prompt.views';
 import type { PromptDocument } from './prompt.schema';
@@ -9,6 +9,7 @@ describe('buildPromptListFilter', () => {
       statuses: [],
       tags: ['Check', 'first', 'testing'],
       types: [],
+      categories: [],
       createdBy: [],
       providers: [],
       q: '',
@@ -24,6 +25,7 @@ describe('buildPromptListFilter', () => {
       statuses: [],
       tags: [],
       types: [PromptType.Image, PromptType.Video],
+      categories: [],
       createdBy: [],
       providers: [],
       q: '',
@@ -37,6 +39,7 @@ describe('buildPromptListFilter', () => {
       statuses: [],
       tags: [],
       types: [],
+      categories: [],
       createdBy: [],
       providers: [],
       q: '',
@@ -45,11 +48,42 @@ describe('buildPromptListFilter', () => {
     expect(filter.type).toBeUndefined();
   });
 
+  it('matches any selected category case-insensitively (mirrors type)', () => {
+    const filter = buildPromptListFilter('workspace-1', 'user-1', {
+      statuses: [],
+      tags: [],
+      types: [],
+      categories: [PromptCategory.Coding, PromptCategory.BusinessStrategy],
+      createdBy: [],
+      providers: [],
+      q: '',
+    });
+
+    expect(filter.category).toEqual({
+      $in: [/^Coding$/i, /^Business Strategy$/i],
+    });
+  });
+
+  it('omits the category filter when no categories are selected', () => {
+    const filter = buildPromptListFilter('workspace-1', 'user-1', {
+      statuses: [],
+      tags: [],
+      types: [],
+      categories: [],
+      createdBy: [],
+      providers: [],
+      q: '',
+    });
+
+    expect(filter.category).toBeUndefined();
+  });
+
   it('keeps multi-select groups as OR within group and AND between groups', () => {
     const filter = buildPromptListFilter('workspace-1', 'user-1', {
       statuses: [PromptStatus.Public, PromptStatus.Draft],
       tags: ['Check'],
       types: [PromptType.Image],
+      categories: [PromptCategory.Creative],
       createdBy: ['user-1', 'user-2'],
       providers: [Provider.Anthropic, Provider.DeepSeek],
       q: 'cozy',
@@ -64,6 +98,7 @@ describe('buildPromptListFilter', () => {
     });
     expect(filter.tags).toEqual({ $in: [/^Check$/i] });
     expect(filter.type).toEqual({ $in: [/^image$/i] });
+    expect(filter.category).toEqual({ $in: [/^Creative$/i] });
   });
 });
 
@@ -94,5 +129,18 @@ describe('toPrompt type mapping', () => {
   it('passes through a stored type', () => {
     const view = toPrompt(doc({ type: PromptType.Video } as never), new Map());
     expect(view.type).toBe(PromptType.Video);
+  });
+
+  it('leaves category undefined when unset (no invented default)', () => {
+    const view = toPrompt(doc({ category: undefined } as never), new Map());
+    expect(view.category).toBeUndefined();
+  });
+
+  it('passes through a stored category', () => {
+    const view = toPrompt(
+      doc({ category: PromptCategory.Writing } as never),
+      new Map(),
+    );
+    expect(view.category).toBe(PromptCategory.Writing);
   });
 });

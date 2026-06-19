@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { MediaType, PromptStatus, PromptType } from '@lyra/shared';
+import { MediaType, PromptCategory, PromptStatus, PromptType } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
 
 @Schema({ _id: false })
@@ -47,6 +47,11 @@ export class Prompt extends AuditedEntity {
   // does NOT change how the prompt runs.
   @Prop({ type: String, enum: Object.values(PromptType), default: PromptType.Text })
   type!: PromptType;
+
+  // Optional top-level grouping for the library. Metadata only (badge + filter) —
+  // does NOT change how the prompt runs. No default: a prompt may have none.
+  @Prop({ type: String, enum: Object.values(PromptCategory), required: false })
+  category?: PromptCategory;
 
   // Attachments sent to the AI provider alongside the prompt.
   @Prop({ type: [PromptMediaItemSchema], default: [] })

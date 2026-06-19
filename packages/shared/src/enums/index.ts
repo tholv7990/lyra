@@ -80,3 +80,17 @@ export enum PromptType {
   Audio = 'audio',
   Video = 'video',
 }
+
+// Top-level prompt category (prompts.chat's 9 groups). Metadata only; optional.
+// Values are the display labels (proper-noun taxonomy — shown as-is, not i18n'd).
+export enum PromptCategory {
+  Coding = 'Coding',
+  Writing = 'Writing',
+  Business = 'Business',
+  Creative = 'Creative',
+  Education = 'Education',
+  Workflows = 'Workflows',
+  Productivity = 'Productivity',
+  SelfImprovement = 'Self-Improvement',
+  BusinessStrategy = 'Business Strategy',
+}

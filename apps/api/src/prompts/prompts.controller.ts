@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { dedupeTags, PromptStatus, PromptType, Provider } from '@lyra/shared';
+import { dedupeTags, PromptCategory, PromptStatus, PromptType, Provider } from '@lyra/shared';
 import type {
   Paged,
   ProviderCount,
@@ -55,6 +55,8 @@ export class PromptsController {
       content: body.content,
       status: body.status ?? PromptStatus.Draft,
       type: body.type ?? PromptType.Text,
+      // Optional metadata: persist only when supplied (no default).
+      category: body.category ?? undefined,
       media: body.media ?? [],
       tags: dedupeTags(body.tags ?? []),
       provider: body.provider,
@@ -72,6 +74,7 @@ export class PromptsController {
     @Query('status') status?: string | string[],
     @Query('tag') tag?: string | string[],
     @Query('type') type?: string | string[],
+    @Query('category') category?: string | string[],
     @Query('provider') provider?: string | string[],
     @Query('createdBy') createdBy?: string | string[],
     @Query('q') q?: string,
@@ -86,6 +89,10 @@ export class PromptsController {
     const types = listQuery(type).filter(
       (t): t is PromptType => Object.values(PromptType).includes(t as PromptType),
     );
+    const categories = listQuery(category).filter(
+      (c): c is PromptCategory =>
+        Object.values(PromptCategory).includes(c as PromptCategory),
+    );
     const providers = listQuery(provider).filter(
       (p): p is Provider => Object.values(Provider).includes(p as Provider),
     );
@@ -93,6 +100,7 @@ export class PromptsController {
       statuses,
       tags: listQuery(tag),
       types,
+      categories,
       createdBy: listQuery(createdBy),
       providers,
       q: q || undefined,
@@ -148,6 +156,13 @@ export class PromptsController {
   ): Promise<PromptModel> {
     const patch: Record<string, unknown> = { ...body, updatedBy: user.id };
     if (body.tags !== undefined) patch.tags = dedupeTags(body.tags);
+    // Optional metadata: `category: null` clears it ($unset); absent leaves it
+    // unchanged; a value sets it. (Read off `patch` — the DTO type excludes
+    // null, but @IsOptional lets it through at runtime.)
+    if (patch.category === null) {
+      delete patch.category;
+      patch.$unset = { ...(patch.$unset as object), category: '' };
+    }
     const updated = await this.prompts.findByIdAndUpdate(id, patch);
     return this.prompts.toView(updated!);
   }

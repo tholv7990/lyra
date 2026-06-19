@@ -8,6 +8,7 @@ export default {
   filter: 'Filter',
   filterStatus: 'Status',
   filterType: 'Type',
+  filterCategory: 'Category',
   filterTags: 'Tags',
   filterProvider: 'Provider',
   filterCreatedBy: 'Created by',
@@ -62,6 +63,11 @@ export default {
     audio: 'Audio',
     video: 'Video',
   },
+
+  // Category — top-level taxonomy (PromptCategory). Values are proper nouns,
+  // shown as-is (not translated); only the field/option labels are localized.
+  categoryLabel: 'Category',
+  categoryNone: 'None',
 
   // PromptEditor
   newTitle: 'New',

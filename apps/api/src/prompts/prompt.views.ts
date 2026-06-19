@@ -22,6 +22,8 @@ export function toPrompt(
     // Legacy docs created before `type` existed have none — default to Text so
     // responses always carry a valid type.
     type: p.type ?? PromptType.Text,
+    // Optional metadata. Legacy/unset docs → undefined; don't invent a default.
+    category: p.category ?? undefined,
     media: (p.media ?? []).map(
       (m): PromptMedia => ({
         type: m.type,

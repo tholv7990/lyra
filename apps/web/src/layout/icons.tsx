@@ -237,6 +237,47 @@ export const AdminIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// ── Prompt output-type glyphs (PromptType: text/image/audio/video) ──
+// Hand-authored, 16 viewBox, currentColor so a token colour can tint them.
+
+// Lines of text on a page — the Text output type.
+export const TextTypeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M3.6 1.8h5.2a1 1 0 0 1 .71.3l2.7 2.7a1 1 0 0 1 .29.71V13a1.2 1.2 0 0 1-1.2 1.2H3.6A1.2 1.2 0 0 1 2.4 13V3A1.2 1.2 0 0 1 3.6 1.8Z" />
+    <rect x="4.4" y="7" width="6.2" height="1.2" rx="0.6" fill="#fff" />
+    <rect x="4.4" y="9.4" width="6.2" height="1.2" rx="0.6" fill="#fff" />
+    <rect x="4.4" y="11.8" width="4" height="1.2" rx="0.6" fill="#fff" />
+  </svg>
+);
+
+// Framed picture with a sun + hill — the Image output type.
+export const ImageTypeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <rect x="2" y="3" width="12" height="10" rx="1.6" />
+    <circle cx="5.5" cy="6.4" r="1.2" fill="#fff" />
+    <path d="M3 12.4 6.6 8.4l2.1 2.2 2.2-2.6L13 11v1.4a.6.6 0 0 1-.6.6H3.6a.6.6 0 0 1-.6-.6Z" fill="#fff" />
+  </svg>
+);
+
+// Sound wave bars — the Audio output type.
+export const AudioTypeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <rect x="2.2" y="6.6" width="1.7" height="2.8" rx="0.85" />
+    <rect x="5" y="4.4" width="1.7" height="7.2" rx="0.85" />
+    <rect x="7.8" y="2.2" width="1.7" height="11.6" rx="0.85" />
+    <rect x="10.6" y="4.9" width="1.7" height="6.2" rx="0.85" />
+    <rect x="13.4" y="6.6" width="1.4" height="2.8" rx="0.7" />
+  </svg>
+);
+
+// Play triangle in a rounded frame — the Video output type.
+export const VideoTypeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <rect x="2" y="3" width="12" height="10" rx="2.2" />
+    <path d="M6.6 5.7 10.6 8 6.6 10.3Z" fill="#fff" />
+  </svg>
+);
+
 // Two interlocking links — Connections.
 export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">

@@ -5,6 +5,7 @@ import {
   defaultModel,
   isAllowedMedia,
   MEDIA_MAX_BYTES,
+  PromptCategory,
   PromptStatus,
   PromptType,
   Provider,
@@ -19,7 +20,8 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
 import { Composer } from '../components/Composer';
 import { Markdown } from '../components/Markdown';
-import { CheckIcon, PencilIcon, XIcon } from '../layout/icons';
+import { ChatsIcon, CheckIcon, PencilIcon, XIcon } from '../layout/icons';
+import { TYPE_COLOR, TYPE_ICON } from '../lib/promptType';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 interface FormState {
@@ -27,6 +29,7 @@ interface FormState {
   content: string;
   status: PromptStatus;
   type: PromptType;
+  category?: PromptCategory;
   media: PromptMedia[];
   tags: string[];
   provider: Provider;
@@ -37,6 +40,7 @@ const emptyForm: FormState = {
   content: '',
   status: PromptStatus.Draft,
   type: PromptType.Text,
+  category: undefined,
   media: [],
   tags: [],
   provider: Provider.Anthropic,
@@ -111,6 +115,7 @@ export function PromptEditor() {
           content: p.content,
           status: p.status,
           type: p.type,
+          category: p.category,
           media: [...p.media],
           tags: [...p.tags],
           provider,
@@ -152,11 +157,14 @@ export function PromptEditor() {
     setError(null);
     const ctrl = new AbortController();
     saveAbortRef.current = ctrl;
+    // Send `category: null` (not omitted) when cleared so the api clears it on
+    // update; otherwise the chosen enum value. Other fields pass through as-is.
+    const payload = JSON.stringify({ ...form, category: form.category ?? null });
     try {
       if (isEdit) {
-        await api<Prompt>(`/prompts/${id}`, { method: 'PATCH', body: JSON.stringify(form), signal: ctrl.signal });
+        await api<Prompt>(`/prompts/${id}`, { method: 'PATCH', body: payload, signal: ctrl.signal });
       } else {
-        await api<Prompt>(`/workspaces/${wsId}/prompts`, { method: 'POST', body: JSON.stringify(form), signal: ctrl.signal });
+        await api<Prompt>(`/workspaces/${wsId}/prompts`, { method: 'POST', body: payload, signal: ctrl.signal });
       }
       baselineRef.current = form; // now clean — won't trip the leave guard
       return true;
@@ -181,6 +189,25 @@ export function PromptEditor() {
   }
   function stopSave() {
     saveAbortRef.current?.abort();
+  }
+
+  // Try the draft WITHOUT saving: open it in a fresh chat with the current
+  // content + provider·model. Same nav-state shape as the Prompts list "Open in
+  // chat" — the conversation is created lazily on the first send.
+  function tryInChat() {
+    if (!form.content.trim()) return;
+    navigate('/chats', {
+      state: {
+        seed: form.content,
+        provider: form.provider,
+        model: form.model,
+        from: {
+          label: t('prompts.breadcrumb'),
+          to: '/prompts',
+          record: form.title.trim() || t('prompts.untitled'),
+        },
+      },
+    });
   }
 
   if (loading) return <p className="empty">{t('common.loading')}</p>;
@@ -228,6 +255,17 @@ export function PromptEditor() {
         />
         <div className="pe-actions">
           <button
+            type="button"
+            className="btn-ghost pe-try"
+            title={t('prompts.openInChat')}
+            aria-label={t('prompts.openInChat')}
+            onClick={tryInChat}
+            disabled={!form.content.trim()}
+          >
+            <ChatsIcon width={15} height={15} />
+            <span className="pe-try-text">{t('prompts.openInChat')}</span>
+          </button>
+          <button
             type="submit"
             className="icon-btn-success"
             title={isEdit ? t('prompts.saveChanges') : t('prompts.createPrompt')}
@@ -250,25 +288,55 @@ export function PromptEditor() {
 
       {error && <p className="error pe-error">{error}</p>}
 
-      {/* Output type (segmented cards) — metadata only: badge + filter, doesn't
-          change how the prompt runs. */}
+      {/* Output type + category (metadata only: badges + filters, don't change
+          how the prompt runs). */}
       <div className="pe-row">
         <div className="pe-field pe-type">
           <span className="pe-field-label" id="pe-type-label">{t('prompts.typeLabel')}</span>
           <div className="seg" role="radiogroup" aria-labelledby="pe-type-label">
-            {Object.values(PromptType).map((ty) => (
-              <button
-                key={ty}
-                type="button"
-                role="radio"
-                aria-checked={form.type === ty}
-                className={`seg-btn ${form.type === ty ? 'active' : ''}`}
-                onClick={() => setForm({ ...form, type: ty })}
-              >
-                {t(`prompts.type.${ty}`)}
-              </button>
-            ))}
+            {Object.values(PromptType).map((ty) => {
+              const TypeIcon = TYPE_ICON[ty];
+              return (
+                <button
+                  key={ty}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.type === ty}
+                  className={`seg-btn ${form.type === ty ? 'active' : ''}`}
+                  onClick={() => setForm({ ...form, type: ty })}
+                >
+                  <TypeIcon
+                    className="pe-type-icon"
+                    width={15}
+                    height={15}
+                    style={{ color: TYPE_COLOR[ty] }}
+                    aria-hidden="true"
+                  />
+                  {t(`prompts.type.${ty}`)}
+                </button>
+              );
+            })}
           </div>
+        </div>
+        <div className="pe-field pe-category">
+          <label className="pe-field-label" htmlFor="pe-category">{t('prompts.categoryLabel')}</label>
+          <select
+            id="pe-category"
+            className="pe-select"
+            value={form.category ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                category: e.target.value ? (e.target.value as PromptCategory) : undefined,
+              })
+            }
+          >
+            <option value="">{t('prompts.categoryNone')}</option>
+            {/* Category VALUES are proper nouns shown as-is (not i18n'd). */}
+            {Object.values(PromptCategory).map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 

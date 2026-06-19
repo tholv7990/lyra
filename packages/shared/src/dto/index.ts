@@ -1,4 +1,4 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode } from '../enums';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, PromptCategory, Provider, StepMode } from '../enums';
 import type { FanOutConfig, PipelineOrigin, PromptMedia, StepCondition } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -93,6 +93,7 @@ export interface CreatePromptDto {
   content: string;
   status?: PromptStatus;
   type?: PromptType;
+  category?: PromptCategory;
   media?: PromptMedia[];
   tags?: string[];
   provider?: Provider;
@@ -104,6 +105,7 @@ export interface UpdatePromptDto {
   content?: string;
   status?: PromptStatus;
   type?: PromptType;
+  category?: PromptCategory;
   media?: PromptMedia[];
   tags?: string[];
   provider?: Provider;

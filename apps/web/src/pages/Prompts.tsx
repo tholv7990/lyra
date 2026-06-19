@@ -2,6 +2,7 @@ import { type CSSProperties, useCallback, useEffect, useRef, useState } from 're
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  PromptCategory,
   PromptStatus,
   PromptType,
   Provider,
@@ -15,6 +16,7 @@ import {
   type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { TYPE_COLOR } from '../lib/promptType';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
@@ -29,14 +31,6 @@ import { IconButton } from '../components/IconButton';
 const STATUS_COLOR: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: 'var(--warning)',
   [PromptStatus.Public]: 'var(--success)',
-};
-// Distinct, token-based hue per output type — drives the filter dot (the row
-// badge stays neutral-outlined to mirror the marketplace `.mkt-type` pill).
-const TYPE_COLOR: Record<PromptType, string> = {
-  [PromptType.Text]: 'var(--accent-prompts)',
-  [PromptType.Image]: 'var(--accent-projects)',
-  [PromptType.Audio]: 'var(--accent-keys)',
-  [PromptType.Video]: 'var(--accent-chats)',
 };
 const PROVIDER_LABEL: Record<Provider, string> = {
   [Provider.OpenAI]: 'OpenAI',
@@ -56,6 +50,7 @@ interface PromptQueryOptions {
   createdBy: string[];
   providers: Provider[];
   types: PromptType[];
+  categories: PromptCategory[];
   q: string;
 }
 
@@ -67,6 +62,7 @@ export function buildPromptQuery({
   createdBy,
   providers,
   types,
+  categories,
   q,
 }: PromptQueryOptions) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
@@ -76,6 +72,8 @@ export function buildPromptQuery({
   providers.forEach((p) => params.append('provider', p));
   // Same repeated-param encoding as status/tag/provider above (`?type=text&type=image`).
   types.forEach((ty) => params.append('type', ty));
+  // Category mirrors type — repeated `?category=Coding&category=Writing` params.
+  categories.forEach((c) => params.append('category', c));
   if (q.trim()) params.set('q', q.trim());
   return params.toString();
 }
@@ -123,6 +121,7 @@ export function Prompts() {
   const [createdBy, setCreatedBy] = useState<string[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [types, setTypes] = useState<PromptType[]>([]);
+  const [categories, setCategories] = useState<PromptCategory[]>([]);
   const [q, setQ] = useState('');
   const [vocab, setVocab] = useState<TagCount[]>([]);
   const [creators, setCreators] = useState<PromptAuthorCount[]>([]);
@@ -137,16 +136,18 @@ export function Prompts() {
   const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filterCount = statuses.length + tags.length + createdBy.length + providers.length + types.length;
+  const filterCount =
+    statuses.length + tags.length + createdBy.length + providers.length + types.length + categories.length;
   const hasFilters =
     statuses.length > 0 ||
     tags.length > 0 ||
     createdBy.length > 0 ||
     providers.length > 0 ||
     types.length > 0 ||
+    categories.length > 0 ||
     !!q.trim();
 
-  useEffect(() => setPage(1), [statuses, tags, createdBy, providers, types, q]);
+  useEffect(() => setPage(1), [statuses, tags, createdBy, providers, types, categories, q]);
 
   // close the filter menu on outside click
   useEffect(() => {
@@ -159,7 +160,7 @@ export function Prompts() {
   }, [filterMenu]);
 
   const buildQuery = () =>
-    buildPromptQuery({ page, limit: PAGE_SIZE, statuses, tags, createdBy, providers, types, q });
+    buildPromptQuery({ page, limit: PAGE_SIZE, statuses, tags, createdBy, providers, types, categories, q });
 
   // Filter vocabularies (tags / creators / providers) are loaded from dedicated
   // endpoints that span the WHOLE visible library — never derived from the
@@ -193,7 +194,7 @@ export function Prompts() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [wsId, page, statuses, tags, createdBy, providers, types, q]);
+  }, [wsId, page, statuses, tags, createdBy, providers, types, categories, q]);
 
   useEffect(loadVocab, [loadVocab]);
 
@@ -328,6 +329,7 @@ export function Prompts() {
                     setProviders([]);
                     setCreatedBy([]);
                     setTypes([]);
+                    setCategories([]);
                   }}
                 >
                   {t('common.clear')}
@@ -349,6 +351,20 @@ export function Prompts() {
                   {types.includes(ty) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
+              <details className="lin-menu-section">
+                <summary className="lin-menu-summary">
+                  <span>{t('prompts.filterCategory')}</span>
+                  {categories.length > 0 && <span className="lin-menu-summary-count">{categories.length}</span>}
+                </summary>
+                {/* Category VALUES are proper nouns shown as-is (not i18n'd). */}
+                {Object.values(PromptCategory).map((c) => (
+                  <button key={c} className="lin-menu-item" onClick={() => setCategories((list) => toggleFilterValue(list, c))}>
+                    <span className="dot" style={{ background: 'var(--primary)' }} />
+                    {c}
+                    {categories.includes(c) && <span className="lin-menu-check">✓</span>}
+                  </button>
+                ))}
+              </details>
               <details className="lin-menu-section">
                 <summary className="lin-menu-summary">
                   <span>{t('prompts.filterTags')}</span>
@@ -477,6 +493,7 @@ export function Prompts() {
 
                   <span className="prow-status">
                     <span className="badge mkt-type">{t(`prompts.type.${p.type}`)}</span>
+                    {p.category && <span className="badge prompt-category">{p.category}</span>}
                     {editable ? (
                       <button
                         type="button"
