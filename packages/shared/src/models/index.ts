@@ -77,7 +77,20 @@ export interface Invite extends Audited {
   workspaceId: string;
   email: string;
   role: Role;
-  status: 'pending' | 'accepted' | 'revoked';
+  status: 'pending' | 'accepted' | 'revoked' | 'declined';
+  expiresAt: string;
+}
+
+// A pending invite addressed to the current user, enriched for the notification
+// bell: the inviting workspace's name + who sent it. Server-built from Invite +
+// the workspace + the inviter's UserRef.
+export interface MyInvite {
+  id: string;
+  workspaceId: string;
+  workspaceName: string;
+  role: Role;
+  invitedBy: UserRef;
+  createdAt: string;
   expiresAt: string;
 }
 
