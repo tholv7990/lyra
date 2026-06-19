@@ -30,6 +30,14 @@ export const MembersIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Single person — the "personal workspace" type marker (vs MembersIcon = team).
+export const PersonIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <circle cx="8" cy="5" r="2.7" />
+    <path d="M2.6 13a.6.6 0 0 1-.6-.62C2.1 9.9 4.6 8.4 8 8.4s5.9 1.5 6 3.98a.6.6 0 0 1-.6.62H2.6Z" />
+  </svg>
+);
+
 export const PromptsIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
     <path d="M4 2.6h8A2 2 0 0 1 14 4.6v4a2 2 0 0 1-2 2H7.1l-3 2.46A.6.6 0 0 1 3.1 12.6V10.5A2 2 0 0 1 2 8.6v-4A2 2 0 0 1 4 2.6Z" />

@@ -54,6 +54,8 @@ export default {
   removeVariable: 'Gỡ biến',
   workspace: 'Workspace',
   personal: 'cá nhân',
+  personalWorkspace: 'Workspace cá nhân',
+  teamWorkspace: 'Workspace nhóm',
   workspaceName: 'Tên workspace',
   creating: 'Đang tạo…',
   newTeamWorkspace: 'Workspace nhóm mới',

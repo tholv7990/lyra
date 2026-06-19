@@ -54,6 +54,8 @@ export default {
   removeVariable: 'Remove variable',
   workspace: 'Workspace',
   personal: 'personal',
+  personalWorkspace: 'Personal workspace',
+  teamWorkspace: 'Team workspace',
   workspaceName: 'Workspace name',
   creating: 'Creating…',
   newTeamWorkspace: 'New team workspace',
