@@ -125,6 +125,33 @@
   box-sizing: border-box;
 }
 
+/* Screen-reader-only: visually hidden but exposed to assistive tech. Used for
+   page-level <h1> landmarks on the toolbar-only list pages (Prompts/Pipelines/…). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* a11y: honor the OS "reduce motion" setting. Collapses all animation/transition
+   (incl. unguarded infinite loops like the typing/run dots) to near-instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Form controls have a large intrinsic min-width; let them shrink inside
    flex/grid so forms never force horizontal scroll on narrow screens. */
 input,

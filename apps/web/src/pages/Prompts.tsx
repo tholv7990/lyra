@@ -278,6 +278,7 @@ export function Prompts() {
 
   return (
     <div>
+      <h1 className="sr-only">{t('nav.prompts')}</h1>
       {/* Linear-style filter toolbar */}
       <div className="lin-toolbar">
         <input

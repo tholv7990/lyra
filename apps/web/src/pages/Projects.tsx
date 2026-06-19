@@ -176,6 +176,7 @@ export function Projects() {
 
   return (
     <div>
+      <h1 className="sr-only">{t('nav.projects')}</h1>
       <div className="lin-toolbar">
         <input className="lin-search" placeholder={t('projects.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="lin-filter" ref={filterRef}>

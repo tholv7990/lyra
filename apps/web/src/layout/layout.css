@@ -3260,6 +3260,23 @@
   color: var(--danger);
 }
 
+/* a11y: keyboard focus ring on bespoke icon buttons that bypass .icon-button.
+   These inherit it for free once migrated to <IconButton> (design-system-actions §2). */
+.prow-eye:focus-visible,
+.prow-chat:focus-visible,
+.prow-open:focus-visible,
+.prow-edit-action:focus-visible,
+.pd-close:focus-visible,
+.pd-save-icon:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.prow-delete:focus-visible,
+.cl-del:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-danger);
+}
+
 .prow-name,
 .prow-namecell {
   text-decoration: none;
