@@ -1,3 +1,43 @@
+# Session handoff — June 20, 2026 — Crawler downloads working: JS-challenge fix (yt-dlp nightly + Deno) · quality selection · live progress bar · TikTok retry
+
+> **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through **`6907847`**. Work in worktree **`.claude/worktrees/notification-bell`** (branch `feat/members-page`; HEAD == origin/dev). Gate green every commit: `pnpm turbo run type-check lint test build` (16/16; connectors-service **62**, api **121**, web ~41, shared ~50). **Commit/push only when the user asks** (they asked for both commits this session). Tracked also in `[[crawler-pending-work]]` memory.
+
+## ✅ Shipped this session (origin/dev)
+- **JS-challenge YouTube downloads now work** — the open task from the prior entry. Updated **yt-dlp → nightly `2026.06.18`** (`--update-to nightly`) and put **Deno 2.8.3** on PATH (already winget-installed at `…\DenoLand.Deno_…\deno.exe`). yt-dlp's `[jsc:deno]` solver now passes YouTube's nsig challenge. **Environment-level fix** (no code except the timeout bump below). Verified: a previously-"not available" video resolves + fully downloads.
+- **`fa5f645` Crawler quality selection + live download progress.** Resolve surfaces a per-item **quality menu** (1080p…240p + audio, size hints) from yt-dlp's format list (`qualitiesFromFormats`); download passes the chosen **`-f`** selector, defaulting to **≤720p** (keeps files small → also dodges the timeout). Downloads now run as an **async job** (`DownloadJobStore`, `POST /download`→`{jobId}`, `GET /download-jobs/:id`) the web **polls every 0.8 s**, rendering a native **`<progress>` bar**; replaces the old blocking call + spinner. Bumped the yt-dlp spawn timeout **120 s→600 s** so large/long videos finish. Shared: `MediaQuality`, `MediaItem.qualities`, `DownloadJob`, `DownloadDto.format`. en+vi i18n.
+- **`6907847` TikTok transient-retry.** TikTok intermittently serves a page missing the rehydration blob (~50% on the **same** link → scary "report this issue" error). `runYtDlpRetrying` re-invokes yt-dlp up to **4× with a 0.5 s backoff**, but **only on transient reasons** (`isTransient`: rehydration / "Unable to extract" / 5xx / timeouts); permanent reasons (unavailable/private/sign-in) fail fast. Wired into resolve + download. Verified **3/6 → 6/6**.
+
+## ⚠️ Environment state the next session needs
+- **dev.getlyras.app = the local machine** (tunnel to `:5173/:3001/:9100`). **No cloud deploy** (no `.github/workflows`, no deploy script) — pushing to dev triggers nothing; "deploy" = the running local servers.
+- **All three servers run from the WORKTREE** (this session repointed them off the main tree, per the user): web `:5173` (vite HMR), api `:3001` (built dist), connectors `:9100` (built dist + Deno). They are **detached `Start-Process` node procs** — **won't survive a reboot**; PIDs change. yt-dlp/ffmpeg/deno are **NOT on the default PATH** (winget dirs in the prior entry below; deno dir `…\DenoLand.Deno_Microsoft.Winget.Source_8wekyb3d8bbwe`). **:9100 restart recipe:** stop the `:9100` listener; set `$env:PORT=9100; CONNECTORS_SERVICE_TOKEN=e2e-test-token-local; POSTIZ_API_URL=http://localhost:5000/api; POSTIZ_PUBLIC_URL=http://localhost:5000`; prepend yt-dlp+ffmpeg+deno dirs to PATH; `Start-Process node dist/main.js -WorkingDirectory <worktree>/apps/connectors-service`. **⚠️ Don't set `$env:PORT=9100` before starting the api** — it inherits it and crashes (bind 3001).
+- Worktree `apps/api/.env` was **copied from the main tree** (gitignored). Service log files (`*-9100/3001/5173.*.log`) are gitignored.
+
+## 🔜 Pending — "we'll do tomorrow" (user) — RESEARCHED + PLANNED overnight
+Overnight (autonomous, user said "follow your recommendation, I'll check tmr") I
+researched 9router and wrote docs/plans for everything below. **No code shipped** —
+the 9router finding is "don't adopt" (would break invariant 7), and the other tasks
+the user asked me to *plan*, not build. Read the docs, then greenlight.
+1. **9router — EVALUATED → DO NOT adopt for the product.** Decisive: its inbound API
+   key is a *gate, not a tenant selector*; provider accounts are chosen by global
+   routing; single-user; keys in its own SQLite via dashboard/OAuth → head-on conflict
+   with invariant 7 (per-workspace encrypted BYO keys). Full writeup +
+   citations: **[superpowers/specs/2026-06-20-9router-evaluation.md](superpowers/specs/2026-06-20-9router-evaluation.md)**.
+   Use it *personally* for Claude Code token savings (no Lyra code). The value it sells
+   (multi-provider + fallback) → build in Lyra's own `ProviderRegistry`:
+   **[superpowers/plans/2026-06-20-multi-provider-fallback.md](superpowers/plans/2026-06-20-multi-provider-fallback.md)**
+   (note: CLAUDE.md is stale — OpenAI/DeepSeek/Image are already *real*, only Video/Crawl mock).
+2. **Durability + crawler polish + cookies + git gc** — all planned in
+   **[superpowers/plans/2026-06-20-crawler-ops-pending.md](superpowers/plans/2026-06-20-crawler-ops-pending.md)**:
+   sync `codex-dev` to origin/dev + run servers from the main tree + a process manager
+   (survive reboot); Dockerfile **Deno + nightly yt-dlp**; per-workspace encrypted
+   **cookies.txt** for logged-in/age-gated videos (security-gated); **smooth the % bar**
+   via a file-count heuristic (`Downloading N format(s): 399+251` → N files); `git gc`.
+
+## ⏸️ Still deferred (don't start unless asked)
+- Permission-normalization (canEditOwned / Owner override on prompts — spec approved, unbuilt). Members increment 3 (**Viewer** role). Postiz publish-v2 live e2e (needs the user to connect a channel). See `[[members-area-roadmap]]`, `[[per-project-channels-model]]`.
+
+---
+
 # Session handoff — June 19, 2026 (late) — Members area (bell + page) shipped · "Crawler" rename · Crawler debug (yt-dlp/ffmpeg installed; JS-challenge/deno still pending)
 
 > **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through **`f8abebf`**. All work below is on dev + **deployed** to dev.getlyras.app (local `pnpm dev` HMR off the main tree). A parallel **Codex agent** shares this tree (it did a big i18n pass this session); reconcile via `git merge origin/dev` — it builds on top of pushed commits, so merges have been **clean** (see `[[concurrent-codex-claude-tree]]`). Gate green every commit: `pnpm turbo run type-check lint test build` (16/16; web 41, api ~110, connectors-service 49, shared 50). Work done in worktree **`.claude/worktrees/notification-bell`** on branch **`feat/members-page`**. **Commit/push only when the user asks** (this session the user asked repeatedly).
