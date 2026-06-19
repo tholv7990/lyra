@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MEDIA_ACCEPT, type PromptMedia, type Provider } from '@lyra/shared';
 import { AttachmentPreviews } from './AttachmentPreviews';
 import { ModelPicker } from './ModelPicker';
@@ -57,6 +58,7 @@ export function Composer({
   trailing,
   className,
 }: ComposerProps) {
+  const { t } = useTranslation();
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   useAutoResize(taRef, value);
@@ -86,7 +88,7 @@ export function Composer({
           type="button"
           className="composer-add"
           onClick={() => fileRef.current?.click()}
-          title="Attach files"
+          title={t('common.attachFiles')}
         >
           +
         </button>
@@ -105,7 +107,7 @@ export function Composer({
         {trailing}
         {(onSubmit || onStop) &&
           (busy ? (
-            <button type="button" className="send-btn stop" onClick={onStop} title="Stop">
+            <button type="button" className="send-btn stop" onClick={onStop} title={t('common.stop')}>
               ■
             </button>
           ) : (
@@ -114,7 +116,7 @@ export function Composer({
               className="send-btn"
               onClick={onSubmit}
               disabled={canSubmit !== undefined ? !canSubmit : !value.trim() && media.length === 0}
-              title="Send"
+              title={t('common.send')}
             >
               ↑
             </button>

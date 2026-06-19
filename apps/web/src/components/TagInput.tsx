@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   dedupeTags,
   normalizeTag,
@@ -17,6 +18,7 @@ interface TagInputProps {
 // press Enter/comma to add, and reuse existing tags instead of creating
 // duplicates (matching is case-insensitive, via the shared tag helpers).
 export function TagInput({ value, suggestions, onChange }: TagInputProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,17 +67,17 @@ export function TagInput({ value, suggestions, onChange }: TagInputProps) {
   return (
     <div className="tag-input">
       <div className="tag-input-box" onClick={() => inputRef.current?.focus()}>
-        {value.map((t) => (
-          <span key={t} className="tag-chip">
-            <span className="tdot" style={{ background: tagColor(t) }} />
-            {t}
+        {value.map((tag) => (
+          <span key={tag} className="tag-chip">
+            <span className="tdot" style={{ background: tagColor(tag) }} />
+            {tag}
             <button
               type="button"
               className="tag-x"
-              aria-label={`Remove ${t}`}
+              aria-label={`${t('common.remove')} ${tag}`}
               onClick={(e) => {
                 e.stopPropagation();
-                remove(t);
+                remove(tag);
               }}
             >
               ×
@@ -92,7 +94,7 @@ export function TagInput({ value, suggestions, onChange }: TagInputProps) {
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 120)}
           onKeyDown={onKeyDown}
-          placeholder={value.length ? '' : 'Add tags…'}
+          placeholder={value.length ? '' : t('common.addTags')}
         />
       </div>
 
@@ -122,7 +124,7 @@ export function TagInput({ value, suggestions, onChange }: TagInputProps) {
                 add(q);
               }}
             >
-              Create <strong>{q}</strong>
+              {t('common.create')} <strong>{q}</strong>
             </button>
           )}
         </div>

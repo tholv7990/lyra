@@ -4,13 +4,14 @@ import { LANG_LABELS, type Lang } from '../i18n';
 
 // Language picker — a compact select (English / Tiếng Việt).
 export function LanguageSelect({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const { lang, setLang, supported } = useLanguage();
   return (
     <select
       className={className ?? 'text-input select-sm pref-lang'}
       value={lang}
       onChange={(e) => setLang(e.target.value as Lang)}
-      aria-label="Language"
+      aria-label={t('common.language')}
     >
       {supported.map((l) => (
         <option key={l} value={l}>
@@ -54,6 +55,7 @@ function FlagVN() {
 // Compact header language control — flag + EN/VN, borderless. Two languages, so
 // a click toggles between them.
 export function LanguageToggleButton() {
+  const { t } = useTranslation();
   const { lang, setLang } = useLanguage();
   const isVi = lang === 'vi';
   return (
@@ -61,8 +63,8 @@ export function LanguageToggleButton() {
       type="button"
       className="pref-lang-toggle"
       onClick={() => setLang(isVi ? 'en' : 'vi')}
-      title={isVi ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
-      aria-label="Language"
+      title={isVi ? t('common.switchToEnglish') : t('common.switchToVietnamese')}
+      aria-label={t('common.language')}
     >
       {isVi ? <FlagVN /> : <FlagEN />}
       <span className="pref-lang-code">{isVi ? 'VN' : 'EN'}</span>
@@ -97,14 +99,18 @@ export function ThemeSegment() {
 
 // Compact theme toggle for the top bar — one button that flips light/dark.
 export function ThemeToggleButton() {
+  const { t } = useTranslation();
   const { setTheme, resolved } = useTheme();
   const next = resolved === 'dark' ? 'light' : 'dark';
   return (
     <button
       type="button"
       className="pref-theme-toggle"
-      title={`${resolved === 'dark' ? 'Dark' : 'Light'} — switch to ${next}`}
-      aria-label="Toggle theme"
+      title={t('common.themeToggleTitle', {
+        mode: resolved === 'dark' ? t('common.dark') : t('common.light'),
+        next: next === 'dark' ? t('common.dark') : t('common.light'),
+      })}
+      aria-label={t('common.toggleTheme')}
       onClick={() => setTheme(next)}
     >
       {resolved === 'dark' ? (

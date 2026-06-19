@@ -4,6 +4,7 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LABEL_COLORS,
   labelColor,
@@ -25,6 +26,7 @@ interface LabelPickerProps {
 // workspace labels (toggle to add/remove) → "Create new label" when nothing
 // matches → pick a colour → the new label is created, saved, and selected.
 export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [creating, setCreating] = useState<string | null>(null); // name awaiting a colour
@@ -103,7 +105,7 @@ export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerPr
             <button
               type="button"
               className="tag-x"
-              aria-label={`Remove ${name}`}
+              aria-label={`${t('common.remove')} ${name}`}
               onClick={() => remove(name)}
             >
               ×
@@ -113,11 +115,11 @@ export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerPr
         <button
           type="button"
           className={value.length ? 'labelpick-add' : 'labelpick-add empty'}
-          aria-label="Add label"
+          aria-label={t('common.addLabel')}
           onClick={() => (open ? close() : openMenu())}
         >
           <PlusIcon />
-          {value.length === 0 && <span>Add label</span>}
+          {value.length === 0 && <span>{t('common.addLabel')}</span>}
         </button>
       </div>
 
@@ -129,7 +131,7 @@ export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerPr
                 <input
                   ref={inputRef}
                   value={text}
-                  placeholder="Add labels…"
+                  placeholder={t('common.addLabels')}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={onSearchKey}
                 />
@@ -156,18 +158,18 @@ export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerPr
                   >
                     <PlusIcon />
                     <span>
-                      Create new label: <strong>“{q}”</strong>
+                      {t('common.createNewLabel')} <strong>“{q}”</strong>
                     </span>
                   </button>
                 )}
                 {matches.length === 0 && !canCreate && (
-                  <div className="labelpick-empty">No labels yet</div>
+                  <div className="labelpick-empty">{t('common.noLabelsYet')}</div>
                 )}
               </div>
             </>
           ) : (
             <>
-              <div className="labelpick-colorhead">Pick a color for label</div>
+              <div className="labelpick-colorhead">{t('common.pickColorForLabel')}</div>
               <div className="labelpick-list">
                 {LABEL_COLORS.map((c) => (
                   <button

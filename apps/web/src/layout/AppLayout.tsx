@@ -105,13 +105,13 @@ export function AppLayout() {
             <button
               className="brand-btn"
               onClick={toggleCollapsed}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? t('common.expandSidebar') : t('common.collapseSidebar')}
+              aria-label={collapsed ? t('common.expandSidebar') : t('common.collapseSidebar')}
             >
               <BrandLogo className="brand-full" />
               <img className="brand-mark" src="/lyra-mark-squircle.svg" alt="Lyra" />
             </button>
-            <button className="brand-close" onClick={close} aria-label="Close menu">
+            <button className="brand-close" onClick={close} aria-label={t('common.closeMenu')}>
               ✕
             </button>
           </div>
@@ -204,14 +204,14 @@ export function AppLayout() {
             <button
               className="topbar-menu"
               onClick={() => setOpen(true)}
-              aria-label="Open menu"
+              aria-label={t('common.openMenu')}
             >
-              <img src="/lyra-mark-squircle.svg" alt="Menu" />
+              <img src="/lyra-mark-squircle.svg" alt={t('common.menu')} />
             </button>
             <nav className="breadcrumb">
               {isDetail ? (
                 <>
-                  <Link to={crumb.parent?.to ?? mod.path} className="bc-back" aria-label={`Back to ${crumb.parent?.label ?? modLabel}`}>
+                  <Link to={crumb.parent?.to ?? mod.path} className="bc-back" aria-label={t('common.backTo', { label: crumb.parent?.label ?? modLabel })}>
                     ‹
                   </Link>
                   <Link to={crumb.parent?.to ?? mod.path} className="bc-module">

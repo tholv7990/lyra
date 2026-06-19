@@ -1,4 +1,5 @@
 import type { PipelineVariable } from '@lyra/shared';
+import { useTranslation } from 'react-i18next';
 
 // Define a pipeline's custom variables (key / label / default). Each is
 // referenced in step prompts as {key}; its value is entered when a run starts.
@@ -11,6 +12,7 @@ export function PipelineVarsEditor({
   disabled?: boolean;
   onChange: (v: PipelineVariable[]) => void;
 }) {
+  const { t } = useTranslation();
   const update = (i: number, patch: Partial<PipelineVariable>) =>
     onChange(variables.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
   const remove = (i: number) => onChange(variables.filter((_, idx) => idx !== i));
@@ -24,9 +26,9 @@ export function PipelineVarsEditor({
         className="btn-ghost pvars-add pvars-empty"
         style={{ width: 'auto', marginTop: 0 }}
         onClick={add}
-        title="Define a {key} variable, entered when a run starts"
+        title={t('common.defineVariableTitle')}
       >
-        + Add variable
+        + {t('common.addVariable')}
       </button>
     );
   }
@@ -34,36 +36,36 @@ export function PipelineVarsEditor({
   return (
     <div className="pvars">
       <div className="pvars-head">
-        <span className="pvars-title">Variables</span>
+        <span className="pvars-title">{t('common.variables')}</span>
         <span className="muted" style={{ fontSize: 12 }}>
-          Use in step prompts as <code>{'{key}'}</code> · values entered at run start
+          {t('common.useInStepPromptsAs')} <code>{'{key}'}</code> · {t('common.valuesEnteredAtRunStart')}
         </span>
       </div>
       {variables.map((v, i) => (
         <div key={i} className="pvars-row">
           <input
             className="text-input"
-            placeholder="key"
+            placeholder={t('common.key')}
             value={v.key}
             disabled={disabled}
             onChange={(e) => update(i, { key: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
           />
           <input
             className="text-input"
-            placeholder="label (optional)"
+            placeholder={t('common.labelOptional')}
             value={v.label ?? ''}
             disabled={disabled}
             onChange={(e) => update(i, { label: e.target.value })}
           />
           <input
             className="text-input"
-            placeholder="default (optional)"
+            placeholder={t('common.defaultOptional')}
             value={v.default ?? ''}
             disabled={disabled}
             onChange={(e) => update(i, { default: e.target.value })}
           />
           {!disabled && (
-            <button className="icon-mini danger" title="Remove variable" onClick={() => remove(i)}>
+            <button className="icon-mini danger" title={t('common.removeVariable')} onClick={() => remove(i)}>
               ×
             </button>
           )}
@@ -71,7 +73,7 @@ export function PipelineVarsEditor({
       ))}
       {!disabled && (
         <button className="btn-ghost pvars-add" style={{ width: 'auto', marginTop: 0 }} onClick={add}>
-          + Add variable
+          + {t('common.addVariable')}
         </button>
       )}
     </div>

@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthTopBar } from '../components/AuthTopBar';
 import { BrandLogo } from '../components/BrandLogo';
 import { api } from '../lib/api';
 
 export function ResetPassword() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const [pw, setPw] = useState({ next: '', confirm: '' });
@@ -16,11 +18,11 @@ export function ResetPassword() {
     e.preventDefault();
     setError(null);
     if (pw.next.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('auth.passwordTooShort'));
       return;
     }
     if (pw.next !== pw.confirm) {
-      setError('Passwords do not match.');
+      setError(t('auth.passwordsNoMatch'));
       return;
     }
     setBusy(true);
@@ -32,7 +34,7 @@ export function ResetPassword() {
       });
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reset password');
+      setError(err instanceof Error ? err.message : t('auth.resetFailed'));
     } finally {
       setBusy(false);
     }
@@ -43,24 +45,24 @@ export function ResetPassword() {
       <AuthTopBar />
       <form className="auth-card" onSubmit={onSubmit}>
         <BrandLogo className="auth-logo" width={159} height={64} />
-        <h1>Set a new password</h1>
+        <h1>{t('auth.resetTitle')}</h1>
 
         {!token ? (
           <>
-            <p className="error">This reset link is missing its token.</p>
-            <p className="switch"><Link to="/forgot-password">Request a new link</Link></p>
+            <p className="error">{t('auth.resetMissingToken')}</p>
+            <p className="switch"><Link to="/forgot-password">{t('auth.requestNewLink')}</Link></p>
           </>
         ) : done ? (
           <>
-            <p className="sub muted">Your password has been reset. You can sign in now.</p>
-            <p className="switch"><Link to="/login">Sign in</Link></p>
+            <p className="sub muted">{t('auth.resetSuccess')}</p>
+            <p className="switch"><Link to="/login">{t('auth.signIn')}</Link></p>
           </>
         ) : (
           <>
-            <p className="sub muted">Choose a new password for your account.</p>
+            <p className="sub muted">{t('auth.resetSubtitle')}</p>
             {error && <p className="error">{error}</p>}
             <label className="field">
-              <span>New password</span>
+              <span>{t('auth.newPassword')}</span>
               <input
                 className="text-input"
                 type="password"
@@ -71,7 +73,7 @@ export function ResetPassword() {
               />
             </label>
             <label className="field">
-              <span>Confirm password</span>
+              <span>{t('auth.confirmPassword')}</span>
               <input
                 className="text-input"
                 type="password"
@@ -82,7 +84,7 @@ export function ResetPassword() {
               />
             </label>
             <button className="btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Resetting…' : 'Reset password'}
+              {busy ? t('auth.resettingPassword') : t('auth.resetPassword')}
             </button>
           </>
         )}

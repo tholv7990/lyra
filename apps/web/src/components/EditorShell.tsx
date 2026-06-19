@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface EditorShellProps {
   /** Header title — usually a borderless `<input className="eshell-name">` or an
@@ -21,11 +22,12 @@ interface EditorShellProps {
 // fixed-height column. Used by the editor/detail pages so they all match the
 // prompt editor + Try chat.
 export function EditorShell({ title, onBack, actions, wide, children }: EditorShellProps) {
+  const { t } = useTranslation();
   return (
     <div className={`eshell${wide ? ' wide' : ''}`}>
       <div className="eshell-head">
         {onBack && (
-          <button type="button" className="eshell-back" onClick={onBack} aria-label="Back">
+          <button type="button" className="eshell-back" onClick={onBack} aria-label={t('common.back')}>
             ‹
           </button>
         )}

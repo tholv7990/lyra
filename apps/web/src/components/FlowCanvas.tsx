@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ReactFlow, ReactFlowProvider, Background, BackgroundVariant, Controls,
   Panel, useNodesState, useEdgesState, useReactFlow, type Node, type Edge,
@@ -25,6 +26,7 @@ export interface FlowCanvasProps {
 }
 
 function Canvas({ graph, callbacks, editData }: FlowCanvasProps) {
+  const { t } = useTranslation();
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
   const { fitView } = useReactFlow();
@@ -66,7 +68,7 @@ function Canvas({ graph, callbacks, editData }: FlowCanvasProps) {
           <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} />
           <Controls showInteractive={false} />
           <Panel position="top-right">
-            <button type="button" className="btn-ghost flow-tidy" onClick={tidy}>Tidy</button>
+            <button type="button" className="btn-ghost flow-tidy" onClick={tidy}>{t('common.tidy')}</button>
           </Panel>
         </ReactFlow>
       </FlowEditDataProvider>

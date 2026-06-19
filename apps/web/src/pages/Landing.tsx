@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { Provider } from '@lyra/shared';
 import { BrandLogo } from '../components/BrandLogo';
 import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
@@ -55,32 +56,31 @@ const MODELS: { provider: Provider; label: string; soon?: boolean }[] = [
   { provider: Provider.Video, label: 'Video', soon: true },
 ];
 
-// The five funnel stages, rendered as one connected flow (the centerpiece).
-const FLOW: { n: number; h: string; b: string; chip: string; soon?: boolean }[] = [
-  { n: 1, h: 'Find', b: 'Pull reference media from any TikTok, Instagram, or web link, and research what is selling.', chip: 'Import live, research soon', soon: true },
-  { n: 2, h: 'Brand', b: 'Claude writes the brief and brand insight, then Lyra generates an on-brand image set.', chip: 'Live' },
-  { n: 3, h: 'Create', b: 'Turn the brand into ad creative and UGC scripts, with video on the way.', chip: 'Images live, video soon', soon: true },
-  { n: 4, h: 'Approve', b: 'Every money or brand decision pauses at a gate. Approve, or edit and re-run.', chip: 'Live' },
-  { n: 5, h: 'Publish', b: 'Post to TikTok, Instagram, Bluesky, X and more, with per-channel delivery receipts.', chip: 'Live' },
+const FLOW: { n: number; key: string; soon?: boolean }[] = [
+  { n: 1, key: 'find', soon: true },
+  { n: 2, key: 'brand' },
+  { n: 3, key: 'create', soon: true },
+  { n: 4, key: 'approve' },
+  { n: 5, key: 'publish' },
 ];
 
 // Output gallery: the kinds of creative one product fans out into.
-const MAKE: { cls: string; label: string; seed: string; w: number; h: number; alt: string }[] = [
-  { cls: 'l-make-1', label: 'Studio product shots', seed: 'lyra-studio-product', w: 900, h: 600, alt: 'Studio product photo of a skincare bottle on a clean seamless backdrop with soft directional light' },
-  { cls: 'l-make-2', label: 'Lifestyle scenes', seed: 'lyra-lifestyle-scene', w: 600, h: 400, alt: 'Lifestyle photo of a product styled in a sunlit kitchen with warm tones' },
-  { cls: 'l-make-3', label: 'UGC reels', seed: 'lyra-ugc-reel', w: 600, h: 400, alt: 'Creator holding a product to camera in a casual UGC reel still' },
-  { cls: 'l-make-4', label: 'Ad variations', seed: 'lyra-ad-variation', w: 600, h: 700, alt: 'Bold ad creative variation of a product with punchy color blocking' },
-  { cls: 'l-make-5', label: 'Marketplace listings', seed: 'lyra-marketplace-listing', w: 600, h: 700, alt: 'Clean marketplace listing photo of a product on a neutral background' },
-  { cls: 'l-make-6', label: 'Seasonal campaigns', seed: 'lyra-seasonal-campaign', w: 600, h: 700, alt: 'Seasonal campaign image of a product styled with festive props and warm light' },
+const MAKE: { cls: string; key: string; seed: string; w: number; h: number }[] = [
+  { cls: 'l-make-1', key: 'studio', seed: 'lyra-studio-product', w: 900, h: 600 },
+  { cls: 'l-make-2', key: 'lifestyle', seed: 'lyra-lifestyle-scene', w: 600, h: 400 },
+  { cls: 'l-make-3', key: 'ugc', seed: 'lyra-ugc-reel', w: 600, h: 400 },
+  { cls: 'l-make-4', key: 'ads', seed: 'lyra-ad-variation', w: 600, h: 700 },
+  { cls: 'l-make-5', key: 'marketplace', seed: 'lyra-marketplace-listing', w: 600, h: 700 },
+  { cls: 'l-make-6', key: 'seasonal', seed: 'lyra-seasonal-campaign', w: 600, h: 700 },
 ];
 
 // Channel chips shown on the hero campaign-flow preview.
 const CHANNELS = ['TikTok', 'Instagram', 'Bluesky', 'X'];
 
-const SECURITY: { Icon: () => ReactElement; h: string; b: string }[] = [
-  { Icon: Lock, h: 'Keys never leave the server', b: 'Provider keys are encrypted with AES-256-GCM and decrypted only to make a call. They are never returned to the browser and never logged.' },
-  { Icon: Layers, h: 'Per-workspace isolation', b: 'Every project, prompt, pipeline, and run is scoped to its workspace. Invite teammates and set roles; nothing crosses a boundary.' },
-  { Icon: Key, h: 'Bring your own everything', b: 'Your keys, your models, your data. No metering and no lock-in. Lyra orchestrates the work; you stay in control.' },
+const SECURITY: { Icon: () => ReactElement; key: string }[] = [
+  { Icon: Lock, key: 'keys' },
+  { Icon: Layers, key: 'workspace' },
+  { Icon: Key, key: 'byo' },
 ];
 
 // Reveal-on-scroll: enhances an already-visible default; collapses under
@@ -125,6 +125,7 @@ function useScrollReveal() {
 
 // Back-to-top: appears after scrolling down; smooth-scrolls to the top.
 function ScrollTopButton() {
+  const { t } = useTranslation();
   const [show, setShow] = useState(false);
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > 700);
@@ -136,7 +137,7 @@ function ScrollTopButton() {
     <button
       type="button"
       className={`l-scrolltop${show ? ' is-shown' : ''}`}
-      aria-label="Back to top"
+      aria-label={t('landing.backToTop')}
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -147,6 +148,7 @@ function ScrollTopButton() {
 }
 
 export function Landing() {
+  const { t } = useTranslation();
   const rootRef = useScrollReveal();
 
   return (
@@ -157,15 +159,15 @@ export function Landing() {
           <Link to="/" className="l-brand" aria-label="Lyra">
             <BrandLogo />
           </Link>
-          <nav className="l-nav-links" aria-label="Primary">
-            <a href="#how">How it works</a>
-            <a href="#features">Features</a>
-            <a href="#security">Security</a>
+          <nav className="l-nav-links" aria-label={t('landing.navAria')}>
+            <a href="#how">{t('landing.navHow')}</a>
+            <a href="#features">{t('landing.navFeatures')}</a>
+            <a href="#security">{t('landing.navSecurity')}</a>
           </nav>
           <div className="l-nav-cta">
-            <div className="l-nav-prefs" aria-label="Preferences">
+            <div className="l-nav-prefs" aria-label={t('landing.preferences')}>
               <LanguageToggleButton />
-              <Link to="/login" className="l-nav-icon-action l-nav-login" aria-label="Log in" title="Log in">
+              <Link to="/login" className="l-nav-icon-action l-nav-login" aria-label={t('landing.login')} title={t('landing.login')}>
                 <LoginIcon />
               </Link>
               <ThemeToggleButton />
@@ -179,29 +181,25 @@ export function Landing() {
         <section className="l-hero">
           <div className="l-container l-hero-grid">
             <div className="l-hero-copy">
-              <span className="l-eyebrow">AI dropshipping co-pilot</span>
-              <h1 className="l-h1">Find winning products. Brand them. Publish everywhere.</h1>
-              <p className="l-hero-sub">
-                Lyra runs your whole dropshipping funnel on prompt-first AI workflows you
-                control: pull reference media and research products, generate on-brand images
-                and ad creative, then post to every channel, approving the calls that matter.
-              </p>
+              <span className="l-eyebrow">{t('landing.eyebrow')}</span>
+              <h1 className="l-h1">{t('landing.heroTitle')}</h1>
+              <p className="l-hero-sub">{t('landing.heroSub')}</p>
               <div className="l-hero-cta">
-                <Link to="/signup" className="l-btn l-btn-primary">Start free</Link>
-                <a href="#how" className="l-btn l-btn-ghost">See how it works</a>
+                <Link to="/signup" className="l-btn l-btn-primary">{t('landing.startFree')}</Link>
+                <a href="#how" className="l-btn l-btn-ghost">{t('landing.seeHow')}</a>
               </div>
-              <p className="l-hero-note">Bring your own AI keys, no credit card.</p>
+              <p className="l-hero-note">{t('landing.noCard')}</p>
             </div>
 
             {/* Campaign-flow preview: a single product carried Find → Publish.
                 Local gpt-image-1 generated assets (/public/landing), not a div-mock. */}
             <div
               className="l-campaign"
-              aria-label="A campaign moving through Lyra: a winning product, branded, made into creative, then published to channels"
+              aria-label={t('landing.campaignAria')}
             >
               <div className="l-campaign-head">
-                <span className="l-campaign-title">Campaign flow</span>
-                <span className="l-campaign-stages">Find, Brand, Create, Publish</span>
+                <span className="l-campaign-title">{t('landing.campaignFlow')}</span>
+                <span className="l-campaign-stages">{t('landing.campaignStages')}</span>
               </div>
 
               <figure className="l-campaign-hero">
@@ -210,10 +208,10 @@ export function Landing() {
                   width={800}
                   height={520}
                   loading="eager"
-                  alt="On-brand hero shot of a skincare bottle lit on a warm seamless backdrop"
+                  alt={t('landing.campaignHeroAlt')}
                 />
                 {/* TODO: swap for real brand asset */}
-                <figcaption className="l-campaign-chip">Branded hero</figcaption>
+                <figcaption className="l-campaign-chip">{t('landing.brandedHero')}</figcaption>
               </figure>
 
               <div className="l-campaign-row">
@@ -223,10 +221,10 @@ export function Landing() {
                     width={360}
                     height={360}
                     loading="lazy"
-                    alt="Reference clip imported from a trending product video"
+                    alt={t('landing.campaignFoundAlt')}
                   />
                   {/* TODO: swap for real brand asset */}
-                  <figcaption className="l-campaign-chip sm">Found</figcaption>
+                  <figcaption className="l-campaign-chip sm">{t('landing.found')}</figcaption>
                 </figure>
                 <figure className="l-campaign-thumb">
                   <img
@@ -234,10 +232,10 @@ export function Landing() {
                     width={360}
                     height={360}
                     loading="lazy"
-                    alt="UGC reel still of a creator holding the product to camera"
+                    alt={t('landing.campaignUgcAlt')}
                   />
                   {/* TODO: swap for real brand asset */}
-                  <figcaption className="l-campaign-chip sm">UGC reel</figcaption>
+                  <figcaption className="l-campaign-chip sm">{t('landing.ugcReel')}</figcaption>
                 </figure>
                 <figure className="l-campaign-thumb">
                   <img
@@ -245,15 +243,15 @@ export function Landing() {
                     width={360}
                     height={360}
                     loading="lazy"
-                    alt="Bold ad variation of the product with bright color blocking"
+                    alt={t('landing.campaignAdAlt')}
                   />
                   {/* TODO: swap for real brand asset */}
-                  <figcaption className="l-campaign-chip sm">Ad</figcaption>
+                  <figcaption className="l-campaign-chip sm">{t('landing.ad')}</figcaption>
                 </figure>
               </div>
 
               <div className="l-campaign-publish">
-                <span className="l-campaign-publish-label">Publishing to</span>
+                <span className="l-campaign-publish-label">{t('landing.publishingTo')}</span>
                 <span className="l-campaign-channels">
                   {CHANNELS.map((c) => (
                     <span className="l-campaign-channel" key={c}>{c}</span>
@@ -267,13 +265,13 @@ export function Landing() {
         {/* ---- Model strip ---- */}
         <section className="l-models">
           <div className="l-container">
-            <p className="l-models-cap">Runs on the models you already pay for</p>
+            <p className="l-models-cap">{t('landing.modelsCap')}</p>
             <div className="l-models-row">
               {MODELS.map((m) => (
                 <span className="l-model" key={m.label}>
                   <ProviderIcon provider={m.provider} size={22} />
                   {m.label}
-                  {m.soon && <span className="l-soon">Soon</span>}
+                  {m.soon && <span className="l-soon">{t('landing.soon')}</span>}
                 </span>
               ))}
             </div>
@@ -284,11 +282,10 @@ export function Landing() {
         <section className="l-pain">
           <div className="l-container">
             <p className="l-pain-text l-reveal">
-              Dropshipping is really four jobs: find a winner, build the brand, make the ads,
-              and post everywhere. Doing all four fast and on-brand is why most stores stall.
+              {t('landing.painText')}
             </p>
             <span className="l-pain-emph l-reveal">
-              Lyra runs the whole loop as <b>one AI workflow you control</b>.
+              <Trans i18nKey="landing.painEmph" components={{ b: <b /> }} />
             </span>
           </div>
         </section>
@@ -297,24 +294,21 @@ export function Landing() {
         <section className="l-gallery-sec">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
-              <h2 className="l-h2">One product. Every kind of content.</h2>
-              <p className="l-lead">
-                Point Lyra at a single product and it fans out into the shots, scenes, and clips
-                your store actually needs to sell.
-              </p>
+              <h2 className="l-h2">{t('landing.galleryTitle')}</h2>
+              <p className="l-lead">{t('landing.galleryLead')}</p>
             </div>
             <div className="l-gallery">
               {MAKE.map((m) => (
-                <figure className={`l-make ${m.cls} l-reveal`} key={m.label}>
+                <figure className={`l-make ${m.cls} l-reveal`} key={m.key}>
                   <img
                     src={`/landing/${m.seed}.webp`}
                     width={m.w}
                     height={m.h}
                     loading="lazy"
-                    alt={m.alt}
+                    alt={t(`landing.make.${m.key}.alt`)}
                   />
                   {/* TODO: swap for real brand asset */}
-                  <figcaption className="l-make-chip">{m.label}</figcaption>
+                  <figcaption className="l-make-chip">{t(`landing.make.${m.key}.label`)}</figcaption>
                 </figure>
               ))}
             </div>
@@ -325,20 +319,17 @@ export function Landing() {
         <section className="l-flow" id="how">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
-              <h2 className="l-h2">From winning product to published campaign.</h2>
-              <p className="l-lead">
-                One pipeline carries a product through every stage. Compose it once, run it on
-                your whole catalog.
-              </p>
+              <h2 className="l-h2">{t('landing.flowTitle')}</h2>
+              <p className="l-lead">{t('landing.flowLead')}</p>
             </div>
             <ol className="l-flow-track">
               {FLOW.map((s, i) => (
                 <li className="l-flow-step l-reveal" key={s.n}>
                   <div className="l-flow-card">
                     <span className="l-flow-n">{s.n}</span>
-                    <h3 className="l-flow-h">{s.h}</h3>
-                    <p className="l-flow-b">{s.b}</p>
-                    <span className={`l-flow-chip${s.soon ? ' soon' : ''}`}>{s.chip}</span>
+                    <h3 className="l-flow-h">{t(`landing.flow.${s.key}.h`)}</h3>
+                    <p className="l-flow-b">{t(`landing.flow.${s.key}.b`)}</p>
+                    <span className={`l-flow-chip${s.soon ? ' soon' : ''}`}>{t(`landing.flow.${s.key}.chip`)}</span>
                   </div>
                   {i < FLOW.length - 1 && (
                     <span className="l-flow-arrow" aria-hidden="true">
@@ -359,17 +350,14 @@ export function Landing() {
           <section className="l-feature-band">
             <div className="l-container l-feature">
               <div className="l-feature-copy l-reveal">
-                <h3 className="l-h3">Compose once. Run it on every product.</h3>
+                <h3 className="l-h3">{t('landing.features.pipeline.title')}</h3>
                 <p className="l-body">
-                  A pipeline binds each step to a prompt and a model, set to gate or run
-                  automatically; outputs chain with the <span className="l-chip">{'{input}'}</span> placeholder.
-                  Or just describe your goal and Build with AI drafts the workflow for you,
-                  grounded in your own prompt library.
+                  <Trans i18nKey="landing.features.pipeline.body" components={{ chip: <span className="l-chip" /> }} />
                 </p>
                 <ul className="l-feature-points">
-                  <li><Tick /> Per-step model (Claude, GPT, DeepSeek)</li>
-                  <li><Tick /> Gate or auto on any step</li>
-                  <li><Tick /> Build with AI from your library</li>
+                  <li><Tick /> {t('landing.features.pipeline.point1')}</li>
+                  <li><Tick /> {t('landing.features.pipeline.point2')}</li>
+                  <li><Tick /> {t('landing.features.pipeline.point3')}</li>
                 </ul>
               </div>
               <div className="l-feature-visual l-reveal">
@@ -380,7 +368,7 @@ export function Landing() {
                       width={700}
                       height={900}
                       loading="lazy"
-                      alt="A polished product render produced as the final step of a pipeline run"
+                      alt={t('landing.features.pipeline.altMain')}
                     />
                     {/* TODO: swap for real brand asset */}
                   </div>
@@ -390,7 +378,7 @@ export function Landing() {
                       width={500}
                       height={400}
                       loading="lazy"
-                      alt="A styled brief mood image generated early in the flow"
+                      alt={t('landing.features.pipeline.altBrief')}
                     />
                     {/* TODO: swap for real brand asset */}
                   </div>
@@ -400,7 +388,7 @@ export function Landing() {
                       width={500}
                       height={400}
                       loading="lazy"
-                      alt="A rendered ad frame output by a later step in the same pipeline"
+                      alt={t('landing.features.pipeline.altRender')}
                     />
                     {/* TODO: swap for real brand asset */}
                   </div>
@@ -413,17 +401,14 @@ export function Landing() {
           <section className="l-feature-band">
             <div className="l-container l-feature rev">
               <div className="l-feature-copy l-reveal">
-                <h3 className="l-h3">Your brand, captured as prompts. Reused everywhere.</h3>
+                <h3 className="l-h3">{t('landing.features.library.title')}</h3>
                 <p className="l-body">
-                  Promote winning prompts into a shared library; drop one on a product and it
-                  fills <span className="l-chip">{'{product}'}</span>,{' '}
-                  <span className="l-chip">{'{niche}'}</span>, and{' '}
-                  <span className="l-chip">{'{homepage}'}</span> automatically.
+                  <Trans i18nKey="landing.features.library.body" components={{ chip: <span className="l-chip" /> }} />
                 </p>
                 <ul className="l-feature-points">
-                  <li><Tick /> Variables fill per product</li>
-                  <li><Tick /> Attach reference media + tags</li>
-                  <li><Tick /> Reopen any prompt in chat to keep tuning</li>
+                  <li><Tick /> {t('landing.features.library.point1')}</li>
+                  <li><Tick /> {t('landing.features.library.point2')}</li>
+                  <li><Tick /> {t('landing.features.library.point3')}</li>
                 </ul>
               </div>
               <div className="l-feature-visual l-reveal">
@@ -433,7 +418,7 @@ export function Landing() {
                     width={900}
                     height={700}
                     loading="lazy"
-                    alt="A cohesive set of on-brand product images sharing the same palette and styling"
+                    alt={t('landing.features.library.alt')}
                   />
                   {/* TODO: swap for real brand asset */}
                 </div>
@@ -445,15 +430,12 @@ export function Landing() {
           <section className="l-feature-band">
             <div className="l-container l-crawl l-reveal">
               <div className="l-crawl-copy">
-                <h3 className="l-h3">Find the content. Import it in a click.</h3>
-                <p className="l-body">
-                  Paste any TikTok, Instagram, YouTube, or web link; Lyra resolves it and pulls
-                  the media straight into your workflow as reference or raw material.
-                </p>
+                <h3 className="l-h3">{t('landing.features.import.title')}</h3>
+                <p className="l-body">{t('landing.features.import.body')}</p>
                 <ul className="l-feature-points l-crawl-points">
-                  <li><Tick /> 1,000+ supported sites</li>
-                  <li><Tick /> Video, image, and audio</li>
-                  <li><Tick /> Straight into a pipeline</li>
+                  <li><Tick /> {t('landing.features.import.point1')}</li>
+                  <li><Tick /> {t('landing.features.import.point2')}</li>
+                  <li><Tick /> {t('landing.features.import.point3')}</li>
                 </ul>
               </div>
               <div className="l-crawl-strip" aria-hidden="true">
@@ -466,11 +448,11 @@ export function Landing() {
                   </svg>
                 </span>
                 <span className="l-crawl-tiles">
-                  <img src="/landing/lyra-crawl-a.webp" width={240} height={240} loading="lazy" alt="Imported reference frame pulled from a product video" />
+                  <img src="/landing/lyra-crawl-a.webp" width={240} height={240} loading="lazy" alt={t('landing.features.import.altA')} />
                   {/* TODO: swap for real brand asset */}
-                  <img src="/landing/lyra-crawl-b.webp" width={240} height={240} loading="lazy" alt="Second imported reference frame from the same clip" />
+                  <img src="/landing/lyra-crawl-b.webp" width={240} height={240} loading="lazy" alt={t('landing.features.import.altB')} />
                   {/* TODO: swap for real brand asset */}
-                  <img src="/landing/lyra-crawl-c.webp" width={240} height={240} loading="lazy" alt="Third imported reference frame from the same clip" />
+                  <img src="/landing/lyra-crawl-c.webp" width={240} height={240} loading="lazy" alt={t('landing.features.import.altC')} />
                   {/* TODO: swap for real brand asset */}
                 </span>
               </div>
@@ -481,17 +463,14 @@ export function Landing() {
           <section className="l-feature-band">
             <div className="l-container l-feature rev">
               <div className="l-feature-copy l-reveal">
-                <h3 className="l-h3">Post everywhere from one place.</h3>
-                <p className="l-body">
-                  Connect your social accounts once, then publish a campaign to many channels in
-                  a click and track per-channel delivery.
-                </p>
+                <h3 className="l-h3">{t('landing.features.publish.title')}</h3>
+                <p className="l-body">{t('landing.features.publish.body')}</p>
                 <ul className="l-feature-points">
-                  <li><Tick /> TikTok, Instagram, Bluesky, X and more</li>
-                  <li><Tick /> One compose, many channels</li>
-                  <li><Tick /> Per-channel receipts</li>
+                  <li><Tick /> {t('landing.features.publish.point1')}</li>
+                  <li><Tick /> {t('landing.features.publish.point2')}</li>
+                  <li><Tick /> {t('landing.features.publish.point3')}</li>
                 </ul>
-                <p className="l-feature-note">Channels connect through your own Postiz workspace.</p>
+                <p className="l-feature-note">{t('landing.features.publish.note')}</p>
               </div>
               <div className="l-feature-visual l-reveal">
                 <div className="l-publish">
@@ -500,7 +479,7 @@ export function Landing() {
                     width={900}
                     height={720}
                     loading="lazy"
-                    alt="A finished campaign image ready to publish across social channels"
+                    alt={t('landing.features.publish.alt')}
                   />
                   {/* TODO: swap for real brand asset */}
                   <div className="l-publish-rail" aria-hidden="true">
@@ -520,23 +499,19 @@ export function Landing() {
           <section className="l-feature-band">
             <div className="l-container l-feature">
               <div className="l-feature-copy l-reveal">
-                <h3 className="l-h3">Nothing ships until you say so. Any model, your keys.</h3>
-                <p className="l-body">
-                  Mark any step a gate and the run holds the result for your review; approve, or
-                  edit the prompt and re-run. Bring your own provider keys, encrypted per
-                  workspace, and swap a step&rsquo;s model in one click.
-                </p>
+                <h3 className="l-h3">{t('landing.features.gates.title')}</h3>
+                <p className="l-body">{t('landing.features.gates.body')}</p>
                 <ul className="l-feature-points">
-                  <li><Tick /> Pause-for-approval on any step</li>
-                  <li><Tick /> BYO keys, encrypted AES-256-GCM</li>
-                  <li><Tick /> Swap models without touching the flow</li>
+                  <li><Tick /> {t('landing.features.gates.point1')}</li>
+                  <li><Tick /> {t('landing.features.gates.point2')}</li>
+                  <li><Tick /> {t('landing.features.gates.point3')}</li>
                 </ul>
               </div>
               <div className="l-feature-visual l-reveal">
                 <div
                   className="l-glimpse"
                   role="img"
-                  aria-label="A pipeline run paused at an approval gate, holding a generated image for review"
+                  aria-label={t('landing.features.gates.glimpseAria')}
                 >
                   <img
                     src="/landing/lyra-gate-render.webp"
@@ -549,15 +524,13 @@ export function Landing() {
                   <div className="l-glimpse-card" aria-hidden="true">
                     <div className="l-glimpse-top">
                       <span className="l-glimpse-gate-dot" />
-                      Hero shot
-                      <span className="l-glimpse-status">GATE, WAITING</span>
+                      {t('landing.features.gates.heroShot')}
+                      <span className="l-glimpse-status">{t('landing.features.gates.gateWaiting')}</span>
                     </div>
-                    <p className="l-glimpse-body">
-                      Warm studio render on a soft seamless backdrop, on-brand palette, ready for review.
-                    </p>
+                    <p className="l-glimpse-body">{t('landing.features.gates.glimpseBody')}</p>
                     <div className="l-glimpse-actions">
-                      <span className="l-glimpse-btn primary">Approve</span>
-                      <span className="l-glimpse-btn">Edit &amp; re-run</span>
+                      <span className="l-glimpse-btn primary">{t('landing.features.gates.approve')}</span>
+                      <span className="l-glimpse-btn">{t('landing.features.gates.editRerun')}</span>
                     </div>
                   </div>
                 </div>
@@ -570,14 +543,14 @@ export function Landing() {
         <section className="l-security" id="security">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
-              <h2 className="l-h2">Your keys, your models, your control.</h2>
+              <h2 className="l-h2">{t('landing.securityTitle')}</h2>
             </div>
             <div className="l-sec-grid">
-              {SECURITY.map(({ Icon, h, b }) => (
-                <div className="l-sec-item l-reveal" key={h}>
+              {SECURITY.map(({ Icon, key }) => (
+                <div className="l-sec-item l-reveal" key={key}>
                   <div className="l-sec-ico"><Icon /></div>
-                  <h3>{h}</h3>
-                  <p>{b}</p>
+                  <h3>{t(`landing.security.${key}.h`)}</h3>
+                  <p>{t(`landing.security.${key}.b`)}</p>
                 </div>
               ))}
             </div>
@@ -588,16 +561,13 @@ export function Landing() {
         <section className="l-cta">
           <div className="l-container">
             <div className="l-cta-panel">
-              <h2>Find your next winner.</h2>
-              <p>
-                Spin up your first workflow, run it on a product, and publish the result. Free
-                to start, with your own keys.
-              </p>
+              <h2>{t('landing.ctaTitle')}</h2>
+              <p>{t('landing.ctaBody')}</p>
               <div className="l-cta-actions">
-                <Link to="/signup" className="l-btn l-btn-onwarm-solid">Start free</Link>
-                <a href="#how" className="l-btn l-btn-onwarm">See how it works</a>
+                <Link to="/signup" className="l-btn l-btn-onwarm-solid">{t('landing.startFree')}</Link>
+                <a href="#how" className="l-btn l-btn-onwarm">{t('landing.seeHow')}</a>
               </div>
-              <p className="l-cta-note">Bring your own AI keys, no credit card.</p>
+              <p className="l-cta-note">{t('landing.noCard')}</p>
             </div>
           </div>
         </section>
@@ -609,30 +579,30 @@ export function Landing() {
           <div className="l-footer-grid">
             <div className="l-footer-brand">
               <BrandLogo />
-              <p>The AI co-pilot for dropshipping.</p>
+              <p>{t('landing.footerTagline')}</p>
             </div>
             <div className="l-footer-col">
-              <h4>Product</h4>
-              <a href="#how">How it works</a>
-              <a href="#features">Features</a>
-              <a href="#security">Security</a>
-              <Link to="/login">Sign in</Link>
+              <h4>{t('landing.footerProduct')}</h4>
+              <a href="#how">{t('landing.navHow')}</a>
+              <a href="#features">{t('landing.navFeatures')}</a>
+              <a href="#security">{t('landing.navSecurity')}</a>
+              <Link to="/login">{t('landing.signIn')}</Link>
             </div>
             <div className="l-footer-col">
-              <h4>Company</h4>
-              <a href="#">About</a>
-              <a href="#">Blog</a>
-              <a href="#">Contact</a>
+              <h4>{t('landing.footerCompany')}</h4>
+              <a href="#">{t('landing.about')}</a>
+              <a href="#">{t('landing.blog')}</a>
+              <a href="#">{t('landing.contact')}</a>
             </div>
             <div className="l-footer-col">
-              <h4>Legal</h4>
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
+              <h4>{t('landing.footerLegal')}</h4>
+              <a href="#">{t('landing.privacy')}</a>
+              <a href="#">{t('landing.terms')}</a>
             </div>
           </div>
           <div className="l-footer-bottom">
-            <span>© 2026 Lyra</span>
-            <span>Built for sellers who ship on brand.</span>
+            <span>{t('landing.copyright')}</span>
+            <span>{t('landing.footerBottom')}</span>
           </div>
         </div>
       </footer>

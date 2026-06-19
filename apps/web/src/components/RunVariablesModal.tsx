@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PipelineVariable } from '@lyra/shared';
 
 // One item per non-empty line.
@@ -30,6 +31,7 @@ export function RunVariablesModal({
   onCancel: () => void;
   onRun: (values: Record<string, string>, collections: Record<string, string[]>) => void;
 }) {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(variables.map((v) => [v.key, prefill?.[v.key] ?? v.default ?? ''])),
   );
@@ -47,8 +49,8 @@ export function RunVariablesModal({
         <h3>{title}</h3>
         <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
           {collections.length > 0
-            ? 'Fill the variables and the items each fan-out step maps over.'
-            : 'Fill the variables this pipeline uses — they resolve into every step prompt.'}
+            ? t('run.fillVariablesAndFanout')
+            : t('run.fillVariables')}
         </p>
         <div className="runvars-fields">
           {variables.map((v) => (
@@ -67,14 +69,14 @@ export function RunVariablesModal({
           {collections.map((c) => (
             <label key={c} className="runvars-field">
               <span className="runvars-flabel">
-                Fan-out items <code>{`${c}`}</code>
-                <span className="muted" style={{ fontWeight: 400 }}>· one per line</span>
+                {t('run.fanoutItems')} <code>{`${c}`}</code>
+                <span className="muted" style={{ fontWeight: 400 }}>· {t('run.onePerLine')}</span>
               </span>
               <textarea
                 className="text-input"
                 rows={4}
                 value={lists[c] ?? ''}
-                placeholder={'item one\nitem two\nitem three'}
+                placeholder={t('run.itemPlaceholder')}
                 onChange={(e) => setLists((s) => ({ ...s, [c]: e.target.value }))}
               />
             </label>
@@ -82,10 +84,10 @@ export function RunVariablesModal({
         </div>
         <div className="runvars-actions">
           <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onCancel}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={submit}>
-            {busy ? 'Starting…' : 'Run ▶'}
+            {busy ? t('run.starting') : t('run.runButton')}
           </button>
         </div>
       </div>

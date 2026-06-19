@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { promptVarsForStep, BUILTIN_VAR_LABELS, type Asset, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
 import { RunStepCard, providerOf } from './RunStepCard';
@@ -37,6 +38,7 @@ export function RunFlow({
   assets = [],
   historyForStep,
 }: RunFlowProps) {
+  const { t } = useTranslation();
   const pager = useFlowPager(run.steps.length);
   const { isMobile, setPage } = pager;
   const assetsFor = (index: number) => assets.filter((a) => a.stepIndex === index);
@@ -55,7 +57,7 @@ export function RunFlow({
       step={step}
       // each node's input = the previous step's output (the {note} seeds step 1)
       input={step.index > 0 ? run.steps[step.index - 1]?.result ?? '' : run.context?.note ?? ''}
-      inputLabel={step.index > 0 ? 'Input · from previous step' : 'Input · note'}
+      inputLabel={step.index > 0 ? t('run.inputFromPrevious') : t('run.inputNote')}
       locked={!hasKey(providerOf(step))}
       isCurrent={step.index === run.currentStep && run.status !== 'done'}
       busy={busy}
@@ -73,7 +75,7 @@ export function RunFlow({
   if (isMobile && mobileLayout === 'flow') {
     return (
       <div className="flow run-flow flow-mobile-full">
-        <div className="flow-cap">● Start</div>
+        <div className="flow-cap">● {t('common.start')}</div>
         <div className="flow-connector" aria-hidden />
         {run.steps.map((step) => (
           <div className="run-flow-segment" key={step.index}>
@@ -81,7 +83,7 @@ export function RunFlow({
             <div className="flow-connector" aria-hidden />
           </div>
         ))}
-        <div className="flow-cap end">◎ End</div>
+        <div className="flow-cap end">◎ {t('common.end')}</div>
       </div>
     );
   }
@@ -91,9 +93,9 @@ export function RunFlow({
     const step = page >= 1 && page <= run.steps.length ? run.steps[page - 1] : null;
     return (
       <div className="flow run-flow pager">
-        {page === 0 && <div className="flow-cap">● Start</div>}
+        {page === 0 && <div className="flow-cap">● {t('common.start')}</div>}
         {step && node(step)}
-        {page === run.steps.length + 1 && <div className="flow-cap end">◉ End</div>}
+        {page === run.steps.length + 1 && <div className="flow-cap end">◉ {t('common.end')}</div>}
         <FlowPagerControls pager={pager} stepCount={run.steps.length} />
       </div>
     );
@@ -101,7 +103,7 @@ export function RunFlow({
 
   const graph = buildRunGraph({ run, hasKey, assets, historyForStep });
   return (
-    <Suspense fallback={<div className="flow-canvas loading">Loading canvas…</div>}>
+    <Suspense fallback={<div className="flow-canvas loading">{t('common.loadingCanvas')}</div>}>
       <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt }} />
     </Suspense>
   );
