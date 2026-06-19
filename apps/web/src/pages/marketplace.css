@@ -165,8 +165,8 @@
 
 .mkt-card-by {
   min-width: 0;
-  font-size: var(--text-micro);
-  color: var(--ink-tertiary);
+  font-size: var(--text-mini);
+  color: var(--ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
