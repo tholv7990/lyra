@@ -12,5 +12,6 @@ import copilot from './copilot';
 import connectors from './connectors';
 import marketplace from './marketplace';
 import admin from './admin';
+import notifications from './notifications';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications };

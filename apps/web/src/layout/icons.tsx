@@ -286,6 +286,13 @@ export const VideoTypeIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const BellIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M8 1.4a3.9 3.9 0 0 0-3.9 3.9v2.05c0 .5-.2.98-.55 1.33l-.62.62A1.05 1.05 0 0 0 3.68 11.1h8.64a1.05 1.05 0 0 0 .74-1.79l-.62-.62a1.88 1.88 0 0 1-.55-1.33V5.3A3.9 3.9 0 0 0 8 1.4Z" />
+    <path d="M6.35 12.1a1.7 1.7 0 0 0 3.3 0H6.35Z" />
+  </svg>
+);
+
 // Two interlocking links — Connections.
 export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">

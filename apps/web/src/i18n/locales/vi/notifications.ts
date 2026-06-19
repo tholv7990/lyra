@@ -1,0 +1,12 @@
+export default {
+  label: 'Thông báo',
+  pending: '{{count}} lời mời',
+  loading: 'Đang tải…',
+  empty: 'Bạn đã xem hết. Lời mời tham gia không gian làm việc sẽ hiện ở đây.',
+  invitedYou: '{{inviter}} đã mời bạn vào {{workspace}} với vai trò {{role}}',
+  accept: 'Chấp nhận',
+  accepting: 'Đang chấp nhận…',
+  decline: 'Từ chối',
+  acceptFailed: 'Không thể chấp nhận lời mời. Hãy thử lại.',
+  declineFailed: 'Không thể từ chối lời mời. Hãy thử lại.',
+} as const;
