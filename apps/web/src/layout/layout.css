@@ -329,6 +329,13 @@
   text-overflow: ellipsis;
 }
 
+.ws-type {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+}
+
 .ws-chevron {
   margin-left: auto;
   color: var(--ink-muted);

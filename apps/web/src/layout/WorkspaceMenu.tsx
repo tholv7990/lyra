@@ -2,7 +2,17 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initial } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
-import { ChevronIcon, CheckIcon } from './icons';
+import { ChevronIcon, CheckIcon, MembersIcon, PersonIcon } from './icons';
+
+// Workspace type marker: a team (group) or personal (single person) icon,
+// shown next to the workspace name in the switcher.
+function WsType({ type }: { type: 'personal' | 'team' }) {
+  return (
+    <span className="ws-type" title={`${type === 'team' ? 'Team' : 'Personal'} workspace`}>
+      {type === 'team' ? <MembersIcon width={13} height={13} /> : <PersonIcon width={13} height={13} />}
+    </span>
+  );
+}
 
 export function WorkspaceMenu() {
   const { workspaces, current, setCurrent, createWorkspace } = useWorkspace();
@@ -51,6 +61,7 @@ export function WorkspaceMenu() {
       <button className="ws-trigger" onClick={() => setOpen((o) => !o)}>
         <span className="ws-avatar">{initial(current?.name ?? 'W', 'W')}</span>
         <span className="ws-name">{current?.name ?? 'Workspace'}</span>
+        {current && <WsType type={current.type} />}
         <ChevronIcon />
       </button>
 
@@ -67,7 +78,7 @@ export function WorkspaceMenu() {
             >
               <span className="ws-avatar">{initial(w.name, 'W')}</span>
               <span className="ws-name">{w.name}</span>
-              {w.type === 'personal' && <span className="tag">personal</span>}
+              <WsType type={w.type} />
               {w.id === current?.id && <CheckIcon />}
             </button>
           ))}
