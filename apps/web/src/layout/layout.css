@@ -8094,9 +8094,9 @@
   display: grid; place-items: center; font-size: var(--text-mini); font-weight: 600;
 }
 .notif-body { min-width: 0; }
-.notif-text { margin: 0 0 8px; font-size: var(--text-sm); color: var(--ink); }
+.notif-text { margin: 0 0 8px; font-size: var(--text-small); color: var(--ink); }
 .notif-actions { display: flex; gap: 6px; }
 .notif-actions .btn-primary,
 .notif-actions .btn-ghost { margin-top: 0; padding: 4px 10px; font-size: var(--text-mini); }
-.notif-empty { margin: 0; padding: 24px 12px; text-align: center; color: var(--ink-muted); font-size: var(--text-sm); }
+.notif-empty { margin: 0; padding: 24px 12px; text-align: center; color: var(--ink-muted); font-size: var(--text-small); }
 .notif-error { margin: 4px 0 0; padding: 0 10px; color: var(--danger); font-size: var(--text-mini); }
