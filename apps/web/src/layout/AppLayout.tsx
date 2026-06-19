@@ -36,6 +36,7 @@ const MODULES = [
   { path: '/publish', name: 'Publish' },
   { path: '/import', name: 'Import media' },
   { path: '/connections', name: 'Connections' },
+  { path: '/members', name: 'Members' },
   { path: '/settings', name: 'Settings' },
   { path: '/admin', name: 'Admin' },
 ];
@@ -81,6 +82,7 @@ export function AppLayout() {
     '/publish': 'nav.publish',
     '/import': 'nav.import',
     '/connections': 'nav.connections',
+    '/members': 'nav.members',
     '/settings': 'nav.settings',
     '/admin': 'nav.admin',
   };
@@ -152,11 +154,10 @@ export function AppLayout() {
               <span className="nav-txt">{t('nav.connections')}</span>
             </NavLink>
 
-            <div className="nav-item disabled" title="Members (soon)">
+            <NavLink to="/members" title={t('nav.members')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <MembersIcon />
-              <span className="nav-txt">Members</span>
-              <span className="soon">Soon</span>
-            </div>
+              <span className="nav-txt">{t('nav.members')}</span>
+            </NavLink>
             <NavLink to="/settings" title={t('nav.settings')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <SettingsIcon />
               <span className="nav-txt">{t('nav.settings')}</span>

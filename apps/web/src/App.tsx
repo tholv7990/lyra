@@ -27,6 +27,7 @@ import { Admin } from './pages/Admin';
 import { Connections } from './pages/Connections';
 import { PublishComposer } from './pages/PublishComposer';
 import { ImportMedia } from './pages/ImportMedia';
+import { Members } from './pages/Members';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -91,6 +92,7 @@ const router = createBrowserRouter([
       { path: 'publish', element: <PublishComposer /> },
       { path: 'import', element: <ImportMedia /> },
       { path: 'connections', element: <Connections /> },
+      { path: 'members', element: <Members /> },
       { path: 'settings', element: <Settings /> },
       { path: 'admin', element: <Admin /> },
     ],
