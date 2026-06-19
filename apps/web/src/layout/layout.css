@@ -605,6 +605,7 @@
 
 .gs-head-text {
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .gs-title {
@@ -703,6 +704,7 @@
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  flex: 1 1 0;
 }
 
 .gs-step-title {
@@ -723,11 +725,6 @@
 
 .gs-step-cta {
   margin-left: auto;
-  flex: none;
-  /* Override the form-default full-width primary button: in this inline step row
-     the CTA must size to its label, not stretch (which overflowed the row and
-     crushed the step title). */
-  width: auto;
   margin-top: 0;
   text-decoration: none;
 }

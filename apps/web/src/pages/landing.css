@@ -201,6 +201,7 @@
   -webkit-backdrop-filter: saturate(180%) blur(18px);
   border-bottom: 1px solid var(--l-hairline);
 }
+.l-nav .l-container { padding-inline: 0; }
 .l-nav-inner { height: 66px; display: flex; align-items: center; gap: 24px; }
 .l-brand { display: inline-flex; align-items: center; flex-shrink: 0; }
 .l-brand img { height: 26px; width: auto; }
@@ -221,7 +222,7 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  color: var(--ink-muted);
+  color: var(--l-ink-muted);
   background: transparent;
   padding: 0;
   cursor: pointer;
@@ -232,7 +233,7 @@
   align-items: center;
   gap: 6px;
   border: 0;
-  color: var(--ink-muted);
+  color: var(--l-ink-muted);
   background: transparent;
   padding: 4px 4px;
   cursor: pointer;
@@ -245,14 +246,14 @@
 .lyra-landing .pref-theme-toggle:hover,
 .lyra-landing .pref-lang-toggle:hover,
 .lyra-landing .l-nav-icon-action:hover {
-  color: var(--ink);
+  color: var(--l-ink);
 }
 .lyra-landing .pref-lang-flag {
   width: 18px;
   height: 12px;
   border-radius: 2px;
   flex: none;
-  box-shadow: 0 0 0 1px var(--hairline);
+  box-shadow: 0 0 0 1px var(--l-hairline);
 }
 
 /* ==========================================================================
@@ -566,6 +567,24 @@
 .l-make:nth-child(3n + 3),
 .l-feature-collage > div:nth-child(3) {
   background-image: linear-gradient(150deg, #ffab5e, #ff6b1a 58%, #ff5d73);
+}
+/* Dark mode: mute the fallback gradients so a not-yet-loaded image reads as a
+   warm dark panel, not a blast of light-mode orange against the dark canvas. */
+[data-theme='dark'] .l-make,
+[data-theme='dark'] .l-feature-photo,
+[data-theme='dark'] .l-feature-collage > div,
+[data-theme='dark'] .l-campaign-hero,
+[data-theme='dark'] .l-campaign-thumb {
+  background-color: var(--l-surface-3);
+  background-image: linear-gradient(135deg, #4a2412 0%, #5c2a18 48%, #3f1722 100%);
+}
+[data-theme='dark'] .l-make:nth-child(3n + 2),
+[data-theme='dark'] .l-feature-collage > div:nth-child(2) {
+  background-image: linear-gradient(135deg, #5c2a18, #3f1722);
+}
+[data-theme='dark'] .l-make:nth-child(3n + 3),
+[data-theme='dark'] .l-feature-collage > div:nth-child(3) {
+  background-image: linear-gradient(150deg, #5a3420, #4a2412 58%, #3f1722);
 }
 /* Hide alt text / the broken-image glyph so a missing photo shows only the
    gradient, never an empty box with an icon. */
@@ -1048,6 +1067,7 @@
 }
 @media (max-width: 640px) {
   .l-container { padding: 0 18px; }
+  .l-nav .l-container { padding-inline: 0; }
   .l-footer-grid { grid-template-columns: 1fr; }
 
   /* gallery collapses to single column with consistent height */

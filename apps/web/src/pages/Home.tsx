@@ -19,6 +19,7 @@ import {
   MembersIcon,
   CheckIcon,
   XIcon,
+  PlusIcon,
 } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
 
@@ -159,9 +160,11 @@ export function Home() {
                   ) : (
                     <Link
                       to={step.to}
-                      className={`${active ? 'btn-primary' : 'btn-ghost'} btn-sm gs-step-cta`}
+                      className={`icon-button ${active ? 'ib-primary' : 'ib-default'} ib-sm gs-step-cta`}
+                      title={t(`home.gs${label}Cta`)}
+                      aria-label={t(`home.gs${label}Cta`)}
                     >
-                      {t(`home.gs${label}Cta`)}
+                      <PlusIcon width={14} height={14} />
                     </Link>
                   )}
                 </li>
