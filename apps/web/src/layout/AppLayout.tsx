@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
+import { initials } from '../lib/format';
 import { BrandLogo } from '../components/BrandLogo';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
 import { WorkspaceMenu } from './WorkspaceMenu';
@@ -22,12 +23,6 @@ import {
   AdminIcon,
 } from './icons';
 import './layout.css';
-
-function initials(name?: string) {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
-}
 
 // Top-level sections. The breadcrumb derives the module from the current path;
 // detail pages add the record name via useBreadcrumb().

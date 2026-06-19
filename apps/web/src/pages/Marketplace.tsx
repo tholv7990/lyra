@@ -11,6 +11,8 @@ import {
 } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { marketplaceApi } from '../lib/marketplace';
+import { useOutsideClick } from '../lib/useOutsideClick';
+import { toggleInList } from '../lib/array';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
 import { MarketplaceDetails } from '../components/MarketplaceDetails';
@@ -31,12 +33,6 @@ const PAGE_SIZE = 30;
 const TYPE_VALUES = ['text', 'structured'] as const;
 // Tags can be a long list — collapse them behind a <details> like Prompts does.
 const TAG_COLLAPSE_THRESHOLD = 8;
-
-// Toggle a value in a multi-select filter list (add if absent, remove if present).
-// Mirrors the Prompts page helper.
-function toggleFilterValue<T>(list: T[], value: T): T[] {
-  return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
-}
 
 // Tracks the adopt state of a single row so the action can flip to "Added".
 type AdoptState = 'idle' | 'busy' | 'done';
@@ -125,18 +121,14 @@ export function Marketplace() {
   }, [ws]);
 
   // Close the filter popover on outside click or Escape (a11y, mirrors Prompts).
+  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
   useEffect(() => {
     if (!filterMenu) return;
-    const onDown = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterMenu(false);
-    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setFilterMenu(false);
     };
-    document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
   }, [filterMenu]);
@@ -285,7 +277,7 @@ export function Marketplace() {
                     key={ty}
                     type="button"
                     className="lin-menu-item"
-                    onClick={() => setTypes((list) => toggleFilterValue(list, ty))}
+                    onClick={() => setTypes((list) => toggleInList(list, ty))}
                   >
                     {ty === 'structured'
                       ? t('marketplace.typeStructured')
@@ -302,7 +294,7 @@ export function Marketplace() {
                         key={c}
                         type="button"
                         className="lin-menu-item"
-                        onClick={() => setCategories((list) => toggleFilterValue(list, c))}
+                        onClick={() => setCategories((list) => toggleInList(list, c))}
                       >
                         <span className="dot" style={{ background: labelColor(c, []) }} />
                         {c}
@@ -326,7 +318,7 @@ export function Marketplace() {
                           key={tag}
                           type="button"
                           className="lin-menu-item"
-                          onClick={() => setTags((list) => toggleFilterValue(list, tag))}
+                          onClick={() => setTags((list) => toggleInList(list, tag))}
                         >
                           <span className="dot" style={{ background: labelColor(tag, []) }} />
                           {tag}
@@ -342,7 +334,7 @@ export function Marketplace() {
                           key={tag}
                           type="button"
                           className="lin-menu-item"
-                          onClick={() => setTags((list) => toggleFilterValue(list, tag))}
+                          onClick={() => setTags((list) => toggleInList(list, tag))}
                         >
                           <span className="dot" style={{ background: labelColor(tag, []) }} />
                           {tag}

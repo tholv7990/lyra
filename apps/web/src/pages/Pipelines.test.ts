@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { Pipeline } from '@lyra/shared';
-import { pipelineMatchesFilters, pipelineNamePatch, pipelineTagVocab } from './Pipelines';
+import { pipelineMatchesFilters, pipelineTagVocab } from './Pipelines';
 
 // Minimal Pipeline factory — only the fields the filter helpers read.
 function pipe(over: Partial<Pipeline> & { name: string }): Pipeline {
@@ -19,14 +19,6 @@ function pipe(over: Partial<Pipeline> & { name: string }): Pipeline {
     updatedAt: '2026-06-18T00:00:00.000Z',
   } as Pipeline;
 }
-
-describe('pipelineNamePatch', () => {
-  test('returns a trimmed name patch only when the name changed', () => {
-    expect(pipelineNamePatch('Old name', ' New name ')).toEqual({ name: 'New name' });
-    expect(pipelineNamePatch('Old name', ' Old name ')).toBeNull();
-    expect(pipelineNamePatch('Old name', '   ')).toBeNull();
-  });
-});
 
 describe('pipelineTagVocab', () => {
   test('folds tag case (one chip per tag) and counts across casings', () => {

@@ -20,6 +20,7 @@ import {
   type PromptMedia,
 } from '@lyra/shared';
 import { api, streamSSE } from '../lib/api';
+import { initials } from '../lib/format';
 import { useModels, type ModelCatalog } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
 import { useAuth } from '../auth/useAuth';
@@ -34,11 +35,6 @@ import { useAppNav, useBreadcrumb } from '../layout/breadcrumb';
 
 function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
   return catalog[provider]?.find((m) => m.id === model)?.label ?? model;
-}
-function initials(name?: string) {
-  if (!name) return '?';
-  const p = name.trim().split(/\s+/);
-  return (p[0][0] + (p[1]?.[0] ?? '')).toUpperCase();
 }
 
 // Where this chat was opened from (e.g. a library prompt). Drives the breadcrumb

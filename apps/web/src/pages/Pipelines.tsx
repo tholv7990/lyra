@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
+import { fmtDate, initial, avatarStyle } from '../lib/format';
+import { useOutsideClick } from '../lib/useOutsideClick';
+import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
@@ -12,34 +15,7 @@ import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { PipelinesIcon, PlusIcon, XIcon } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
 
-function fmtDate(iso: string) {
-  const parts = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const month = parts.find((p) => p.type === 'month')?.value ?? '';
-  const day = parts.find((p) => p.type === 'day')?.value ?? '';
-  const year = parts.find((p) => p.type === 'year')?.value ?? '';
-  return [month, day, year].filter(Boolean).join(' ');
-}
-
-function initial(name?: string) {
-  return name?.trim().charAt(0).toUpperCase() || '?';
-}
-
-function avatarStyle(name?: string) {
-  const c = labelColor(name || 'User', []);
-  return { color: c, background: `${c}16` };
-}
-
 const PAGE_SIZE = 10;
-
-export function pipelineNamePatch(current: string, draft: string): { name: string } | null {
-  const name = draft.trim();
-  if (!name || name === current) return null;
-  return { name };
-}
 
 // Tag vocabulary for the filter menu: dedupe case-insensitively (first-seen
 // display casing wins), count usages, sort by count then name. Mirrors how the
@@ -133,14 +109,7 @@ export function Pipelines() {
   const filterCount = tagFilters.length + creatorFilters.length;
   useEffect(() => { setPage(1); }, [q, tagFilters, creatorFilters]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
-  useEffect(() => {
-    if (!filterMenu) return;
-    const onDown = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterMenu(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [filterMenu]);
+  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   const canEdit = (p: Pipeline) => !!user && (p.createdBy.id === user.id || current?.role === 'owner');
 
@@ -156,10 +125,6 @@ export function Pipelines() {
     } finally {
       setDeleting(false);
     }
-  }
-
-  function toggleFilterValue<T>(list: T[], value: T): T[] {
-    return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
   }
 
   return (
@@ -196,7 +161,7 @@ export function Pipelines() {
                 </summary>
                 {tagVocab.length === 0 && <div className="lin-menu-empty">{t('pipelines.noTags')}</div>}
                 {tagVocab.map(([tag, count]) => (
-                  <button key={tag} className="lin-menu-item" onClick={() => setTagFilters((list) => toggleFilterValue(list, tag))}>
+                  <button key={tag} className="lin-menu-item" onClick={() => setTagFilters((list) => toggleInList(list, tag))}>
                     <span className="dot" style={{ background: labelColor(tag, labels) }} />
                     {tag} <span className="lin-menu-count">{count}</span>
                     {tagFilters.includes(tag) && <span className="lin-menu-check">✓</span>}
@@ -210,7 +175,7 @@ export function Pipelines() {
                     {creatorFilters.length > 0 && <span className="lin-menu-summary-count">{creatorFilters.length}</span>}
                   </summary>
                   {creatorVocab.map((creator) => (
-                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleFilterValue(list, creator.id))}>
+                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleInList(list, creator.id))}>
                       <span className="dot" style={{ background: labelColor(creator.name, []) }} />
                       {creator.name} <span className="lin-menu-count">{creator.count}</span>
                       {creatorFilters.includes(creator.id) && <span className="lin-menu-check">✓</span>}

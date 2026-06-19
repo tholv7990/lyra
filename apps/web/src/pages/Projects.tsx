@@ -1,8 +1,12 @@
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { canEditProject, labelColor, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
+import { fmtDate, initial, avatarStyle } from '../lib/format';
+import { useOutsideClick } from '../lib/useOutsideClick';
+import { STATUS_COLOR } from '../lib/constants';
+import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -14,31 +18,6 @@ const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
   [ProjectStatus.Public]: 'projects.statusPublic',
 };
-const STATUS_COLOR: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'var(--warning)',
-  [ProjectStatus.Public]: 'var(--success)',
-};
-
-function fmtDate(iso: string) {
-  const parts = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const month = parts.find((p) => p.type === 'month')?.value ?? '';
-  const day = parts.find((p) => p.type === 'day')?.value ?? '';
-  const year = parts.find((p) => p.type === 'year')?.value ?? '';
-  return [month, day, year].filter(Boolean).join(' ');
-}
-
-function initial(name?: string) {
-  return name?.trim().charAt(0).toUpperCase() || '?';
-}
-
-function avatarStyle(name?: string): CSSProperties {
-  const c = labelColor(name || 'User', []);
-  return { color: c, background: `${c}16` };
-}
 
 const PAGE_SIZE = 10;
 
@@ -100,14 +79,7 @@ export function Projects() {
   const filterCount = statusFilters.length + creatorFilters.length;
   useEffect(() => { setPage(1); }, [q, statusFilters, creatorFilters]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
-  useEffect(() => {
-    if (!filterMenu) return;
-    const onDown = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterMenu(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [filterMenu]);
+  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   function canEdit(p: Project) {
     if (!current || !user) return false;
@@ -129,10 +101,6 @@ export function Projects() {
     } finally {
       setDeleting(false);
     }
-  }
-
-  function toggleFilterValue<T>(list: T[], value: T): T[] {
-    return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
   }
 
   return (
@@ -164,7 +132,7 @@ export function Projects() {
               </div>
               <div className="lin-menu-label">{t('projects.status')}</div>
               {Object.values(ProjectStatus).map((status) => (
-                <button key={status} className="lin-menu-item" onClick={() => setStatusFilters((list) => toggleFilterValue(list, status))}>
+                <button key={status} className="lin-menu-item" onClick={() => setStatusFilters((list) => toggleInList(list, status))}>
                   <span className="dot" style={{ background: STATUS_COLOR[status] }} />
                   {t(STATUS_KEY[status])}
                   {statusFilters.includes(status) && <span className="lin-menu-check">✓</span>}
@@ -177,7 +145,7 @@ export function Projects() {
                     {creatorFilters.length > 0 && <span className="lin-menu-summary-count">{creatorFilters.length}</span>}
                   </summary>
                   {creatorVocab.map((creator) => (
-                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleFilterValue(list, creator.id))}>
+                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleInList(list, creator.id))}>
                       <span className="dot" style={{ background: labelColor(creator.name, []) }} />
                       {creator.name} <span className="lin-menu-count">{creator.count}</span>
                       {creatorFilters.includes(creator.id) && <span className="lin-menu-check">✓</span>}

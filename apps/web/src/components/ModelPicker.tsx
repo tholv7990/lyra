@@ -1,15 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Provider } from '@lyra/shared';
+import { PROVIDER_LABELS } from '../lib/constants';
+import { useOutsideClick } from '../lib/useOutsideClick';
 import type { ModelCatalog } from '../lib/useModels';
 
-const PROVIDER_LABELS: Record<Provider, string> = {
-  [Provider.OpenAI]: 'OpenAI',
-  [Provider.Anthropic]: 'Anthropic',
-  [Provider.DeepSeek]: 'DeepSeek',
-  [Provider.Image]: 'Image',
-  [Provider.Video]: 'Video',
-  [Provider.Crawl]: 'Crawl',
-};
 const PROVIDERS = Object.values(Provider);
 
 // Compact provider·model pill + dropdown (matches the testing chat). The menu
@@ -28,14 +22,7 @@ export function ModelPicker({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
+  useOutsideClick(ref, open, () => setOpen(false));
 
   const label = catalog[provider]?.find((m) => m.id === model)?.label ?? model;
 

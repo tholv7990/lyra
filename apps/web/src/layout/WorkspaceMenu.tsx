@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { initial } from '../lib/format';
+import { useOutsideClick } from '../lib/useOutsideClick';
 import { ChevronIcon, CheckIcon } from './icons';
-
-function initial(name: string) {
-  return (name.trim()[0] ?? 'W').toUpperCase();
-}
 
 export function WorkspaceMenu() {
   const { workspaces, current, setCurrent, createWorkspace } = useWorkspace();
@@ -16,21 +14,17 @@ export function WorkspaceMenu() {
   const ref = useRef<HTMLDivElement>(null);
 
   // Close on outside click / Escape.
+  useOutsideClick(ref, open, () => {
+    setOpen(false);
+    setCreating(false);
+  });
   useEffect(() => {
     if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setCreating(false);
-      }
-    }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false);
     }
-    document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -55,7 +49,7 @@ export function WorkspaceMenu() {
   return (
     <div className="ws" ref={ref}>
       <button className="ws-trigger" onClick={() => setOpen((o) => !o)}>
-        <span className="ws-avatar">{initial(current?.name ?? 'W')}</span>
+        <span className="ws-avatar">{initial(current?.name ?? 'W', 'W')}</span>
         <span className="ws-name">{current?.name ?? 'Workspace'}</span>
         <ChevronIcon />
       </button>
@@ -71,7 +65,7 @@ export function WorkspaceMenu() {
                 setOpen(false);
               }}
             >
-              <span className="ws-avatar">{initial(w.name)}</span>
+              <span className="ws-avatar">{initial(w.name, 'W')}</span>
               <span className="ws-name">{w.name}</span>
               {w.type === 'personal' && <span className="tag">personal</span>}
               {w.id === current?.id && <CheckIcon />}

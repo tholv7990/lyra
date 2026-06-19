@@ -1,27 +1,11 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PromptStatus, labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
+import { fmtDate, initial } from '../lib/format';
 import { PromptCodeBlock } from './PromptCodeBlock';
 import { PromptHistory } from './PromptHistory';
 import { ProviderIcon } from './ProviderIcon';
 import { XIcon } from '../layout/icons';
-
-function initial(name?: string) {
-  const n = (name ?? '').trim();
-  return n ? n[0].toUpperCase() : '?';
-}
-
-function fmtDate(iso: string) {
-  const parts = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const month = parts.find((p) => p.type === 'month')?.value ?? '';
-  const day = parts.find((p) => p.type === 'day')?.value ?? '';
-  const year = parts.find((p) => p.type === 'year')?.value ?? '';
-  return [month, day, year].filter(Boolean).join(' ');
-}
 
 // {word} placeholders in the body, de-duped (skips {step:Name} refs).
 function promptVars(content: string): string[] {

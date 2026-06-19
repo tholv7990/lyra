@@ -1,9 +1,8 @@
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
-  labelColor,
   providerNeedsKey,
   keyProviderFor,
   ProjectStatus,
@@ -17,6 +16,7 @@ import {
   type Run,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { fmtDate, initial, avatarStyle } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useIsMobile } from '../lib/useIsMobile';
@@ -46,27 +46,6 @@ const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
   [ProjectStatus.Public]: 'projects.statusPublic',
 };
-
-function fmtDate(iso: string) {
-  const parts = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const month = parts.find((p) => p.type === 'month')?.value ?? '';
-  const day = parts.find((p) => p.type === 'day')?.value ?? '';
-  const year = parts.find((p) => p.type === 'year')?.value ?? '';
-  return [month, day, year].filter(Boolean).join(' ');
-}
-
-function initial(name?: string) {
-  return name?.trim().charAt(0).toUpperCase() || '?';
-}
-
-function avatarStyle(name?: string): CSSProperties {
-  const c = labelColor(name || 'User', []);
-  return { color: c, background: `${c}16` };
-}
 
 // Distinct collection names the pipeline's fan-out steps map over.
 function fanOutNames(p: Pipeline): string[] {

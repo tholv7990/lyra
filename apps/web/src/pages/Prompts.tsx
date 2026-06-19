@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,6 +15,10 @@ import {
   type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { fmtDate, initial, avatarStyle } from '../lib/format';
+import { useOutsideClick } from '../lib/useOutsideClick';
+import { PROVIDER_LABELS, STATUS_COLOR } from '../lib/constants';
+import { toggleInList } from '../lib/array';
 import { TYPE_COLOR } from '../lib/promptType';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -26,18 +30,6 @@ import { ProviderIcon } from '../components/ProviderIcon';
 import { ChatsIcon, EyeIcon, PromptsIcon, PlusIcon, XIcon } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
 
-const STATUS_COLOR: Record<PromptStatus, string> = {
-  [PromptStatus.Draft]: 'var(--warning)',
-  [PromptStatus.Public]: 'var(--success)',
-};
-const PROVIDER_LABEL: Record<Provider, string> = {
-  [Provider.OpenAI]: 'OpenAI',
-  [Provider.Anthropic]: 'Anthropic',
-  [Provider.DeepSeek]: 'DeepSeek',
-  [Provider.Image]: 'Image',
-  [Provider.Video]: 'Video',
-  [Provider.Crawl]: 'Crawl',
-};
 const PAGE_SIZE = 15;
 
 interface PromptQueryOptions {
@@ -70,27 +62,6 @@ export function buildPromptQuery({
   types.forEach((ty) => params.append('type', ty));
   if (q.trim()) params.set('q', q.trim());
   return params.toString();
-}
-
-function fmtDate(iso: string) {
-  const parts = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const month = parts.find((p) => p.type === 'month')?.value ?? '';
-  const day = parts.find((p) => p.type === 'day')?.value ?? '';
-  const year = parts.find((p) => p.type === 'year')?.value ?? '';
-  return [month, day, year].filter(Boolean).join(' ');
-}
-
-function initial(name?: string) {
-  return name?.trim().charAt(0).toUpperCase() || '?';
-}
-
-function avatarStyle(name?: string): CSSProperties {
-  const c = labelColor(name || 'User', []);
-  return { color: c, background: `${c}16` };
 }
 
 export function Prompts() {
@@ -141,14 +112,7 @@ export function Prompts() {
   useEffect(() => setPage(1), [statuses, tags, createdBy, providers, types, q]);
 
   // close the filter menu on outside click
-  useEffect(() => {
-    if (!filterMenu) return;
-    const onDown = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterMenu(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [filterMenu]);
+  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   const buildQuery = () =>
     buildPromptQuery({ page, limit: PAGE_SIZE, statuses, tags, createdBy, providers, types, q });
@@ -196,10 +160,6 @@ export function Prompts() {
     api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?${buildQuery()}`)
       .then((res) => { setPrompts(res.items); setTotal(res.total); })
       .catch(() => undefined);
-  }
-
-  function toggleFilterValue<T>(list: T[], value: T): T[] {
-    return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
   }
 
   // Open a prompt in a new chat: go to the chat page with the prompt's content +
@@ -301,7 +261,7 @@ export function Prompts() {
               </div>
               <div className="lin-menu-label">{t('prompts.filterStatus')}</div>
               {[PromptStatus.Draft, PromptStatus.Public].map((s) => (
-                <button key={s} className="lin-menu-item" onClick={() => setStatuses((list) => toggleFilterValue(list, s))}>
+                <button key={s} className="lin-menu-item" onClick={() => setStatuses((list) => toggleInList(list, s))}>
                   <span className="dot" style={{ background: STATUS_COLOR[s] }} />
                   {statusLabel(s)}
                   {statuses.includes(s) && <span className="lin-menu-check">✓</span>}
@@ -309,7 +269,7 @@ export function Prompts() {
               ))}
               <div className="lin-menu-label">{t('prompts.filterType')}</div>
               {Object.values(PromptType).map((ty) => (
-                <button key={ty} className="lin-menu-item" onClick={() => setTypes((list) => toggleFilterValue(list, ty))}>
+                <button key={ty} className="lin-menu-item" onClick={() => setTypes((list) => toggleInList(list, ty))}>
                   <span className="dot" style={{ background: TYPE_COLOR[ty] }} />
                   {t(`prompts.type.${ty}`)}
                   {types.includes(ty) && <span className="lin-menu-check">✓</span>}
@@ -322,7 +282,7 @@ export function Prompts() {
                 </summary>
                 {vocab.length === 0 && <div className="lin-menu-empty">{t('prompts.noPromptTags')}</div>}
                 {vocab.map((t) => (
-                  <button key={t.value} className="lin-menu-item" onClick={() => setTags((list) => toggleFilterValue(list, t.value))}>
+                  <button key={t.value} className="lin-menu-item" onClick={() => setTags((list) => toggleInList(list, t.value))}>
                     <span className="dot" style={{ background: labelColor(t.value, labels) }} />
                     {t.value} <span className="lin-menu-count">{t.count}</span>
                     {tags.includes(t.value) && <span className="lin-menu-check">✓</span>}
@@ -331,9 +291,9 @@ export function Prompts() {
               </details>
               {providerVocab.length > 0 && <div className="lin-menu-label">{t('prompts.filterProvider')}</div>}
               {providerVocab.map(([provider, count]) => (
-                <button key={provider} className="lin-menu-item" onClick={() => setProviders((list) => toggleFilterValue(list, provider))}>
+                <button key={provider} className="lin-menu-item" onClick={() => setProviders((list) => toggleInList(list, provider))}>
                   <ProviderIcon provider={provider} size={14} />
-                  {PROVIDER_LABEL[provider]} <span className="lin-menu-count">{count}</span>
+                  {PROVIDER_LABELS[provider]} <span className="lin-menu-count">{count}</span>
                   {providers.includes(provider) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
@@ -344,7 +304,7 @@ export function Prompts() {
                     {createdBy.length > 0 && <span className="lin-menu-summary-count">{createdBy.length}</span>}
                   </summary>
                   {creators.map((creator) => (
-                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatedBy((list) => toggleFilterValue(list, creator.id))}>
+                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatedBy((list) => toggleInList(list, creator.id))}>
                       <span className="dot" style={{ background: labelColor(creator.name, []) }} />
                       {creator.name} <span className="lin-menu-count">{creator.count}</span>
                       {createdBy.includes(creator.id) && <span className="lin-menu-check">✓</span>}

@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +11,7 @@ import {
   tagKey,
   type LabelInfo,
 } from '@lyra/shared';
+import { useOutsideClick } from '../lib/useOutsideClick';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 
 interface LabelPickerProps {
@@ -54,14 +54,7 @@ export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerPr
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  useEffect(() => {
-    if (!open) return;
-    function onDoc(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) close();
-    }
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
+  useOutsideClick(wrapRef, open, close);
 
   function toggle(name: string) {
     if (selected.has(tagKey(name))) {

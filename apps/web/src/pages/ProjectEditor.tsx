@@ -8,6 +8,7 @@ import {
   type ProjectVariable,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { STATUS_COLOR } from '../lib/constants';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
@@ -17,10 +18,6 @@ import { useBreadcrumb } from '../layout/breadcrumb';
 const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
   [ProjectStatus.Public]: 'projects.statusPublic',
-};
-const STATUS_COLOR: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'var(--warning)',
-  [ProjectStatus.Public]: 'var(--success)',
 };
 // Shown beneath the toggle; reflects what the current status actually does.
 // (Member-level sharing is deferred — a public project is visible to everyone.)

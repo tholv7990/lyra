@@ -1,13 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
+import { initial } from '../lib/format';
 import { EyeIcon, FilterIcon } from '../layout/icons';
 import { PromptDetails } from './PromptDetails';
-
-function initial(name?: string) {
-  const n = (name ?? '').trim();
-  return n ? n[0].toUpperCase() : '?';
-}
 
 // Add-step prompt picker (Linear-style). Search by name + a Filter button that
 // reveals tag chips. Each card: name + eye (view full), a 2-line snippet, then
