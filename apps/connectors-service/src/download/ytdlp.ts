@@ -110,6 +110,38 @@ export function runYtDlp(
   });
 }
 
+// Some extractors fail transiently for the SAME link — TikTok notably serves a
+// page missing the rehydration blob ~half the time, and 5xx/timeouts come and go.
+// Worth retrying; permanent reasons (unavailable, private, sign-in) are not.
+const TRANSIENT = /rehydration|Unable to extract|Failed to (parse|extract)|HTTP Error 5\d\d|timed out|temporarily/i;
+export function isTransient(reason: string): boolean {
+  return TRANSIENT.test(reason);
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Run yt-dlp, re-invoking on transient extraction failures (with a small backoff
+// so we don't hammer the site). Permanent reasons fail fast. 4 tries turns
+// TikTok's ~50% per-try success into ~94%.
+export async function runYtDlpRetrying(
+  args: string[],
+  attempts = 4,
+  timeoutMs?: number,
+  onProgress?: (pct: number) => void,
+): Promise<{ stdout: string }> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await sleep(500);
+    try {
+      return await runYtDlp(args, timeoutMs, onProgress);
+    } catch (err) {
+      last = err;
+      if (!isTransient(ytDlpReason(err))) throw err;
+    }
+  }
+  throw last;
+}
+
 // Turn a yt-dlp failure into a short, user-facing reason. yt-dlp emits e.g.
 // "ERROR: [youtube] ID: This video is not available" — strip the "yt-dlp exited N:",
 // the "[extractor]" tag, and a leading "<id>:" so the line reads plainly. Falls

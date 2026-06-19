@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { mkdtemp, readdir } from 'node:fs/promises';
 import type { MediaItem } from '@lyra/shared';
 import { assertSafeUrl } from '../common/url';
-import { downloadArgs, mapResolveJson, resolveArgs, runYtDlp, ytDlpReason } from './ytdlp';
+import { downloadArgs, mapResolveJson, resolveArgs, runYtDlpRetrying, ytDlpReason } from './ytdlp';
 import { FileStore } from './file-store';
 import { DownloadJobStore, ServiceDownloadJob } from './download-job-store';
 
@@ -25,7 +25,7 @@ export class DownloadService {
 
   async resolve(url: string): Promise<MediaItem[]> {
     assertSafeUrl(url);
-    const { stdout } = await runYtDlp(resolveArgs(url));
+    const { stdout } = await runYtDlpRetrying(resolveArgs(url));
     return mapResolveJson(JSON.parse(stdout));
   }
 
@@ -42,7 +42,7 @@ export class DownloadService {
   private async runJob(id: string, url: string, indices?: number[], format?: string): Promise<void> {
     try {
       const dir = await mkdtemp(join(tmpdir(), 'lyra-dl-'));
-      await runYtDlp(downloadArgs(url, join(dir, '%(id)s.%(ext)s'), indices, format), 600_000, (pct) =>
+      await runYtDlpRetrying(downloadArgs(url, join(dir, '%(id)s.%(ext)s'), indices, format), 4, 600_000, (pct) =>
         this.jobs.update(id, { pct }),
       );
       const files = await readdir(dir);

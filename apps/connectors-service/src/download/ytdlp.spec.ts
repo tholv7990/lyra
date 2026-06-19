@@ -6,6 +6,7 @@ import {
   ytDlpReason,
   qualitiesFromFormats,
   parsePercents,
+  isTransient,
 } from './ytdlp';
 
 describe('typeFromExt', () => {
@@ -55,6 +56,20 @@ describe('arg builders', () => {
   });
   it('downloadArgs requests --newline so progress is parseable', () => {
     expect(downloadArgs('https://x/v', '/tmp/o')).toContain('--newline');
+  });
+});
+
+describe('isTransient', () => {
+  it('retries flaky extraction reasons (TikTok rehydration, 5xx, timeouts)', () => {
+    expect(isTransient('Unable to extract universal data for rehydration; please report')).toBe(true);
+    expect(isTransient('Unable to extract webpage')).toBe(true);
+    expect(isTransient('HTTP Error 503: Service Unavailable')).toBe(true);
+    expect(isTransient('The read operation timed out')).toBe(true);
+  });
+  it('does not retry permanent reasons', () => {
+    expect(isTransient('This video is not available')).toBe(false);
+    expect(isTransient("Sign in to confirm you're not a bot")).toBe(false);
+    expect(isTransient('Video is private')).toBe(false);
   });
 });
 
