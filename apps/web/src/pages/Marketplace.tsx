@@ -1,14 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  MarketplacePrompt,
-  RankedMarketplacePrompt,
+import { useNavigate } from 'react-router-dom';
+import {
+  Provider,
+  defaultModel,
+  type MarketplacePrompt,
+  type RankedMarketplacePrompt,
 } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { marketplaceApi } from '../lib/marketplace';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
-import { MarketplaceIcon, PlusIcon } from '../layout/icons';
+import { MarketplaceDetails } from '../components/MarketplaceDetails';
+import {
+  ChatsIcon,
+  CheckIcon,
+  CopyIcon,
+  EyeIcon,
+  MarketplaceIcon,
+  PlusIcon,
+} from '../layout/icons';
 import './marketplace.css';
 
 const PAGE_SIZE = 30;
@@ -19,6 +30,7 @@ type AdoptState = 'idle' | 'busy' | 'done';
 export function Marketplace() {
   const { t } = useTranslation();
   const { current } = useWorkspace();
+  const navigate = useNavigate();
   const ws = current?.id;
 
   // Browse state
@@ -36,9 +48,13 @@ export function Marketplace() {
   const [rankedFor, setRankedFor] = useState('');
   const [ranking, setRanking] = useState(false);
 
-  // Per-row adopt state + a transient confirmation toast.
+  // Per-card adopt state, transient copy confirmation, and a toast.
   const [adopt, setAdopt] = useState<Record<string, AdoptState>>({});
+  const [copied, setCopied] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // The catalog prompt shown in the detail modal (null = closed).
+  const [detail, setDetail] = useState<MarketplacePrompt | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -110,8 +126,46 @@ export function Marketplace() {
     }
   }
 
+  // Copy the raw prompt to the clipboard — the grab-and-go action this catalog
+  // is built around. Flips the icon to a check for a beat.
+  function copyPrompt(p: MarketplacePrompt) {
+    void navigator.clipboard?.writeText(p.content);
+    setCopied(p.id);
+    setToast(t('marketplace.copiedToast', { title: p.title }));
+    window.setTimeout(() => setToast(null), 2400);
+    window.setTimeout(() => setCopied((c) => (c === p.id ? null : c)), 1500);
+  }
+
+  // Try the prompt immediately in a fresh chat (composer pre-seeded). Not a
+  // library prompt yet, so no originPromptId — just a draft with a back-link.
+  function openInChat(p: MarketplacePrompt) {
+    navigate('/chats', {
+      state: {
+        seed: p.content,
+        provider: Provider.Anthropic,
+        model: defaultModel(Provider.Anthropic),
+        from: { label: t('marketplace.heading'), to: '/marketplace', record: p.title },
+      },
+    });
+  }
+
   const showRanked = ranked !== null;
   const rankedEmpty = showRanked && ranked!.length === 0;
+
+  const card = (p: MarketplacePrompt, rank?: RankedMarketplacePrompt) => (
+    <Card
+      key={p.id}
+      prompt={p}
+      rank={rank}
+      state={adopt[p.id] ?? 'idle'}
+      copied={copied === p.id}
+      onAdopt={() => void adoptPrompt(p)}
+      onView={() => setDetail(p)}
+      onCopy={() => copyPrompt(p)}
+      onOpenInChat={() => openInChat(p)}
+      t={t}
+    />
+  );
 
   return (
     <div>
@@ -175,25 +229,14 @@ export function Marketplace() {
 
       {error && <p className="error">{error}</p>}
 
-      {/* Body: loading / empty / catalog rows */}
+      {/* Body: loading / empty / catalog cards */}
       {!showRanked && loading ? (
         <p className="empty">{t('marketplace.loading')}</p>
       ) : showRanked ? (
         rankedEmpty ? (
           <p className="empty">{t('marketplace.noRanked')}</p>
         ) : (
-          <div className="ptable t-marketplace">
-            {ranked!.map((r) => (
-              <Row
-                key={r.prompt.id}
-                prompt={r.prompt}
-                rank={r}
-                state={adopt[r.prompt.id] ?? 'idle'}
-                onAdopt={() => void adoptPrompt(r.prompt)}
-                t={t}
-              />
-            ))}
-          </div>
+          <div className="mkt-grid">{ranked!.map((r) => card(r.prompt, r))}</div>
         )
       ) : items.length === 0 ? (
         q.trim() || forDevs ? (
@@ -207,17 +250,7 @@ export function Marketplace() {
         )
       ) : (
         <>
-          <div className="ptable t-marketplace">
-            {items.map((p) => (
-              <Row
-                key={p.id}
-                prompt={p}
-                state={adopt[p.id] ?? 'idle'}
-                onAdopt={() => void adoptPrompt(p)}
-                t={t}
-              />
-            ))}
-          </div>
+          <div className="mkt-grid">{items.map((p) => card(p))}</div>
           {totalPages > 1 && (
             <div className="pager">
               <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
@@ -232,6 +265,18 @@ export function Marketplace() {
         </>
       )}
 
+      {detail && (
+        <MarketplaceDetails
+          prompt={detail}
+          state={adopt[detail.id] ?? 'idle'}
+          copied={copied === detail.id}
+          onAdopt={() => void adoptPrompt(detail)}
+          onCopy={() => copyPrompt(detail)}
+          onOpenInChat={() => openInChat(detail)}
+          onClose={() => setDetail(null)}
+        />
+      )}
+
       {toast && (
         <div className="mkt-toast" role="status" aria-live="polite">
           {toast}
@@ -243,70 +288,97 @@ export function Marketplace() {
 
 type TFn = ReturnType<typeof useTranslation>['t'];
 
-interface RowProps {
+interface CardProps {
   prompt: MarketplacePrompt;
   rank?: RankedMarketplacePrompt;
   state: AdoptState;
+  copied: boolean;
   onAdopt: () => void;
+  onView: () => void;
+  onCopy: () => void;
+  onOpenInChat: () => void;
   t: TFn;
 }
 
-// One catalog entry — shares the app's .prow list-row treatment (Prompts/Pipelines).
-function Row({ prompt, rank, state, onAdopt, t }: RowProps) {
+// One catalog entry as a browsable card — prompts.chat-style gallery in the
+// app's own tokens. Title/body open the detail modal; copy / open-in-chat /
+// adopt are the grab-and-go actions.
+function Card({ prompt, rank, state, copied, onAdopt, onView, onCopy, onOpenInChat, t }: CardProps) {
   const contributor = prompt.contributor?.trim();
   const done = state === 'done';
   return (
-    <div className="prow">
-      <div className="prow-namecell">
-        <span className="prow-name">
+    <article className="mkt-card">
+      <div className="mkt-card-head">
+        <button type="button" className="mkt-card-title" onClick={onView} title={t('marketplace.view')}>
           <span className="nm">{prompt.title}</span>
-        </span>
-        {rank && (
-          <span className="mkt-rank">
-            <span className="mkt-rank-score">{t('marketplace.relevance', { score: Math.round(rank.score) })}</span>
-            {rank.reason && <span className="mkt-rank-reason">{rank.reason}</span>}
+        </button>
+        <span className="mkt-card-badges">
+          {prompt.forDevs && <span className="badge mkt-dev">{t('marketplace.devBadge')}</span>}
+          <span className="badge mkt-type">
+            {prompt.type === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
           </span>
-        )}
-        <span className="prow-sniprow">
-          <span className="snip">{prompt.content}</span>
         </span>
       </div>
 
-      <span className="prow-tags">
-        {prompt.variables.slice(0, 4).map((v) => (
-          <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
-        ))}
-        {prompt.variables.length > 4 && (
-          <span className="more">+{prompt.variables.length - 4}</span>
-        )}
-      </span>
+      {rank && (
+        <div className="mkt-rank">
+          <span className="mkt-rank-score">{t('marketplace.relevance', { score: Math.round(rank.score) })}</span>
+          {rank.reason && <span className="mkt-rank-reason">{rank.reason}</span>}
+        </div>
+      )}
 
-      <span className="prow-status">
-        {prompt.forDevs && <span className="badge mkt-dev">{t('marketplace.devBadge')}</span>}
-      </span>
+      {/* Prompt preview in a monospace code-block (prompts.chat's signature look);
+          a plain block clamps reliably, title + eye are the accessible openers. */}
+      <p className="mkt-card-code" onClick={onView} title={t('marketplace.view')}>
+        {prompt.content}
+      </p>
 
-      <span className="prow-facts">
-        <span className="prow-date" title={t('marketplace.openSource', { source: prompt.source })}>
-          {contributor
-            ? t('marketplace.by', { name: contributor })
-            : t('marketplace.byUnknown')}
+      {prompt.variables.length > 0 && (
+        <div className="mkt-card-vars">
+          {prompt.variables.slice(0, 5).map((v) => (
+            <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
+          ))}
+          {prompt.variables.length > 5 && <span className="more">+{prompt.variables.length - 5}</span>}
+        </div>
+      )}
+
+      <div className="mkt-card-foot">
+        <span className="mkt-card-by" title={t('marketplace.openSource', { source: prompt.source })}>
+          {contributor ? t('marketplace.by', { name: contributor }) : t('marketplace.byUnknown')}
         </span>
-      </span>
-
-      <span className="prow-actions">
-        {done ? (
-          <span className="mkt-added">{t('marketplace.added')}</span>
-        ) : (
+        <div className="mkt-card-actions">
           <IconButton
-            variant="primary"
             size="sm"
-            icon={<PlusIcon width={14} height={14} />}
-            label={state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
-            disabled={state === 'busy'}
-            onClick={onAdopt}
+            icon={copied ? <CheckIcon width={15} height={15} /> : <CopyIcon width={15} height={15} />}
+            label={copied ? t('marketplace.copied') : t('marketplace.copy')}
+            onClick={onCopy}
           />
-        )}
-      </span>
-    </div>
+          <IconButton
+            size="sm"
+            icon={<ChatsIcon width={15} height={15} />}
+            label={t('marketplace.openInChat')}
+            onClick={onOpenInChat}
+          />
+          <IconButton
+            size="sm"
+            icon={<EyeIcon width={15} height={15} />}
+            label={t('marketplace.view')}
+            onClick={onView}
+          />
+          {done ? (
+            <span className="mkt-added">{t('marketplace.added')}</span>
+          ) : (
+            <IconButton
+              variant="primary"
+              size="sm"
+              icon={<PlusIcon width={14} height={14} />}
+              label={state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
+              disabled={state === 'busy'}
+              onClick={onAdopt}
+            />
+          )}
+        </div>
+      </div>
+    </article>
   );
 }

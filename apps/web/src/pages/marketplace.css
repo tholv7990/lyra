@@ -1,8 +1,9 @@
 /* ===== Prompt Marketplace =====
-   The catalog reuses the shared .ptable/.prow list rows (see Prompts/Pipelines)
-   and the .lin-toolbar / .pager toolbar; only the pieces unique to this page
-   live here. All values are :root tokens (docs/lyra-design-system-actions.md);
-   motion is covered by the global prefers-reduced-motion rule in index.css. */
+   A browsable card gallery (prompts.chat-inspired) on the app's own tokens,
+   with the shared .lin-toolbar / .pager and .dialog / .pd-* detail shell. Only
+   the gallery + card pieces unique to this page live here. All values are :root
+   tokens (docs/lyra-design-system-actions.md); motion is covered by the global
+   prefers-reduced-motion rule in index.css. */
 
 /* AI filter — the prominent control. .lin-search + .btn-primary do the styling;
    this only lays them out side by side and unsticks the button's default 100%. */
@@ -52,10 +53,130 @@
   color: var(--ink-muted);
 }
 
-/* Catalog column layout — extends the shared grid with marketplace columns:
-   title/rank/snippet · variables · dev badge · contributor · adopt action. */
-.ptable.t-marketplace .prow {
-  grid-template-columns: minmax(260px, 1fr) minmax(120px, 200px) 96px 160px 64px;
+/* Catalog gallery — a browsable card grid (prompts.chat-style) in the app's
+   own tokens. Cards reflow to fit; no fixed breakpoints needed. */
+.mkt-grid {
+  display: grid;
+  /* min(100%, 260px) so the column floor never exceeds the container width
+     (a hard 260px floor overflows narrow columns — the page-break bug). */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.mkt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0; /* grid item: allow it to shrink instead of forcing overflow */
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.mkt-card:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Title is a button (opens the detail modal) — strip the native chrome. */
+.mkt-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mkt-card-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: var(--text-normal);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.mkt-card-title .nm {
+  overflow-wrap: anywhere;
+}
+
+.mkt-card-title:hover .nm {
+  color: var(--primary);
+}
+
+.mkt-card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Neutral outlined type pill (Text / Structured), like prompts.chat. */
+.mkt-type {
+  color: var(--ink-muted);
+  background: transparent;
+  border-color: var(--hairline-strong);
+}
+
+/* Prompt preview as a monospace code-block, clamped to 4 lines + ellipsis
+   (a block <p>, so the clamp is reliable). Full text lives in the modal. */
+.mkt-card-code {
+  flex: 1;
+  margin: 0;
+  cursor: pointer;
+  padding: 12px;
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: var(--text-mini);
+  line-height: 1.55;
+  color: var(--ink-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.mkt-card-vars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.mkt-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+}
+
+.mkt-card-by {
+  min-width: 0;
+  font-size: var(--text-micro);
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mkt-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 /* AI relevance — quiet metadata under the title, not a loud chip row. */
@@ -105,6 +226,29 @@
   white-space: nowrap;
 }
 
+/* Detail modal — reuses the shared .dialog / .pd-* shell; only the adopt
+   footer is marketplace-specific. */
+.mkt-details-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+.mkt-details-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mkt-details-act,
+.mkt-details-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Toast confirmation — the only one in the app, so it lives here. */
 .mkt-toast {
   position: fixed;
@@ -134,28 +278,22 @@
   }
 }
 
-/* Tablet — tighten the catalog columns alongside the shared breakpoint. */
-@media (max-width: 1060px) and (min-width: 761px) {
-  .ptable.t-marketplace .prow {
-    grid-template-columns: minmax(220px, 1fr) minmax(110px, 170px) 88px 132px 64px;
-    gap: 10px;
-  }
-}
-
-/* Mobile — collapse to stacked rows, matching the shared .prow mobile pattern. */
-@media (max-width: 760px) {
-  .ptable.t-marketplace .prow {
-    grid-template-columns: minmax(0, 1fr) 64px;
-    grid-template-areas:
-      'name actions'
-      'snippet snippet'
-      'tags status'
-      'date date';
+/* Mobile — single-column cards; AI button and modal footer go full width. */
+@media (max-width: 560px) {
+  .mkt-grid {
+    grid-template-columns: 1fr;
   }
   .mkt-ai {
     flex-wrap: wrap;
   }
   .mkt-ai-go {
     width: 100%;
+  }
+  .mkt-details-foot {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .mkt-details-left {
+    justify-content: center;
   }
 }

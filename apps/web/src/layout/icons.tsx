@@ -111,6 +111,29 @@ export const CheckIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const CopyIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <rect
+      x="5.4"
+      y="5.4"
+      width="8.6"
+      height="8.6"
+      rx="2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    />
+    <path
+      d="M3.5 10.5A1.5 1.5 0 0 1 2 9V3.5A1.5 1.5 0 0 1 3.5 2H9a1.5 1.5 0 0 1 1.5 1.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 // Solid X (the plus glyph rotated 45°) — used for the cancel/discard action.
 export const XIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
