@@ -29,5 +29,8 @@ import { MarketplaceController } from './marketplace.controller';
     MarketplaceFetcher,
     AnthropicClient,
   ],
+  // Exported so the AdminModule (which imports MarketplaceModule) can inject
+  // MarketplaceService into the admin catalog-sync controller.
+  exports: [MarketplaceService],
 })
 export class MarketplaceModule {}
