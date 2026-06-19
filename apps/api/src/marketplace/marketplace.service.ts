@@ -6,6 +6,7 @@ import {
   PromptStatus,
   PromptType,
   toLyraPlaceholders,
+  type MarketplaceFacets,
   type MarketplacePrompt as MarketplacePromptModel,
   type Paged,
   type Prompt as PromptModel,
@@ -22,6 +23,9 @@ function escapeRegex(s: string): string {
 export interface MarketplaceListOptions {
   q?: string;
   forDevs?: boolean;
+  types?: string[];
+  categories?: string[];
+  tags?: string[];
   page: number;
   limit: number;
 }
@@ -84,7 +88,9 @@ export class MarketplaceService {
   }
 
   // Paged browse: case-insensitive q across title OR content; optional forDevs
-  // filter; title asc. Returns mapped safe shapes.
+  // filter; optional multi-select type/category/tag filters (OR within each
+  // group, AND across groups, all case-insensitive — mirrors the prompts list);
+  // title asc. Returns mapped safe shapes.
   async list(opts: MarketplaceListOptions): Promise<Paged<MarketplacePromptModel>> {
     const filter: Record<string, unknown> = {};
     if (opts.q) {
@@ -92,6 +98,17 @@ export class MarketplaceService {
       filter.$or = [{ title: rx }, { content: rx }];
     }
     if (opts.forDevs !== undefined) filter.forDevs = opts.forDevs;
+    if (opts.types?.length) {
+      filter.type = { $in: opts.types.map((t) => new RegExp(`^${escapeRegex(t)}$`, 'i')) };
+    }
+    if (opts.categories?.length) {
+      filter.category = {
+        $in: opts.categories.map((c) => new RegExp(`^${escapeRegex(c)}$`, 'i')),
+      };
+    }
+    if (opts.tags?.length) {
+      filter.tags = { $in: opts.tags.map((tag) => new RegExp(`^${escapeRegex(tag)}$`, 'i')) };
+    }
 
     const total = await this.model.countDocuments(filter).exec();
     const docs = await this.model
@@ -106,6 +123,20 @@ export class MarketplaceService {
       page: opts.page,
       limit: opts.limit,
     };
+  }
+
+  // Filter vocabularies for the browse filter: distinct non-empty categories +
+  // tags across the whole catalog, each sorted ascending.
+  async facets(): Promise<MarketplaceFacets> {
+    const [categories, tags] = await Promise.all([
+      this.model.distinct('category').exec() as Promise<unknown[]>,
+      this.model.distinct('tags').exec() as Promise<unknown[]>,
+    ]);
+    const clean = (values: unknown[]): string[] =>
+      (values.filter((v): v is string => typeof v === 'string' && v.trim() !== '')).sort(
+        (a, b) => a.localeCompare(b),
+      );
+    return { categories: clean(categories), tags: clean(tags) };
   }
 
   // Adopt a catalog item into the workspace library: create a real Prompt

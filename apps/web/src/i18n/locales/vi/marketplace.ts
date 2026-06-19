@@ -15,8 +15,12 @@ export default {
 
   // Browse mode
   searchPlaceholder: 'Tìm trong danh mục…',
-  forDevs: 'Cho nhà phát triển',
-  forDevsHint: 'Chỉ hiện câu lệnh dành cho lập trình viên',
+
+  // Browse filter popover (Type / Category / Tags)
+  filter: 'Bộ lọc',
+  filterType: 'Loại',
+  filterCategory: 'Danh mục',
+  filterTags: 'Thẻ',
 
   // Card
   by: 'bởi {{name}}',

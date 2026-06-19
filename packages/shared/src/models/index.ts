@@ -417,6 +417,13 @@ export interface RankedMarketplacePrompt {
   reason: string; // one-line rationale
 }
 
+// Filter vocabularies for the marketplace browse filter (distinct categories +
+// tags across the catalog).
+export interface MarketplaceFacets {
+  categories: string[];
+  tags: string[];
+}
+
 // ===== Super-admin panel =====
 // Per-user usage counts (items the user created), shown in the admin user detail.
 export interface AdminUserUsage {

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Provider,
   defaultModel,
   labelColor,
+  type MarketplaceFacets,
   type MarketplacePrompt,
   type RankedMarketplacePrompt,
 } from '@lyra/shared';
@@ -25,6 +26,17 @@ import './marketplace.css';
 
 const PAGE_SIZE = 30;
 
+// Catalog types are a small fixed vocabulary (mirrors the marketplace schema).
+const TYPE_VALUES = ['text', 'structured'] as const;
+// Tags can be a long list — collapse them behind a <details> like Prompts does.
+const TAG_COLLAPSE_THRESHOLD = 8;
+
+// Toggle a value in a multi-select filter list (add if absent, remove if present).
+// Mirrors the Prompts page helper.
+function toggleFilterValue<T>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
+}
+
 // Tracks the adopt state of a single row so the action can flip to "Added".
 type AdoptState = 'idle' | 'busy' | 'done';
 
@@ -39,9 +51,17 @@ export function Marketplace() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
-  const [forDevs, setForDevs] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Browse filters (Linear-style: search always visible, type/category/tag
+  // added via the + Filter popover). Multi-select each.
+  const [types, setTypes] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [facets, setFacets] = useState<MarketplaceFacets>({ categories: [], tags: [] });
+  const [filterMenu, setFilterMenu] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   // AI-filter state. `ranked` non-null = we're in AI-results mode (browse hidden).
   const [aiQuery, setAiQuery] = useState('');
@@ -58,8 +78,10 @@ export function Marketplace() {
   const [detail, setDetail] = useState<MarketplacePrompt | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filterCount = types.length + categories.length + tags.length;
+  const hasFilters = filterCount > 0 || !!q.trim();
 
-  useEffect(() => setPage(1), [q, forDevs]);
+  useEffect(() => setPage(1), [q, types, categories, tags]);
 
   // Load the browse catalog (skipped while AI results are showing).
   useEffect(() => {
@@ -69,7 +91,7 @@ export function Marketplace() {
     setError(null);
     const timer = setTimeout(() => {
       marketplaceApi
-        .list(ws, { page, limit: PAGE_SIZE, q, forDevs: forDevs ? true : undefined })
+        .list(ws, { page, limit: PAGE_SIZE, q, types, categories, tags })
         .then((res) => {
           if (cancelled) return;
           setItems(res.items);
@@ -86,7 +108,38 @@ export function Marketplace() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [ws, page, q, forDevs, ranked, t]);
+  }, [ws, page, q, types, categories, tags, ranked, t]);
+
+  // Load filter vocabularies once per workspace (categories + tags across the
+  // whole catalog) so the popover options stay stable as other filters narrow.
+  useEffect(() => {
+    if (!ws) return;
+    let cancelled = false;
+    marketplaceApi
+      .facets(ws)
+      .then((res) => !cancelled && setFacets(res))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [ws]);
+
+  // Close the filter popover on outside click or Escape (a11y, mirrors Prompts).
+  useEffect(() => {
+    if (!filterMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterMenu(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFilterMenu(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [filterMenu]);
 
   const runRank = useCallback(async () => {
     const query = aiQuery.trim();
@@ -203,15 +256,109 @@ export function Marketplace() {
             onChange={(e) => setQ(e.target.value)}
             aria-label={t('marketplace.searchPlaceholder')}
           />
-          <button
-            type="button"
-            className={`lin-filter-btn ${forDevs ? 'active' : ''}`}
-            aria-pressed={forDevs}
-            title={t('marketplace.forDevsHint')}
-            onClick={() => setForDevs((v) => !v)}
-          >
-            {t('marketplace.forDevs')}
-          </button>
+          <div className="lin-filter" ref={filterRef}>
+            <button
+              type="button"
+              className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
+              aria-expanded={filterMenu}
+              aria-haspopup="true"
+              onClick={() => setFilterMenu((s) => !s)}
+            >
+              + {t('marketplace.filter')}
+              {filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            </button>
+            {filterMenu && (
+              <div className="lin-menu" role="menu">
+                <div className="lin-menu-actions">
+                  <button
+                    type="button"
+                    className="lin-menu-clear"
+                    disabled={filterCount === 0}
+                    onClick={() => {
+                      setTypes([]);
+                      setCategories([]);
+                      setTags([]);
+                    }}
+                  >
+                    {t('marketplace.clear')}
+                  </button>
+                </div>
+
+                <div className="lin-menu-label">{t('marketplace.filterType')}</div>
+                {TYPE_VALUES.map((ty) => (
+                  <button
+                    key={ty}
+                    type="button"
+                    className="lin-menu-item"
+                    onClick={() => setTypes((list) => toggleFilterValue(list, ty))}
+                  >
+                    {ty === 'structured'
+                      ? t('marketplace.typeStructured')
+                      : t('marketplace.typeText')}
+                    {types.includes(ty) && <span className="lin-menu-check">✓</span>}
+                  </button>
+                ))}
+
+                {facets.categories.length > 0 && (
+                  <>
+                    <div className="lin-menu-label">{t('marketplace.filterCategory')}</div>
+                    {facets.categories.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className="lin-menu-item"
+                        onClick={() => setCategories((list) => toggleFilterValue(list, c))}
+                      >
+                        <span className="dot" style={{ background: labelColor(c, []) }} />
+                        {c}
+                        {categories.includes(c) && <span className="lin-menu-check">✓</span>}
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {facets.tags.length > 0 &&
+                  (facets.tags.length > TAG_COLLAPSE_THRESHOLD ? (
+                    <details className="lin-menu-section">
+                      <summary className="lin-menu-summary">
+                        <span>{t('marketplace.filterTags')}</span>
+                        {tags.length > 0 && (
+                          <span className="lin-menu-summary-count">{tags.length}</span>
+                        )}
+                      </summary>
+                      {facets.tags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className="lin-menu-item"
+                          onClick={() => setTags((list) => toggleFilterValue(list, tag))}
+                        >
+                          <span className="dot" style={{ background: labelColor(tag, []) }} />
+                          {tag}
+                          {tags.includes(tag) && <span className="lin-menu-check">✓</span>}
+                        </button>
+                      ))}
+                    </details>
+                  ) : (
+                    <>
+                      <div className="lin-menu-label">{t('marketplace.filterTags')}</div>
+                      {facets.tags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className="lin-menu-item"
+                          onClick={() => setTags((list) => toggleFilterValue(list, tag))}
+                        >
+                          <span className="dot" style={{ background: labelColor(tag, []) }} />
+                          {tag}
+                          {tags.includes(tag) && <span className="lin-menu-check">✓</span>}
+                        </button>
+                      ))}
+                    </>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -240,7 +387,7 @@ export function Marketplace() {
           <div className="mkt-grid">{ranked!.map((r) => card(r.prompt, r))}</div>
         )
       ) : items.length === 0 ? (
-        q.trim() || forDevs ? (
+        hasFilters ? (
           <p className="empty">{t('marketplace.noMatch')}</p>
         ) : (
           <EmptyState

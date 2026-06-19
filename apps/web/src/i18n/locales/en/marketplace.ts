@@ -15,8 +15,12 @@ export default {
 
   // Browse mode
   searchPlaceholder: 'Search the catalog…',
-  forDevs: 'For developers',
-  forDevsHint: 'Show developer-oriented prompts only',
+
+  // Browse filter popover (Type / Category / Tags)
+  filter: 'Filter',
+  filterType: 'Type',
+  filterCategory: 'Category',
+  filterTags: 'Tags',
 
   // Card
   by: 'by {{name}}',
