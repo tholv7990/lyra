@@ -196,12 +196,13 @@
   position: sticky;
   top: 0;
   z-index: var(--l-z-nav);
-  background: rgba(255, 248, 243, 0.82);
+  /* token-driven so it flips with the theme (was hardcoded cream → washed-out
+     light bar under dark mode); surface-1 at 82% keeps the light look identical. */
+  background: color-mix(in srgb, var(--l-surface-1) 82%, transparent);
   backdrop-filter: saturate(180%) blur(18px);
   -webkit-backdrop-filter: saturate(180%) blur(18px);
   border-bottom: 1px solid var(--l-hairline);
 }
-.l-nav .l-container { padding-inline: 0; }
 .l-nav-inner { height: 66px; display: flex; align-items: center; gap: 24px; }
 .l-brand { display: inline-flex; align-items: center; flex-shrink: 0; }
 .l-brand img { height: 26px; width: auto; }
@@ -1067,7 +1068,6 @@
 }
 @media (max-width: 640px) {
   .l-container { padding: 0 18px; }
-  .l-nav .l-container { padding-inline: 0; }
   .l-footer-grid { grid-template-columns: 1fr; }
 
   /* gallery collapses to single column with consistent height */
