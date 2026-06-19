@@ -82,6 +82,16 @@ export class ConversationsController {
     return doc ? this.convos.toSummaries([doc])[0] : null;
   }
 
+  @Post('workspaces/:id/conversations/prompt-history-list')
+  @UseGuards(WorkspaceGuard)
+  async listPromptHistory(
+    @Param('id') workspaceId: string,
+    @Body() body: FindPromptConversationBody,
+    @CurrentUser() user: User,
+  ): Promise<ConversationSummary[]> {
+    return this.convos.listForPrompt(workspaceId, user.id, body.promptId, body.content);
+  }
+
   @Get('conversations/:id')
   async get(
     @Param('id') id: string,

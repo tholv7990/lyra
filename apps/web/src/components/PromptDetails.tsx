@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
+import { PromptStatus, labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
 import { PromptCodeBlock } from './PromptCodeBlock';
+import { PromptHistory } from './PromptHistory';
 import { ProviderIcon } from './ProviderIcon';
-import { CheckIcon, XIcon } from '../layout/icons';
+import { XIcon } from '../layout/icons';
 
 function initial(name?: string) {
   const n = (name ?? '').trim();
@@ -22,28 +23,31 @@ function fmtDate(iso: string) {
   return [month, day, year].filter(Boolean).join(' ');
 }
 
-// Read-only full view of a library prompt (opened by the eye icon on a step or a
-// picker card): title · creator · model · tags · the full content (markdown).
+// {word} placeholders in the body, de-duped (skips {step:Name} refs).
+function promptVars(content: string): string[] {
+  const seen = new Set<string>();
+  for (const m of content.matchAll(/\{([a-zA-Z0-9_]+)\}/g)) seen.add(m[1]);
+  return [...seen];
+}
+
+// Read-only full view of a library prompt (opened by the eye icon on a row/step
+// or a picker card), laid out like the marketplace detail: title · creator/date/
+// status/type meta · colored labels · variable chips · the prompt in a code-block
+// (copy + open-in-chat) · the run history below. Editing happens in the editor.
 export function PromptDetails({
   prompt,
   labels,
-  canEdit = false,
-  onSaveContent,
   onOpenInChat,
   onClose,
 }: {
   prompt: Prompt;
   labels: LabelInfo[];
-  canEdit?: boolean;
-  onSaveContent?: (content: string) => void | Promise<void>;
   onOpenInChat?: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [content, setContent] = useState(prompt.content);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const hasChanges = content !== prompt.content;
+  const isPublic = prompt.status === PromptStatus.Public;
+  const vars = promptVars(prompt.content);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -51,29 +55,16 @@ export function PromptDetails({
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  async function saveContent() {
-    if (!canEdit || !onSaveContent || busy || !content.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await onSaveContent(content);
-      onClose();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t('prompts.errSave'));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog prompt-details" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <div className="dialog prompt-details pd-with-history" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="pd-head">
           <h3>{prompt.title}</h3>
           <button className="pd-close" onClick={onClose} aria-label={t('common.close')} title={t('common.close')}>
             <XIcon />
           </button>
         </div>
+
         <div className="pd-meta">
           <span
             className="pd-avatar"
@@ -85,6 +76,8 @@ export function PromptDetails({
           >
             {initial(prompt.createdBy.name)}
           </span>
+          <span>{prompt.createdBy.name}</span>
+          <span className="pd-dot">·</span>
           <span>{fmtDate(prompt.createdAt)}</span>
           {prompt.provider && prompt.model && (
             <>
@@ -95,19 +88,19 @@ export function PromptDetails({
               </span>
             </>
           )}
-          <span className="badge mkt-type">{t(`prompts.type.${prompt.type}`)}</span>
+          <span className={`badge pd-status ${isPublic ? 'st-public' : 'st-draft'}`}>
+            {isPublic ? t('prompts.statusPublic') : t('prompts.statusDraft')}
+          </span>
+          <span className="badge mkt-type">{t(`prompts.type.${prompt.type ?? 'text'}`)}</span>
         </div>
-        {error && <p className="error">{error}</p>}
+
+        <div className="pd-scroll">
         {prompt.tags.length > 0 && (
           <div className="mkt-details-tags">
             {prompt.tags.map((tag) => {
               const c = labelColor(tag, labels);
               return (
-                <span
-                  key={tag}
-                  className="mkt-tag"
-                  style={{ background: `${c}1f`, borderColor: `${c}3a` }}
-                >
+                <span key={tag} className="mkt-tag" style={{ background: `${c}1f`, borderColor: `${c}3a` }}>
                   <span className="mkt-tag-dot" style={{ background: c }} />
                   {tag}
                 </span>
@@ -115,28 +108,16 @@ export function PromptDetails({
             })}
           </div>
         )}
-        {canEdit ? (
-          <label className="field pd-edit">
-            <span className="pd-edit-label">
-              <span>{t('prompts.editPrompt')}</span>
-              <button
-                type="button"
-                className="pd-save-icon"
-                onClick={() => void saveContent()}
-                aria-label="Save changes"
-                title="Save changes"
-                disabled={busy || !content.trim() || !hasChanges}
-              >
-                <CheckIcon width={16} height={16} />
-              </button>
-            </span>
-            <textarea
-              className="text-input pd-editarea"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-          </label>
-        ) : prompt.content.trim() ? (
+
+        {vars.length > 0 && (
+          <div className="pd-tags">
+            {vars.map((v) => (
+              <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
+            ))}
+          </div>
+        )}
+
+        {prompt.content.trim() ? (
           <PromptCodeBlock
             content={prompt.content}
             label={t('common.prompt')}
@@ -148,6 +129,9 @@ export function PromptDetails({
             <p className="muted">{t('prompts.noContent')}</p>
           </div>
         )}
+
+        <PromptHistory promptId={prompt.id} content={prompt.content} />
+        </div>
       </div>
     </div>
   );

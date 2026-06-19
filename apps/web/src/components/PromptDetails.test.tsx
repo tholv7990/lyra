@@ -1,13 +1,19 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, test } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, test, vi } from 'vitest';
 import { PromptStatus, PromptType, Provider, type Prompt } from '@lyra/shared';
 import { PromptDetails } from './PromptDetails';
+
+// PromptHistory reads the active workspace; with none, it stays empty (no fetch).
+vi.mock('../workspace/useWorkspace', () => ({
+  useWorkspace: () => ({ current: undefined }),
+}));
 
 const prompt: Prompt = {
   id: 'prompt-1',
   workspaceId: 'workspace-1',
   title: 'Competitor analysis',
-  content: 'Full prompt body that should be editable',
+  content: 'Full prompt body for {product} in {niche}',
   status: PromptStatus.Public,
   type: PromptType.Image,
   tags: [],
@@ -22,24 +28,23 @@ const prompt: Prompt = {
 };
 
 describe('PromptDetails', () => {
-  test('renders an editable prompt body when editing is allowed', () => {
+  test('renders the read view: code-block, type + status badges, creator, variables', () => {
     const html = renderToStaticMarkup(
-      <PromptDetails
-        prompt={prompt}
-        labels={[]}
-        canEdit
-        onSaveContent={() => undefined}
-        onClose={() => undefined}
-      />,
+      <MemoryRouter>
+        <PromptDetails prompt={prompt} labels={[]} onClose={() => undefined} />
+      </MemoryRouter>,
     );
 
-    expect(html).toContain('textarea');
-    expect(html).toContain('Full prompt body that should be editable');
-    expect(html).toContain('Save changes');
-    expect(html).toContain('disabled=""');
-    expect(html).toContain('pd-save-icon');
-    expect(html).not.toContain('class="btn-primary pd-save"');
-    // The type badge mirrors the marketplace `.mkt-type` pill.
+    // Read view shows the prompt in a code-block, not an editable textarea.
+    expect(html).toContain('class="pcb"');
+    expect(html).not.toContain('<textarea');
+    expect(html).toContain('Full prompt body for {product} in {niche}');
+    // Meta: creator name, type badge, status badge (public).
+    expect(html).toContain('Putiin');
     expect(html).toContain('badge mkt-type');
+    expect(html).toContain('pd-status st-public');
+    // Variables parsed from the body.
+    expect(html).toContain('{product}');
+    expect(html).toContain('{niche}');
   });
 });

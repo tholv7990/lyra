@@ -83,21 +83,46 @@ export class ConversationsService extends BaseRepository<Conversation> {
     );
   }
 
+  // Active chats that originated from a prompt — matched by stamped
+  // originPromptId or by a legacy first user message equal to the prompt body.
+  private promptHistoryFilter(
+    workspaceId: string,
+    userId: string,
+    promptId: string,
+    content: string,
+  ) {
+    return this.active({
+      workspaceId,
+      createdBy: userId,
+      $or: [
+        { originPromptId: promptId },
+        { 'messages.0.role': 'user', 'messages.0.content': content },
+      ],
+    });
+  }
+
   findForPrompt(workspaceId: string, userId: string, promptId: string, content: string) {
     return this.model
-      .findOne(
-        this.active({
-          workspaceId,
-          createdBy: userId,
-          $or: [
-            { originPromptId: promptId },
-            { 'messages.0.role': 'user', 'messages.0.content': content },
-          ],
-        }),
-        null,
-        { sort: { updatedAt: -1, createdAt: -1 } },
-      )
+      .findOne(this.promptHistoryFilter(workspaceId, userId, promptId, content), null, {
+        sort: { updatedAt: -1, createdAt: -1 },
+      })
       .exec();
+  }
+
+  // All matching chats (same match/sort as findForPrompt), capped, as summaries.
+  async listForPrompt(
+    workspaceId: string,
+    userId: string,
+    promptId: string,
+    content: string,
+  ): Promise<ConversationSummary[]> {
+    const docs = await this.model
+      .find(this.promptHistoryFilter(workspaceId, userId, promptId, content), null, {
+        sort: { updatedAt: -1, createdAt: -1 },
+        limit: 20,
+      })
+      .exec();
+    return this.toSummaries(docs);
   }
 
   // Validate provider/model and return the decrypted key — throws (-> 4xx)
