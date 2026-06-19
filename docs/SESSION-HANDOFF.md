@@ -1,3 +1,37 @@
+# Session handoff — June 19, 2026 (latest) — design-consistency pass shipped + design plugins enabled
+
+> **Read this first.** Branch **dev** is now **PUSHED** to `origin/dev` (user asked) — through commit `da4e071`. Working tree clean except the intentional **`docker-compose.yml`** Postiz `v2.11.3` pin (keep uncommitted) and gitignored `apps/api/.env`. Commit/push policy still: only when the user asks.
+
+## ✅ Shipped this session (design-system consistency, all on origin/dev)
+A token-enforcement + UX pass on `apps/web`. Each commit kept the web gate green (type-check, lint, 38 tests, build). All live on dev.getlyras.app via the running Vite HMR.
+- `b47c782` tokenize status/section-accent colors (+dark-mode badge fix)
+- `22473ad` **Home "Get started" onboarding checklist** (the #1 UX-audit gap) — `apps/web/src/lib/gettingStarted.ts` (unit-tested) + `pages/Home.tsx` + `.gs-*` CSS
+- `ed559e5` Settings per-provider "Get a key ↗" links
+- `d01ae94` consistent list-row typography (Projects vs Prompts/Pipelines mismatch on mobile — `.prow-title-input/.prow-desc-input` pinned; `--text-mini/--text-micro` tokens)
+- `3cb7eac` **consistent action affordances** (delete=X everywhere incl. Settings; modal close=X; row icons neutral+token) + tokenized action/semantic colors (+`--info`)
+- `a68321b` **shared `<EmptyState>` + `<IconButton>` primitives** + `docs/lyra-design-system-actions.md` (the enforceable rules)
+- `da4e071` **high-contrast form placeholders** via one `--placeholder` token (was `--ink-tertiary` 0.3 ≈ unreadable)
+
+**Source-of-truth design docs:** `docs/lyra-design-system-actions.md` (action/token/reuse rules), `docs/lyra-linear-audit.md` (Linear spec from Figma), `docs/superpowers/specs/2026-06-19-lyra-ux-redesign-plan.md` (recon + roadmap). The live token layer is `apps/web/src/index.css :root` (+ `[data-theme=dark]`); `apps/web/CLAUDE.md` UI section was corrected (the dark `lyra-design-system.md` is SUPERSEDED).
+
+## ⏳ Remaining design-consistency queue (not done — do carefully)
+1. Migrate the grid-coupled `.prow-*` row buttons through `<IconButton>` — needs a **mobile visual check** (grid-area coupling), don't blind-edit.
+2. Build `<Modal>` + `<InlineEdit>` shared primitives (10 dialogs re-roll backdrop/escape; 3 inline-edit classes `.prow-edit`/`.lin-title-input`/`.prow-title-input` do the same job).
+3. Long-tail token sweep (~400 off-scale font-size/radius/spacing values → tokens). Some are intentional — needs care + the user's eyes, NOT a mass find-replace.
+
+## 🔌 Design/coding plugins — ENABLED, pending restart
+`~/.claude/settings.json` `enabledPlugins` now has **impeccable@impeccable, taste-skill@taste-skill, headroom@headroom-marketplace, ponytail@ponytail** (marketplaces all registered in `extraKnownMarketplaces`). They load on the **next Claude Code restart** (the startup reconciler caches them from the local marketplace clones). `/plugin` is unavailable in this VS Code extension build (stale — updating it would restore `/plugin`); we enabled via settings.json instead.
+- **impeccable** (`/impeccable polish|audit|critique`) + **taste-skill** — frontend design audit/taste skills. Use them to second-opinion the consistency work.
+- **ponytail** (`/ponytail-review|-audit|-debt`) — "write less code" reuse-first ruleset; well-aligned with this codebase. Consider `lite` mode.
+- **headroom** — context-compression HOOKS; ⚠️ behavior-altering AND **non-functional until** `pip install "headroom-ai[all]"` (Rust build; not yet installed).
+- After restart: verify each appears in `~/.claude/plugins/installed_plugins.json` + `cache/`, then they're invokable.
+
+## ⏸️ Still paused (unchanged, see older sections below)
+- **Postiz publish v2 live-post e2e (Steps 4–5)** — services left running; tester `tholv.7990@gmail.com`, workspace `6a309b8efe9ec7c83515dad5`.
+- **Per-project channels model** — build after the e2e (see [[per-project-channels-model]]).
+
+---
+
 # Session handoff — June 19, 2026 (overnight) — 🎨 UX redesign pass started
 
 > **You said "redesign to follow Linear + make it simple to use" then went to
