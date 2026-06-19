@@ -7,6 +7,10 @@ export default {
   chatsBody:
     'Your always-on AI assistant — reach it from the button in the corner. Chat multi-turn with any provider·model, then save standout answers onto a prompt or promote a message into your library.',
   chatsCta: 'Start chatting',
+  marketplaceTitle: 'Marketplace',
+  marketplaceBody:
+    'Browse a community library of ready-made prompts, let AI find the right one, and add it to your library in a click.',
+  marketplaceCta: 'Browse marketplace',
   promptsTitle: 'Prompts',
   promptsBody:
     'Your library of reusable, on-brand prompts with media, tags, {placeholders}, and the best answers saved from chat. Open one in chat to iterate, or wire it into a pipeline step.',
@@ -19,6 +23,14 @@ export default {
   projectsBody:
     'A project per brand, product, or store. It supplies the run context ({product}, {niche}, {homepage}) and is where you assign pipelines and launch runs.',
   projectsCta: 'Open projects',
+  importTitle: 'Import media',
+  importBody:
+    'Crawl a public TikTok, Instagram, YouTube, X, or Facebook link to pull its video and images — content you own or have the rights to use.',
+  importCta: 'Import media',
+  publishTitle: 'Publish',
+  publishBody:
+    'Compose once and post to every connected channel at once — built in. You always review before anything goes out.',
+  publishCta: 'Open publish',
   keysTitle: 'Provider keys',
   keysBody:
     "Bring your own provider keys per workspace, encrypted at rest. A step is runnable only once its provider's key is set — no keys ever leave the server.",

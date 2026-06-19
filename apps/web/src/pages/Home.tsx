@@ -15,6 +15,9 @@ import {
   PromptsIcon,
   ChatsIcon,
   PipelinesIcon,
+  MarketplaceIcon,
+  ImportIcon,
+  PublishIcon,
   SettingsIcon,
   MembersIcon,
   CheckIcon,
@@ -35,9 +38,12 @@ interface Tile {
 
 const TILES: Tile[] = [
   { to: '/chats', icon: ChatsIcon, accent: 'var(--accent-chats)', key: 'chats', cta: true },
+  { to: '/marketplace', icon: MarketplaceIcon, accent: 'var(--accent-marketplace)', key: 'marketplace', cta: true },
   { to: '/prompts', icon: PromptsIcon, accent: 'var(--accent-prompts)', key: 'prompts', cta: true },
   { to: '/pipelines', icon: PipelinesIcon, accent: 'var(--accent-pipelines)', key: 'pipelines', cta: true },
   { to: '/projects', icon: ProjectsIcon, accent: 'var(--accent-projects)', key: 'projects', cta: true },
+  { to: '/import', icon: ImportIcon, accent: 'var(--accent-import)', key: 'import', cta: true },
+  { to: '/publish', icon: PublishIcon, accent: 'var(--accent-publish)', key: 'publish', cta: true },
   { to: '/settings', icon: SettingsIcon, accent: 'var(--accent-keys)', key: 'keys', cta: true },
   { icon: MembersIcon, accent: 'var(--accent-members)', key: 'members', soon: true },
 ];

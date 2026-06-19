@@ -7,6 +7,10 @@ export default {
   chatsBody:
     'Trợ lý AI luôn sẵn sàng — mở từ nút ở góc màn hình. Trò chuyện nhiều lượt với mọi nhà cung cấp·model, rồi lưu những câu trả lời nổi bật vào một prompt hoặc đưa một tin nhắn vào thư viện.',
   chatsCta: 'Bắt đầu trò chuyện',
+  marketplaceTitle: 'Chợ câu lệnh',
+  marketplaceBody:
+    'Duyệt thư viện prompt cộng đồng có sẵn, để AI tìm đúng cái bạn cần và thêm vào thư viện chỉ với một cú nhấp.',
+  marketplaceCta: 'Mở chợ câu lệnh',
   promptsTitle: 'Câu lệnh',
   promptsBody:
     'Thư viện các prompt tái sử dụng, đúng thương hiệu với media, thẻ, {placeholders} và những câu trả lời tốt nhất đã lưu từ chat. Mở trong chat để tinh chỉnh, hoặc gắn vào một bước pipeline.',
@@ -19,6 +23,14 @@ export default {
   projectsBody:
     'Mỗi dự án cho một thương hiệu, sản phẩm hoặc cửa hàng. Nó cung cấp ngữ cảnh chạy ({product}, {niche}, {homepage}) và là nơi bạn gán pipeline và khởi chạy.',
   projectsCta: 'Mở dự án',
+  importTitle: 'Tải media',
+  importBody:
+    'Crawl một link công khai TikTok, Instagram, YouTube, X hoặc Facebook để lấy video và hình ảnh — nội dung bạn sở hữu hoặc có quyền sử dụng.',
+  importCta: 'Tải media',
+  publishTitle: 'Đăng bài',
+  publishBody:
+    'Soạn một lần và đăng lên mọi kênh đã kết nối cùng lúc — tích hợp sẵn. Bạn luôn xem lại trước khi đăng.',
+  publishCta: 'Mở đăng bài',
   keysTitle: 'Khóa nhà cung cấp',
   keysBody:
     'Dùng khóa nhà cung cấp của riêng bạn theo từng workspace, mã hóa khi lưu. Một bước chỉ chạy được khi đã đặt khóa của nhà cung cấp — khóa không bao giờ rời khỏi máy chủ.',
