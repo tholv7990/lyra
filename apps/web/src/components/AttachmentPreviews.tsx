@@ -1,4 +1,5 @@
 import { MediaType, type PromptMedia } from '@lyra/shared';
+import { useTranslation } from 'react-i18next';
 
 function extLabel(name?: string) {
   if (!name) return 'FILE';
@@ -18,6 +19,7 @@ export function AttachmentPreviews({
   uploading?: number;
   onRemove?: (index: number) => void;
 }) {
+  const { t } = useTranslation();
   if (media.length === 0 && uploading === 0) return null;
   return (
     <div className="composer-attachments">
@@ -30,7 +32,7 @@ export function AttachmentPreviews({
                 type="button"
                 className="att-x on-thumb"
                 onClick={() => onRemove(i)}
-                aria-label="Remove"
+                aria-label={t('common.remove')}
               >
                 ×
               </button>
@@ -45,7 +47,7 @@ export function AttachmentPreviews({
                 type="button"
                 className="att-x"
                 onClick={() => onRemove(i)}
-                aria-label="Remove"
+                aria-label={t('common.remove')}
               >
                 ×
               </button>
@@ -55,7 +57,7 @@ export function AttachmentPreviews({
       )}
       {uploading > 0 && (
         <span className="att-chip">
-          <span className="spinner" /> Uploading…
+          <span className="spinner" /> {t('common.uploading')}
         </span>
       )}
     </div>

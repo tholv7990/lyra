@@ -5,6 +5,7 @@ import {
   RouterProvider,
   useLocation,
 } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth/useAuth';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -31,7 +32,8 @@ import { Members } from './pages/Members';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
-  return <div className="center muted">Loading…</div>;
+  const { t } = useTranslation();
+  return <div className="center muted">{t('common.loading')}</div>;
 }
 
 // Root gate: logged-out visitors get the public marketing landing at `/` and a

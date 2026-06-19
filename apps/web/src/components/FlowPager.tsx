@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Mobile "one step per page" pager (doc decision 15). Pages are:
 //   0 = Start · 1..N = steps · N+1 = End
@@ -37,16 +38,21 @@ export function useFlowPager(stepCount: number) {
 export type FlowPager = ReturnType<typeof useFlowPager>;
 
 export function FlowPagerControls({ pager, stepCount }: { pager: FlowPager; stepCount: number }) {
+  const { t } = useTranslation();
   const { page, total, prev, next, atStart, atEnd } = pager;
-  const label = page === 0 ? 'Start' : page === total - 1 ? 'End' : `Step ${page} of ${stepCount}`;
+  const label = page === 0
+    ? t('common.start')
+    : page === total - 1
+      ? t('common.end')
+      : t('run.stepOf', { page, total: stepCount });
   return (
     <div className="flow-pager-bar">
       <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={atStart} onClick={prev}>
-        ‹ Prev
+        ‹ {t('common.previous')}
       </button>
       <span className="flow-pager-label">{label}</span>
       <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={atEnd} onClick={next}>
-        Next ›
+        {t('common.next')} ›
       </button>
     </div>
   );

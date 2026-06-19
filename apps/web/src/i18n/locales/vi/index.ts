@@ -14,5 +14,6 @@ import marketplace from './marketplace';
 import admin from './admin';
 import notifications from './notifications';
 import members from './members';
+import landing from './landing';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing };

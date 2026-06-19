@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   isAllowedMedia,
   MEDIA_MAX_BYTES,
@@ -42,6 +43,7 @@ export function StepTestModal({
   catalog,
   onClose,
 }: StepTestModalProps) {
+  const { t } = useTranslation();
   const [provider, setProvider] = useState(initialProvider);
   const [model, setModel] = useState(initialModel);
   const [input, setInput] = useState(initialPrompt);
@@ -196,12 +198,12 @@ export function StepTestModal({
     <div className="step-test">
       <div className="step-test-main">
         <header className="step-test-top">
-          <button type="button" className="eshell-back step-test-back" onClick={onClose} aria-label="Close test">
+          <button type="button" className="eshell-back step-test-back" onClick={onClose} aria-label={t('run.closeTest')}>
             &lsaquo;
           </button>
           <div className="step-test-title">
-            <span className="step-test-kicker">Step test</span>
-            <h2>Test {title}</h2>
+            <span className="step-test-kicker">{t('run.stepTest')}</span>
+            <h2>{t('run.testTitle', { title })}</h2>
             <span className="step-test-model">
               <ProviderIcon provider={provider} size={14} />
               {modelLabel(catalog, provider, model)}
@@ -215,8 +217,8 @@ export function StepTestModal({
           <div className="step-test-thread">
             {messages.length === 0 ? (
               <div className="chat-empty step-test-empty">
-                <h3>Test this node</h3>
-                <p>The selected prompt is ready in the composer. Send it as-is or tweak it first.</p>
+                <h3>{t('run.testThisNode')}</h3>
+                <p>{t('run.testNodeHint')}</p>
               </div>
             ) : (
               messages.map((m) => (
@@ -254,7 +256,7 @@ export function StepTestModal({
             value={input}
             onChange={setInput}
             onSubmit={() => void send()}
-            placeholder="Test this step prompt..."
+            placeholder={t('run.testPromptPlaceholder')}
             autoFocus
             media={media}
             onRemoveMedia={(idx) => setMedia((m) => m.filter((_, i) => i !== idx))}

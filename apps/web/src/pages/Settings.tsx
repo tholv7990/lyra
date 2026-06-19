@@ -11,12 +11,12 @@ import { CheckIcon, RefreshIcon, XIcon } from '../layout/icons';
 // `keyUrl` points at each provider's API-key console so a new user can find
 // their key without leaving the flow. Image reuses the OpenAI key (no separate
 // image key — see keyProviderFor in shared); Video is still a mock, no key.
-const PROVIDERS: { id: Provider; label: string; hint: string; keyUrl?: string }[] = [
-  { id: Provider.OpenAI, label: 'OpenAI', hint: 'GPT-5.5 — Find sources', keyUrl: 'https://platform.openai.com/api-keys' },
-  { id: Provider.Anthropic, label: 'Anthropic', hint: 'Claude — Brain steps', keyUrl: 'https://console.anthropic.com/settings/keys' },
-  { id: Provider.DeepSeek, label: 'DeepSeek', hint: 'Crawl & extract', keyUrl: 'https://platform.deepseek.com/api_keys' },
-  { id: Provider.Image, label: 'Image', hint: 'Image generation — uses your OpenAI key', keyUrl: 'https://platform.openai.com/api-keys' },
-  { id: Provider.Video, label: 'Video', hint: 'Video / UGC' },
+const PROVIDERS: { id: Provider; label: string; hintKey: string; keyUrl?: string }[] = [
+  { id: Provider.OpenAI, label: 'OpenAI', hintKey: 'openai', keyUrl: 'https://platform.openai.com/api-keys' },
+  { id: Provider.Anthropic, label: 'Anthropic', hintKey: 'anthropic', keyUrl: 'https://console.anthropic.com/settings/keys' },
+  { id: Provider.DeepSeek, label: 'DeepSeek', hintKey: 'deepseek', keyUrl: 'https://platform.deepseek.com/api_keys' },
+  { id: Provider.Image, label: 'Image', hintKey: 'image', keyUrl: 'https://platform.openai.com/api-keys' },
+  { id: Provider.Video, label: 'Video', hintKey: 'video' },
 ];
 const LABEL: Record<Provider, string> = Object.fromEntries(
   PROVIDERS.map((p) => [p.id, p.label]),
@@ -84,11 +84,11 @@ export function Settings() {
         { method: 'POST' },
       );
       setModels((m) => ({ ...m, [provider]: list }));
-      setRefreshMsg((m) => ({ ...m, [provider]: `Updated · ${list.length} models` }));
+      setRefreshMsg((m) => ({ ...m, [provider]: t('settings.modelsUpdated', { count: list.length }) }));
     } catch (err) {
       setRefreshMsg((m) => ({
         ...m,
-        [provider]: err instanceof Error ? err.message : 'Could not fetch models',
+        [provider]: err instanceof Error ? err.message : t('settings.modelsFetchFailed'),
       }));
     } finally {
       setRefreshing(null);
@@ -108,7 +108,7 @@ export function Settings() {
       setDrafts((d) => ({ ...d, [provider]: '' }));
       setEditingKeys((d) => ({ ...d, [provider]: false }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save key');
+      setError(err instanceof Error ? err.message : t('settings.saveKeyFailed'));
     }
   }
 
@@ -161,20 +161,20 @@ export function Settings() {
   async function submitPassword() {
     setPwMsg(null);
     if (pw.next.length < 8) {
-      setPwMsg({ ok: false, text: 'New password must be at least 8 characters.' });
+      setPwMsg({ ok: false, text: t('settings.passwordTooShort') });
       return;
     }
     if (pw.next !== pw.confirm) {
-      setPwMsg({ ok: false, text: 'New passwords do not match.' });
+      setPwMsg({ ok: false, text: t('settings.passwordsNoMatch') });
       return;
     }
     setPwBusy(true);
     try {
       await changePassword(pw.current, pw.next);
       setPw({ current: '', next: '', confirm: '' });
-      setPwMsg({ ok: true, text: 'Password updated. Your other devices were signed out.' });
+      setPwMsg({ ok: true, text: t('settings.passwordUpdated') });
     } catch (err) {
-      setPwMsg({ ok: false, text: err instanceof Error ? err.message : 'Could not change password' });
+      setPwMsg({ ok: false, text: err instanceof Error ? err.message : t('settings.passwordChangeFailed') });
     } finally {
       setPwBusy(false);
     }
@@ -207,13 +207,13 @@ export function Settings() {
         <div className="set-section-head">
           <h2>{t('settings.providerKeys')}</h2>
           <p>
-            Bring-your-own keys, encrypted at rest per workspace. Each pipeline step unlocks once its provider key is set.
-            {!canManage && ' You need Owner or key-management permission to change these.'}
+            {t('settings.providerKeysLongHint')}
+            {!canManage && t('settings.keyManagePermissionHint')}
           </p>
         </div>
 
         {loading ? (
-          <p className="empty">Loading keys…</p>
+          <p className="empty">{t('settings.loadingKeys')}</p>
         ) : (
           <div className="list">
             {PROVIDERS.map((p) => {
@@ -228,11 +228,11 @@ export function Settings() {
                       {p.label}
                       <span className="key-set">
                         <span className={`key-dot ${existing ? 'on' : ''}`} />
-                        {existing ? `Key set ···· ${existing.last4}` : t('settings.notSet')}
+                        {existing ? t('settings.keySet', { last4: existing.last4 }) : t('settings.notSet')}
                       </span>
                     </div>
                     <div className="sub">
-                      {p.hint}
+                      {t(`settings.providerHints.${p.hintKey}`)}
                       {!existing && p.keyUrl && (
                         <>
                           {' · '}
@@ -254,7 +254,7 @@ export function Settings() {
                           data-1p-ignore="true"
                           data-lpignore="true"
                           data-form-type="other"
-                          placeholder={existing ? 'replace key' : 'Paste key'}
+                          placeholder={existing ? t('settings.replaceKey') : t('settings.pasteKey')}
                           value={draft}
                           onFocus={(e) => {
                             if (existing && draft === MASKED_KEY_VALUE) e.currentTarget.select();
@@ -270,7 +270,7 @@ export function Settings() {
                           className="text-input key-input key-input-trigger"
                           onClick={() => startKeyEdit(p.id, existing)}
                         >
-                          {existing ? MASKED_KEY_VALUE : 'Paste key'}
+                          {existing ? MASKED_KEY_VALUE : t('settings.pasteKey')}
                         </button>
                       )}
                       {isEditing && (
@@ -278,7 +278,7 @@ export function Settings() {
                           <button
                             type="button"
                             className="icon-btn-primary"
-                            title="Save key"
+                            title={t('settings.saveKeyTitle')}
                             disabled={!canSaveDraft}
                             onClick={() => setToSave(p.id)}
                           >
@@ -287,7 +287,7 @@ export function Settings() {
                           <button
                             type="button"
                             className="icon-btn-danger"
-                            title="Cancel editing"
+                            title={t('settings.cancelEditing')}
                             onPointerDown={(e) => {
                               e.preventDefault();
                               cancelKeyEdit(p.id);
@@ -310,11 +310,8 @@ export function Settings() {
       {/* ===== Section 2: Models, grouped by provider ===== */}
       <section className="set-section">
         <div className="set-section-head">
-          <h2>Models</h2>
-          <p>
-            Models available in the prompt playground and pipeline steps. Refresh to fetch the current list
-            from each provider — no code change needed.
-          </p>
+          <h2>{t('settings.models')}</h2>
+          <p>{t('settings.modelsHint')}</p>
         </div>
 
         <div className="model-groups">
@@ -326,11 +323,11 @@ export function Settings() {
               <div className="model-group" key={p}>
                 <div className="model-group-head">
                   <span className="mg-title">{LABEL[p]}</span>
-                  <span className="mg-count">{list.length} models</span>
+                  <span className="mg-count">{t('settings.modelsCount', { count: list.length })}</span>
                   {canManage && existing && (
                     <button
                       className="icon-btn mg-refresh"
-                      title="Fetch latest models from provider"
+                      title={t('settings.fetchLatestModels')}
                       disabled={refreshing === p}
                       onClick={() => void refreshModels(p)}
                     >
@@ -340,9 +337,9 @@ export function Settings() {
                 </div>
 
                 {!existing ? (
-                  <p className="mg-hint">Add the {LABEL[p]} key above to fetch its models.</p>
+                  <p className="mg-hint">{t('settings.addProviderKeyToFetch', { provider: LABEL[p] })}</p>
                 ) : list.length === 0 ? (
-                  <p className="mg-hint">No models yet — refresh to fetch.</p>
+                  <p className="mg-hint">{t('settings.noModelsYet')}</p>
                 ) : (
                   <div className="mg-models">
                     {list.map((m) => (
@@ -361,15 +358,15 @@ export function Settings() {
       {/* ===== Section 3: Password ===== */}
       <section className="set-section">
         <div className="set-section-head">
-          <h2>Password</h2>
-          <p>Change your password. Updating it signs out your other devices.</p>
+          <h2>{t('settings.password')}</h2>
+          <p>{t('settings.passwordHint')}</p>
         </div>
         <form className="pw-form" onSubmit={(e) => { e.preventDefault(); void submitPassword(); }}>
           <input
             className="text-input"
             type="password"
             autoComplete="current-password"
-            placeholder="Current password"
+            placeholder={t('settings.currentPassword')}
             value={pw.current}
             onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
           />
@@ -377,7 +374,7 @@ export function Settings() {
             className="text-input"
             type="password"
             autoComplete="new-password"
-            placeholder="New password (min 8 characters)"
+            placeholder={t('settings.newPasswordMin')}
             value={pw.next}
             onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
           />
@@ -385,7 +382,7 @@ export function Settings() {
             className="text-input"
             type="password"
             autoComplete="new-password"
-            placeholder="Confirm new password"
+            placeholder={t('settings.confirmNewPassword')}
             value={pw.confirm}
             onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))}
           />
@@ -395,7 +392,7 @@ export function Settings() {
             style={{ width: 'auto', alignSelf: 'flex-start' }}
             disabled={pwBusy || !pw.current || !pw.next || !pw.confirm}
           >
-            {pwBusy ? 'Updating…' : 'Update password'}
+            {pwBusy ? t('settings.updatingPassword') : t('settings.updatePassword')}
           </button>
           {pwMsg && <p className={pwMsg.ok ? 'pw-ok' : 'error'}>{pwMsg.text}</p>}
         </form>
@@ -403,14 +400,9 @@ export function Settings() {
 
       <ConfirmDialog
         open={!!toSave}
-        title="Save provider key?"
-        message={
-          <>
-            Save this <strong>{toSave ? LABEL[toSave] : ''}</strong> key for this workspace? It will replace the current
-            key and affect future pipeline runs that use this provider.
-          </>
-        }
-        confirmLabel="Save key"
+        title={t('settings.saveProviderKeyTitle')}
+        message={t('settings.saveProviderKeyMessage', { provider: toSave ? LABEL[toSave] : '' })}
+        confirmLabel={t('settings.saveKeyTitle')}
         busy={saving}
         onConfirm={() => void confirmSave()}
         onCancel={() => setToSave(null)}
@@ -418,13 +410,9 @@ export function Settings() {
 
       <ConfirmDialog
         open={!!toRemove}
-        title="Remove key?"
-        message={
-          <>
-            Remove the <strong>{toRemove}</strong> key for this workspace? Steps using it will lock until a new key is set.
-          </>
-        }
-        confirmLabel="Remove"
+        title={t('settings.removeKeyTitle')}
+        message={t('settings.removeKeyMessage', { provider: toRemove ? LABEL[toRemove] : '' })}
+        confirmLabel={t('settings.remove')}
         danger
         busy={removing}
         onConfirm={() => void confirmRemove()}

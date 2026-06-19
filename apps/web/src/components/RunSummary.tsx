@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StepStatus, type Run } from '@lyra/shared';
 import { Markdown } from './Markdown';
 
@@ -20,14 +21,6 @@ const STATUS_DOT: Record<string, string> = {
   done: '#2da44e',
   error: '#e5484d',
 };
-const STATUS_TEXT: Record<string, string> = {
-  idle: 'Idle',
-  running: 'Running',
-  waiting: 'Awaiting approval',
-  done: 'Done',
-  error: 'Error',
-};
-
 // Below the run canvas: surfaces the things you actually run a pipeline for —
 // the final deliverable, and a clear log of what each step did (incl. failures).
 export function RunSummary({
@@ -39,6 +32,7 @@ export function RunSummary({
   busy: boolean;
   onRetry: (index: number) => void;
 }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const errored = run.steps.find((s) => s.status === StepStatus.Error || !!s.error);
@@ -68,10 +62,12 @@ export function RunSummary({
         <div className="run-error">
           <div className="run-error-main">
             <strong>
-              Step {errored.index + 1}
-              {errored.name ? ` · ${errored.name}` : ''} failed
+              {t('run.stepFailed', {
+                n: errored.index + 1,
+                name: errored.name ? ` · ${errored.name}` : '',
+              })}
             </strong>
-            <span>{errored.error ?? 'The step did not complete.'}</span>
+            <span>{errored.error ?? t('run.stepIncomplete')}</span>
           </div>
           <button
             className="btn-ghost run-error-retry"
@@ -79,7 +75,7 @@ export function RunSummary({
             disabled={busy}
             onClick={() => onRetry(errored.index)}
           >
-            ↻ Retry step
+            ↻ {t('run.retryStep')}
           </button>
         </div>
       )}
@@ -87,17 +83,17 @@ export function RunSummary({
       {finalResult && (
         <div className="run-final">
           <div className="run-final-head">
-            <h3>Final result{last?.name ? ` · ${last.name}` : ''}</h3>
+            <h3>{t('run.finalResult', { name: last?.name ? ` · ${last.name}` : '' })}</h3>
             <div className="run-final-actions">
               <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} onClick={() => copy(finalResult)}>
-                {copied ? 'Copied' : 'Copy'}
+                {copied ? t('common.copied') : t('common.copy')}
               </button>
               <button
                 className="btn-ghost"
                 style={{ width: 'auto', marginTop: 0 }}
                 onClick={() => download(finalResult, `${(run.pipelineName ?? 'run').replace(/\s+/g, '-')}.md`)}
               >
-                Download
+                {t('common.download')}
               </button>
             </div>
           </div>
@@ -108,7 +104,7 @@ export function RunSummary({
       )}
 
       <div className="run-timeline">
-        <div className="run-timeline-head">Run log</div>
+        <div className="run-timeline-head">{t('run.runLog')}</div>
         {run.steps.map((s) => {
           const dur = fmtDuration(s.startedAt, s.finishedAt);
           const cost = fmtCost(s.usage?.costUsd);
@@ -116,13 +112,13 @@ export function RunSummary({
             <div key={s.index} className={`run-tl-row${s.status === StepStatus.Error ? ' err' : ''}`}>
               <span className="run-tl-dot" style={{ background: STATUS_DOT[s.status] ?? 'var(--ink-tertiary)' }} />
               <span className="run-tl-name">
-                {s.index + 1}. {s.name ?? `Step ${s.index + 1}`}
+                {s.index + 1}. {s.name ?? t('run.stepFallback', { n: s.index + 1 })}
               </span>
-              <span className={`run-tl-status st-${s.status}`}>{STATUS_TEXT[s.status] ?? s.status}</span>
+              <span className={`run-tl-status st-${s.status}`}>{t(`run.status_${s.status}`, s.status)}</span>
               <span className="run-tl-meta">
                 {dur && <span>{dur}</span>}
                 {cost && <span>{cost}</span>}
-                {s.usage?.tokens != null && <span>{s.usage.tokens.toLocaleString()} tok</span>}
+                {s.usage?.tokens != null && <span>{t('run.tokenShort', { count: s.usage.tokens.toLocaleString() })}</span>}
               </span>
             </div>
           );

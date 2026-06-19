@@ -146,14 +146,14 @@ export function RunStepCard(props: RunStepCardProps) {
       </div>
 
       {assets && assets.length > 0 && (
-        <div className="rn-assets" aria-label={`${assets.length} generated asset${assets.length === 1 ? '' : 's'}`}>
+        <div className="rn-assets" aria-label={t('run.generatedAssets', { count: assets.length })}>
           {assets.map((a) =>
             a.type === 'image' ? (
-              <a key={a.id} className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title="Open full size">
+              <a key={a.id} className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')}>
                 <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
               </a>
             ) : (
-              <a key={a.id} className={`rn-asset rn-asset-${a.type}`} href={a.url} target="_blank" rel="noreferrer" title={`Open ${a.type}`}>
+              <a key={a.id} className={`rn-asset rn-asset-${a.type}`} href={a.url} target="_blank" rel="noreferrer" title={t('run.openAsset', { type: a.type })}>
                 <span className="rn-asset-glyph" aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span>
               </a>
             ),

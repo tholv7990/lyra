@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initial } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
@@ -7,14 +8,18 @@ import { ChevronIcon, CheckIcon, MembersIcon, PersonIcon } from './icons';
 // Workspace type marker: a team (group) or personal (single person) icon,
 // shown next to the workspace name in the switcher.
 function WsType({ type }: { type: 'personal' | 'team' }) {
+  const { t } = useTranslation();
+  const label = type === 'team' ? t('common.teamWorkspace') : t('common.personalWorkspace');
+
   return (
-    <span className="ws-type" title={`${type === 'team' ? 'Team' : 'Personal'} workspace`}>
+    <span className="ws-type" title={label}>
       {type === 'team' ? <MembersIcon width={13} height={13} /> : <PersonIcon width={13} height={13} />}
     </span>
   );
 }
 
 export function WorkspaceMenu() {
+  const { t } = useTranslation();
   const { workspaces, current, setCurrent, createWorkspace } = useWorkspace();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -50,7 +55,7 @@ export function WorkspaceMenu() {
       setCreating(false);
       setOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create workspace');
+      setError(err instanceof Error ? err.message : t('common.couldNotCreateWorkspace'));
     } finally {
       setBusy(false);
     }
@@ -60,7 +65,7 @@ export function WorkspaceMenu() {
     <div className="ws" ref={ref}>
       <button className="ws-trigger" onClick={() => setOpen((o) => !o)}>
         <span className="ws-avatar">{initial(current?.name ?? 'W', 'W')}</span>
-        <span className="ws-name">{current?.name ?? 'Workspace'}</span>
+        <span className="ws-name">{current?.name ?? t('common.workspace')}</span>
         {current && <WsType type={current.type} />}
         <ChevronIcon />
       </button>
@@ -91,16 +96,16 @@ export function WorkspaceMenu() {
                 className="text-input"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Workspace name"
+                placeholder={t('common.workspaceName')}
                 autoFocus
               />
               {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
               <div style={{ display: 'flex', gap: 6 }}>
                 <button className="btn-primary" type="submit" disabled={busy} style={{ flex: 1, marginTop: 0 }}>
-                  {busy ? 'Creating…' : 'Create'}
+                  {busy ? t('common.creating') : t('common.create')}
                 </button>
                 <button className="btn-ghost" type="button" onClick={() => setCreating(false)}>
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
@@ -109,7 +114,7 @@ export function WorkspaceMenu() {
               <span className="ws-avatar" style={{ background: 'var(--surface-3)', color: 'var(--ink)' }}>
                 +
               </span>
-              <span className="ws-name">New team workspace</span>
+              <span className="ws-name">{t('common.newTeamWorkspace')}</span>
             </button>
           )}
         </div>

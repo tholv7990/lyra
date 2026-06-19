@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StepMode,
   tagColor,
@@ -30,6 +31,7 @@ export interface StepCardProps {
 // via the ← / → actions (the old pointer-drag grip is gone — on the canvas you
 // drag to reposition, and ← / → change the sequence).
 export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelLabel, promptMissing, needsPrompt }: StepCardProps) {
+  const { t } = useTranslation();
   const cb = useFlowCallbacks();
   return (
     <div className={`flow-node${promptMissing || needsPrompt ? ' broken' : ''}`} style={{ '--accent': tagColor(s.name || s.promptId || String(i)) } as CSSProperties}>
@@ -41,37 +43,41 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
             <button
               type="button"
               className={`mode-tag mode-toggle ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}
-              title="Toggle gate / auto"
+              title={t('run.toggleGateAuto')}
               onClick={(e) => { e.stopPropagation(); cb.onToggleMode?.(i); }}
             >
-              {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
+              {s.mode === StepMode.Gate ? t('run.gate') : t('run.auto')}
             </button>
           ) : (
             <span className={`mode-tag ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
-              {s.mode === StepMode.Gate ? 'GATE' : 'AUTO'}
+              {s.mode === StepMode.Gate ? t('run.gate') : t('run.auto')}
             </span>
           )}
           {s.fanOut?.over && (
-            <span className="mode-tag fanout" title={`Fan out over the "${s.fanOut.over}" collection`}>
-              FAN-OUT
+            <span className="mode-tag fanout" title={t('run.fanOutOver', { collection: s.fanOut.over })}>
+              {t('run.fanOut')}
             </span>
           )}
           {s.condition?.variable && (
             <span
               className="mode-tag cond"
-              title={`Run only when ${s.condition.variable} ${s.condition.op}${s.condition.value ? ` ${s.condition.value}` : ''}`}
+              title={t('run.conditionTitle', {
+                variable: s.condition.variable,
+                op: s.condition.op,
+                value: s.condition.value ? ` ${s.condition.value}` : '',
+              })}
             >
               IF
             </span>
           )}
           {promptMissing && (
-            <span className="mode-tag missing" title="This step's prompt was deleted — re-pick a prompt or remove the step">
-              ⚠ PROMPT DELETED
+            <span className="mode-tag missing" title={t('run.promptDeletedTitle')}>
+              ⚠ {t('run.promptDeleted')}
             </span>
           )}
           {needsPrompt && !promptMissing && (
-            <span className="mode-tag missing" title="No prompt bound yet — pick a prompt for this step">
-              ⚠ NEEDS PROMPT
+            <span className="mode-tag missing" title={t('run.needsPromptTitle')}>
+              ⚠ {t('run.needsPrompt')}
             </span>
           )}
           {p && (
@@ -79,7 +85,7 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               className="flow-eye"
               role="button"
               tabIndex={0}
-              title="View full prompt"
+              title={t('run.viewFullPrompt')}
               onClick={(e) => { e.stopPropagation(); cb.onViewPrompt?.(p.id); }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); cb.onViewPrompt?.(p.id); } }}
             >
@@ -90,22 +96,22 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
             <button
               type="button"
               className="flow-test-btn"
-              title="Test this step"
+              title={t('run.testThisStep')}
               onClick={(e) => {
                 e.stopPropagation();
                 cb.onTestStep?.(i);
               }}
             >
-              Test
+              {t('run.test')}
             </button>
           )}
         </div>
         {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
         {promptMissing && (
-          <div className="flow-node-snip broken-hint">Prompt deleted — re-pick a prompt for this step.</div>
+          <div className="flow-node-snip broken-hint">{t('run.promptDeletedHint')}</div>
         )}
         {needsPrompt && !promptMissing && (
-          <div className="flow-node-snip broken-hint">AI couldn’t match a prompt — pick one for this step.</div>
+          <div className="flow-node-snip broken-hint">{t('run.needsPromptHint')}</div>
         )}
         <div className="flow-node-sub">
           <ProviderIcon provider={s.provider} size={14} />
@@ -130,9 +136,9 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
       </div>
       {canEdit && (
         <div className="flow-node-actions">
-          <button className="icon-mini" title="Move earlier" onClick={() => cb.onMove?.(i, -1)}>←</button>
-          <button className="icon-mini" title="Move later" onClick={() => cb.onMove?.(i, 1)}>→</button>
-          <button className="icon-mini danger" title="Remove" onClick={() => cb.onRemove?.(i)}>×</button>
+          <button className="icon-mini" title={t('run.moveEarlier')} onClick={() => cb.onMove?.(i, -1)}>←</button>
+          <button className="icon-mini" title={t('run.moveLater')} onClick={() => cb.onMove?.(i, 1)}>→</button>
+          <button className="icon-mini danger" title={t('common.remove')} onClick={() => cb.onRemove?.(i)}>×</button>
         </div>
       )}
     </div>
