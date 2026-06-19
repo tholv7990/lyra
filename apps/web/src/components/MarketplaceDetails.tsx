@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { MarketplacePrompt } from '@lyra/shared';
+import { labelColor, type MarketplacePrompt } from '@lyra/shared';
 import { Markdown } from './Markdown';
 import { ChatsIcon, CheckIcon, CopyIcon, PlusIcon, XIcon } from '../layout/icons';
 
@@ -63,6 +63,24 @@ export function MarketplaceDetails({
             {prompt.type === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
           </span>
         </div>
+
+        {prompt.tags.length > 0 && (
+          <div className="mkt-details-tags">
+            {prompt.tags.map((tag) => {
+              const c = labelColor(tag, []);
+              return (
+                <span
+                  key={tag}
+                  className="mkt-tag"
+                  style={{ background: `${c}1f`, borderColor: `${c}3a` }}
+                >
+                  <span className="mkt-tag-dot" style={{ background: c }} />
+                  {tag}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {prompt.variables.length > 0 && (
           <div className="pd-tags">

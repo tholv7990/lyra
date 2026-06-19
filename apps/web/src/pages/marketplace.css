@@ -153,6 +153,36 @@
   gap: 5px;
 }
 
+/* Colored category/tag chips (prompts.chat-style) — hue per tag via labelColor,
+   applied inline. Empty until the catalog import populates prompt.tags. */
+.mkt-card-tags,
+.mkt-details-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mkt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink); /* ink text stays readable; the hue lives in the dot + tint */
+  white-space: nowrap;
+}
+
+.mkt-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .mkt-card-foot {
   display: flex;
   align-items: center;

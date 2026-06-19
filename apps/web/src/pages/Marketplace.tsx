@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Provider,
   defaultModel,
+  labelColor,
   type MarketplacePrompt,
   type RankedMarketplacePrompt,
 } from '@lyra/shared';
@@ -332,6 +333,24 @@ function Card({ prompt, rank, state, copied, onAdopt, onView, onCopy, onOpenInCh
       <p className="mkt-card-code" onClick={onView} title={t('marketplace.view')}>
         {prompt.content}
       </p>
+
+      {prompt.tags.length > 0 && (
+        <div className="mkt-card-tags">
+          {prompt.tags.map((tag) => {
+            const c = labelColor(tag, []);
+            return (
+              <span
+                key={tag}
+                className="mkt-tag"
+                style={{ background: `${c}1f`, borderColor: `${c}3a` }}
+              >
+                <span className="mkt-tag-dot" style={{ background: c }} />
+                {tag}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {prompt.variables.length > 0 && (
         <div className="mkt-card-vars">
