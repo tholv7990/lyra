@@ -10,6 +10,17 @@ Built and verified: **Phase 0** (monorepo + auth), **Phase 1** (workspaces/membe
 
 Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` interface + `ProviderRegistry`); only Anthropic is real — openai/deepseek/image/video still use `MockStepProvider`. Wiring a real provider = add its impl + map it in the registry (one line).
 
+## Recent UI/API updates (June 19, 2026 — night)
+
+Full detail in **[docs/SESSION-HANDOFF.md](docs/SESSION-HANDOFF.md)** (top entry) and the design spec **[docs/superpowers/specs/2026-06-19-chat-as-assistant-design.md](docs/superpowers/specs/2026-06-19-chat-as-assistant-design.md)**. Headlines:
+
+- **Chat is now a generic AI assistant** reached from a **bottom-right "AI" FAB** (it left the nav). The sidebar is **Home · Marketplace · [Workspace group: Prompts/Pipelines/Projects] · Built-ins**.
+- **A Prompt is the durable parent that owns saved answers** (`Prompt.results: SavedResult[]`, shared model). In chat, each AI answer has a **Save** action (enabled only when the chat has a parent prompt); **Save as prompt** is the gateway that creates the prompt + attaches the first answer. Prompt **details** shows a **`SavedResults`** list (the old per-prompt conversation timeline `PromptHistory` is **removed**). api routes: `POST|PATCH|DELETE /prompts/:id/results[/:resultId]` (reuse `PromptAccessGuard`; add = any prompt-viewer, mutate = author-or-owner). **This supersedes the Chats auto-save toggle / "Save to history" model from the evening section below.**
+- **Prompt ↔ pipeline ↔ project are isolated lanes** — pipelines/projects do **not** read a prompt's chat `results[]`; pipeline run history lives per-(project,pipeline) Run and is fresh per assignment (spec §12). Adding `results[]` changed nothing about how pipelines run.
+- **Prompts / Pipelines / Projects / Admin-Users are all card galleries** now (shared `.lib-card`/`.lib-grid`), pure **read views** — inline edit removed; edit via the editors. Admin Users cards drill into a detail view.
+- **Shared web helpers** live in `apps/web/src/lib/{format,useOutsideClick,constants,array}.ts` — use these, don't re-roll `fmtDate`/`initial`/`avatarStyle`/outside-click/`PROVIDER_LABELS`/`STATUS_COLOR`/`toggleInList`.
+- **CSS is token-only** in `layout.css`/`connectors.css`; landing has its own `--l-*` scope **with a `[data-theme=dark]` override** (+ `--l-glass*` for frosted surfaces). Auth pages have a theme/language toggle (`components/AuthTopBar.tsx`).
+
 ## Recent UI/API updates (June 19, 2026 — evening)
 
 - **Marketplace is a prompts.chat-style card gallery** (`apps/web/src/pages/Marketplace.tsx`,

@@ -1,7 +1,7 @@
 # Chat as Assistant — Prompt owns saved answers (v1 design)
 
 - **Date:** 2026-06-19
-- **Status:** Approved (design) — pending spec review, then implementation plan
+- **Status:** Implemented (v1) on `dev` (api `6a22800`, web `d7b0a89`, + follow-ups). §12–13 record the prompt↔pipeline↔project boundary and the as-built refinements.
 - **Scope:** `apps/web` (Chats, Prompt details), `apps/api` (prompts, conversations), `@lyra/shared`
 
 ## 1. Problem & intent
@@ -151,3 +151,32 @@ not make old results misleading — the lazy stand-in for versioning (§9 gradua
 - Rating UI in v1 (capture on save vs. inline on the results list) — default: optional, inline.
 - Exact permission to add/remove a result (any viewer vs. prompt creator/editor) — default:
   align with prompt edit permission for mutate, view for read.
+
+## 12. Prompt ↔ Pipeline ↔ Project boundary (decided)
+
+Three **isolated lanes** — no carry-over, no bridge in v1 (confirmed with the owner):
+
+- **Chat lane:** prompt → `results[]` (chat-curated answers). Workspace-library scope.
+- **Pipeline** is a reusable **template** (binds prompts to steps). It runs the prompt's *content*
+  by reference; it **never reads `results[]`**. Adding saved results changed nothing about how
+  pipelines run.
+- **Project lane:** project + pipeline → **Runs** (per-step outputs), scoped to the
+  *(project, pipeline)* pair and **fresh** when a pipeline is first assigned. Run history lives in
+  the Run document (`historyForStep` shows prior runs of that step *in that project*), never pulls
+  a prompt's chat results, and never crosses projects.
+
+No "save a run output back to the prompt" bridge yet — the api `POST /prompts/:id/results` makes
+it cheap to add later (snapshot the *filled* prompt). Cross-project / cross-pipeline analytics
+("this prompt's results everywhere") is also deferred.
+
+## 13. As-built notes (what shipped vs. the plan above)
+
+- **Routes** are mounted at `prompts/:id/results` (reusing `PromptAccessGuard`), not workspace-
+  nested. **Add** = any member who can *view* the prompt (the chat flow). **Remove/update** =
+  the result's author **or** the prompt owner (refines §11's default).
+- `results` are included in the Prompt view for both list and get (curated handful — fine).
+- The chat **results rail** is desktop-only (≥1101px); below that the results live in Prompt
+  details. The whole feature is built on the canonical modal/affordance vocabulary.
+- **Rating UI deferred** — the backend stores `rating`/`note` (DTO + schema), but no UI yet.
+- **Cleanup still pending** (per §8): the `conversations/prompt-history-list` endpoint and a few
+  now-unused `chats.*` i18n keys (`autoSave`, `saveToHistory*`, `couldNotSave`) are dead.

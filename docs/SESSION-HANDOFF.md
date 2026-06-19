@@ -1,3 +1,46 @@
+# Session handoff — June 19, 2026 (night) — card galleries everywhere · CSS tokenized · Chat-as-assistant (Prompt owns saved answers) · landing/auth/admin dark-mode fixes
+
+> **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through **`fb387e2`** (all 16 commits below are up). Working tree clean except three **intentionally-untracked** paths: `data/` (the prompts.chat rich export), `import-rich.cjs` (re-runnable marketplace importer), and `.codex-dev/` (a parallel **Codex agent's git worktree** — not our tree; ignore it, but see `[[concurrent-codex-claude-tree]]`). **Commit/push only when the user asks.** Web gate stayed green every commit: `pnpm turbo run type-check lint test build` (web ~38 tests; api 103 tests).
+
+## ✅ Shipped this session (all on origin/dev)
+
+**Card galleries everywhere (the requested redesign).**
+- `f0010d0` **Prompts / Pipelines / Projects → read-only `.lib-card` galleries** on a shared `.lib-grid`/`.lib-card` shell in `layout.css` (matches the Marketplace). Cards are pure read views — **all inline edit removed** (rename, status toggle, tag `LabelPicker`, the Projects name/description fields); editing happens in the dedicated editors.
+- `fb387e2` **Admin → Users** is now the same card gallery (avatar · name · email · meta · status badge — **no label:value rows**) + search; **removed the redundant "Admin / Platform operations" top header**; clicking a card **drills into a full user detail view** (back button + identity header + workspaces + usage + deactivate), replacing the old inline expand. `apps/web/src/pages/{Admin.tsx,admin.css}`.
+
+**CSS + code hygiene.**
+- `fd4e5f3` **tokenized hardcoded CSS colors** in `layout.css` + `connectors.css` — new tokens `--on-accent`, `--danger-tint`/`--danger-wash` (with dark values), `--code-bg`/`--code-ink`/`--code-ink-muted`; deleted dead `.project-card.vis-*` side-stripes; made `.badge.vis-private` theme-adaptive. Only genuinely-bespoke literals remain (brand gradient, platform brand colors, two contrast-tuned inks, media letterbox black), each commented.
+- `8d7de87` **DRY: shared helpers** — `src/lib/{format.ts (fmtDate/initial/initials/avatarStyle), useOutsideClick.ts, constants.ts (PROVIDER_LABELS/STATUS_COLOR), array.ts (toggleInList)}` replace ~14 copy-pasted definitions; deleted dead `pipelineNamePatch`. Net −205 lines.
+
+**Chat → AI assistant + Prompt owns saved answers** (the big feature — see the spec).
+- `f07da1d` **Chats left the nav → a bottom-right "AI" FAB** (opens `/chats` over the current page); sidebar reordered to **Home · Marketplace · [Workspace group: Prompts/Pipelines/Projects] · Built-ins**; `WorkspaceMenu` moved under a "Workspace" group label.
+- `f59e7c5` **design spec** → `docs/superpowers/specs/2026-06-19-chat-as-assistant-design.md` (read it — §12 boundary, §13 as-built).
+- `6a22800` **api: Prompt owns `results[]`** (saved answer-children). Shared `SavedResult` + `Prompt.results`; subdoc schema; service `addResult`/`removeResult`/`updateResult`; routes `POST|PATCH|DELETE /prompts/:id/results[/:resultId]` (reuse `PromptAccessGuard`; **add = any prompt-viewer**, **remove/update = result author or prompt owner**). 7 new unit tests.
+- `d7b0a89` **web:** Prompt details' conversation-history timeline → **`SavedResults`** list (`PromptHistory` deleted); each AI answer in chat gets a **Save** action (only when the chat has a parent prompt); **Save as prompt** links the chat + attaches the triggering answer as the first result; a desktop **results rail** beside the thread. Retired the auto-save toggle + "Save to history".
+- `cd67817` consistent disabled state for the chat save pills (no more dead disabled button on every answer). `8569a60` **close (X) button** on the chat header (returns to origin or home).
+
+**Landing / auth / home dark-mode + content.**
+- `a155cd7` **landing dark-mode contrast** — three frosted surfaces (`.l-campaign` card, `.l-glimpse-card`, `.l-publish-pill`) were hardcoded **white** `rgba(255,255,255,…)` and never flipped → light-on-light (the white-on-white channel pills + faded "Publishing to" chips). Added `--l-glass`/`--l-glass-strong`/`--l-glass-line` tokens that flip; lifted `--l-ink-subtle` to clear AA on warm dark surfaces.
+- `cb9cc1e` **auth pages get a theme + language toggle** — new `components/AuthTopBar.tsx` (shared `PrefControls`) top-right on login/signup/forgot/reset. (The auth CSS already flipped with `data-theme`; the gap was no control on those pages for direct arrivals.)
+- `c75355c` refreshed in-app **home copy** (Chats = the assistant; dropped the false "every turn auto-saved"). `005a47c` added **Marketplace + Import (crawl public) + Publish (multi-channel)** tiles to the home hub (+ `--accent-marketplace`/`--accent-import`/`--accent-publish`).
+- `2baefd8` marketplace **adopt confirmation** (ConfirmDialog before copying a catalog prompt into the library).
+
+## 📐 Key decisions (so the next session doesn't re-litigate)
+- **Prompt is the durable parent; each saved answer is a child** (`results[]`). v1 = flat prompt + per-answer `promptSnapshot` (no version objects). Chat threads are disposable scratch; only deliberately-saved answers are children.
+- **Three isolated lanes, no bridge in v1:** chat (prompt→results), pipeline (reusable template, never reads results), project (project+pipeline→Runs, fresh per assignment, never crosses projects). Pipelines/projects are **unaffected** by `results[]`. (Spec §12.)
+- **Coolify** (coolify.io) was reviewed for hosting: a good fit for the "VPS + Docker Compose" path (api+worker+redis+web on one box, git auto-deploy, SSL); recommend keeping **Mongo on Atlas** (transactions/replica-set) + **assets on R2**. Advisory only — nothing built.
+
+## 🔜 Deferred / cleanup (not blocking)
+- **Saved-answer rating UI** (backend stores `rating`/`note`; no UI yet).
+- **Dead-code cleanup:** the `conversations/prompt-history-list` endpoint + unused `chats.*` i18n keys (`autoSave`, `saveToHistory*`, `couldNotSave`) are now orphaned (spec §8/§13).
+- **Admin Users status filter** (Active/Inactive) — needs an api query param; search-only for now.
+- **Context-aware assistant**, **in-chat thread switcher**, marketplace catalog made durable (`[[marketplace-category-import-plan]]`).
+
+## ⏸️ Still paused (unchanged)
+- Postiz publish-v2 live-post e2e; per-project channels (`[[per-project-channels-model]]`). Autonomous loop + Connector Scout still deferred (`[[phase4-autonomous-loop-deferred]]`, `[[connector-scout-deferred]]`).
+
+---
+
 # Session handoff — June 19, 2026 (evening) — Prompt-library UX + Marketplace rebuilt (prompts.chat-style) + Chats auto-save
 
 > **Read this first.** Branch **dev** is **PUSHED** to `origin/dev` through `fc0d24c`. Tree clean except the intentional `docker-compose.yml` pin (keep uncommitted), gitignored `apps/api/.env`, and **untracked `data/`** (the prompts.chat rich export + `import-rich.cjs`). Commit/push only when the user asks.
