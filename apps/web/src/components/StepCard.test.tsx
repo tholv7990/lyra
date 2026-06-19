@@ -22,6 +22,7 @@ const prompt: Prompt = {
   type: PromptType.Text,
   media: [],
   tags: [],
+  results: [],
   active: true,
   createdBy: { id: 'user-1', name: 'Ada' },
   updatedBy: { id: 'user-1', name: 'Ada' },

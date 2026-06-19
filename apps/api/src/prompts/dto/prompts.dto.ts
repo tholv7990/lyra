@@ -5,7 +5,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -21,7 +23,9 @@ import {
 import type {
   CreatePromptDto,
   PromptMedia,
+  SaveResultDto,
   UpdatePromptDto,
+  UpdateResultDto,
 } from '@lyra/shared';
 
 // Nested media item — validated per-element via @ValidateNested + @Type.
@@ -82,6 +86,52 @@ export class CreatePromptBody implements CreatePromptDto {
   @IsOptional()
   @IsString()
   model?: string;
+}
+
+// Save an answer as a child result of a prompt (the chat "Save" action).
+export class SaveResultBody implements SaveResultDto {
+  @IsString()
+  @MinLength(1)
+  output!: string;
+
+  @IsEnum(Provider)
+  provider!: Provider;
+
+  @IsString()
+  @MinLength(1)
+  model!: string;
+
+  @IsOptional()
+  @IsString()
+  promptSnapshot?: string;
+
+  @IsOptional()
+  @IsString()
+  sourceConversationId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  note?: string;
+}
+
+export class UpdateResultBody implements UpdateResultDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  note?: string;
 }
 
 export class UpdatePromptBody implements UpdatePromptDto {

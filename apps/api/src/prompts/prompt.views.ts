@@ -3,11 +3,15 @@ import type {
   Prompt as PromptModel,
   PromptMedia,
   Provider,
+  SavedResult,
   UserRef,
 } from '@lyra/shared';
-import type { PromptDocument } from './prompt.schema';
+import type { PromptDocument, PromptResultItem } from './prompt.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';
+
+// Subdocs carry an _id at runtime that the class type doesn't declare.
+type ResultDoc = PromptResultItem & { _id: { toString(): string } };
 
 export function toPrompt(
   p: PromptDocument,
@@ -34,6 +38,20 @@ export function toPrompt(
     tags: p.tags ?? [],
     provider: p.provider as Provider | undefined,
     model: p.model,
+    results: ((p.results ?? []) as ResultDoc[]).map(
+      (r): SavedResult => ({
+        id: r._id.toString(),
+        output: r.output,
+        provider: r.provider as Provider,
+        model: r.model,
+        promptSnapshot: r.promptSnapshot ?? '',
+        rating: r.rating,
+        note: r.note,
+        sourceConversationId: r.sourceConversationId,
+        createdBy: userRef(r.createdBy, refs),
+        savedAt: iso(r.savedAt),
+      }),
+    ),
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),
@@ -42,7 +60,8 @@ export function toPrompt(
   };
 }
 
-// Collect every user id a prompt references (for batch resolution).
+// Collect every user id a prompt references (for batch resolution) — the
+// prompt's own actors plus every saved-result author.
 export function promptActorIds(p: PromptDocument): string[] {
-  return [p.createdBy, p.updatedBy];
+  return [p.createdBy, p.updatedBy, ...(p.results ?? []).map((r) => r.createdBy)];
 }

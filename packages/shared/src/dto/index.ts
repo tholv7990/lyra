@@ -110,6 +110,25 @@ export interface UpdatePromptDto {
   model?: string;
 }
 
+// Save an answer as a child result of a prompt (the chat "Save" action).
+// `promptSnapshot` is optional — the api falls back to the prompt's current
+// content. `provider`/`model` stamp which model produced the answer.
+export interface SaveResultDto {
+  output: string;
+  provider: Provider;
+  model: string;
+  promptSnapshot?: string;
+  sourceConversationId?: string;
+  rating?: number;
+  note?: string;
+}
+
+// Update a saved result's curation metadata (rating / note).
+export interface UpdateResultDto {
+  rating?: number;
+  note?: string;
+}
+
 // ===== Pipelines =====
 export interface PipelineStepInput {
   id?: string;

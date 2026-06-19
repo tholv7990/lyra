@@ -20,6 +20,7 @@ const prompt: Prompt = {
   media: [],
   provider: Provider.Anthropic,
   model: 'claude-sonnet-4',
+  results: [],
   active: true,
   createdAt: '2026-06-17T00:00:00.000Z',
   updatedAt: '2026-06-17T00:00:00.000Z',

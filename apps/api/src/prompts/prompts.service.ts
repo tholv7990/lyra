@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -9,9 +9,11 @@ import {
   type ProviderCount,
   type PromptAuthorCount,
   type Prompt as PromptModel,
+  type SaveResultDto,
   type TagCount,
+  type UpdateResultDto,
 } from '@lyra/shared';
-import { Prompt } from './prompt.schema';
+import { Prompt, PromptResultItem } from './prompt.schema';
 import type { PromptDocument } from './prompt.schema';
 import { BaseRepository } from '../common/database/base.repository';
 import { UsersService } from '../users/users.service';
@@ -76,6 +78,72 @@ export class PromptsService extends BaseRepository<Prompt> {
   async toView(p: PromptDocument): Promise<PromptModel> {
     const refs = await this.users.refMap(promptActorIds(p));
     return toPrompt(p, refs);
+  }
+
+  // ===== Saved results (answer children) =====
+  // Subdocs carry an _id at runtime the class type doesn't declare.
+  private resultsWithId(prompt: PromptDocument) {
+    return prompt.results as (PromptResultItem & { _id: { toString(): string } })[];
+  }
+
+  // Save an answer under the prompt. Any member who can view the prompt may save
+  // (the chat "Save" action); `createdBy` records who did. The snapshot falls
+  // back to the prompt's current wording when the caller doesn't supply one.
+  async addResult(
+    prompt: PromptDocument,
+    userId: string,
+    dto: SaveResultDto,
+  ): Promise<PromptModel> {
+    prompt.results.push({
+      output: dto.output,
+      provider: dto.provider,
+      model: dto.model,
+      promptSnapshot: dto.promptSnapshot?.trim() || prompt.content,
+      sourceConversationId: dto.sourceConversationId,
+      rating: dto.rating,
+      note: dto.note,
+      createdBy: userId,
+      savedAt: new Date(),
+    });
+    await prompt.save();
+    return this.toView(prompt);
+  }
+
+  // Remove a saved result. Allowed for the result's author or the prompt owner.
+  async removeResult(
+    prompt: PromptDocument,
+    userId: string,
+    resultId: string,
+  ): Promise<PromptModel> {
+    const results = this.resultsWithId(prompt);
+    const idx = results.findIndex((r) => r._id.toString() === resultId);
+    if (idx === -1) throw new NotFoundException('Result not found');
+    if (results[idx].createdBy !== userId && prompt.createdBy !== userId) {
+      throw new ForbiddenException('Cannot remove this result');
+    }
+    prompt.results.splice(idx, 1);
+    await prompt.save();
+    return this.toView(prompt);
+  }
+
+  // Update a result's curation metadata (rating / note). Author or prompt owner.
+  async updateResult(
+    prompt: PromptDocument,
+    userId: string,
+    resultId: string,
+    dto: UpdateResultDto,
+  ): Promise<PromptModel> {
+    const result = this.resultsWithId(prompt).find(
+      (r) => r._id.toString() === resultId,
+    );
+    if (!result) throw new NotFoundException('Result not found');
+    if (result.createdBy !== userId && prompt.createdBy !== userId) {
+      throw new ForbiddenException('Cannot modify this result');
+    }
+    if (dto.rating !== undefined) result.rating = dto.rating;
+    if (dto.note !== undefined) result.note = dto.note;
+    await prompt.save();
+    return this.toView(prompt);
   }
 
   async toViews(ps: PromptDocument[]): Promise<PromptModel[]> {

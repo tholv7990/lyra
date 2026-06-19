@@ -22,6 +22,40 @@ export class PromptMediaItem {
 }
 const PromptMediaItemSchema = SchemaFactory.createForClass(PromptMediaItem);
 
+// A saved answer kept under a prompt (the child in the prompt→results model).
+// Keeps its own _id so a single result can be removed/rated. `createdBy` is the
+// user who saved it; `promptSnapshot` is the prompt wording used to produce it.
+@Schema({ _id: true })
+export class PromptResultItem {
+  @Prop({ required: true })
+  output!: string;
+
+  @Prop({ required: true })
+  provider!: string;
+
+  @Prop({ required: true })
+  model!: string;
+
+  @Prop({ required: true, default: '' })
+  promptSnapshot!: string;
+
+  @Prop()
+  rating?: number;
+
+  @Prop()
+  note?: string;
+
+  @Prop()
+  sourceConversationId?: string;
+
+  @Prop({ required: true })
+  createdBy!: string;
+
+  @Prop({ type: Date, default: Date.now })
+  savedAt!: Date;
+}
+const PromptResultItemSchema = SchemaFactory.createForClass(PromptResultItem);
+
 export type PromptDocument = HydratedDocument<Prompt>;
 
 @Schema({ timestamps: true })
@@ -63,6 +97,10 @@ export class Prompt extends AuditedEntity {
 
   @Prop()
   model?: string;
+
+  // Curated saved answers (children of this prompt), gathered across chats.
+  @Prop({ type: [PromptResultItemSchema], default: [] })
+  results!: PromptResultItem[];
 }
 
 export const PromptSchema = SchemaFactory.createForClass(Prompt);

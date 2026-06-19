@@ -187,6 +187,23 @@ export interface PromptMedia {
   size?: number;
 }
 
+// A saved answer kept under a prompt — the child in the prompt→results model.
+// Gathered across any chats; `promptSnapshot` records the wording used to produce
+// it so an edited prompt doesn't make old results misleading (our lazy stand-in
+// for full versioning). `sourceConversationId` is provenance back to the chat.
+export interface SavedResult {
+  id: string;
+  output: string;
+  provider: Provider;
+  model: string;
+  promptSnapshot: string;
+  rating?: number;
+  note?: string;
+  sourceConversationId?: string;
+  createdBy: UserRef;
+  savedAt: string;
+}
+
 // A reusable prompt in the workspace library.
 export interface Prompt extends Audited {
   id: string;
@@ -201,6 +218,9 @@ export interface Prompt extends Audited {
   // playground). Optional — older prompts have none.
   provider?: Provider;
   model?: string;
+  // Curated saved answers (children). The prompt is the durable parent; results
+  // accumulate across chats. Empty for prompts that have never had a save.
+  results: SavedResult[];
 }
 
 // A tag in the workspace vocabulary plus how many visible prompts carry it.

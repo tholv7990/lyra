@@ -28,7 +28,12 @@ import {
   RequirePromptOwner,
 } from './decorators/prompt.decorators';
 import type { PromptDocument } from './prompt.schema';
-import { CreatePromptBody, UpdatePromptBody } from './dto/prompts.dto';
+import {
+  CreatePromptBody,
+  SaveResultBody,
+  UpdatePromptBody,
+  UpdateResultBody,
+} from './dto/prompts.dto';
 
 function listQuery(value?: string | string[]): string[] {
   if (!value) return [];
@@ -161,5 +166,41 @@ export class PromptsController {
     @CurrentUser() user: User,
   ): Promise<void> {
     await this.prompts.softDelete(id, user.id);
+  }
+
+  // ===== Saved results (answer children) =====
+  // Add: any member who can VIEW the prompt may save an answer to it (the chat
+  // "Save" action — no @RequirePromptOwner). Remove/update are author-or-owner
+  // gated inside the service.
+
+  @Post('prompts/:id/results')
+  @UseGuards(PromptAccessGuard)
+  addResult(
+    @CurrentPrompt() prompt: PromptDocument,
+    @Body() body: SaveResultBody,
+    @CurrentUser() user: User,
+  ): Promise<PromptModel> {
+    return this.prompts.addResult(prompt, user.id, body);
+  }
+
+  @Patch('prompts/:id/results/:resultId')
+  @UseGuards(PromptAccessGuard)
+  updateResult(
+    @CurrentPrompt() prompt: PromptDocument,
+    @Param('resultId') resultId: string,
+    @Body() body: UpdateResultBody,
+    @CurrentUser() user: User,
+  ): Promise<PromptModel> {
+    return this.prompts.updateResult(prompt, user.id, resultId, body);
+  }
+
+  @Delete('prompts/:id/results/:resultId')
+  @UseGuards(PromptAccessGuard)
+  removeResult(
+    @CurrentPrompt() prompt: PromptDocument,
+    @Param('resultId') resultId: string,
+    @CurrentUser() user: User,
+  ): Promise<PromptModel> {
+    return this.prompts.removeResult(prompt, user.id, resultId);
   }
 }
