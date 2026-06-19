@@ -49,8 +49,9 @@ function RootGate() {
 // Keeps logged-in users out of /login and /signup.
 function PublicOnlyLayout() {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <Loading />;
-  if (user) return <Navigate to="/" replace />;
+  if (user && location.pathname !== '/reset-password') return <Navigate to="/" replace />;
   return (
     <>
       <MatrixRain />
