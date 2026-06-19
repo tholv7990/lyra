@@ -8,6 +8,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
+import { IconButton } from '../components/IconButton';
 
 const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
@@ -321,25 +322,20 @@ export function Projects() {
                 </span>
               </span>
               <span className="prow-actions" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className="prow-open"
+                <IconButton
+                  size="sm"
+                  icon={<ProjectsIcon width={15} height={15} />}
+                  label={`${t('common.open')} ${p.name}`}
                   onClick={() => navigate(`/projects/${p.id}`)}
-                  title={t('common.open')}
-                  aria-label={`${t('common.open')} ${p.name}`}
-                >
-                  <ProjectsIcon width={15} height={15} />
-                </button>
+                />
                 {canEdit(p) && (
-                  <button
-                    type="button"
-                    className="prow-delete"
+                  <IconButton
+                    size="sm"
+                    variant="danger"
+                    icon={<XIcon width={14} height={14} />}
+                    label={`${t('common.delete')} ${p.name}`}
                     onClick={() => setToDelete(p)}
-                    title={t('common.delete')}
-                    aria-label={`${t('common.delete')} ${p.name}`}
-                  >
-                    <XIcon width={14} height={14} />
-                  </button>
+                  />
                 )}
               </span>
             </div>

@@ -11,6 +11,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LabelPicker } from '../components/LabelPicker';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { PipelinesIcon, PlusIcon, XIcon } from '../layout/icons';
+import { IconButton } from '../components/IconButton';
 
 function fmtDate(iso: string) {
   const parts = new Intl.DateTimeFormat(undefined, {
@@ -339,23 +340,20 @@ export function Pipelines() {
                 </span>
               </span>
               <span className="prow-actions">
-                <button
-                  className="prow-open"
+                <IconButton
+                  size="sm"
+                  icon={<PipelinesIcon width={15} height={15} />}
+                  label={t('pipelines.openNamed', { name: p.name })}
                   onClick={() => navigate(`/pipelines/${p.id}`)}
-                  title={t('pipelines.openPipeline')}
-                  aria-label={t('pipelines.openNamed', { name: p.name })}
-                >
-                  <PipelinesIcon width={15} height={15} />
-                </button>
+                />
                 {canEdit(p) && (
-                  <button
-                    className="prow-delete"
+                  <IconButton
+                    size="sm"
+                    variant="danger"
+                    icon={<XIcon width={14} height={14} />}
+                    label={t('pipelines.deleteNamed', { name: p.name })}
                     onClick={() => setToDelete(p)}
-                    title={t('pipelines.deletePipeline')}
-                    aria-label={t('pipelines.deleteNamed', { name: p.name })}
-                  >
-                    <XIcon width={14} height={14} />
-                  </button>
+                  />
                 )}
               </span>
             </div>

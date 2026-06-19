@@ -23,6 +23,7 @@ import { LabelPicker } from '../components/LabelPicker';
 import { PromptDetails } from '../components/PromptDetails';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { ChatsIcon, EyeIcon, PromptsIcon, PlusIcon, XIcon } from '../layout/icons';
+import { IconButton } from '../components/IconButton';
 
 const STATUS_COLOR: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: 'var(--warning)',
@@ -416,15 +417,13 @@ export function Prompts() {
                     </div>
                   )}
 
-                  <button
-                    type="button"
+                  <IconButton
                     className="prow-eye"
-                    title={t('prompts.viewFullPrompt')}
-                    aria-label={t('prompts.viewFullPromptFor', { title: p.title })}
+                    size="sm"
+                    icon={<EyeIcon width={15} height={15} />}
+                    label={t('prompts.viewFullPromptFor', { title: p.title })}
                     onClick={() => setDetailPrompt(p)}
-                  >
-                    <EyeIcon width={15} height={15} />
-                  </button>
+                  />
 
                   <span className="prow-tags">
                     {editable ? (
@@ -482,23 +481,20 @@ export function Prompts() {
                   </span>
 
                   <span className="prow-actions">
-                    <button
-                      className="prow-chat"
+                    <IconButton
+                      size="sm"
+                      icon={<ChatsIcon width={15} height={15} />}
+                      label={t('prompts.openInChatNamed', { title: p.title })}
                       onClick={() => void openInChat(p)}
-                      title={t('prompts.openInChat')}
-                      aria-label={t('prompts.openInChatNamed', { title: p.title })}
-                    >
-                      <ChatsIcon width={15} height={15} />
-                    </button>
+                    />
                     {editable && (
-                      <button
-                        className="prow-delete"
+                      <IconButton
+                        size="sm"
+                        variant="danger"
+                        icon={<XIcon width={14} height={14} />}
+                        label={t('prompts.deletePromptNamed', { title: p.title })}
                         onClick={() => askDelete(p)}
-                        title={t('prompts.deletePrompt')}
-                        aria-label={t('prompts.deletePromptNamed', { title: p.title })}
-                      >
-                        <XIcon width={14} height={14} />
-                      </button>
+                      />
                     )}
                   </span>
                 </div>

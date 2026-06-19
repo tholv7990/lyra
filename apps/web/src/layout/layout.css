@@ -1581,6 +1581,54 @@
 }
 .seg-btn .sdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
+/* Project STATUS rendered as radio buttons (scoped override of the shared .seg
+   segmented control: a borderless vertical list, each option carrying a radio
+   dial). Scoped to .project-status-row so other .seg users are untouched. */
+.project-status-row .seg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 0;
+  overflow: visible;
+}
+.project-status-row .seg-btn {
+  flex: none;
+  justify-content: flex-start;
+  gap: 9px;
+  border: 1px solid var(--hairline);
+  background: var(--field);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  box-shadow: none;
+}
+.project-status-row .seg-btn::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--hairline-strong);
+  flex-shrink: 0;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.project-status-row .seg-btn:hover {
+  border-color: var(--hairline-strong);
+}
+.project-status-row .seg-btn.active {
+  background: var(--primary-tint);
+  border-color: var(--primary);
+  color: var(--ink);
+  box-shadow: none;
+}
+.project-status-row .seg-btn.active::before {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 3.5px var(--primary);
+}
+
 @media (max-width: 820px) {
   .project-cards-grid,
   .project-cards-grid.cards-2 {
@@ -3071,23 +3119,10 @@
   line-clamp: 2;
 }
 
+/* Placement only — visuals come from <IconButton> (.icon-button .ib-sm).
+   The mobile rule further down sets grid-area: eye. */
 .prow-eye {
-  width: 24px;
-  height: 24px;
-  display: inline-grid;
-  place-items: center;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--ink-muted);
-  cursor: pointer;
   justify-self: center;
-}
-
-.prow-eye:hover {
-  background: var(--surface-2);
-  color: var(--ink);
 }
 
 .prow-meta {
@@ -3188,90 +3223,16 @@
   flex-shrink: 0;
 }
 
-.prow-chat {
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink-muted);
-  cursor: pointer;
-}
+/* .prow-chat/-open/-edit-action/-delete removed — these rows now use the shared
+   <IconButton> (size="sm"; variant="danger" for delete). */
 
-.prow-chat:hover {
-  border-color: transparent;
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
-.prow-open {
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink-muted);
-  cursor: pointer;
-}
-
-.prow-open:hover {
-  border-color: transparent;
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
-.prow-edit-action {
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink-muted);
-  cursor: pointer;
-}
-
-.prow-edit-action:hover {
-  border-color: transparent;
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
-.prow-delete {
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--danger);
-  cursor: pointer;
-}
-
-.prow-delete:hover {
-  border-color: color-mix(in srgb, var(--danger) 16%, transparent);
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  color: var(--danger);
-}
-
-/* a11y: keyboard focus ring on bespoke icon buttons that bypass .icon-button.
-   These inherit it for free once migrated to <IconButton> (design-system-actions §2). */
-.prow-eye:focus-visible,
-.prow-chat:focus-visible,
-.prow-open:focus-visible,
-.prow-edit-action:focus-visible,
+/* a11y: keyboard focus ring on the hand-rolled icon buttons that still bypass
+   <IconButton> (modal close/save in PromptDetails, chat-row delete). */
 .pd-close:focus-visible,
 .pd-save-icon:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
-.prow-delete:focus-visible,
 .cl-del:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring-danger);
@@ -3430,8 +3391,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "name actions"
-      "snippet snippet"
-      "status status"
+      "snippet status"
       "date date";
   }
   .prow-namecell {
@@ -3485,7 +3445,8 @@
     max-width: 190px;
   }
   .ptable.t-project .prow-status {
-    justify-self: start;
+    justify-self: end;
+    align-self: center;
   }
   .ptable.t-project .prow-actions {
     width: 92px;
