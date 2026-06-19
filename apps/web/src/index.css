@@ -240,6 +240,18 @@ h4 {
   z-index: 1;
 }
 
+/* Theme + language controls on the public auth pages, top-right above the
+   rain (z-1). Lets a user who lands directly on /login switch appearance. */
+.auth-prefs {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Matrix digital-rain backdrop on the auth pages (see MatrixRain.tsx) */
 .matrix-rain {
   position: fixed;

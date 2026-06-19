@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { SignupDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { AuthTopBar } from '../components/AuthTopBar';
 import { BrandLogo } from '../components/BrandLogo';
 import { GoogleButton } from '../components/GoogleButton';
 
@@ -33,6 +34,7 @@ export function Signup() {
 
   return (
     <div className="center">
+      <AuthTopBar />
       <form className="auth-card" onSubmit={onSubmit}>
         <BrandLogo className="auth-logo" width={159} height={64} />
         <h1>Create your account</h1>

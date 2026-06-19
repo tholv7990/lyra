@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthTopBar } from '../components/AuthTopBar';
 import { BrandLogo } from '../components/BrandLogo';
 import { api } from '../lib/api';
 
@@ -29,6 +30,7 @@ export function ForgotPassword() {
 
   return (
     <div className="center">
+      <AuthTopBar />
       <form className="auth-card" onSubmit={onSubmit}>
         <BrandLogo className="auth-logo" width={159} height={64} />
         <h1>Reset your password</h1>

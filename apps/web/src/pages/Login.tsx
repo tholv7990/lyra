@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LoginDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { AuthTopBar } from '../components/AuthTopBar';
 import { BrandLogo } from '../components/BrandLogo';
 import { GoogleButton } from '../components/GoogleButton';
 
@@ -54,6 +55,7 @@ export function Login() {
 
   return (
     <div className="center">
+      <AuthTopBar />
       <form className="auth-card" onSubmit={onSubmit}>
         <BrandLogo className="auth-logo" width={159} height={64} />
         <h1>{t('auth.loginTitle')}</h1>
