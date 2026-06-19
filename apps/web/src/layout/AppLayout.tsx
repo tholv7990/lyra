@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
@@ -51,6 +51,7 @@ const COLLAPSE_KEY = 'lyra.nav.collapsed';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const location = useLocation();
   const [open, setOpen] = useState(false); // mobile drawer
@@ -166,7 +167,17 @@ export function AppLayout() {
               <div className="email">{user?.email}</div>
             </div>
           </div>
-          <button className="nav-item" title={t('nav.logout')} onClick={() => void logout()}>
+          <button
+            className="nav-item"
+            title={t('nav.logout')}
+            onClick={() => {
+              // Land on the public homepage (Landing), not /login. Navigate to '/'
+              // first so when `user` clears we are already on the route that
+              // renders Landing for logged-out visitors.
+              navigate('/');
+              void logout();
+            }}
+          >
             <LogoutIcon />
             <span className="nav-txt">{t('nav.logout')}</span>
           </button>

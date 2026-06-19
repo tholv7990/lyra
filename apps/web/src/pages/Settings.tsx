@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { LanguageSelect, ThemeSegment } from '../components/PrefControls';
+import { LanguageToggleButton, ThemeSegment } from '../components/PrefControls';
 import { CheckIcon, RefreshIcon, XIcon } from '../layout/icons';
 
 // `keyUrl` points at each provider's API-key console so a new user can find
@@ -163,7 +163,7 @@ export function Settings() {
         <div className="pref-rows">
           <div className="pref-row">
             <div className="pref-row-label">{t('settings.language')}</div>
-            <LanguageSelect />
+            <LanguageToggleButton />
           </div>
           <div className="pref-row">
             <div className="pref-row-label">{t('settings.appearance')}</div>
@@ -215,6 +215,10 @@ export function Settings() {
                       <input
                         className="text-input key-input"
                         type="password"
+                        name={`lyra-key-${p.id}`}
+                        autoComplete="off"
+                        data-1p-ignore="true"
+                        data-lpignore="true"
                         placeholder={existing ? '••••••••••  replace' : 'Paste key'}
                         value={drafts[p.id] ?? ''}
                         onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
