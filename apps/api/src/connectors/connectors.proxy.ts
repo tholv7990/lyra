@@ -112,7 +112,15 @@ export class ConnectorsProxy {
       };
     }
     if (path === 'download') {
-      return { items: [{ url: 'https://example.com/mock-download', filename: 'media.zip' }] };
+      return { jobId: 'mock-dl-1' };
+    }
+    if (path.startsWith('download-jobs/')) {
+      return {
+        jobId: path.slice('download-jobs/'.length),
+        status: 'done',
+        pct: 100,
+        items: [{ url: 'https://example.com/mock-download', filename: 'media.zip' }],
+      };
     }
     return {};
   }

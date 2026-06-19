@@ -19,4 +19,5 @@ export class ResolveBody implements ResolveDto {
 export class DownloadBody implements DownloadDto {
   @IsString() @MinLength(1) url!: string;
   @IsOptional() @IsArray() indices?: number[];
+  @IsOptional() @IsString() @MinLength(1) format?: string;
 }

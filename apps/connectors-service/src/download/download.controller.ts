@@ -39,12 +39,17 @@ export class DownloadController {
   }
 
   @Post('download')
-  async download(@Body() b: DownloadBody) {
+  download(@Body() b: DownloadBody) {
     try {
-      return { items: await this.svc.download(b.url, b.indices) };
+      return { jobId: this.svc.startDownload(b.url, b.indices, b.format) };
     } catch (err) {
-      throw asHttp(err);
+      throw asHttp(err); // SSRF guard (sync); yt-dlp failures land on the job, not here
     }
+  }
+
+  @Get('download-jobs/:id')
+  job(@Param('id') id: string) {
+    return this.svc.job(id) ?? { jobId: id, status: 'error', pct: 0, error: 'job expired or not found' };
   }
 
   @Get('files/:id')

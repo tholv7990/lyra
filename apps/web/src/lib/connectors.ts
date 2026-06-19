@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Channel, ConnectorCredentialInfo, MediaItem, PublishJob } from '@lyra/shared';
+import type { Channel, ConnectorCredentialInfo, DownloadJob, MediaItem, PublishJob } from '@lyra/shared';
 
 const base = (ws: string) => `/workspaces/${ws}/connectors`;
 
@@ -32,9 +32,13 @@ export const connectorsApi = {
       body: JSON.stringify({ url }),
     }),
 
-  download: (ws: string, url: string, indices?: number[]) =>
-    api<{ items: { url: string; filename: string }[] }>(`${base(ws)}/download`, {
+  // Start an async download → { jobId }; poll downloadJob for live progress.
+  startDownload: (ws: string, url: string, indices?: number[], format?: string) =>
+    api<{ jobId: string }>(`${base(ws)}/download`, {
       method: 'POST',
-      body: JSON.stringify({ url, indices }),
+      body: JSON.stringify({ url, indices, format }),
     }),
+
+  downloadJob: (ws: string, jobId: string) =>
+    api<DownloadJob>(`${base(ws)}/download-jobs/${jobId}`),
 };

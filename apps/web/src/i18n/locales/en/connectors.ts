@@ -51,6 +51,9 @@ export default {
   resolved_other: 'Resolved · {{count}} items',
   download: 'Download',
   downloadAll: 'Download all (.zip)',
+  quality: 'Quality',
+  audioOnly: 'Audio only',
+  downloading: 'Downloading…',
   tosNote: 'Import content you own or have the rights to use. Subject to each platform\'s terms.',
   nothingResolved: 'Nothing to import from that link.',
 

@@ -51,6 +51,9 @@ export default {
   resolved_other: 'Đã tìm thấy · {{count}} mục',
   download: 'Tải về',
   downloadAll: 'Tải tất cả (.zip)',
+  quality: 'Chất lượng',
+  audioOnly: 'Chỉ âm thanh',
+  downloading: 'Đang tải…',
   tosNote: 'Chỉ tải nội dung bạn sở hữu hoặc có quyền dùng. Tuân theo điều khoản của từng nền tảng.',
   nothingResolved: 'Không có gì để tải từ liên kết đó.',
 

@@ -407,12 +407,31 @@ export interface PublishJob {
   receipts?: Receipt[];
 }
 
+// A selectable download quality for a MediaItem, derived from yt-dlp's format
+// list. `format` is the yt-dlp -f selector to pass back on download.
+export interface MediaQuality {
+  label: string; // "1080p", "720p", … or an audio label
+  format: string; // yt-dlp -f selector, e.g. "bv*[height<=720]+ba/b[height<=720]"
+  height?: number; // video height; omitted for audio-only
+  approxBytes?: number; // best-effort size hint for the label
+}
+
 // One resolved media item from a download/resolve (carousels return many).
 export interface MediaItem {
   index: number;
   type: 'video' | 'image' | 'audio';
   thumbUrl?: string;
   filename?: string;
+  qualities?: MediaQuality[]; // present for videos; undefined for images/playlists
+}
+
+// A running/finished media-download job, polled by the web for live progress.
+export interface DownloadJob {
+  jobId: string;
+  status: 'running' | 'done' | 'error';
+  pct: number; // 0..100, latest yt-dlp progress (resets per file across video+audio)
+  items?: { url: string; filename: string }[]; // present when status === 'done'
+  error?: string; // present when status === 'error'
 }
 
 // Safe transport shape for a stored connector credential (e.g. the Postiz API

@@ -65,9 +65,15 @@ export class ConnectorsController {
   }
 
   @Post('download')
-  async download(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: DownloadBody) {
-    const raw = await this.proxy.forward(ws, u.id, 'POST', 'download', b);
-    return rewriteDownload(ws, raw as never);
+  download(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: DownloadBody) {
+    return this.proxy.forward(ws, u.id, 'POST', 'download', b); // -> { jobId }
+  }
+
+  // Poll a download job; once done, rewrite the service's fileIds to browser file URLs.
+  @Get('download-jobs/:jobId')
+  async downloadJob(@Param('id') ws: string, @Param('jobId') j: string, @CurrentUser() u: User) {
+    const raw = await this.proxy.forward(ws, u.id, 'GET', `download-jobs/${j}`);
+    return raw.status === 'done' && raw.items ? { ...raw, ...rewriteDownload(ws, raw as never) } : raw;
   }
 
   @Get('files/:fileId')

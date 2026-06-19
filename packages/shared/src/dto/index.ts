@@ -333,4 +333,5 @@ export interface ResolveDto {
 export interface DownloadDto {
   url: string;
   indices?: number[];
+  format?: string; // yt-dlp -f selector chosen from a MediaItem's qualities
 }

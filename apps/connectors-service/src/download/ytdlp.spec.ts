@@ -1,4 +1,12 @@
-import { typeFromExt, mapResolveJson, resolveArgs, downloadArgs, ytDlpReason } from './ytdlp';
+import {
+  typeFromExt,
+  mapResolveJson,
+  resolveArgs,
+  downloadArgs,
+  ytDlpReason,
+  qualitiesFromFormats,
+  parsePercents,
+} from './ytdlp';
 
 describe('typeFromExt', () => {
   it('classifies by extension', () => {
@@ -38,6 +46,47 @@ describe('arg builders', () => {
     expect(downloadArgs('https://x/v', '/tmp/o', [0, 2])).toEqual(
       expect.arrayContaining(['--playlist-items', '1,3']),
     );
+  });
+  it('downloadArgs passes -f when a format is chosen, and omits it otherwise', () => {
+    expect(downloadArgs('https://x/v', '/tmp/o', undefined, 'bv*[height<=720]+ba/b[height<=720]')).toEqual(
+      expect.arrayContaining(['-f', 'bv*[height<=720]+ba/b[height<=720]']),
+    );
+    expect(downloadArgs('https://x/v', '/tmp/o')).not.toContain('-f');
+  });
+  it('downloadArgs requests --newline so progress is parseable', () => {
+    expect(downloadArgs('https://x/v', '/tmp/o')).toContain('--newline');
+  });
+});
+
+describe('parsePercents', () => {
+  it('pulls every download percent from a chunk', () => {
+    const chunk = '[download]   0.0% of 100MiB\n[download]  42.3% of 100MiB at 1MiB/s\n[download] 100% of 100MiB';
+    expect(parsePercents(chunk)).toEqual([0, 42.3, 100]);
+  });
+  it('returns [] for non-progress output', () => {
+    expect(parsePercents('[youtube] extracting...\n[Merger] Merging formats')).toEqual([]);
+  });
+});
+
+describe('qualitiesFromFormats', () => {
+  it('surfaces present ladder heights (desc) + an audio option', () => {
+    const q = qualitiesFromFormats([
+      { vcodec: 'avc1', height: 720, filesize: 200 },
+      { vcodec: 'avc1', height: 360 },
+      { vcodec: 'none', acodec: 'opus', filesize: 5 },
+      { vcodec: 'av01', height: 999 }, // off-ladder → ignored
+    ]);
+    expect(q?.map((x) => x.label)).toEqual(['720p', '360p', 'audio']);
+    expect(q?.[0]).toMatchObject({ height: 720, approxBytes: 200, format: 'bv*[height<=720]+ba/b[height<=720]' });
+    expect(q?.find((x) => x.label === 'audio')).toMatchObject({ format: 'ba/b' });
+  });
+  it('returns undefined when there are no formats (images/playlists)', () => {
+    expect(qualitiesFromFormats(undefined)).toBeUndefined();
+    expect(qualitiesFromFormats([])).toBeUndefined();
+  });
+  it('omits audio when no audio-only format exists', () => {
+    const q = qualitiesFromFormats([{ vcodec: 'avc1', acodec: 'mp4a', height: 480 }]);
+    expect(q?.map((x) => x.label)).toEqual(['480p']);
   });
 });
 
