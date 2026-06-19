@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
+import { useWorkspace } from '../workspace/useWorkspace';
 import { initials } from '../lib/format';
 import { BrandLogo } from '../components/BrandLogo';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
@@ -53,6 +54,7 @@ const COLLAPSE_KEY = 'lyra.nav.collapsed';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { current } = useWorkspace();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const location = useLocation();
@@ -154,10 +156,12 @@ export function AppLayout() {
               <span className="nav-txt">{t('nav.connections')}</span>
             </NavLink>
 
-            <NavLink to="/members" title={t('nav.members')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
-              <MembersIcon />
-              <span className="nav-txt">{t('nav.members')}</span>
-            </NavLink>
+            {current?.type === 'team' && (
+              <NavLink to="/members" title={t('nav.members')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+                <MembersIcon />
+                <span className="nav-txt">{t('nav.members')}</span>
+              </NavLink>
+            )}
             <NavLink to="/settings" title={t('nav.settings')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <SettingsIcon />
               <span className="nav-txt">{t('nav.settings')}</span>

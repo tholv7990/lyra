@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Role } from '@lyra/shared';
 import type { Invite, MemberView } from '@lyra/shared';
@@ -6,15 +7,17 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { initial, avatarStyle, fmtDate } from '../lib/format';
+import { useOutsideClick } from '../lib/useOutsideClick';
+import { toggleInList } from '../lib/array';
 import { ROLE_LABELS } from '../lib/constants';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconButton } from '../components/IconButton';
-import { MembersIcon, XIcon } from '../layout/icons';
+import { MembersIcon, PlusIcon, XIcon } from '../layout/icons';
 import './members.css';
 
-// The two assignable roles today (Viewer is a planned increment). The picker and
-// invite form read labels from the shared ROLE_LABELS so every surface matches.
+// The two assignable roles today (Viewer is a planned increment). The picker,
+// invite form, and role filter read labels from the shared ROLE_LABELS.
 const ROLES: Role[] = [Role.Owner, Role.Member];
 
 // Workspace Members: the owner-side counterpart to the notification bell. Any
@@ -32,6 +35,11 @@ export function Members() {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const [roleFilters, setRoleFilters] = useState<Role[]>([]);
+  const [filterMenu, setFilterMenu] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     if (!wsId) return;
@@ -52,7 +60,18 @@ export function Members() {
     void load();
   }, [load]);
 
+  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
+
   if (!current) return <p className="empty">{t('members.loading')}</p>;
+  // Members is a team-workspace feature; personal workspaces are solo.
+  if (current.type !== 'team') return <Navigate to="/" replace />;
+
+  const ql = q.trim().toLowerCase();
+  const filtered = members.filter(
+    (m) =>
+      (!ql || m.name.toLowerCase().includes(ql) || m.email.toLowerCase().includes(ql)) &&
+      (roleFilters.length === 0 || roleFilters.includes(m.role)),
+  );
 
   return (
     <div className="members">
@@ -60,6 +79,68 @@ export function Members() {
         <h1>{t('members.title')}</h1>
         <p>{t('members.subtitle', { workspace: current.name })}</p>
       </header>
+
+      <div className="lin-toolbar">
+        <input
+          className="lin-search"
+          placeholder={t('members.searchPlaceholder')}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          aria-label={t('members.searchPlaceholder')}
+        />
+        <div className="lin-filter" ref={filterRef}>
+          <button
+            type="button"
+            className={`lin-filter-btn ${roleFilters.length > 0 || filterMenu ? 'active' : ''}`}
+            onClick={() => setFilterMenu((s) => !s)}
+          >
+            {t('members.filter')}
+            {roleFilters.length > 0 && (
+              <>
+                {' '}
+                <span className="lin-filter-count">{roleFilters.length}</span>
+              </>
+            )}
+          </button>
+          {filterMenu && (
+            <div className="lin-menu">
+              <div className="lin-menu-actions">
+                <button
+                  type="button"
+                  className="lin-menu-clear"
+                  disabled={roleFilters.length === 0}
+                  onClick={() => setRoleFilters([])}
+                >
+                  {t('common.clear')}
+                </button>
+              </div>
+              <div className="lin-menu-label">{t('members.role')}</div>
+              {ROLES.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className="lin-menu-item"
+                  onClick={() => setRoleFilters((list) => toggleInList(list, r))}
+                >
+                  {ROLE_LABELS[r]}
+                  {roleFilters.includes(r) && <span className="lin-menu-check">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {isOwner && (
+          <button
+            type="button"
+            className="lin-add"
+            onClick={() => setInviteOpen((o) => !o)}
+            title={t('members.invite')}
+            aria-label={t('members.invite')}
+          >
+            <PlusIcon />
+          </button>
+        )}
+      </div>
 
       {error && (
         <p className="error" role="alert">
@@ -71,11 +152,13 @@ export function Members() {
         <p className="empty">{t('members.loading')}</p>
       ) : (
         <>
-          {isOwner && <InviteForm wsId={wsId!} onInvited={load} />}
+          {isOwner && inviteOpen && (
+            <InviteForm wsId={wsId!} onInvited={load} onClose={() => setInviteOpen(false)} />
+          )}
 
           <section aria-labelledby="mem-people-title">
             <h2 id="mem-people-title" className="mem-subhead">
-              {t('members.peopleCount', { count: members.length })}
+              {t('members.peopleCount', { count: filtered.length })}
             </h2>
             {members.length === 0 ? (
               <EmptyState
@@ -83,9 +166,11 @@ export function Members() {
                 title={t('members.emptyTitle')}
                 body={t('members.emptyBody')}
               />
+            ) : filtered.length === 0 ? (
+              <p className="empty">{t('members.noMatch')}</p>
             ) : (
               <div className="lib-grid">
-                {members.map((m) => (
+                {filtered.map((m) => (
                   <MemberCard
                     key={m.membershipId}
                     member={m}
@@ -217,9 +302,16 @@ function MemberCard({ member, isSelf, canManage, wsId, onChanged, onError }: Mem
   );
 }
 
-function InviteForm({ wsId, onInvited }: { wsId: string; onInvited: () => Promise<void> }) {
+function InviteForm({
+  wsId,
+  onInvited,
+  onClose,
+}: {
+  wsId: string;
+  onInvited: () => Promise<void>;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>(Role.Member);
   const [busy, setBusy] = useState(false);
@@ -252,22 +344,6 @@ function InviteForm({ wsId, onInvited }: { wsId: string; onInvited: () => Promis
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        className="btn-primary mem-invite-open"
-        onClick={() => {
-          setOpen(true);
-          setLink(null);
-          setError(null);
-        }}
-      >
-        {t('members.invite')}
-      </button>
-    );
-  }
-
   return (
     <form className="mem-invite" onSubmit={submit}>
       <div className="mem-invite-row">
@@ -290,7 +366,7 @@ function InviteForm({ wsId, onInvited }: { wsId: string; onInvited: () => Promis
         <button className="btn-primary" type="submit" disabled={busy}>
           {busy ? t('members.sending') : t('members.sendInvite')}
         </button>
-        <button className="btn-ghost" type="button" onClick={() => setOpen(false)}>
+        <button className="btn-ghost" type="button" onClick={onClose}>
           {t('members.cancel')}
         </button>
       </div>
