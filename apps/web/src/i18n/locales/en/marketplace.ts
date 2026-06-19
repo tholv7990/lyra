@@ -4,8 +4,8 @@ export default {
   subtitle: 'Browse community prompts, let AI find the right one, and add it to your library.',
 
   // AI filter
-  aiPlaceholder: 'Describe what you need…',
-  aiRun: 'Find prompts',
+  aiSearch: 'AI',
+  aiSearchHint: 'Find matching prompts with AI (uses the search text)',
   aiRunning: 'Ranking…',
   aiResultsFor: 'AI picks for “{{query}}”',
   aiHint: 'Ranked by relevance',

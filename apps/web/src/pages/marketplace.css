@@ -5,24 +5,35 @@
    tokens (docs/lyra-design-system-actions.md); motion is covered by the global
    prefers-reduced-motion rule in index.css. */
 
-/* AI filter — the prominent control. .lin-search + .btn-primary do the styling;
-   this only lays them out side by side and unsticks the button's default 100%. */
-.mkt-ai {
-  display: flex;
-  gap: 8px;
+/* AI search — a compact toolbar button (next to Filter) that AI-ranks the search
+   text. Sparkle in the brand orange; matches the toolbar control height. */
+.mkt-ai-btn {
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: var(--control-h);
+  padding: 0 11px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink);
+  font-size: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
-
-.mkt-ai-go {
-  width: auto;
-  margin-top: 0;
+.mkt-ai-btn .icon {
+  color: var(--primary);
   flex-shrink: 0;
 }
-
-.mkt-sub {
-  margin: 8px 0 16px;
-  font-size: var(--text-small);
-  color: var(--ink-muted);
+.mkt-ai-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+}
+.mkt-ai-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* AI results header */
@@ -317,12 +328,6 @@
 @media (max-width: 560px) {
   .mkt-grid {
     grid-template-columns: 1fr;
-  }
-  .mkt-ai {
-    flex-wrap: wrap;
-  }
-  .mkt-ai-go {
-    width: 100%;
   }
   .mkt-details-foot {
     align-items: stretch;

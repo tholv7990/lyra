@@ -21,6 +21,7 @@ import {
   EyeIcon,
   MarketplaceIcon,
   PlusIcon,
+  SparkleIcon,
 } from '../layout/icons';
 import './marketplace.css';
 
@@ -64,7 +65,6 @@ export function Marketplace() {
   const filterRef = useRef<HTMLDivElement>(null);
 
   // AI-filter state. `ranked` non-null = we're in AI-results mode (browse hidden).
-  const [aiQuery, setAiQuery] = useState('');
   const [ranked, setRanked] = useState<RankedMarketplacePrompt[] | null>(null);
   const [rankedFor, setRankedFor] = useState('');
   const [ranking, setRanking] = useState(false);
@@ -142,7 +142,7 @@ export function Marketplace() {
   }, [filterMenu]);
 
   const runRank = useCallback(async () => {
-    const query = aiQuery.trim();
+    const query = q.trim();
     if (!ws || !query) return;
     setRanking(true);
     setError(null);
@@ -157,7 +157,7 @@ export function Marketplace() {
     } finally {
       setRanking(false);
     }
-  }, [ws, aiQuery, t]);
+  }, [ws, q, t]);
 
   function clearRank() {
     setRanked(null);
@@ -225,30 +225,16 @@ export function Marketplace() {
     <div>
       <h1 className="sr-only">{t('marketplace.heading')}</h1>
 
-      {/* AI filter — the prominent hero control, in the app's input/button vocabulary */}
-      <form
-        className="mkt-ai"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void runRank();
-        }}
-      >
-        <input
-          className="lin-search"
-          placeholder={t('marketplace.aiPlaceholder')}
-          value={aiQuery}
-          onChange={(e) => setAiQuery(e.target.value)}
-          aria-label={t('marketplace.aiPlaceholder')}
-        />
-        <button className="btn-primary mkt-ai-go" type="submit" disabled={ranking || !aiQuery.trim()}>
-          {ranking ? t('marketplace.aiRunning') : t('marketplace.aiRun')}
-        </button>
-      </form>
-      <p className="mkt-sub">{t('marketplace.subtitle')}</p>
-
-      {/* Browse toolbar — hidden while AI results are showing */}
+      {/* Browse toolbar — search · AI (ranks the search text) · Filter.
+          Hidden while AI results are showing. */}
       {!showRanked && (
-        <div className="lin-toolbar">
+        <form
+          className="lin-toolbar"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void runRank();
+          }}
+        >
           <input
             className="lin-search"
             placeholder={t('marketplace.searchPlaceholder')}
@@ -256,6 +242,15 @@ export function Marketplace() {
             onChange={(e) => setQ(e.target.value)}
             aria-label={t('marketplace.searchPlaceholder')}
           />
+          <button
+            type="submit"
+            className="mkt-ai-btn"
+            disabled={ranking || !q.trim()}
+            title={t('marketplace.aiSearchHint')}
+          >
+            <SparkleIcon width={14} height={14} />
+            {ranking ? t('marketplace.aiRunning') : t('marketplace.aiSearch')}
+          </button>
           <div className="lin-filter" ref={filterRef}>
             <button
               type="button"
@@ -359,7 +354,7 @@ export function Marketplace() {
               </div>
             )}
           </div>
-        </div>
+        </form>
       )}
 
       {/* AI results header */}

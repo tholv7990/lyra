@@ -4,8 +4,8 @@ export default {
   subtitle: 'Duyệt câu lệnh cộng đồng, để AI tìm đúng cái bạn cần và thêm vào thư viện.',
 
   // AI filter
-  aiPlaceholder: 'Mô tả nhu cầu của bạn…',
-  aiRun: 'Tìm câu lệnh',
+  aiSearch: 'AI',
+  aiSearchHint: 'Tìm prompt phù hợp bằng AI (dùng nội dung tìm kiếm)',
   aiRunning: 'Đang xếp hạng…',
   aiResultsFor: 'AI gợi ý cho “{{query}}”',
   aiHint: 'Xếp theo mức độ liên quan',

@@ -134,6 +134,14 @@ export const CopyIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Two 4-point sparkles — the "AI" affordance.
+export const SparkleIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M7 1.6c.35 2.85 1.45 3.95 4.3 4.3-2.85.35-3.95 1.45-4.3 4.3-.35-2.85-1.45-3.95-4.3-4.3 2.85-.35 3.95-1.45 4.3-4.3Z" />
+    <path d="M12.2 9.1c.18 1.45.74 2.02 2.2 2.2-1.46.18-2.02.74-2.2 2.2-.18-1.46-.74-2.02-2.2-2.2 1.46-.18 2.02-.75 2.2-2.2Z" />
+  </svg>
+);
+
 // Solid X (the plus glyph rotated 45°) — used for the cancel/discard action.
 export const XIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
