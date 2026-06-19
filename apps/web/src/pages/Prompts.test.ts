@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { PromptStatus, Provider } from '@lyra/shared';
+import { PromptStatus, PromptType, Provider } from '@lyra/shared';
 import { buildPromptQuery } from './Prompts';
 
 describe('buildPromptQuery', () => {
-  test('serializes multi-select status, tags, and createdBy filters', () => {
+  test('serializes multi-select status, tags, createdBy, provider and type filters', () => {
     const query = buildPromptQuery({
       page: 2,
       limit: 15,
@@ -11,11 +11,27 @@ describe('buildPromptQuery', () => {
       tags: ['seo', 'competitor'],
       createdBy: ['user-1', 'user-2'],
       providers: [Provider.Anthropic, Provider.DeepSeek],
+      types: [PromptType.Text, PromptType.Image],
       q: 'cozy',
     });
 
     expect(query).toBe(
-      'page=2&limit=15&status=public&status=draft&tag=seo&tag=competitor&createdBy=user-1&createdBy=user-2&provider=anthropic&provider=deepseek&q=cozy',
+      'page=2&limit=15&status=public&status=draft&tag=seo&tag=competitor&createdBy=user-1&createdBy=user-2&provider=anthropic&provider=deepseek&type=text&type=image&q=cozy',
     );
+  });
+
+  test('encodes the type filter as repeated params, matching tag/status', () => {
+    const query = buildPromptQuery({
+      page: 1,
+      limit: 15,
+      statuses: [],
+      tags: [],
+      createdBy: [],
+      providers: [],
+      types: [PromptType.Image, PromptType.Video],
+      q: '',
+    });
+
+    expect(query).toBe('page=1&limit=15&type=image&type=video');
   });
 });

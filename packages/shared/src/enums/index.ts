@@ -71,3 +71,12 @@ export enum MediaType {
   Video = 'video',
   File = 'file',
 }
+
+// The kind of output a library prompt is for. Metadata only (badge + filter) —
+// it does not change how the prompt runs.
+export enum PromptType {
+  Text = 'text',
+  Image = 'image',
+  Audio = 'audio',
+  Video = 'video',
+}

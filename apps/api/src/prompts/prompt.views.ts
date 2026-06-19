@@ -1,3 +1,4 @@
+import { PromptType } from '@lyra/shared';
 import type {
   Prompt as PromptModel,
   PromptMedia,
@@ -18,6 +19,9 @@ export function toPrompt(
     title: p.title,
     content: p.content,
     status: p.status,
+    // Legacy docs created before `type` existed have none — default to Text so
+    // responses always carry a valid type.
+    type: p.type ?? PromptType.Text,
     media: (p.media ?? []).map(
       (m): PromptMedia => ({
         type: m.type,

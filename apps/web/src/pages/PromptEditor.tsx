@@ -6,6 +6,7 @@ import {
   isAllowedMedia,
   MEDIA_MAX_BYTES,
   PromptStatus,
+  PromptType,
   Provider,
   type Prompt,
   type PromptMedia,
@@ -25,6 +26,7 @@ interface FormState {
   title: string;
   content: string;
   status: PromptStatus;
+  type: PromptType;
   media: PromptMedia[];
   tags: string[];
   provider: Provider;
@@ -34,6 +36,7 @@ const emptyForm: FormState = {
   title: '',
   content: '',
   status: PromptStatus.Draft,
+  type: PromptType.Text,
   media: [],
   tags: [],
   provider: Provider.Anthropic,
@@ -107,6 +110,7 @@ export function PromptEditor() {
           title: p.title,
           content: p.content,
           status: p.status,
+          type: p.type,
           media: [...p.media],
           tags: [...p.tags],
           provider,
@@ -245,6 +249,28 @@ export function PromptEditor() {
       </div>
 
       {error && <p className="error pe-error">{error}</p>}
+
+      {/* Output type (segmented cards) — metadata only: badge + filter, doesn't
+          change how the prompt runs. */}
+      <div className="pe-row">
+        <div className="pe-field pe-type">
+          <span className="pe-field-label" id="pe-type-label">{t('prompts.typeLabel')}</span>
+          <div className="seg" role="radiogroup" aria-labelledby="pe-type-label">
+            {Object.values(PromptType).map((ty) => (
+              <button
+                key={ty}
+                type="button"
+                role="radio"
+                aria-checked={form.type === ty}
+                className={`seg-btn ${form.type === ty ? 'active' : ''}`}
+                onClick={() => setForm({ ...form, type: ty })}
+              >
+                {t(`prompts.type.${ty}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Label picker (left) + status toggle (right) in one row. */}
       <div className="pe-row">

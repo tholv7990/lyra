@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import {
   parsePromptVariables,
   PromptStatus,
+  PromptType,
   toLyraPlaceholders,
   type MarketplacePrompt as MarketplacePromptModel,
   type Paged,
@@ -124,6 +125,9 @@ export class MarketplaceService {
       title: item.title,
       content: toLyraPlaceholders(item.content),
       status: PromptStatus.Draft,
+      // Marketplace prompts use a different (text/structured) enum; map all
+      // adopted prompts to the library's Text type for now.
+      type: PromptType.Text,
       tags: item.tags ?? [],
     });
     return this.prompts.toView(created);

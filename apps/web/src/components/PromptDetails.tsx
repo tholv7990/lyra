@@ -95,16 +95,24 @@ export function PromptDetails({
               </span>
             </>
           )}
+          <span className="badge mkt-type">{t(`prompts.type.${prompt.type}`)}</span>
         </div>
         {error && <p className="error">{error}</p>}
         {prompt.tags.length > 0 && (
-          <div className="pd-tags">
-            {prompt.tags.map((t) => (
-              <span key={t} className="tag-chip ro">
-                <span className="tdot" style={{ background: labelColor(t, labels) }} />
-                {t}
-              </span>
-            ))}
+          <div className="mkt-details-tags">
+            {prompt.tags.map((tag) => {
+              const c = labelColor(tag, labels);
+              return (
+                <span
+                  key={tag}
+                  className="mkt-tag"
+                  style={{ background: `${c}1f`, borderColor: `${c}3a` }}
+                >
+                  <span className="mkt-tag-dot" style={{ background: c }} />
+                  {tag}
+                </span>
+              );
+            })}
           </div>
         )}
         {canEdit ? (

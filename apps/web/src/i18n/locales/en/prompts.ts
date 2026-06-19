@@ -7,6 +7,7 @@ export default {
   searchPlaceholder: 'Search prompts…',
   filter: 'Filter',
   filterStatus: 'Status',
+  filterType: 'Type',
   filterTags: 'Tags',
   filterProvider: 'Provider',
   filterCreatedBy: 'Created by',
@@ -52,6 +53,15 @@ export default {
   errUpload: 'Could not upload {{name}}',
   errFileType: '{{name}}: file type not allowed',
   errFileSize: '{{name}}: exceeds 25 MB',
+
+  // Output type — metadata badge + filter (PromptType: text/image/audio/video)
+  typeLabel: 'Type',
+  type: {
+    text: 'Text',
+    image: 'Image',
+    audio: 'Audio',
+    video: 'Video',
+  },
 
   // PromptEditor
   newTitle: 'New',

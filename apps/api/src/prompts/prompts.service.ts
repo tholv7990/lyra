@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import {
   Provider,
   PromptStatus,
+  PromptType,
   tagKey,
   type ProviderCount,
   type PromptAuthorCount,
@@ -23,6 +24,7 @@ function escapeRegex(s: string): string {
 export interface PromptListOptions {
   statuses?: PromptStatus[];
   tags?: string[];
+  types?: PromptType[];
   createdBy?: string[];
   providers?: Provider[];
   q?: string;
@@ -33,7 +35,10 @@ export interface PromptListOptions {
 export function buildPromptListFilter(
   workspaceId: string,
   userId: string,
-  opts: Pick<PromptListOptions, 'statuses' | 'tags' | 'createdBy' | 'providers' | 'q'>,
+  opts: Pick<
+    PromptListOptions,
+    'statuses' | 'tags' | 'types' | 'createdBy' | 'providers' | 'q'
+  >,
 ): Record<string, unknown> {
   const filter: Record<string, unknown> = {
     workspaceId,
@@ -42,6 +47,11 @@ export function buildPromptListFilter(
   if (opts.statuses?.length) filter.status = { $in: opts.statuses };
   if (opts.tags?.length) {
     filter.tags = { $in: opts.tags.map((tag) => new RegExp(`^${escapeRegex(tag)}$`, 'i')) };
+  }
+  // Type filter mirrors tags: any-selected (OR within group), case-insensitive,
+  // ANDed with the other groups.
+  if (opts.types?.length) {
+    filter.type = { $in: opts.types.map((t) => new RegExp(`^${escapeRegex(t)}$`, 'i')) };
   }
   if (opts.createdBy?.length) filter.createdBy = { $in: opts.createdBy };
   if (opts.providers?.length) filter.provider = { $in: opts.providers };

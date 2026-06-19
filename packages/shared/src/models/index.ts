@@ -7,6 +7,7 @@ import {
   StepMode,
   StepKey,
   PromptStatus,
+  PromptType,
   MediaType,
   Provider,
 } from '../enums';
@@ -193,6 +194,7 @@ export interface Prompt extends Audited {
   title: string;
   content: string;
   status: PromptStatus;
+  type: PromptType; // text | image | audio | video (metadata: badge + filter)
   media: PromptMedia[];
   tags: string[];
   // Default provider + model for testing this prompt (pre-selected in the

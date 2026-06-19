@@ -1949,6 +1949,7 @@
   flex: 1;
 }
 .pe-tags { flex: 1; min-width: 0; }
+.pe-type { flex-wrap: wrap; }
 .pe-status {
   margin-left: auto;
   justify-content: flex-end;
@@ -3072,7 +3073,7 @@
     420px
     32px
     minmax(120px, 1fr)
-    74px
+    150px
     180px
     64px;
   align-items: center;
@@ -3187,6 +3188,10 @@
 }
 
 .prow-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   flex-shrink: 0;
   justify-self: start;
 }
@@ -3388,7 +3393,7 @@
       320px
       32px
       minmax(120px, 1fr)
-      74px
+      140px
       168px
       64px;
     gap: 10px;
@@ -5432,6 +5437,29 @@
   min-width: 0;
 }
 .pd-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+/* Colored tinted tag chip (prompts.chat-style): ink text on a per-tag hue tint,
+   with a hue dot. Shared by the marketplace card/detail and the library prompt
+   detail — defined here (not in marketplace.css) so both reuse one definition. */
+.mkt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink); /* ink text stays readable; the hue lives in the dot + tint */
+  white-space: nowrap;
+}
+.mkt-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 .pd-body {
   overflow-y: auto;
   overscroll-behavior: contain;

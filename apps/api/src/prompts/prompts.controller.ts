@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { dedupeTags, PromptStatus, Provider } from '@lyra/shared';
+import { dedupeTags, PromptStatus, PromptType, Provider } from '@lyra/shared';
 import type {
   Paged,
   ProviderCount,
@@ -54,6 +54,7 @@ export class PromptsController {
       title: body.title,
       content: body.content,
       status: body.status ?? PromptStatus.Draft,
+      type: body.type ?? PromptType.Text,
       media: body.media ?? [],
       tags: dedupeTags(body.tags ?? []),
       provider: body.provider,
@@ -70,6 +71,7 @@ export class PromptsController {
     @CurrentUser() user: User,
     @Query('status') status?: string | string[],
     @Query('tag') tag?: string | string[],
+    @Query('type') type?: string | string[],
     @Query('provider') provider?: string | string[],
     @Query('createdBy') createdBy?: string | string[],
     @Query('q') q?: string,
@@ -81,12 +83,16 @@ export class PromptsController {
     const statuses = listQuery(status).filter(
       (s): s is PromptStatus => s === PromptStatus.Draft || s === PromptStatus.Public,
     );
+    const types = listQuery(type).filter(
+      (t): t is PromptType => Object.values(PromptType).includes(t as PromptType),
+    );
     const providers = listQuery(provider).filter(
       (p): p is Provider => Object.values(Provider).includes(p as Provider),
     );
     const { items, total } = await this.prompts.listPaged(workspaceId, user.id, {
       statuses,
       tags: listQuery(tag),
+      types,
       createdBy: listQuery(createdBy),
       providers,
       q: q || undefined,

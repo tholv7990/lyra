@@ -7,6 +7,7 @@ export default {
   searchPlaceholder: 'Tìm prompt…',
   filter: 'Bộ lọc',
   filterStatus: 'Trạng thái',
+  filterType: 'Loại',
   filterTags: 'Thẻ',
   filterProvider: 'Nhà cung cấp',
   filterCreatedBy: 'Người tạo',
@@ -52,6 +53,15 @@ export default {
   errUpload: 'Không thể tải lên {{name}}',
   errFileType: '{{name}}: loại tệp không được phép',
   errFileSize: '{{name}}: vượt quá 25 MB',
+
+  // Output type — metadata badge + filter (PromptType: text/image/audio/video)
+  typeLabel: 'Loại',
+  type: {
+    text: 'Văn bản',
+    image: 'Hình ảnh',
+    audio: 'Âm thanh',
+    video: 'Video',
+  },
 
   // PromptEditor
   newTitle: 'Mới',

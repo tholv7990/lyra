@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   PromptStatus,
+  PromptType,
   Provider,
   defaultModel,
   labelColor,
@@ -29,6 +30,14 @@ const STATUS_COLOR: Record<PromptStatus, string> = {
   [PromptStatus.Draft]: 'var(--warning)',
   [PromptStatus.Public]: 'var(--success)',
 };
+// Distinct, token-based hue per output type — drives the filter dot (the row
+// badge stays neutral-outlined to mirror the marketplace `.mkt-type` pill).
+const TYPE_COLOR: Record<PromptType, string> = {
+  [PromptType.Text]: 'var(--accent-prompts)',
+  [PromptType.Image]: 'var(--accent-projects)',
+  [PromptType.Audio]: 'var(--accent-keys)',
+  [PromptType.Video]: 'var(--accent-chats)',
+};
 const PROVIDER_LABEL: Record<Provider, string> = {
   [Provider.OpenAI]: 'OpenAI',
   [Provider.Anthropic]: 'Anthropic',
@@ -46,6 +55,7 @@ interface PromptQueryOptions {
   tags: string[];
   createdBy: string[];
   providers: Provider[];
+  types: PromptType[];
   q: string;
 }
 
@@ -56,6 +66,7 @@ export function buildPromptQuery({
   tags,
   createdBy,
   providers,
+  types,
   q,
 }: PromptQueryOptions) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
@@ -63,6 +74,8 @@ export function buildPromptQuery({
   tags.forEach((t) => params.append('tag', t));
   createdBy.forEach((id) => params.append('createdBy', id));
   providers.forEach((p) => params.append('provider', p));
+  // Same repeated-param encoding as status/tag/provider above (`?type=text&type=image`).
+  types.forEach((ty) => params.append('type', ty));
   if (q.trim()) params.set('q', q.trim());
   return params.toString();
 }
@@ -109,6 +122,7 @@ export function Prompts() {
   const [tags, setTags] = useState<string[]>([]);
   const [createdBy, setCreatedBy] = useState<string[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [types, setTypes] = useState<PromptType[]>([]);
   const [q, setQ] = useState('');
   const [vocab, setVocab] = useState<TagCount[]>([]);
   const [creators, setCreators] = useState<PromptAuthorCount[]>([]);
@@ -123,10 +137,16 @@ export function Prompts() {
   const [editing, setEditing] = useState<{ id: string; val: string } | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filterCount = statuses.length + tags.length + createdBy.length + providers.length;
-  const hasFilters = statuses.length > 0 || tags.length > 0 || createdBy.length > 0 || providers.length > 0 || !!q.trim();
+  const filterCount = statuses.length + tags.length + createdBy.length + providers.length + types.length;
+  const hasFilters =
+    statuses.length > 0 ||
+    tags.length > 0 ||
+    createdBy.length > 0 ||
+    providers.length > 0 ||
+    types.length > 0 ||
+    !!q.trim();
 
-  useEffect(() => setPage(1), [statuses, tags, createdBy, providers, q]);
+  useEffect(() => setPage(1), [statuses, tags, createdBy, providers, types, q]);
 
   // close the filter menu on outside click
   useEffect(() => {
@@ -139,7 +159,7 @@ export function Prompts() {
   }, [filterMenu]);
 
   const buildQuery = () =>
-    buildPromptQuery({ page, limit: PAGE_SIZE, statuses, tags, createdBy, providers, q });
+    buildPromptQuery({ page, limit: PAGE_SIZE, statuses, tags, createdBy, providers, types, q });
 
   // Filter vocabularies (tags / creators / providers) are loaded from dedicated
   // endpoints that span the WHOLE visible library — never derived from the
@@ -173,7 +193,7 @@ export function Prompts() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [wsId, page, statuses, tags, createdBy, providers, q]);
+  }, [wsId, page, statuses, tags, createdBy, providers, types, q]);
 
   useEffect(loadVocab, [loadVocab]);
 
@@ -307,6 +327,7 @@ export function Prompts() {
                     setTags([]);
                     setProviders([]);
                     setCreatedBy([]);
+                    setTypes([]);
                   }}
                 >
                   {t('common.clear')}
@@ -318,6 +339,14 @@ export function Prompts() {
                   <span className="dot" style={{ background: STATUS_COLOR[s] }} />
                   {statusLabel(s)}
                   {statuses.includes(s) && <span className="lin-menu-check">✓</span>}
+                </button>
+              ))}
+              <div className="lin-menu-label">{t('prompts.filterType')}</div>
+              {Object.values(PromptType).map((ty) => (
+                <button key={ty} className="lin-menu-item" onClick={() => setTypes((list) => toggleFilterValue(list, ty))}>
+                  <span className="dot" style={{ background: TYPE_COLOR[ty] }} />
+                  {t(`prompts.type.${ty}`)}
+                  {types.includes(ty) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
               <details className="lin-menu-section">
@@ -447,6 +476,7 @@ export function Prompts() {
                   </span>
 
                   <span className="prow-status">
+                    <span className="badge mkt-type">{t(`prompts.type.${p.type}`)}</span>
                     {editable ? (
                       <button
                         type="button"

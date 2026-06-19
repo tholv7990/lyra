@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, test } from 'vitest';
-import { PromptStatus, Provider, type Prompt } from '@lyra/shared';
+import { PromptStatus, PromptType, Provider, type Prompt } from '@lyra/shared';
 import { PromptDetails } from './PromptDetails';
 
 const prompt: Prompt = {
@@ -9,6 +9,7 @@ const prompt: Prompt = {
   title: 'Competitor analysis',
   content: 'Full prompt body that should be editable',
   status: PromptStatus.Public,
+  type: PromptType.Image,
   tags: [],
   media: [],
   provider: Provider.Anthropic,
@@ -38,5 +39,7 @@ describe('PromptDetails', () => {
     expect(html).toContain('disabled=""');
     expect(html).toContain('pd-save-icon');
     expect(html).not.toContain('class="btn-primary pd-save"');
+    // The type badge mirrors the marketplace `.mkt-type` pill.
+    expect(html).toContain('badge mkt-type');
   });
 });

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, test } from 'vitest';
-import { Provider, PromptStatus, StepMode, type PipelineStep, type Prompt } from '@lyra/shared';
+import { Provider, PromptStatus, PromptType, StepMode, type PipelineStep, type Prompt } from '@lyra/shared';
 import { FlowCallbacksProvider } from './flow/flowCallbacks';
 import { StepCard } from './StepCard';
 
@@ -19,6 +19,7 @@ const prompt: Prompt = {
   title: 'Find stores',
   content: 'Find 10 stores that sell pet toys',
   status: PromptStatus.Public,
+  type: PromptType.Text,
   media: [],
   tags: [],
   active: true,
