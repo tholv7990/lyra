@@ -44,6 +44,8 @@ export default {
     'Dán liên kết mạng xã hội để lấy video hoặc ảnh. Dành cho nội dung bạn sở hữu hoặc có quyền dùng.',
   urlPlaceholder: 'Dán liên kết TikTok / Instagram / YouTube / X / Facebook…',
   fetch: 'Lấy',
+  preparingWorkspace: 'Đang chuẩn bị workspace trước khi lấy media…',
+  resolvingMedia: 'Đang xử lý media từ liên kết này…',
   supported: 'Hỗ trợ TikTok · Instagram · YouTube · X · Facebook',
   resolved: 'Đã tìm thấy · {{count}} mục',
   resolved_other: 'Đã tìm thấy · {{count}} mục',
