@@ -6519,6 +6519,15 @@
   color: var(--ink);
 }
 
+.cicon:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cicon:disabled:hover {
+  background: transparent;
+  color: var(--ink-muted);
+}
+
 .cicon.on {
   color: var(--warning);
 }
@@ -6526,15 +6535,6 @@
 .cicon.danger:hover {
   background: rgba(229, 72, 77, 0.1);
   color: var(--danger);
-}
-
-/* save-to-history tick in the message actions — green like the header tick */
-.cicon.save {
-  color: var(--success);
-}
-.cicon.save:hover {
-  background: rgba(45, 164, 78, 0.12);
-  color: var(--success);
 }
 
 /* attachments in a message + composer */
@@ -7078,6 +7078,9 @@
   cursor: pointer;
 }
 .cmsg-save:hover { background: var(--surface-hover); color: var(--ink); }
+/* Saved/disabled state reads as inactive (the "Saved ✓" pill). */
+.cmsg-save:disabled { opacity: 0.55; cursor: default; }
+.cmsg-save:disabled:hover { background: var(--field); color: var(--ink-muted); }
 
 /* Save-as-prompt modal */
 .dialog.sap {

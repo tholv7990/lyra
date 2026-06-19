@@ -34,7 +34,6 @@ export default {
   deleteResult: 'Remove this saved answer',
   saveAnswer: 'Save answer',
   saveAnswerHint: 'Save this answer to the prompt',
-  saveAnswerDisabled: 'Open this from a prompt (or Save as prompt first) to save answers',
   answerSaved: 'Saved ✓',
   deletePrompt: 'Delete prompt',
   deletePromptNamed: 'Delete {{title}}',

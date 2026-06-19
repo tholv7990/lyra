@@ -34,7 +34,6 @@ export default {
   deleteResult: 'Xóa câu trả lời đã lưu',
   saveAnswer: 'Lưu câu trả lời',
   saveAnswerHint: 'Lưu câu trả lời này vào prompt',
-  saveAnswerDisabled: 'Mở từ một prompt (hoặc Lưu thành prompt trước) để lưu câu trả lời',
   answerSaved: 'Đã lưu ✓',
   deletePrompt: 'Xóa prompt',
   deletePromptNamed: 'Xóa {{title}}',

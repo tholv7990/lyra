@@ -645,7 +645,9 @@ export function Chats() {
                       {done && (
                         <div className="cactions">
                           <button className="cicon" onClick={() => copy(m.content)} title={copied ? t('common.copied') : t('common.copy')}><IconCopy /></button>
-                          {sourcePromptId ? (
+                          {/* Save only when the chat has a parent prompt. Otherwise the
+                              gateway is "Save as prompt" on the instruction above. */}
+                          {sourcePromptId && (
                             <button
                               className="cmsg-save"
                               onClick={() => void saveAnswer(m)}
@@ -653,10 +655,6 @@ export function Chats() {
                               title={t('prompts.saveAnswerHint')}
                             >
                               <IconBookmark /> {savedMsgIds.has(m.id) ? t('prompts.answerSaved') : t('prompts.saveAnswer')}
-                            </button>
-                          ) : (
-                            <button className="cmsg-save" disabled title={t('prompts.saveAnswerDisabled')}>
-                              <IconBookmark /> {t('prompts.saveAnswer')}
                             </button>
                           )}
                         </div>
