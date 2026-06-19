@@ -15,6 +15,8 @@ import {
   labelColor,
   mediaTypeForMime,
   isAllowedMedia,
+  parsePromptVariables,
+  toLyraPlaceholders,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider } from '../enums';
@@ -328,5 +330,22 @@ describe('evalCondition', () => {
     expect(evalCondition({ variable: 'stock', op: 'gt', value: '5' }, vars)).toBe(true);
     expect(evalCondition({ variable: 'stock', op: 'lt', value: '5' }, vars)).toBe(false);
     expect(evalCondition({ variable: 'product', op: 'gt', value: '5' }, vars)).toBe(false);
+  });
+});
+
+describe('prompt marketplace placeholders', () => {
+  it('parsePromptVariables extracts unique names from ${var} and ${var:default}', () => {
+    expect(parsePromptVariables('Write about ${topic} for ${audience:devs}')).toEqual([
+      'topic',
+      'audience',
+    ]);
+    expect(parsePromptVariables('${a} ${a} ${b}')).toEqual(['a', 'b']);
+    expect(parsePromptVariables('no vars here')).toEqual([]);
+  });
+  it('toLyraPlaceholders converts ${var}/${var:default} to {var}', () => {
+    expect(toLyraPlaceholders('Hi ${name:there}, about ${topic}')).toBe(
+      'Hi {name}, about {topic}',
+    );
+    expect(toLyraPlaceholders('plain text')).toBe('plain text');
   });
 });

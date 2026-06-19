@@ -9,6 +9,7 @@ import {
   HomeIcon,
   ProjectsIcon,
   PromptsIcon,
+  MarketplaceIcon,
   ChatsIcon,
   PipelinesIcon,
   MembersIcon,
@@ -31,6 +32,7 @@ function initials(name?: string) {
 const MODULES = [
   { path: '/chats', name: 'Chats' },
   { path: '/prompts', name: 'Prompts' },
+  { path: '/marketplace', name: 'Marketplace' },
   { path: '/pipelines', name: 'Pipelines' },
   { path: '/projects', name: 'Projects' },
   { path: '/publish', name: 'Publish' },
@@ -74,6 +76,7 @@ export function AppLayout() {
     '/': 'nav.home',
     '/chats': 'nav.chats',
     '/prompts': 'nav.prompts',
+    '/marketplace': 'nav.marketplace',
     '/pipelines': 'nav.pipelines',
     '/projects': 'nav.projects',
     '/publish': 'nav.publish',
@@ -123,6 +126,10 @@ export function AppLayout() {
             <NavLink to="/prompts" title={t('nav.prompts')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PromptsIcon />
               <span className="nav-txt">{t('nav.prompts')}</span>
+            </NavLink>
+            <NavLink to="/marketplace" title={t('nav.marketplace')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <MarketplaceIcon />
+              <span className="nav-txt">{t('nav.marketplace')}</span>
             </NavLink>
             <NavLink to="/pipelines" title={t('nav.pipelines')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PipelinesIcon />

@@ -3,6 +3,7 @@ export default {
   projects: 'Projects',
   pipelines: 'Pipelines',
   prompts: 'Prompts',
+  marketplace: 'Marketplace',
   chats: 'Chats',
   settings: 'Settings',
   logout: 'Log out',

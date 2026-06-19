@@ -10,5 +10,6 @@ import prompts from './prompts';
 import chats from './chats';
 import copilot from './copilot';
 import connectors from './connectors';
+import marketplace from './marketplace';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace };

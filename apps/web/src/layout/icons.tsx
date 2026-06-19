@@ -36,6 +36,14 @@ export const PromptsIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Storefront — awning over a shop front — the Prompt Marketplace section.
+export const MarketplaceIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M2.6 2.6h10.8a1 1 0 0 1 .95.68l.6 1.8a2 2 0 0 1-1.9 2.64 2 2 0 0 1-1.6-.8 2 2 0 0 1-3.2 0 2 2 0 0 1-3.2 0 2 2 0 0 1-1.6.8A2 2 0 0 1 1.55 5.08l.6-1.8a1 1 0 0 1 .95-.68Z" />
+    <path d="M3 8.4a3 3 0 0 0 2.4-.6 3 3 0 0 0 1.6.74V11h2V8.54a3 3 0 0 0 1.6-.74A3 3 0 0 0 13 8.4v4.1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.4Zm6 4.1v-1.6a1 1 0 0 0-1-1H8v2.6h1Z" />
+  </svg>
+);
+
 // Chat bubble with a reply tail + dots — the Chats (conversations) section.
 export const ChatsIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
@@ -174,6 +182,13 @@ export const LogoutIcon = (p: SVGProps<SVGSVGElement>) => (
 );
 
 // Paper-plane — the Publish (send to channels) section.
+export const LoginIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M8.5 2.5h4A1.5 1.5 0 0 1 14 4v8a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 7 12v-1.2a.8.8 0 0 1 1.6 0v1.1H12V4.1H8.6v1.1a.8.8 0 1 1-1.6 0V4a1.5 1.5 0 0 1 1.5-1.5Z" />
+    <path d="M5.06 5.64 7.7 7.4a.7.7 0 0 1 0 1.2l-2.64 1.76a.7.7 0 0 1-1.09-.58V8.8H2.3a.8.8 0 0 1 0-1.6h1.67V6.22a.7.7 0 0 1 1.09-.58Z" />
+  </svg>
+);
+
 export const PublishIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
     <path d="M13.6 2.4 1.9 7.1a.6.6 0 0 0 .05 1.12l3.4 1.1 1.1 3.4a.6.6 0 0 0 1.12.05L13.6 2.4Zm-1.5 1.5L6.9 9.1l-.02.02-2.2-.7 7.42-3.0ZM7.5 10.1l-.7-2.2 5.2-5.2-4.5 7.4Z" />

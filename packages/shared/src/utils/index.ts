@@ -274,3 +274,30 @@ export function isAllowedMedia(mime: string, filename: string): boolean {
   if (mime && MEDIA_ALLOWED_MIME.includes(mime)) return true;
   return MEDIA_ALLOWED_EXT.includes(extOf(filename));
 }
+
+// ===== Prompt marketplace =====
+// prompts.chat bodies use `${name}` / `${name:default}` placeholders. These two
+// pure helpers parse the variable names and convert the syntax to Lyra's
+// `{name}` so an adopted prompt works with pipeline variable-fill.
+const PROMPT_VAR_PATTERN = '\\$\\{\\s*([a-zA-Z0-9_]+)\\s*(?::[^}]*)?\\}';
+
+export function parsePromptVariables(content: string): string[] {
+  const re = new RegExp(PROMPT_VAR_PATTERN, 'g');
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const m of content.matchAll(re)) {
+    const name = m[1];
+    if (!seen.has(name)) {
+      seen.add(name);
+      out.push(name);
+    }
+  }
+  return out;
+}
+
+export function toLyraPlaceholders(content: string): string {
+  return content.replace(
+    new RegExp(PROMPT_VAR_PATTERN, 'g'),
+    (_m, name: string) => `{${name}}`,
+  );
+}

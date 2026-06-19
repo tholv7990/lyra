@@ -3,6 +3,7 @@ export default {
   projects: 'Dự án',
   pipelines: 'Quy trình',
   prompts: 'Câu lệnh',
+  marketplace: 'Chợ câu lệnh',
   chats: 'Trò chuyện',
   settings: 'Cài đặt',
   logout: 'Đăng xuất',

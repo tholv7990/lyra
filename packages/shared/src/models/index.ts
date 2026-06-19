@@ -383,3 +383,28 @@ export interface ConnectorCredentialInfo {
   connected: boolean;
   last4?: string;
 }
+
+// ===== Prompt marketplace =====
+// A community prompt in the global, read-only marketplace catalog (imported from
+// prompts.chat, CC0). NOT a workspace Prompt — a lightweight draft a user can
+// browse and adopt into their own library.
+export interface MarketplacePrompt {
+  id: string;
+  title: string;
+  content: string;
+  type: 'text' | 'structured';
+  forDevs: boolean;
+  contributor?: string;
+  source: string; // e.g. 'prompts.chat'
+  variables: string[]; // placeholder names parsed from the body
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// A marketplace prompt plus why the AI filter ranked it for the user's request.
+export interface RankedMarketplacePrompt {
+  prompt: MarketplacePrompt;
+  score: number; // 0-100 relevance
+  reason: string; // one-line rationale
+}

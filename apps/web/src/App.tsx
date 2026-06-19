@@ -18,6 +18,7 @@ import { ProjectDetail } from './pages/ProjectDetail';
 import { ProjectEditor } from './pages/ProjectEditor';
 import { Prompts } from './pages/Prompts';
 import { PromptEditor } from './pages/PromptEditor';
+import { Marketplace } from './pages/Marketplace';
 import { Chats } from './pages/Chats';
 import { Pipelines } from './pages/Pipelines';
 import { PipelineBuilder } from './pages/PipelineBuilder';
@@ -79,6 +80,7 @@ const router = createBrowserRouter([
       { path: 'prompts', element: <Prompts /> },
       { path: 'prompts/new', element: <PromptEditor /> },
       { path: 'prompts/:id', element: <PromptEditor /> },
+      { path: 'marketplace', element: <Marketplace /> },
       { path: 'chats', element: <Chats /> },
       { path: 'chats/:id', element: <Chats /> },
       { path: 'pipelines', element: <Pipelines /> },

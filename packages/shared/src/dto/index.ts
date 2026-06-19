@@ -232,6 +232,26 @@ export interface UpdateLabelDto {
   color?: string;
 }
 
+// ===== Prompt marketplace =====
+// Browse the global marketplace catalog (query params).
+export interface MarketplaceListDto {
+  page?: number;
+  limit?: number;
+  q?: string;
+  forDevs?: boolean;
+}
+
+// AI filter: rank the catalog against a free-text need.
+export interface MarketplaceRankDto {
+  query: string;
+  limit?: number;
+}
+
+// Adopt a catalog prompt into the workspace library (creates a real Prompt).
+export interface AdoptMarketplacePromptDto {
+  promptId: string;
+}
+
 // ===== Chats (conversations) =====
 // Create an (empty) conversation. The first message is sent separately via the
 // streaming messages endpoint. `originPromptId` links a chat opened from a
