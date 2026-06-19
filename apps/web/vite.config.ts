@@ -41,6 +41,7 @@ export default defineConfig({
       '/files': api(), // always proxy — files open in a new tab (a navigation)
       '/runs': api(),
       '/health': api(),
+      '/admin': api(true), // /admin is a SPA route AND the /admin/* API prefix
     },
   },
 });
