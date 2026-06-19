@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -52,7 +52,18 @@ export class ConnectorsProxy {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    return (await res.json()) as Record<string, unknown>;
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    // Never pass an upstream error body back as a success: it would reach the
+    // browser as a 200 with no payload and crash the page (e.g. channels.map on
+    // undefined). Propagate a real status — client errors (4xx) as-is, server
+    // errors (5xx) as 502 Bad Gateway.
+    if (!res.ok) {
+      const message =
+        typeof data.message === 'string' ? data.message : 'connector service request failed';
+      const status = res.status >= 400 && res.status < 500 ? res.status : 502;
+      throw new HttpException(message, status);
+    }
+    return data;
   }
 
   async streamFile(path: string): Promise<{ status: number; headers: Headers; body: ReadableStream | null }> {

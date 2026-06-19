@@ -1,3 +1,4 @@
+import { HttpException } from '@nestjs/common';
 import { ConnectorsProxy, rewriteDownload } from './connectors.proxy';
 
 function proxy(url?: string) {
@@ -36,7 +37,7 @@ describe('ConnectorsProxy (forward mode — service URL set)', () => {
   it('forwards to the service with auth + workspace headers', async () => {
     const fetchMock = jest
       .fn()
-      .mockResolvedValue({ json: () => Promise.resolve({ channels: [] }) });
+      .mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ channels: [] }) });
     (global as unknown as { fetch: jest.Mock }).fetch = fetchMock;
 
     await proxy('http://svc:9100/').forward('ws1', 'u1', 'GET', 'channels');
@@ -46,6 +47,34 @@ describe('ConnectorsProxy (forward mode — service URL set)', () => {
     expect(init.headers['X-Workspace-Id']).toBe('ws1');
     expect(init.headers['X-User-Id']).toBe('u1');
     expect(init.headers.Authorization).toContain('Bearer');
+  });
+
+  // Regression: a non-2xx upstream must NOT be passed back as a success body.
+  // Previously forward() returned the error JSON verbatim, so the api answered 200
+  // with no `channels`, and the web Connections page crashed on `channels.map`.
+  it('throws 502 on a 5xx upstream instead of returning the error body as success', async () => {
+    (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ statusCode: 500, message: 'Internal server error' }),
+    });
+    const err = await proxy('http://svc:9100/')
+      .forward('ws1', 'u1', 'GET', 'channels', undefined, 'bad-key')
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(HttpException);
+    expect((err as HttpException).getStatus()).toBe(502);
+  });
+
+  it('propagates a 4xx upstream status as-is (e.g. missing key → 401)', async () => {
+    (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ message: 'missing connector key' }),
+    });
+    const err = await proxy('http://svc:9100/')
+      .forward('ws1', 'u1', 'GET', 'channels')
+      .catch((e: unknown) => e);
+    expect((err as HttpException).getStatus()).toBe(401);
   });
 });
 

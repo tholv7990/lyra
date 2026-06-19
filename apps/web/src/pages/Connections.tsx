@@ -29,7 +29,7 @@ export function Connections() {
     if (!ws) return;
     try {
       setCred(await connectorsApi.credentialStatus(ws));
-      setChannels((await connectorsApi.channels(ws)).channels);
+      setChannels((await connectorsApi.channels(ws)).channels ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('connectors.error'));
     }
