@@ -7,6 +7,7 @@ import type {
   AdminUserSummary,
 } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { initial, avatarStyle } from '../lib/format';
 import { adminApi, type CatalogStats } from '../lib/admin';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
@@ -47,10 +48,7 @@ export function Admin() {
 
   return (
     <div className="admin">
-      <div className="set-section-head admin-head">
-        <h1>{t('admin.heading')}</h1>
-        <p>{t('admin.subtitle')}</p>
-      </div>
+      <h1 className="sr-only">{t('admin.heading')}</h1>
 
       <div className="seg admin-tabs" role="tablist" aria-label={t('admin.heading')}>
         {TABS.map((id) => (
@@ -167,7 +165,7 @@ function UsersSection() {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<AdminUserSummary | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -200,17 +198,28 @@ function UsersSection() {
     };
   }, [page, q, t]);
 
-  // Reflect a row's new active state in the list after a detail toggle.
+  // Reflect a user's new active state in the list (and the open detail) after a
+  // deactivate/reactivate.
   const onActiveChanged = useCallback((updated: AdminUserSummary) => {
     setRows((list) => list.map((r) => (r.id === updated.id ? updated : r)));
+    setSelected((s) => (s && s.id === updated.id ? { ...s, ...updated } : s));
   }, []);
 
+  // Clicking a card drills into the full user view; back returns to the list.
+  if (selected) {
+    return (
+      <UserDetailView
+        row={selected}
+        isSelf={selected.id === user?.id}
+        onBack={() => setSelected(null)}
+        onActiveChanged={onActiveChanged}
+      />
+    );
+  }
+
   return (
-    <section className="set-section" aria-labelledby="admin-users-title">
-      <div className="set-section-head">
-        <h2 id="admin-users-title">{t('admin.tab.users')}</h2>
-        <p>{t('admin.usersDesc')}</p>
-      </div>
+    <section aria-labelledby="admin-users-title">
+      <h2 id="admin-users-title" className="sr-only">{t('admin.tab.users')}</h2>
 
       <div className="lin-toolbar admin-users-toolbar">
         <input
@@ -238,23 +247,9 @@ function UsersSection() {
         />
       ) : (
         <>
-          <div className="ptable">
-            <div className="admin-uhead" role="row">
-              <span>{t('admin.col.email')}</span>
-              <span>{t('admin.col.name')}</span>
-              <span>{t('admin.col.joined')}</span>
-              <span className="admin-ucol-num">{t('admin.col.workspaces')}</span>
-              <span>{t('admin.col.status')}</span>
-            </div>
+          <div className="lib-grid">
             {rows.map((u) => (
-              <UserRow
-                key={u.id}
-                row={u}
-                open={openId === u.id}
-                isSelf={u.id === user?.id}
-                onToggle={() => setOpenId((id) => (id === u.id ? null : u.id))}
-                onActiveChanged={onActiveChanged}
-              />
+              <UserCard key={u.id} row={u} onOpen={() => setSelected(u)} />
             ))}
           </div>
 
@@ -279,72 +274,68 @@ function UsersSection() {
   );
 }
 
-interface UserRowProps {
-  row: AdminUserSummary;
-  open: boolean;
-  isSelf: boolean;
-  onToggle: () => void;
-  onActiveChanged: (updated: AdminUserSummary) => void;
-}
-
-function UserRow({ row, open, isSelf, onToggle, onActiveChanged }: UserRowProps) {
+// Clean user card (no label:value rows) — avatar · name · email, with a status
+// badge and a meta line. The whole card opens the detail view.
+function UserCard({ row, onOpen }: { row: AdminUserSummary; onOpen: () => void }) {
   const { t } = useTranslation();
   return (
-    <div className={`admin-urow-wrap ${open ? 'open' : ''}`}>
-      <button
-        type="button"
-        className="admin-urow"
-        aria-expanded={open}
-        onClick={onToggle}
-      >
-        <span className="admin-ucell admin-uemail" data-label={t('admin.col.email')}>
-          {row.email}
-        </span>
-        <span className="admin-ucell" data-label={t('admin.col.name')}>
-          {row.name}
-        </span>
-        <span className="admin-ucell admin-umuted" data-label={t('admin.col.joined')}>
-          {fmtDate(row.createdAt)}
-        </span>
-        <span className="admin-ucell admin-ucol-num" data-label={t('admin.col.workspaces')}>
-          {row.workspaceCount}
-        </span>
-        <span className="admin-ucell" data-label={t('admin.col.status')}>
-          <span className={`badge ${row.active ? 'admin-active' : 'admin-inactive'}`}>
-            {row.active ? t('admin.active') : t('admin.inactive')}
+    <button
+      type="button"
+      className="lib-card admin-user-card"
+      onClick={onOpen}
+      title={t('admin.openUser', { name: row.name })}
+    >
+      <div className="lib-card-head">
+        <span className="admin-uid">
+          <span className="admin-uavatar" style={avatarStyle(row.name)} aria-hidden="true">
+            {initial(row.name)}
+          </span>
+          <span className="admin-uid-text">
+            <span className="admin-uname">{row.name}</span>
+            <span className="admin-uemail">{row.email}</span>
           </span>
         </span>
-      </button>
-
-      {open && (
-        <UserDetailPanel userId={row.id} isSelf={isSelf} onActiveChanged={onActiveChanged} />
-      )}
-    </div>
+        <span className={`badge ${row.active ? 'admin-active' : 'admin-inactive'}`}>
+          {row.active ? t('admin.active') : t('admin.inactive')}
+        </span>
+      </div>
+      <div className="admin-user-meta">
+        <span>{t('admin.joinedOn', { date: fmtDate(row.createdAt) })}</span>
+        <span className="pd-dot" aria-hidden="true">·</span>
+        <span>{t('admin.workspaceCount', { count: row.workspaceCount })}</span>
+      </div>
+    </button>
   );
 }
 
 const USAGE_KEYS = ['projects', 'pipelines', 'prompts', 'runs', 'chats'] as const;
 
-interface UserDetailPanelProps {
-  userId: string;
+interface UserDetailViewProps {
+  row: AdminUserSummary;
   isSelf: boolean;
+  onBack: () => void;
   onActiveChanged: (updated: AdminUserSummary) => void;
 }
 
-function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelProps) {
+// Full user detail "page": identity header + workspaces + usage + the
+// deactivate/reactivate action. Reached by clicking a user card; Back returns.
+function UserDetailView({ row, isSelf, onBack, onActiveChanged }: UserDetailViewProps) {
   const { t } = useTranslation();
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The summary row carries name/email/status so the header shows instantly;
+  // the detail load fills in workspaces + usage.
+  const active = detail?.active ?? row.active;
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
     adminApi
-      .user(userId)
+      .user(row.id)
       .then((d) => !cancelled && setDetail(d))
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -354,13 +345,13 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
     return () => {
       cancelled = true;
     };
-  }, [userId, t]);
+  }, [row.id, t]);
 
-  async function applyActive(active: boolean) {
+  async function applyActive(next: boolean) {
     setBusy(true);
     setError(null);
     try {
-      const updated = await adminApi.setUserActive(userId, active);
+      const updated = await adminApi.setUserActive(row.id, next);
       setDetail((d) => (d ? { ...d, ...updated } : d));
       onActiveChanged(updated);
       setConfirm(false);
@@ -374,18 +365,35 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
     }
   }
 
-  if (loading) return <div className="admin-udetail empty">{t('admin.loading')}</div>;
-  if (error && !detail)
-    return (
-      <div className="admin-udetail error" role="alert">
-        {error}
-      </div>
-    );
-  if (!detail) return null;
-
   return (
-    <div className="admin-udetail">
-      <div className="admin-udetail-cols">
+    <section className="admin-udetail-page" aria-label={row.name}>
+      <button type="button" className="btn-ghost admin-back" onClick={onBack}>
+        ← {t('admin.backToUsers')}
+      </button>
+
+      <header className="admin-uid-head">
+        <span className="admin-uavatar lg" style={avatarStyle(row.name)} aria-hidden="true">
+          {initial(row.name)}
+        </span>
+        <div className="admin-uid-text">
+          <h2 className="admin-uname lg">{row.name}</h2>
+          <span className="admin-uemail">{row.email}</span>
+        </div>
+        <span className={`badge ${active ? 'admin-active' : 'admin-inactive'}`}>
+          {active ? t('admin.active') : t('admin.inactive')}
+        </span>
+      </header>
+
+      {loading && <p className="empty">{t('admin.loading')}</p>}
+      {error && !detail && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+
+      {detail && (
+        <>
+          <div className="admin-udetail-cols">
         <div className="admin-udetail-block">
           <h4 className="admin-subhead">{t('admin.workspaces')}</h4>
           {detail.workspaces.length === 0 ? (
@@ -421,40 +429,42 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
         </p>
       )}
 
-      <div className="admin-udetail-actions">
-        {detail.active ? (
-          <button
-            type="button"
-            className="btn-danger admin-btn-inline"
-            disabled={isSelf || busy}
-            title={isSelf ? t('admin.cantDeactivateSelf') : undefined}
-            onClick={() => setConfirm(true)}
-          >
-            <XIcon width={14} height={14} aria-hidden="true" />
-            {t('admin.deactivate')}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="btn-primary admin-btn-inline"
-            disabled={busy}
-            onClick={() => void applyActive(true)}
-          >
-            <RefreshIcon width={14} height={14} aria-hidden="true" />
-            {t('admin.reactivate')}
-          </button>
-        )}
-        {isSelf && detail.active && (
-          <span className="admin-self-note">{t('admin.cantDeactivateSelf')}</span>
-        )}
-      </div>
+          <div className="admin-udetail-actions">
+            {active ? (
+              <button
+                type="button"
+                className="btn-danger admin-btn-inline"
+                disabled={isSelf || busy}
+                title={isSelf ? t('admin.cantDeactivateSelf') : undefined}
+                onClick={() => setConfirm(true)}
+              >
+                <XIcon width={14} height={14} aria-hidden="true" />
+                {t('admin.deactivate')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-primary admin-btn-inline"
+                disabled={busy}
+                onClick={() => void applyActive(true)}
+              >
+                <RefreshIcon width={14} height={14} aria-hidden="true" />
+                {t('admin.reactivate')}
+              </button>
+            )}
+            {isSelf && active && (
+              <span className="admin-self-note">{t('admin.cantDeactivateSelf')}</span>
+            )}
+          </div>
+        </>
+      )}
 
       <ConfirmDialog
         open={confirm}
         title={t('admin.deactivateTitle')}
         message={
           <>
-            {t('admin.deactivateConfirm')} <strong>{detail.name}</strong>?
+            {t('admin.deactivateConfirm')} <strong>{row.name}</strong>?
           </>
         }
         confirmLabel={t('admin.deactivate')}
@@ -463,7 +473,7 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
         onConfirm={() => void applyActive(false)}
         onCancel={() => setConfirm(false)}
       />
-    </div>
+    </section>
   );
 }
 

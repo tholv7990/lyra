@@ -32,6 +32,11 @@ export default {
   noUsersTitle: 'Không có người dùng',
   noUsersBody: 'Chưa có tài khoản nào được tạo.',
   noMatch: 'Không có người dùng nào khớp với tìm kiếm.',
+  openUser: 'Mở {{name}}',
+  joinedOn: 'Tham gia {{date}}',
+  workspaceCount: '{{count}} không gian',
+  workspaceCount_other: '{{count}} không gian',
+  backToUsers: 'Người dùng',
   col: {
     email: 'Email',
     name: 'Tên',

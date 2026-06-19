@@ -9,20 +9,7 @@
   max-width: 860px;
 }
 
-.admin-head {
-  margin-bottom: 22px;
-}
-
-/* Page-title h1 — .set-section-head styles h2 only, so the page landmark needs
-   its own rule (one step up the type scale from a section heading). */
-.admin-head h1 {
-  font-size: var(--text-title2);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-/* The tab switch reuses .seg; this just spaces it from the head. */
+/* The tab switch reuses .seg; spaced from the top of the page. */
 .admin-tabs {
   margin-bottom: 22px;
 }
@@ -113,76 +100,80 @@
   font-size: var(--text-mini);
 }
 
-/* ===== Users: list (reuses .ptable container; admin-specific column grid) ===== */
-/* The shared .prow grid is locked to the Prompts column set, so the user list
-   keeps its own 5-column track while inheriting .ptable's card chrome and the
-   shared row hover/focus/typography below. */
-.admin-uhead,
-.admin-urow {
-  display: grid;
-  grid-template-columns: 1.6fr 1.2fr auto 90px 110px;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 16px;
-}
-
-.admin-uhead {
-  font-size: var(--text-micro);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-tertiary);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.admin-ucol-num {
-  text-align: right;
-}
-
-.admin-urow-wrap {
-  border-top: 1px solid var(--hairline);
-}
-
-.admin-urow-wrap:first-child {
-  border-top: 0;
-}
-
-.admin-urow {
+/* ===== Users: card gallery (shared .lib-card; admin-specific identity bits) ===== */
+/* The card is a button (whole card opens the detail view), so reset the button
+   chrome on top of .lib-card. */
+.admin-user-card {
   width: 100%;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
   text-align: left;
   font: inherit;
-  transition: background 0.12s ease;
+  cursor: pointer;
+  gap: 12px;
+}
+.admin-user-card .lib-card-head {
+  align-items: center;
 }
 
-.admin-urow:hover,
-.admin-urow-wrap.open .admin-urow {
-  background: var(--surface-1);
+.admin-uid {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
-.admin-urow:focus-visible {
-  outline: none;
-  background: var(--surface-2);
-  box-shadow: inset 2px 0 0 var(--primary);
+.admin-uavatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin-uavatar.lg {
+  width: 46px;
+  height: 46px;
+  font-size: var(--text-large);
 }
 
-.admin-ucell {
-  font-size: 14px;
+.admin-uid-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-uname {
+  font-size: var(--text-normal);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.admin-uemail {
-  font-weight: 500;
+.admin-uname.lg {
+  margin: 0;
+  font-size: var(--text-title3);
 }
 
-.admin-umuted {
+.admin-uemail {
+  font-size: var(--text-small);
   color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
   font-size: var(--text-mini);
+  color: var(--ink-muted);
 }
 
 /* Active / inactive state badges — genuinely admin-specific account state, so
@@ -202,11 +193,24 @@
   text-transform: capitalize;
 }
 
-/* ===== Users: expanded detail panel ===== */
-.admin-udetail {
-  padding: 16px 16px 18px;
-  background: var(--surface-1);
-  border-top: 1px solid var(--hairline);
+/* ===== Users: detail view (drill-in "page", reached by clicking a card) ===== */
+.admin-udetail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.admin-back {
+  width: auto;
+  align-self: flex-start;
+  margin-top: 0;
+}
+.admin-uid-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.admin-uid-head .admin-uid-text {
+  flex: 1;
 }
 
 .admin-udetail-cols {
@@ -344,38 +348,6 @@
   .admin-recent-email {
     grid-column: 1 / -1;
     order: 3;
-  }
-
-  .admin-uhead {
-    display: none;
-  }
-
-  .admin-urow {
-    grid-template-columns: 1fr auto;
-    row-gap: 4px;
-  }
-
-  /* Stack each cell as label + value; status keeps its own row at the end. */
-  .admin-ucell {
-    white-space: normal;
-  }
-
-  .admin-ucell::before {
-    content: attr(data-label);
-    display: block;
-    font-size: var(--text-micro);
-    font-weight: 600;
-    color: var(--ink-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .admin-uemail {
-    grid-column: 1 / -1;
-  }
-
-  .admin-ucol-num {
-    text-align: left;
   }
 
   .admin-udetail-cols {

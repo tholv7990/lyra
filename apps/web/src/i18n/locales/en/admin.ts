@@ -32,6 +32,11 @@ export default {
   noUsersTitle: 'No users',
   noUsersBody: 'No accounts have been created yet.',
   noMatch: 'No users match your search.',
+  openUser: 'Open {{name}}',
+  joinedOn: 'Joined {{date}}',
+  workspaceCount: '{{count}} workspace',
+  workspaceCount_other: '{{count}} workspaces',
+  backToUsers: 'Users',
   col: {
     email: 'Email',
     name: 'Name',
