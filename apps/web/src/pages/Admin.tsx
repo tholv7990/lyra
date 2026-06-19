@@ -52,15 +52,14 @@ export function Admin() {
         <p>{t('admin.subtitle')}</p>
       </div>
 
-      <div className="admin-tabs" role="tablist" aria-label={t('admin.heading')}>
+      <div className="seg admin-tabs" role="tablist" aria-label={t('admin.heading')}>
         {TABS.map((id) => (
           <button
             key={id}
             type="button"
             role="tab"
-            aria-pressed={tab === id}
             aria-selected={tab === id}
-            className={`admin-tab ${tab === id ? 'active' : ''}`}
+            className={`seg-btn ${tab === id ? 'active' : ''}`}
             onClick={() => setTab(id)}
           >
             {t(`admin.tab.${id}`)}
@@ -118,7 +117,7 @@ function OverviewSection() {
     );
 
   return (
-    <section className="set-section admin-card" aria-labelledby="admin-overview-title">
+    <section className="set-section" aria-labelledby="admin-overview-title">
       <div className="set-section-head">
         <h2 id="admin-overview-title">{t('admin.tab.overview')}</h2>
         <p>{t('admin.overviewDesc')}</p>
@@ -207,7 +206,7 @@ function UsersSection() {
   }, []);
 
   return (
-    <section className="set-section admin-card" aria-labelledby="admin-users-title">
+    <section className="set-section" aria-labelledby="admin-users-title">
       <div className="set-section-head">
         <h2 id="admin-users-title">{t('admin.tab.users')}</h2>
         <p>{t('admin.usersDesc')}</p>
@@ -239,7 +238,7 @@ function UsersSection() {
         />
       ) : (
         <>
-          <div className="admin-utable">
+          <div className="ptable">
             <div className="admin-uhead" role="row">
               <span>{t('admin.col.email')}</span>
               <span>{t('admin.col.name')}</span>
@@ -311,7 +310,7 @@ function UserRow({ row, open, isSelf, onToggle, onActiveChanged }: UserRowProps)
           {row.workspaceCount}
         </span>
         <span className="admin-ucell" data-label={t('admin.col.status')}>
-          <span className={`badge ${row.active ? 'admin-badge-active' : 'admin-badge-inactive'}`}>
+          <span className={`badge ${row.active ? 'admin-active' : 'admin-inactive'}`}>
             {row.active ? t('admin.active') : t('admin.inactive')}
           </span>
         </span>
@@ -396,7 +395,7 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
               {detail.workspaces.map((ws) => (
                 <li className="admin-ws-row" key={ws.id}>
                   <span className="admin-ws-name">{ws.name}</span>
-                  <span className="badge admin-ws-role">{t(`admin.role.${ws.role}`)}</span>
+                  <span className="badge admin-role">{t(`admin.role.${ws.role}`)}</span>
                 </li>
               ))}
             </ul>
@@ -426,7 +425,7 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
         {detail.active ? (
           <button
             type="button"
-            className="btn-danger admin-deact"
+            className="btn-danger admin-btn-inline"
             disabled={isSelf || busy}
             title={isSelf ? t('admin.cantDeactivateSelf') : undefined}
             onClick={() => setConfirm(true)}
@@ -437,7 +436,7 @@ function UserDetailPanel({ userId, isSelf, onActiveChanged }: UserDetailPanelPro
         ) : (
           <button
             type="button"
-            className="btn-primary admin-react"
+            className="btn-primary admin-btn-inline"
             disabled={busy}
             onClick={() => void applyActive(true)}
           >
@@ -526,60 +525,58 @@ function CatalogCard() {
   }
 
   return (
-    <section className="set-section admin-card" aria-labelledby="admin-catalog-title">
+    <section className="set-section" aria-labelledby="admin-catalog-title">
       <div className="set-section-head">
         <h2 id="admin-catalog-title">{t('admin.catalogTitle')}</h2>
         <p>{t('admin.catalogDesc')}</p>
       </div>
 
-      <div className="admin-card-body">
-        {loading ? (
-          <p className="empty">{t('admin.loading')}</p>
-        ) : (
-          <dl className="admin-facts">
-            <div className="admin-fact">
-              <dt>{t('admin.catalogCount')}</dt>
-              <dd>{(stats?.count ?? 0).toLocaleString()}</dd>
-            </div>
-            <div className="admin-fact">
-              <dt>{t('admin.lastSynced')}</dt>
-              <dd>
-                {stats?.lastSyncedAt
-                  ? formatSynced(stats.lastSyncedAt)
-                  : t('admin.neverSynced')}
-              </dd>
-            </div>
-          </dl>
-        )}
+      {loading ? (
+        <p className="empty">{t('admin.loading')}</p>
+      ) : (
+        <dl className="admin-facts">
+          <div className="admin-fact">
+            <dt>{t('admin.catalogCount')}</dt>
+            <dd>{(stats?.count ?? 0).toLocaleString()}</dd>
+          </div>
+          <div className="admin-fact">
+            <dt>{t('admin.lastSynced')}</dt>
+            <dd>
+              {stats?.lastSyncedAt
+                ? formatSynced(stats.lastSyncedAt)
+                : t('admin.neverSynced')}
+            </dd>
+          </div>
+        </dl>
+      )}
 
-        <div className="admin-actions">
-          <button
-            type="button"
-            className="btn-primary admin-sync"
-            onClick={() => void sync()}
-            disabled={syncing || loading}
-          >
-            <RefreshIcon
-              width={15}
-              height={15}
-              className={syncing ? 'icon spin' : 'icon'}
-              aria-hidden="true"
-            />
-            {syncing ? t('admin.syncing') : t('admin.sync')}
-          </button>
-          {done != null && !error && (
-            <p className="admin-ok" role="status" aria-live="polite">
-              {t('admin.imported', { count: done })}
-            </p>
-          )}
-        </div>
-
-        {error && (
-          <p className="error" role="alert">
-            {error}
+      <div className="admin-actions">
+        <button
+          type="button"
+          className="btn-primary admin-btn-inline"
+          onClick={() => void sync()}
+          disabled={syncing || loading}
+        >
+          <RefreshIcon
+            width={15}
+            height={15}
+            className={syncing ? 'icon spin' : 'icon'}
+            aria-hidden="true"
+          />
+          {syncing ? t('admin.syncing') : t('admin.sync')}
+        </button>
+        {done != null && !error && (
+          <p className="admin-ok" role="status" aria-live="polite">
+            {t('admin.imported', { count: done })}
           </p>
         )}
       </div>
+
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

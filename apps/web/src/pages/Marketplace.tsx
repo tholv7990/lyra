@@ -13,7 +13,7 @@ import './marketplace.css';
 
 const PAGE_SIZE = 30;
 
-// Tracks the adopt state of a single card so the button can flip to "Added ✓".
+// Tracks the adopt state of a single row so the action can flip to "Added".
 type AdoptState = 'idle' | 'busy' | 'done';
 
 export function Marketplace() {
@@ -36,7 +36,7 @@ export function Marketplace() {
   const [rankedFor, setRankedFor] = useState('');
   const [ranking, setRanking] = useState(false);
 
-  // Per-card adopt state + a transient confirmation toast.
+  // Per-row adopt state + a transient confirmation toast.
   const [adopt, setAdopt] = useState<Record<string, AdoptState>>({});
   const [toast, setToast] = useState<string | null>(null);
 
@@ -114,10 +114,10 @@ export function Marketplace() {
   const rankedEmpty = showRanked && ranked!.length === 0;
 
   return (
-    <div className="mkt">
+    <div>
       <h1 className="sr-only">{t('marketplace.heading')}</h1>
 
-      {/* AI filter — the prominent hero control */}
+      {/* AI filter — the prominent hero control, in the app's input/button vocabulary */}
       <form
         className="mkt-ai"
         onSubmit={(e) => {
@@ -126,13 +126,13 @@ export function Marketplace() {
         }}
       >
         <input
-          className="mkt-ai-input"
+          className="lin-search"
           placeholder={t('marketplace.aiPlaceholder')}
           value={aiQuery}
           onChange={(e) => setAiQuery(e.target.value)}
           aria-label={t('marketplace.aiPlaceholder')}
         />
-        <button className="btn-primary" type="submit" disabled={ranking || !aiQuery.trim()}>
+        <button className="btn-primary mkt-ai-go" type="submit" disabled={ranking || !aiQuery.trim()}>
           {ranking ? t('marketplace.aiRunning') : t('marketplace.aiRun')}
         </button>
       </form>
@@ -140,7 +140,7 @@ export function Marketplace() {
 
       {/* Browse toolbar — hidden while AI results are showing */}
       {!showRanked && (
-        <div className="lin-toolbar mkt-toolbar">
+        <div className="lin-toolbar">
           <input
             className="lin-search"
             placeholder={t('marketplace.searchPlaceholder')}
@@ -150,7 +150,7 @@ export function Marketplace() {
           />
           <button
             type="button"
-            className={`mkt-toggle ${forDevs ? 'active' : ''}`}
+            className={`lin-filter-btn ${forDevs ? 'active' : ''}`}
             aria-pressed={forDevs}
             title={t('marketplace.forDevsHint')}
             onClick={() => setForDevs((v) => !v)}
@@ -175,16 +175,16 @@ export function Marketplace() {
 
       {error && <p className="error">{error}</p>}
 
-      {/* Body: loading / empty / grid */}
+      {/* Body: loading / empty / catalog rows */}
       {!showRanked && loading ? (
-        <CardSkeletons />
+        <p className="empty">{t('marketplace.loading')}</p>
       ) : showRanked ? (
         rankedEmpty ? (
           <p className="empty">{t('marketplace.noRanked')}</p>
         ) : (
-          <div className="mkt-grid">
+          <div className="ptable t-marketplace">
             {ranked!.map((r) => (
-              <Card
+              <Row
                 key={r.prompt.id}
                 prompt={r.prompt}
                 rank={r}
@@ -207,9 +207,9 @@ export function Marketplace() {
         )
       ) : (
         <>
-          <div className="mkt-grid">
+          <div className="ptable t-marketplace">
             {items.map((p) => (
-              <Card
+              <Row
                 key={p.id}
                 prompt={p}
                 state={adopt[p.id] ?? 'idle'}
@@ -218,15 +218,17 @@ export function Marketplace() {
               />
             ))}
           </div>
-          <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
-              ← {t('marketplace.prev')}
-            </button>
-            <span className="pager-info">{t('marketplace.pagerInfo', { page, totalPages, total })}</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
-              {t('marketplace.next')} →
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className="pager">
+              <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
+                ← {t('marketplace.prev')}
+              </button>
+              <span className="pager-info">{t('marketplace.pagerInfo', { page, totalPages, total })}</span>
+              <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
+                {t('marketplace.next')} →
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -241,7 +243,7 @@ export function Marketplace() {
 
 type TFn = ReturnType<typeof useTranslation>['t'];
 
-interface CardProps {
+interface RowProps {
   prompt: MarketplacePrompt;
   rank?: RankedMarketplacePrompt;
   state: AdoptState;
@@ -249,46 +251,51 @@ interface CardProps {
   t: TFn;
 }
 
-function Card({ prompt, rank, state, onAdopt, t }: CardProps) {
+// One catalog entry — shares the app's .prow list-row treatment (Prompts/Pipelines).
+function Row({ prompt, rank, state, onAdopt, t }: RowProps) {
   const contributor = prompt.contributor?.trim();
   const done = state === 'done';
   return (
-    <article className="mkt-card">
-      <div className="mkt-card-head">
-        <h3 className="mkt-card-title">{prompt.title}</h3>
-        {prompt.forDevs && <span className="mkt-dev">{t('marketplace.devBadge')}</span>}
+    <div className="prow">
+      <div className="prow-namecell">
+        <span className="prow-name">
+          <span className="nm">{prompt.title}</span>
+        </span>
+        {rank && (
+          <span className="mkt-rank">
+            <span className="mkt-rank-score">{t('marketplace.relevance', { score: Math.round(rank.score) })}</span>
+            {rank.reason && <span className="mkt-rank-reason">{rank.reason}</span>}
+          </span>
+        )}
+        <span className="prow-sniprow">
+          <span className="snip">{prompt.content}</span>
+        </span>
       </div>
 
-      {rank && (
-        <div className="mkt-rank">
-          <span className="mkt-rank-score">{t('marketplace.relevance', { score: Math.round(rank.score) })}</span>
-          {rank.reason && <span className="mkt-rank-reason">{rank.reason}</span>}
-        </div>
-      )}
+      <span className="prow-tags">
+        {prompt.variables.slice(0, 4).map((v) => (
+          <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
+        ))}
+        {prompt.variables.length > 4 && (
+          <span className="more">+{prompt.variables.length - 4}</span>
+        )}
+      </span>
 
-      <p className="mkt-preview">{prompt.content}</p>
+      <span className="prow-status">
+        {prompt.forDevs && <span className="badge mkt-dev">{t('marketplace.devBadge')}</span>}
+      </span>
 
-      {prompt.variables.length > 0 && (
-        <div className="mkt-vars" aria-label={t('marketplace.variables')}>
-          {prompt.variables.slice(0, 6).map((v) => (
-            <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
-          ))}
-          {prompt.variables.length > 6 && (
-            <span className="more">+{prompt.variables.length - 6}</span>
-          )}
-        </div>
-      )}
-
-      <div className="mkt-card-foot">
-        <span className="mkt-by" title={t('marketplace.openSource', { source: prompt.source })}>
+      <span className="prow-facts">
+        <span className="prow-date" title={t('marketplace.openSource', { source: prompt.source })}>
           {contributor
             ? t('marketplace.by', { name: contributor })
             : t('marketplace.byUnknown')}
         </span>
+      </span>
+
+      <span className="prow-actions">
         {done ? (
-          <button className="btn-ghost btn-sm mkt-added" type="button" disabled>
-            {t('marketplace.added')}
-          </button>
+          <span className="mkt-added">{t('marketplace.added')}</span>
         ) : (
           <IconButton
             variant="primary"
@@ -299,23 +306,7 @@ function Card({ prompt, rank, state, onAdopt, t }: CardProps) {
             onClick={onAdopt}
           />
         )}
-      </div>
-    </article>
-  );
-}
-
-// Lightweight loading placeholders — six token-styled card silhouettes.
-function CardSkeletons() {
-  return (
-    <div className="mkt-grid" aria-hidden="true">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div className="mkt-card mkt-skel" key={i}>
-          <div className="mkt-skel-line w60" />
-          <div className="mkt-skel-line w90" />
-          <div className="mkt-skel-line w80" />
-          <div className="mkt-skel-line w40" />
-        </div>
-      ))}
+      </span>
     </div>
   );
 }
