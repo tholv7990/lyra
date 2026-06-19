@@ -3,6 +3,7 @@ import type {
   WorkspaceView,
   MemberView,
   Invite,
+  MyInvite,
   UserRef,
 } from '@lyra/shared';
 import type { WorkspaceDocument } from './workspace.schema';
@@ -62,6 +63,22 @@ export function toInviteView(
     updatedBy: userRef(i.updatedBy, refs),
     createdAt: iso(i.createdAt),
     updatedAt: iso(i.updatedAt ?? i.createdAt),
+    expiresAt: iso(i.expiresAt),
+  };
+}
+
+export function toMyInviteView(
+  i: InviteDocument,
+  workspaceName: string,
+  refs: Map<string, UserRef>,
+): MyInvite {
+  return {
+    id: i._id.toString(),
+    workspaceId: i.workspaceId,
+    workspaceName,
+    role: i.role,
+    invitedBy: userRef(i.createdBy, refs),
+    createdAt: iso(i.createdAt),
     expiresAt: iso(i.expiresAt),
   };
 }

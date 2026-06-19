@@ -22,10 +22,10 @@ export class Invite extends AuditedEntity {
 
   @Prop({
     required: true,
-    enum: ['pending', 'accepted', 'revoked'],
+    enum: ['pending', 'accepted', 'revoked', 'declined'],
     default: 'pending',
   })
-  status!: 'pending' | 'accepted' | 'revoked';
+  status!: 'pending' | 'accepted' | 'revoked' | 'declined';
 
   @Prop({ required: true })
   expiresAt!: Date;
