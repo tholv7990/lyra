@@ -1,4 +1,4 @@
-import { typeFromExt, mapResolveJson, resolveArgs, downloadArgs } from './ytdlp';
+import { typeFromExt, mapResolveJson, resolveArgs, downloadArgs, ytDlpReason } from './ytdlp';
 
 describe('typeFromExt', () => {
   it('classifies by extension', () => {
@@ -38,5 +38,21 @@ describe('arg builders', () => {
     expect(downloadArgs('https://x/v', '/tmp/o', [0, 2])).toEqual(
       expect.arrayContaining(['--playlist-items', '1,3']),
     );
+  });
+});
+
+describe('ytDlpReason', () => {
+  it('extracts the plain reason from a yt-dlp error', () => {
+    expect(
+      ytDlpReason(new Error('yt-dlp exited 1: ERROR: [youtube] ATOB4EE8SfU: This video is not available')),
+    ).toBe('This video is not available');
+  });
+  it('strips the extractor tag + id prefix on a sign-in error', () => {
+    expect(
+      ytDlpReason(new Error("yt-dlp exited 1: ERROR: [youtube] ID: Sign in to confirm you're not a bot")),
+    ).toBe("Sign in to confirm you're not a bot");
+  });
+  it('falls back to a generic line when nothing parses', () => {
+    expect(ytDlpReason('')).toBe('Could not resolve media from this link.');
   });
 });

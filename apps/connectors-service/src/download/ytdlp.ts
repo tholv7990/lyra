@@ -55,3 +55,19 @@ export function runYtDlp(args: string[], timeoutMs = 120_000): Promise<{ stdout:
     );
   });
 }
+
+// Turn a yt-dlp failure into a short, user-facing reason. yt-dlp emits e.g.
+// "ERROR: [youtube] ID: This video is not available" — strip the "yt-dlp exited N:",
+// the "[extractor]" tag, and a leading "<id>:" so the line reads plainly. Falls
+// back to a generic message when nothing parses.
+export function ytDlpReason(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const errLine = raw.split('\n').find((l) => /ERROR:/i.test(l)) ?? raw;
+  const reason = errLine
+    .replace(/^.*?ERROR:\s*/i, '') // drop everything up to "ERROR:"
+    .replace(/^\[[^\]]+\]\s*/, '') // drop the "[youtube]" extractor tag
+    .replace(/^[\w.-]+:\s*/, '') // drop a leading "<id>:" prefix
+    .trim()
+    .slice(0, 300);
+  return reason || 'Could not resolve media from this link.';
+}

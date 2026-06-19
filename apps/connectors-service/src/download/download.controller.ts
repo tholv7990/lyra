@@ -1,10 +1,28 @@
-import { Body, Controller, Get, Param, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Param,
+  Post,
+  Res,
+  UnprocessableEntityException,
+  UseGuards,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
 import { ServiceTokenGuard } from '../auth/service-token.guard';
 import { DownloadService } from './download.service';
 import { DownloadBody, ResolveBody } from './dto';
+import { ytDlpReason } from './ytdlp';
+
+// Map a yt-dlp failure to a clean 4xx carrying the real reason, so Lyra's proxy
+// forwards it to the UI instead of a generic 500. Real HttpExceptions (e.g. the
+// SSRF guard's 400) pass through unchanged.
+function asHttp(err: unknown): HttpException {
+  return err instanceof HttpException ? err : new UnprocessableEntityException(ytDlpReason(err));
+}
 
 @Controller()
 @UseGuards(ServiceTokenGuard)
@@ -13,12 +31,20 @@ export class DownloadController {
 
   @Post('resolve')
   async resolve(@Body() b: ResolveBody) {
-    return { items: await this.svc.resolve(b.url) };
+    try {
+      return { items: await this.svc.resolve(b.url) };
+    } catch (err) {
+      throw asHttp(err);
+    }
   }
 
   @Post('download')
   async download(@Body() b: DownloadBody) {
-    return { items: await this.svc.download(b.url, b.indices) };
+    try {
+      return { items: await this.svc.download(b.url, b.indices) };
+    } catch (err) {
+      throw asHttp(err);
+    }
   }
 
   @Get('files/:id')
