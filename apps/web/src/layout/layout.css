@@ -76,6 +76,51 @@
   margin-top: 10px;
 }
 
+/* Floating AI launcher — a bottom-right pill that opens Chats from anywhere.
+   z-index 55 keeps it above page content but below the mobile scrim (60),
+   dialogs (100), and toasts, so overlays always cover it. */
+.ai-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 55;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 18px 0 15px;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-accent);
+  font-size: var(--text-small);
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.12s ease;
+}
+.ai-fab:hover {
+  background: var(--primary-hover);
+}
+.ai-fab:active {
+  transform: translateY(1px) scale(0.98);
+}
+.ai-fab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--shadow-lg);
+}
+.ai-fab svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+@media (max-width: 820px) {
+  .ai-fab {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
 .nav-txt {
   flex: 1;
   min-width: 0;

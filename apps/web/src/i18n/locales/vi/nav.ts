@@ -8,6 +8,8 @@ export default {
   settings: 'Cài đặt',
   logout: 'Đăng xuất',
   account: 'Tài khoản',
+  workspace: 'Không gian làm việc',
+  aiButton: 'AI',
   builtins: 'Tích hợp sẵn',
   publish: 'Đăng bài',
   import: 'Tải media',

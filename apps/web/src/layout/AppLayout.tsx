@@ -111,24 +111,22 @@ export function AppLayout() {
             </button>
           </div>
 
-          <WorkspaceMenu />
-
           <nav className="sidebar-nav">
             <NavLink to="/" end title={t('nav.home')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <HomeIcon />
               <span className="nav-txt">{t('nav.home')}</span>
             </NavLink>
-            <NavLink to="/chats" title={t('nav.chats')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
-              <ChatsIcon />
-              <span className="nav-txt">{t('nav.chats')}</span>
-            </NavLink>
-            <NavLink to="/prompts" title={t('nav.prompts')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
-              <PromptsIcon />
-              <span className="nav-txt">{t('nav.prompts')}</span>
-            </NavLink>
             <NavLink to="/marketplace" title={t('nav.marketplace')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <MarketplaceIcon />
               <span className="nav-txt">{t('nav.marketplace')}</span>
+            </NavLink>
+
+            {/* Workspace group: the switcher heads its scoped resources. */}
+            <div className="nav-group-label">{t('nav.workspace')}</div>
+            <WorkspaceMenu />
+            <NavLink to="/prompts" title={t('nav.prompts')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <PromptsIcon />
+              <span className="nav-txt">{t('nav.prompts')}</span>
             </NavLink>
             <NavLink to="/pipelines" title={t('nav.pipelines')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PipelinesIcon />
@@ -229,6 +227,19 @@ export function AppLayout() {
             <Outlet />
           </div>
         </div>
+
+        {/* Floating AI launcher — opens Chats from anywhere (hidden while in Chats). */}
+        {!location.pathname.startsWith('/chats') && (
+          <button
+            className="ai-fab"
+            onClick={() => { close(); navigate('/chats'); }}
+            title={t('nav.chats')}
+            aria-label={t('nav.chats')}
+          >
+            <ChatsIcon />
+            <span className="ai-fab-txt">{t('nav.aiButton')}</span>
+          </button>
+        )}
       </div>
      </AppNavContext.Provider>
     </BreadcrumbContext.Provider>

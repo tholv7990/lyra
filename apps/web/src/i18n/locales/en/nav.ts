@@ -8,6 +8,8 @@ export default {
   settings: 'Settings',
   logout: 'Log out',
   account: 'Account',
+  workspace: 'Workspace',
+  aiButton: 'AI',
   builtins: 'Built-ins',
   publish: 'Publish',
   import: 'Import media',
