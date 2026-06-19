@@ -5,11 +5,11 @@ export default {
   soon: 'Sắp có',
   chatsTitle: 'Trò chuyện',
   chatsBody:
-    'Nơi bạn tạo prompt. Trò chuyện nhiều lượt với mọi nhà cung cấp·model, so sánh câu trả lời và lưu những prompt ưng ý vào thư viện. Mọi lượt đều được lưu tự động.',
+    'Trợ lý AI luôn sẵn sàng — mở từ nút ở góc màn hình. Trò chuyện nhiều lượt với mọi nhà cung cấp·model, rồi lưu những câu trả lời nổi bật vào một prompt hoặc đưa một tin nhắn vào thư viện.',
   chatsCta: 'Bắt đầu trò chuyện',
   promptsTitle: 'Câu lệnh',
   promptsBody:
-    'Thư viện các prompt tái sử dụng, đúng thương hiệu với media, thẻ và {placeholders}. Mở lại trong chat để tinh chỉnh, hoặc gắn vào một bước pipeline.',
+    'Thư viện các prompt tái sử dụng, đúng thương hiệu với media, thẻ, {placeholders} và những câu trả lời tốt nhất đã lưu từ chat. Mở trong chat để tinh chỉnh, hoặc gắn vào một bước pipeline.',
   promptsCta: 'Mở câu lệnh',
   pipelinesTitle: 'Quy trình',
   pipelinesBody:

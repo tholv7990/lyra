@@ -5,11 +5,11 @@ export default {
   soon: 'Soon',
   chatsTitle: 'Chats',
   chatsBody:
-    'Where you craft prompts. Chat multi-turn with any provider·model, compare answers, and save the keepers to your library. Every turn is kept automatically.',
+    'Your always-on AI assistant — reach it from the button in the corner. Chat multi-turn with any provider·model, then save standout answers onto a prompt or promote a message into your library.',
   chatsCta: 'Start chatting',
   promptsTitle: 'Prompts',
   promptsBody:
-    'Your library of reusable, on-brand prompts with media, tags, and {placeholders}. Open one back in a chat to iterate, or wire it into a pipeline step.',
+    'Your library of reusable, on-brand prompts with media, tags, {placeholders}, and the best answers saved from chat. Open one in chat to iterate, or wire it into a pipeline step.',
   promptsCta: 'Open prompts',
   pipelinesTitle: 'Pipelines',
   pipelinesBody:
