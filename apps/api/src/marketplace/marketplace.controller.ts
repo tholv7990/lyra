@@ -16,13 +16,13 @@ import type {
 } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
-import { RequireManageKeys } from '../workspaces/decorators/require-manage-keys.decorator';
 import { MarketplaceService } from './marketplace.service';
 import { PromptRankService } from './prompt-rank.service';
 import { AdoptMarketplacePromptBody, MarketplaceRankBody } from './dto/marketplace.dto';
 
 // The global, read-only prompt marketplace, accessed in a workspace context.
-// Browse + rank = any member; sync = Owner or canManageKeys (like key mgmt).
+// Browse + rank + adopt = any member. Global catalog sync is super-admin only
+// and lives on the admin route (POST /admin/marketplace/sync).
 @Controller('workspaces/:id/marketplace')
 @UseGuards(WorkspaceGuard)
 export class MarketplaceController {
@@ -71,12 +71,5 @@ export class MarketplaceController {
     @CurrentUser() user: User,
   ): Promise<PromptModel> {
     return this.marketplace.adopt(workspaceId, user.id, body.promptId);
-  }
-
-  // Refresh the global catalog from prompts.csv. Gated to Owner/canManageKeys.
-  @Post('sync')
-  @RequireManageKeys()
-  sync(): Promise<{ imported: number }> {
-    return this.marketplace.sync();
   }
 }

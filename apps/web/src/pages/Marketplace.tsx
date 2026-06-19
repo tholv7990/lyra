@@ -8,7 +8,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { marketplaceApi } from '../lib/marketplace';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
-import { MarketplaceIcon, PlusIcon, RefreshIcon } from '../layout/icons';
+import { MarketplaceIcon, PlusIcon } from '../layout/icons';
 import './marketplace.css';
 
 const PAGE_SIZE = 30;
@@ -39,9 +39,6 @@ export function Marketplace() {
   // Per-card adopt state + a transient confirmation toast.
   const [adopt, setAdopt] = useState<Record<string, AdoptState>>({});
   const [toast, setToast] = useState<string | null>(null);
-
-  // Admin refresh (sync) state.
-  const [syncing, setSyncing] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -113,27 +110,6 @@ export function Marketplace() {
     }
   }
 
-  async function refreshCatalog() {
-    if (!ws || syncing) return;
-    setSyncing(true);
-    setError(null);
-    try {
-      const { imported } = await marketplaceApi.sync(ws);
-      setToast(t('marketplace.refreshed', { count: imported }));
-      window.setTimeout(() => setToast(null), 3200);
-      // Re-pull the first page so freshly imported prompts appear.
-      clearRank();
-      setPage(1);
-      const res = await marketplaceApi.list(ws, { page: 1, limit: PAGE_SIZE, q, forDevs: forDevs ? true : undefined });
-      setItems(res.items);
-      setTotal(res.total);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('marketplace.error'));
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   const showRanked = ranked !== null;
   const rankedEmpty = showRanked && ranked!.length === 0;
 
@@ -181,14 +157,6 @@ export function Marketplace() {
           >
             {t('marketplace.forDevs')}
           </button>
-          <IconButton
-            className="mkt-refresh"
-            size="sm"
-            icon={<RefreshIcon width={15} height={15} />}
-            label={syncing ? t('marketplace.refreshing') : t('marketplace.refresh')}
-            disabled={syncing}
-            onClick={() => void refreshCatalog()}
-          />
         </div>
       )}
 

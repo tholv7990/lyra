@@ -75,7 +75,6 @@ export function ThemeSegment() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const opts: { value: ThemePref; label: string }[] = [
-    { value: 'system', label: t('settings.themeSystem') },
     { value: 'light', label: t('settings.themeLight') },
     { value: 'dark', label: t('settings.themeDark') },
   ];
@@ -98,13 +97,13 @@ export function ThemeSegment() {
 
 // Compact theme toggle for the top bar — one button that flips light/dark.
 export function ThemeToggleButton() {
-  const { theme, setTheme, resolved } = useTheme();
+  const { setTheme, resolved } = useTheme();
   const next = resolved === 'dark' ? 'light' : 'dark';
   return (
     <button
       type="button"
       className="pref-theme-toggle"
-      title={`${theme === 'system' ? 'System' : resolved === 'dark' ? 'Dark' : 'Light'} — switch to ${next}`}
+      title={`${resolved === 'dark' ? 'Dark' : 'Light'} — switch to ${next}`}
       aria-label="Toggle theme"
       onClick={() => setTheme(next)}
     >

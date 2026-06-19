@@ -203,6 +203,17 @@ export const ImportIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Shield with a centred gear cut-out — Admin (platform operations).
+export const AdminIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M7.62 1.46a1 1 0 0 1 .76 0l4.6 1.9a1 1 0 0 1 .62.92v3.06c0 3.2-1.96 5.5-5.27 6.78a1 1 0 0 1-.72 0C4.3 12.84 2.4 10.54 2.4 7.34V4.28a1 1 0 0 1 .62-.92l4.6-1.9ZM8 5.55a2.45 2.45 0 1 0 0 4.9 2.45 2.45 0 0 0 0-4.9Zm0 1.6a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7Z"
+    />
+  </svg>
+);
+
 // Two interlocking links — Connections.
 export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">

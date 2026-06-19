@@ -68,6 +68,28 @@
   overflow-x: hidden;
 }
 
+[data-theme='dark'] .lyra-landing {
+  --l-canvas: #15100c;
+  --l-surface-1: #1d1611;
+  --l-surface-2: #261c15;
+  --l-surface-3: #352417;
+  --l-field: #211913;
+  --l-hairline: rgba(255, 226, 206, 0.1);
+  --l-hairline-strong: rgba(255, 226, 206, 0.16);
+  --l-hairline-faint: rgba(255, 226, 206, 0.06);
+  --l-ink: #fff6ef;
+  --l-ink-muted: #cdbbae;
+  --l-ink-subtle: #9f8b7d;
+  --l-primary-deep: #ffb27d;
+  --l-primary-tint: rgba(255, 107, 26, 0.18);
+  --l-primary-line: rgba(255, 138, 76, 0.36);
+  --l-grad-warm-soft:
+    linear-gradient(140deg, #1d120c 0%, #2a1911 52%, #31151b 100%);
+  --l-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.28), 0 8px 22px rgba(0, 0, 0, 0.24);
+  --l-shadow-2: 0 2px 8px rgba(0, 0, 0, 0.32), 0 20px 50px rgba(0, 0, 0, 0.34);
+  color-scheme: dark;
+}
+
 .lyra-landing *,
 .lyra-landing *::before,
 .lyra-landing *::after { box-sizing: border-box; }
@@ -89,14 +111,19 @@
 }
 
 /* --- Scroll-reveal (enhances an already-visible default) --- */
-.l-reveal {
+/* Reveal-on-scroll ENHANCES an already-visible default: content is visible
+   without JS and is only hidden-then-animated once the hook adds .reveal-on
+   (which also installs a failsafe that reveals everything if the observer never
+   fires). Prevents whole sections from shipping blank on a flaky observer. */
+.l-reveal { opacity: 1; transform: none; }
+.reveal-on .l-reveal {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
-.l-reveal.is-in { opacity: 1; transform: none; }
+.reveal-on .l-reveal.is-in { opacity: 1; transform: none; }
 
 /* ==========================================================================
    Buttons
@@ -181,13 +208,59 @@
 .l-nav-links a { font-size: 14.5px; font-weight: 500; color: var(--l-ink-muted); transition: color 0.15s ease; }
 .l-nav-links a:hover { color: var(--l-ink); }
 .l-nav-cta { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.l-nav-prefs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.lyra-landing .pref-theme-toggle,
+.lyra-landing .l-nav-icon-action {
+  width: var(--control-h);
+  height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  color: var(--ink-muted);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+.lyra-landing .pref-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: var(--ink-muted);
+  background: transparent;
+  padding: 4px 4px;
+  cursor: pointer;
+  transition: color 0.12s ease;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.lyra-landing .pref-theme-toggle:hover,
+.lyra-landing .pref-lang-toggle:hover,
+.lyra-landing .l-nav-icon-action:hover {
+  color: var(--ink);
+}
+.lyra-landing .pref-lang-flag {
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  flex: none;
+  box-shadow: 0 0 0 1px var(--hairline);
+}
 
 /* ==========================================================================
    Section scaffolding
    ========================================================================== */
 .l-section { padding: clamp(48px, 7vw, 84px) 0; scroll-margin-top: 80px; }
 .l-section-head { max-width: 720px; }
-.l-section-head.center { margin: 0 auto; text-align: center; }
+.l-section-head-centered { margin: 0 auto; text-align: center; }
 
 .l-eyebrow {
   display: inline-block;
@@ -246,7 +319,7 @@
   max-width: 60ch;
   text-wrap: pretty;
 }
-.l-section-head.center .l-lead { margin-left: auto; margin-right: auto; }
+.l-section-head-centered .l-lead { margin-left: auto; margin-right: auto; }
 
 /* ==========================================================================
    Hero - warm mesh drench behind a bento collage of the OUTPUT
@@ -475,17 +548,33 @@
   box-shadow: var(--l-shadow-1);
   isolation: isolate;
 }
-/* Skeleton fill so image-led blocks never read as empty voids while photos load
-   (or if a CDN image is slow/blocked on cellular). The <img> covers it on load. */
+/* Image blocks carry a vibrant on-brand gradient so they always render rich,
+   even when a remote photo is slow or blocked on the visitor's network. The
+   <img> covers it on load; a slow/failed photo just shows the gradient. */
 .l-make,
 .l-feature-photo,
+.l-feature-collage > div,
 .l-campaign-hero,
 .l-campaign-thumb {
-  background-image: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--l-primary) 16%, var(--l-surface-1)),
-    var(--l-surface-1)
-  );
+  background-color: var(--l-primary);
+  background-image: linear-gradient(135deg, #ff6b1a 0%, #ff8a4c 48%, #ff5d73 100%);
+}
+.l-make:nth-child(3n + 2),
+.l-feature-collage > div:nth-child(2) {
+  background-image: linear-gradient(135deg, #ff8a4c, #ff5d73);
+}
+.l-make:nth-child(3n + 3),
+.l-feature-collage > div:nth-child(3) {
+  background-image: linear-gradient(150deg, #ffab5e, #ff6b1a 58%, #ff5d73);
+}
+/* Hide alt text / the broken-image glyph so a missing photo shows only the
+   gradient, never an empty box with an icon. */
+.l-make img,
+.l-feature-photo img,
+.l-feature-collage img,
+.l-campaign-hero img,
+.l-campaign-thumb img {
+  color: transparent;
 }
 .l-make img {
   position: absolute;
@@ -960,7 +1049,6 @@
 @media (max-width: 640px) {
   .l-container { padding: 0 18px; }
   .l-footer-grid { grid-template-columns: 1fr; }
-  .l-nav-cta .l-sign { display: none; }
 
   /* gallery collapses to single column with consistent height */
   .l-gallery { grid-template-columns: 1fr; grid-auto-rows: 200px; }
@@ -974,6 +1062,10 @@
   .l-cta-actions .l-btn { width: 100%; }
   .l-feature-collage { aspect-ratio: 4 / 3; }
 }
+@media (max-width: 380px) {
+  .l-nav-inner { gap: 12px; }
+  .l-nav-prefs { gap: 4px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .lyra-landing { scroll-behavior: auto; }
@@ -984,4 +1076,38 @@
   .l-campaign:hover .l-campaign-hero img,
   .l-make:hover img { transform: none; }
   .l-flow-step:hover .l-flow-card { transform: none; }
+}
+
+/* ==========================================================================
+   Back-to-top button
+   ========================================================================== */
+.l-scrolltop {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: var(--l-z-nav);
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--l-radius-pill);
+  background: var(--l-primary);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(180, 65, 10, 0.4);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px) scale(0.94);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, background 0.15s ease;
+}
+.l-scrolltop:hover { background: var(--l-primary-deep); }
+.l-scrolltop.is-shown {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .l-scrolltop { transition: opacity 0.2s ease; }
+  .l-scrolltop.is-shown { transform: none; }
 }

@@ -23,6 +23,7 @@ import { Chats } from './pages/Chats';
 import { Pipelines } from './pages/Pipelines';
 import { PipelineBuilder } from './pages/PipelineBuilder';
 import { Settings } from './pages/Settings';
+import { Admin } from './pages/Admin';
 import { Connections } from './pages/Connections';
 import { PublishComposer } from './pages/PublishComposer';
 import { ImportMedia } from './pages/ImportMedia';
@@ -90,6 +91,7 @@ const router = createBrowserRouter([
       { path: 'import', element: <ImportMedia /> },
       { path: 'connections', element: <Connections /> },
       { path: 'settings', element: <Settings /> },
+      { path: 'admin', element: <Admin /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

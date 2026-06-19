@@ -5,6 +5,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { WorkspaceProvider } from './workspace/WorkspaceContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { App } from './App';
+import { useTheme } from './lib/prefs';
 // React Flow stylesheet (base styles before app overrides)
 import '@xyflow/react/dist/style.css';
 // Design tokens (CSS vars + Tailwind @theme) — single source of truth.
@@ -17,10 +18,16 @@ import './i18n';
 
 const queryClient = new QueryClient();
 
+function ThemeBootstrap() {
+  useTheme();
+  return null;
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <ThemeBootstrap />
         <AuthProvider>
           <WorkspaceProvider>
             <App />

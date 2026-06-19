@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { SignupDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { BrandLogo } from '../components/BrandLogo';
 import { GoogleButton } from '../components/GoogleButton';
 
 export function Signup() {
@@ -33,13 +34,7 @@ export function Signup() {
   return (
     <div className="center">
       <form className="auth-card" onSubmit={onSubmit}>
-        <img
-          className="auth-logo"
-          src="/lyra-logo-horizontal-light.svg"
-          alt="Lyra"
-          width={159}
-          height={64}
-        />
+        <BrandLogo className="auth-logo" width={159} height={64} />
         <h1>Create your account</h1>
         <p className="sub muted">Start running the Lyra pipeline</p>
 

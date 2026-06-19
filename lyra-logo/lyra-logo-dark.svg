@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 843.8 338.2" width="843.8" height="338.2">
+<defs>
+<linearGradient id="sq" x1="0" y1="0" x2="0" y2="270.17" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#202023"/><stop offset="1" stop-color="#070708"/></linearGradient>
+<linearGradient id="ink" x1="0" y1="0" x2="0" y2="270.17" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF7D35"/><stop offset="1" stop-color="#FF6B1A"/></linearGradient>
+<filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="12"/></filter>
+</defs>
+<g transform="translate(34.0 34.0)">
+<rect x="0" y="0" width="270.17" height="270.17" rx="60.8" fill="url(#sq)"/>
+<rect x="1" y="1" width="268.17" height="268.17" rx="59.8" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+</g>
+<g filter="url(#glow)" opacity="0.55"><path transform="translate(169.1 169.1) scale(0.13877 -0.13877) translate(-535.00 -218.00)" d="M189.0 92H424.0V0H75.0V695H189.0ZM995.0 551 657.0 -259H539.0L651.0 9L434.0 551H561.0L716.0 131L877.0 551Z" fill="#FF6B1A"/></g>
+<path transform="translate(169.1 169.1) scale(0.13877 -0.13877) translate(-535.00 -218.00)" d="M189.0 92H424.0V0H75.0V695H189.0ZM995.0 551 657.0 -259H539.0L651.0 9L434.0 551H561.0L716.0 131L877.0 551Z" fill="url(#ink)"/>
+<g transform="translate(368.17 244.09) scale(0.21521 -0.21521)" fill="#F5F5F7">
+<path transform="translate(0.00 0)" d="M189 92H424V0H75V695H189Z"/><path transform="translate(432.00 0)" d="M571 551 233 -259H115L227 9L10 551H137L292 131L453 551Z"/><path transform="translate(1002.00 0)" d="M354 560V442H325Q258 442 223.5 408.0Q189 374 189 290V0H75V551H189V471Q214 513 255.5 536.5Q297 560 354 560Z"/><path transform="translate(1374.00 0)" d="M297 560Q362 560 410.5 534.5Q459 509 488 471V551H603V0H488V82Q459 43 409.0 17.0Q359 -9 295 -9Q224 -9 165.0 27.5Q106 64 71.5 129.5Q37 195 37 278Q37 361 71.5 425.0Q106 489 165.5 524.5Q225 560 297 560ZM321 461Q277 461 239.0 439.5Q201 418 177.5 376.5Q154 335 154 278Q154 221 177.5 178.0Q201 135 239.5 112.5Q278 90 321 90Q365 90 403.0 112.0Q441 134 464.5 176.5Q488 219 488 276Q488 333 464.5 375.0Q441 417 403.0 439.0Q365 461 321 461Z"/>
+</g>
+</svg>

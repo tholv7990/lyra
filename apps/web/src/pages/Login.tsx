@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LoginDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
+import { BrandLogo } from '../components/BrandLogo';
 import { GoogleButton } from '../components/GoogleButton';
 
 const EyeIcon = () => (
@@ -54,13 +55,7 @@ export function Login() {
   return (
     <div className="center">
       <form className="auth-card" onSubmit={onSubmit}>
-        <img
-          className="auth-logo"
-          src="/lyra-logo-horizontal-light.svg"
-          alt="Lyra"
-          width={159}
-          height={64}
-        />
+        <BrandLogo className="auth-logo" width={159} height={64} />
         <h1>{t('auth.loginTitle')}</h1>
         <p className="sub muted">{t('auth.loginSubtitle')}</p>
 

@@ -2159,10 +2159,49 @@
   width: 230px;
 }
 
+.key-input-trigger {
+  color: var(--muted);
+  cursor: text;
+  font: inherit;
+  text-align: left;
+}
+
+.key-input-trigger:hover {
+  border-color: var(--border-strong);
+}
+
 .key-row-btns {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.key-row-btns .icon-btn-primary,
+.key-row-btns .icon-btn-danger {
+  background: transparent;
+  border: 0;
+  color: var(--ink-muted);
+  box-shadow: none;
+}
+
+.key-row-btns .icon-btn-primary:hover,
+.key-row-btns .icon-btn-danger:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.key-row-btns .icon-btn-primary:disabled {
+  background: transparent;
+  color: var(--ink-tertiary);
+  cursor: not-allowed;
+}
+
+.key-row-btns .icon-btn-danger {
+  color: var(--danger);
+}
+
+.key-row-btns .icon-btn-danger:hover {
+  color: var(--danger);
 }
 
 /* Mobile: input goes full-width, action buttons drop below it, right-aligned. */

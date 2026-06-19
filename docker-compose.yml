@@ -72,7 +72,7 @@ services:
   # platform's developer app + app review (Postiz provides the OAuth flows, not the
   # approvals).
   postiz:
-    image: ghcr.io/gitroomhq/postiz-app:latest
+    image: ghcr.io/gitroomhq/postiz-app:v2.11.3
     container_name: lyra-postiz
     restart: unless-stopped
     profiles: ["connectors"]

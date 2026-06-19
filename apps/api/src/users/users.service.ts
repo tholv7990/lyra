@@ -3,12 +3,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import { BaseRepository } from '../common/database/base.repository';
+import { AdminService } from '../admin/admin.service';
 import { iso } from '../common/dates';
 import type { User as SafeUser, UserRef } from '@lyra/shared';
 
 @Injectable()
 export class UsersService extends BaseRepository<User> {
-  constructor(@InjectModel(User.name) model: Model<User>) {
+  constructor(
+    @InjectModel(User.name) model: Model<User>,
+    private readonly admin: AdminService,
+  ) {
     super(model);
   }
 
@@ -30,13 +34,20 @@ export class UsersService extends BaseRepository<User> {
     );
   }
 
-  /** Maps a Mongoose document to the safe transport shape (no passwordHash). */
+  /**
+   * Maps a Mongoose document to the safe transport shape (no passwordHash).
+   * `isAdmin` is the single point where admin status is stamped onto the user
+   * the client receives — always computed server-side from the email allowlist,
+   * never read from request input or persisted. Every auth path (login/signup/
+   * me/change-password) builds its user here, so all of them carry isAdmin.
+   */
   toSafeUser(doc: UserDocument): SafeUser {
     return {
       id: doc._id.toString(),
       email: doc.email,
       name: doc.name,
       active: doc.active ?? true,
+      isAdmin: this.admin.isSuperAdmin(doc.email),
       createdAt: iso(doc.createdAt),
       updatedAt: iso(doc.updatedAt ?? doc.createdAt),
     };

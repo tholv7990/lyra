@@ -252,6 +252,12 @@ export interface AdoptMarketplacePromptDto {
   promptId: string;
 }
 
+// ===== Super-admin panel =====
+// Toggle a user's active status from the admin Users section.
+export interface UpdateUserStatusDto {
+  active: boolean;
+}
+
 // ===== Chats (conversations) =====
 // Create an (empty) conversation. The first message is sent separately via the
 // streaming messages endpoint. `originPromptId` links a chat opened from a

@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import { Provider } from '@lyra/shared';
+import { BrandLogo } from '../components/BrandLogo';
+import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
 import { ProviderIcon } from '../components/ProviderIcon';
+import { LoginIcon } from '../layout/icons';
 import './landing.css';
 
 // ---- Small inline glyphs (kept local to the marketing page) ----
@@ -92,25 +95,55 @@ function useScrollReveal() {
     const reduce =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || !('IntersectionObserver' in window)) {
-      els.forEach((el) => el.classList.add('is-in'));
-      return;
-    }
+    // No animation path: content stays visible (the CSS default). Never hide it.
+    if (reduce || !('IntersectionObserver' in window)) return;
+    // Enable the hidden-then-animate state only now that we can observe.
+    root.classList.add('reveal-on');
+    const reveal = (el: Element) => el.classList.add('is-in');
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('is-in');
+            reveal(entry.target);
             io.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.14, rootMargin: '0px 0px -8% 0px' },
+      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' },
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    // Failsafe: if the observer never fires (bfcache restore, hidden tab during
+    // load, mobile quirk), reveal everything so nothing ships blank.
+    const failsafe = window.setTimeout(() => els.forEach(reveal), 1600);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(failsafe);
+    };
   }, []);
   return rootRef;
+}
+
+// Back-to-top: appears after scrolling down; smooth-scrolls to the top.
+function ScrollTopButton() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 700);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return (
+    <button
+      type="button"
+      className={`l-scrolltop${show ? ' is-shown' : ''}`}
+      aria-label="Back to top"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m6 14 6-6 6 6" />
+      </svg>
+    </button>
+  );
 }
 
 export function Landing() {
@@ -122,7 +155,7 @@ export function Landing() {
       <header className="l-nav">
         <div className="l-container l-nav-inner">
           <Link to="/" className="l-brand" aria-label="Lyra">
-            <img src="/lyra-logo-horizontal-light.svg" alt="Lyra" />
+            <BrandLogo />
           </Link>
           <nav className="l-nav-links" aria-label="Primary">
             <a href="#how">How it works</a>
@@ -130,8 +163,13 @@ export function Landing() {
             <a href="#security">Security</a>
           </nav>
           <div className="l-nav-cta">
-            <Link to="/login" className="l-btn l-btn-ghost l-btn-sm l-sign">Sign in</Link>
-            <Link to="/signup" className="l-btn l-btn-primary l-btn-sm">Start free</Link>
+            <div className="l-nav-prefs" aria-label="Preferences">
+              <LanguageToggleButton />
+              <Link to="/login" className="l-nav-icon-action l-nav-login" aria-label="Log in" title="Log in">
+                <LoginIcon />
+              </Link>
+              <ThemeToggleButton />
+            </div>
           </div>
         </div>
       </header>
@@ -258,7 +296,7 @@ export function Landing() {
         {/* ---- What you can make (colorful centerpiece gallery) ---- */}
         <section className="l-gallery-sec">
           <div className="l-container">
-            <div className="l-section-head center">
+            <div className="l-section-head l-section-head-centered">
               <h2 className="l-h2">One product. Every kind of content.</h2>
               <p className="l-lead">
                 Point Lyra at a single product and it fans out into the shots, scenes, and clips
@@ -286,7 +324,7 @@ export function Landing() {
         {/* ---- The flow: 5 connected funnel stages (centerpiece) ---- */}
         <section className="l-flow" id="how">
           <div className="l-container">
-            <div className="l-section-head center">
+            <div className="l-section-head l-section-head-centered">
               <h2 className="l-h2">From winning product to published campaign.</h2>
               <p className="l-lead">
                 One pipeline carries a product through every stage. Compose it once, run it on
@@ -531,7 +569,7 @@ export function Landing() {
         {/* ---- Security ---- */}
         <section className="l-security" id="security">
           <div className="l-container">
-            <div className="l-section-head center">
+            <div className="l-section-head l-section-head-centered">
               <h2 className="l-h2">Your keys, your models, your control.</h2>
             </div>
             <div className="l-sec-grid">
@@ -570,7 +608,7 @@ export function Landing() {
         <div className="l-container">
           <div className="l-footer-grid">
             <div className="l-footer-brand">
-              <img src="/lyra-logo-horizontal-light.svg" alt="Lyra" />
+              <BrandLogo />
               <p>The AI co-pilot for dropshipping.</p>
             </div>
             <div className="l-footer-col">
@@ -598,6 +636,7 @@ export function Landing() {
           </div>
         </div>
       </footer>
+      <ScrollTopButton />
     </div>
   );
 }

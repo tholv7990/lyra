@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { LanguageToggleButton, ThemeSegment } from '../components/PrefControls';
+import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
 import { CheckIcon, RefreshIcon, XIcon } from '../layout/icons';
 
 // `keyUrl` points at each provider's API-key console so a new user can find
@@ -21,6 +21,7 @@ const PROVIDERS: { id: Provider; label: string; hint: string; keyUrl?: string }[
 const LABEL: Record<Provider, string> = Object.fromEntries(
   PROVIDERS.map((p) => [p.id, p.label]),
 ) as Record<Provider, string>;
+const MASKED_KEY_VALUE = '••••••••••';
 
 // Providers that expose a live /models listing we can fetch and save.
 const LISTABLE: Provider[] = [Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek];
@@ -34,8 +35,11 @@ export function Settings() {
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [keys, setKeys] = useState<Record<string, ApiKeyInfo>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [editingKeys, setEditingKeys] = useState<Partial<Record<Provider, boolean>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toSave, setToSave] = useState<Provider | null>(null);
+  const [saving, setSaving] = useState(false);
   const [toRemove, setToRemove] = useState<Provider | null>(null);
   const [removing, setRemoving] = useState(false);
   const [models, setModels] = useState<Partial<Record<Provider, ModelOption[]>>>({});
@@ -93,7 +97,7 @@ export function Settings() {
 
   async function save(provider: Provider) {
     const key = (drafts[provider] ?? '').trim();
-    if (!wsId || !key) return;
+    if (!wsId || !key || key === MASKED_KEY_VALUE) return;
     setError(null);
     try {
       const info = await api<ApiKeyInfo>(`/workspaces/${wsId}/keys/${provider}`, {
@@ -102,8 +106,20 @@ export function Settings() {
       });
       setKeys((k) => ({ ...k, [provider]: info }));
       setDrafts((d) => ({ ...d, [provider]: '' }));
+      setEditingKeys((d) => ({ ...d, [provider]: false }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save key');
+    }
+  }
+
+  async function confirmSave() {
+    if (!toSave) return;
+    setSaving(true);
+    try {
+      await save(toSave);
+      setToSave(null);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -115,6 +131,20 @@ export function Settings() {
       delete next[provider];
       return next;
     });
+    setDrafts((d) => ({ ...d, [provider]: '' }));
+    setEditingKeys((d) => ({ ...d, [provider]: false }));
+  }
+
+  function startKeyEdit(provider: Provider, existing?: ApiKeyInfo) {
+    setEditingKeys((d) => ({ ...d, [provider]: true }));
+    if (existing) {
+      setDrafts((d) => ({ ...d, [provider]: d[provider] || MASKED_KEY_VALUE }));
+    }
+  }
+
+  function cancelKeyEdit(provider: Provider) {
+    setDrafts((d) => ({ ...d, [provider]: '' }));
+    setEditingKeys((d) => ({ ...d, [provider]: false }));
   }
 
   async function confirmRemove() {
@@ -167,7 +197,7 @@ export function Settings() {
           </div>
           <div className="pref-row">
             <div className="pref-row-label">{t('settings.appearance')}</div>
-            <ThemeSegment />
+            <ThemeToggleButton />
           </div>
         </div>
       </section>
@@ -188,6 +218,9 @@ export function Settings() {
           <div className="list">
             {PROVIDERS.map((p) => {
               const existing = keys[p.id];
+              const draft = drafts[p.id] ?? '';
+              const isEditing = !!editingKeys[p.id] || draft.length > 0;
+              const canSaveDraft = !!draft.trim() && draft !== MASKED_KEY_VALUE;
               return (
                 <div className="key-row" key={p.id}>
                   <div className="key-row-info">
@@ -212,32 +245,59 @@ export function Settings() {
                   </div>
                   {canManage && (
                     <div className="key-row-form">
-                      <input
-                        className="text-input key-input"
-                        type="password"
-                        name={`lyra-key-${p.id}`}
-                        autoComplete="off"
-                        data-1p-ignore="true"
-                        data-lpignore="true"
-                        placeholder={existing ? '••••••••••  replace' : 'Paste key'}
-                        value={drafts[p.id] ?? ''}
-                        onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
-                      />
-                      <div className="key-row-btns">
+                      {isEditing ? (
+                        <input
+                          className="text-input key-input"
+                          type="password"
+                          name={`lyra-key-${p.id}-draft`}
+                          autoComplete="new-password"
+                          data-1p-ignore="true"
+                          data-lpignore="true"
+                          data-form-type="other"
+                          placeholder={existing ? 'replace key' : 'Paste key'}
+                          value={draft}
+                          onFocus={(e) => {
+                            if (existing && draft === MASKED_KEY_VALUE) e.currentTarget.select();
+                          }}
+                          onChange={(e) => {
+                            setEditingKeys((d) => ({ ...d, [p.id]: true }));
+                            setDrafts((d) => ({ ...d, [p.id]: e.target.value }));
+                          }}
+                        />
+                      ) : (
                         <button
-                          className="icon-btn-primary"
-                          title="Save key"
-                          disabled={!(drafts[p.id] ?? '').trim()}
-                          onClick={() => void save(p.id)}
+                          type="button"
+                          className="text-input key-input key-input-trigger"
+                          onClick={() => startKeyEdit(p.id, existing)}
                         >
-                          <CheckIcon width={16} height={16} />
+                          {existing ? MASKED_KEY_VALUE : 'Paste key'}
                         </button>
-                        {existing && (
-                          <button className="icon-btn-danger" title="Remove key" onClick={() => setToRemove(p.id)}>
+                      )}
+                      {isEditing && (
+                        <div className="key-row-btns">
+                          <button
+                            type="button"
+                            className="icon-btn-primary"
+                            title="Save key"
+                            disabled={!canSaveDraft}
+                            onClick={() => setToSave(p.id)}
+                          >
+                            <CheckIcon width={16} height={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn-danger"
+                            title="Cancel editing"
+                            onPointerDown={(e) => {
+                              e.preventDefault();
+                              cancelKeyEdit(p.id);
+                            }}
+                            onClick={() => cancelKeyEdit(p.id)}
+                          >
                             <XIcon width={16} height={16} />
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -340,6 +400,21 @@ export function Settings() {
           {pwMsg && <p className={pwMsg.ok ? 'pw-ok' : 'error'}>{pwMsg.text}</p>}
         </form>
       </section>
+
+      <ConfirmDialog
+        open={!!toSave}
+        title="Save provider key?"
+        message={
+          <>
+            Save this <strong>{toSave ? LABEL[toSave] : ''}</strong> key for this workspace? It will replace the current
+            key and affect future pipeline runs that use this provider.
+          </>
+        }
+        confirmLabel="Save key"
+        busy={saving}
+        onConfirm={() => void confirmSave()}
+        onCancel={() => setToSave(null)}
+      />
 
       <ConfirmDialog
         open={!!toRemove}

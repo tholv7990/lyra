@@ -12,4 +12,5 @@ export default {
   publish: 'Publish',
   import: 'Import media',
   connections: 'Connections',
+  admin: 'Admin',
 } as const;

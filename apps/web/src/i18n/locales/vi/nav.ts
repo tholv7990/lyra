@@ -12,4 +12,5 @@ export default {
   publish: 'Đăng bài',
   import: 'Tải media',
   connections: 'Kết nối',
+  admin: 'Quản trị',
 } as const;

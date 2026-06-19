@@ -1,0 +1,475 @@
+/* Admin (platform operations). Reuses the Settings section primitives
+   (.set-section / .set-section-head / .btn-primary / .empty / .error) and adds
+   only the card + facts layout. Token-driven — no hardcoded hex/px colors. */
+
+.admin {
+  max-width: 860px;
+}
+
+.admin-head h1 {
+  font-size: var(--text-title2);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.admin-head p {
+  margin: 4px 0 0;
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+}
+
+.admin-head {
+  margin-bottom: 22px;
+}
+
+/* The platform-ops card. A lifted surface so cards stack cleanly as more
+   operations are added. */
+.admin-card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+.admin-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Stat facts — count + last synced. */
+.admin-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 0;
+}
+
+.admin-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-fact dt {
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-fact dd {
+  margin: 0;
+  font-size: var(--text-title3);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Primary sync button — auto width with the icon inline (the global .btn-primary
+   is full-width by default). */
+.admin-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+}
+
+.admin-ok {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--success);
+}
+
+/* ===== Tab switch (Overview · Users · Platform) ===== */
+.admin-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 22px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.admin-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--ink-muted);
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.admin-tab:hover {
+  color: var(--ink);
+}
+
+.admin-tab.active {
+  color: var(--ink);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-tab {
+    transition: none;
+  }
+}
+
+/* ===== Overview: stat-card grid ===== */
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.admin-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.admin-stat-accent {
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface-1));
+}
+
+.admin-stat-num {
+  font-size: var(--text-title2);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.admin-stat-label {
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Shared sub-heading inside a card section ===== */
+.admin-subhead {
+  margin: 0 0 8px;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-recent {
+  margin-top: 22px;
+}
+
+.admin-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-recent-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: var(--text-small);
+}
+
+.admin-recent-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-recent-name {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.admin-recent-email {
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-recent-date {
+  color: var(--ink-muted);
+  font-size: var(--text-mini);
+  white-space: nowrap;
+}
+
+/* ===== Users: search toolbar ===== */
+.admin-users-toolbar {
+  margin-bottom: 14px;
+}
+
+/* ===== Users: Linear-style list ===== */
+.admin-utable {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-uhead {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr auto 90px 110px;
+  gap: 12px;
+  padding: 0 12px 8px;
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-ucol-num {
+  text-align: right;
+}
+
+.admin-urow-wrap {
+  border-top: 1px solid var(--hairline);
+}
+
+.admin-urow-wrap:last-of-type:not(.open) {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.admin-urow {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr auto 90px 110px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s ease;
+}
+
+.admin-urow:hover {
+  background: var(--surface-1);
+}
+
+.admin-urow:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.admin-urow-wrap.open .admin-urow {
+  background: var(--surface-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-urow {
+    transition: none;
+  }
+}
+
+.admin-ucell {
+  font-size: var(--text-small);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-uemail {
+  font-weight: 500;
+}
+
+.admin-umuted {
+  color: var(--ink-muted);
+}
+
+/* Active / inactive / role badges — tinted via tokens (mirrors .badge.vis-*). */
+.badge.admin-badge-active {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--success) 28%, transparent);
+}
+
+.badge.admin-badge-inactive {
+  color: var(--ink-muted);
+  background: var(--surface-2);
+}
+
+.badge.admin-ws-role {
+  text-transform: capitalize;
+}
+
+/* ===== Users: expanded detail panel ===== */
+.admin-udetail {
+  padding: 16px 12px 18px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.admin-udetail.empty,
+.admin-udetail.error {
+  padding: 16px 12px;
+}
+
+.admin-udetail-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.admin-udetail-block {
+  min-width: 0;
+}
+
+.admin-ws-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-ws-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: var(--text-small);
+}
+
+.admin-ws-name {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Usage breakdown — small stat tiles. */
+.admin-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.admin-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+}
+
+.admin-usage-num {
+  font-size: var(--text-large);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-usage-label {
+  font-size: var(--text-mini);
+  color: var(--ink-muted);
+  text-transform: capitalize;
+}
+
+.admin-udetail-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.admin-deact,
+.admin-react {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  margin-top: 0;
+}
+
+.admin-self-note {
+  font-size: var(--text-mini);
+  color: var(--ink-muted);
+}
+
+/* ===== Mobile: stat grid + user rows collapse ===== */
+@media (max-width: 640px) {
+  .admin-recent-row {
+    grid-template-columns: 1fr auto;
+    row-gap: 2px;
+  }
+
+  .admin-recent-email {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  .admin-uhead {
+    display: none;
+  }
+
+  .admin-urow {
+    grid-template-columns: 1fr auto;
+    row-gap: 4px;
+  }
+
+  /* Stack each cell as label + value; status keeps its own row at the end. */
+  .admin-ucell {
+    white-space: normal;
+  }
+
+  .admin-ucell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--text-mini);
+    font-weight: 500;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .admin-uemail {
+    grid-column: 1 / -1;
+  }
+
+  .admin-ucol-num {
+    text-align: left;
+  }
+
+  .admin-udetail-cols {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}

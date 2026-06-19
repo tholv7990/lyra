@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
+import { BrandLogo } from '../components/BrandLogo';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
 import { WorkspaceMenu } from './WorkspaceMenu';
 import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadcrumb';
@@ -18,6 +19,7 @@ import {
   PublishIcon,
   ImportIcon,
   ConnectionsIcon,
+  AdminIcon,
 } from './icons';
 import './layout.css';
 
@@ -39,6 +41,7 @@ const MODULES = [
   { path: '/import', name: 'Import media' },
   { path: '/connections', name: 'Connections' },
   { path: '/settings', name: 'Settings' },
+  { path: '/admin', name: 'Admin' },
 ];
 function moduleFor(pathname: string) {
   return (
@@ -83,6 +86,7 @@ export function AppLayout() {
     '/import': 'nav.import',
     '/connections': 'nav.connections',
     '/settings': 'nav.settings',
+    '/admin': 'nav.admin',
   };
   const modLabel = t(NAV_KEY[mod.path] ?? '', { defaultValue: mod.name });
   // A path under a module is a detail view; so is any page that set a parent
@@ -104,7 +108,7 @@ export function AppLayout() {
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <img className="brand-full" src="/lyra-logo-horizontal-light.svg" alt="Lyra" />
+              <BrandLogo className="brand-full" />
               <img className="brand-mark" src="/lyra-mark-squircle.svg" alt="Lyra" />
             </button>
             <button className="brand-close" onClick={close} aria-label="Close menu">
@@ -163,6 +167,12 @@ export function AppLayout() {
               <SettingsIcon />
               <span className="nav-txt">{t('nav.settings')}</span>
             </NavLink>
+            {user?.isAdmin && (
+              <NavLink to="/admin" title={t('nav.admin')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+                <AdminIcon />
+                <span className="nav-txt">{t('nav.admin')}</span>
+              </NavLink>
+            )}
           </nav>
 
           <div className="sidebar-spacer" />

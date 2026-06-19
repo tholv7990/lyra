@@ -41,8 +41,4 @@ export const marketplaceApi = {
       method: 'POST',
       body: JSON.stringify({ promptId }),
     }),
-
-  // Admin: re-import the catalog from prompts.chat.
-  sync: (ws: string) =>
-    api<{ imported: number }>(`${base(ws)}/sync`, { method: 'POST' }),
 };

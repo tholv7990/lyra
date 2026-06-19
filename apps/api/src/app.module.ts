@@ -19,6 +19,7 @@ import { LabelsModule } from './labels/labels.module';
 import { FilesModule } from './files/files.module';
 import { ConnectorsModule } from './connectors/connectors.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -51,6 +52,7 @@ import { HealthController } from './health.controller';
     FilesModule,
     ConnectorsModule,
     MarketplaceModule,
+    AdminModule,
     AuthModule,
   ],
   controllers: [HealthController],

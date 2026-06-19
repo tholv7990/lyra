@@ -65,6 +65,23 @@ export class MarketplaceService {
     return { imported };
   }
 
+  // Global catalog stats for the admin surface: total doc count and the most
+  // recent updatedAt (ISO), or null when the catalog is empty.
+  async stats(): Promise<{ count: number; lastSyncedAt: string | null }> {
+    const count = await this.model.countDocuments().exec();
+    const latest = await this.model
+      .findOne()
+      .sort({ updatedAt: -1 })
+      .select('updatedAt')
+      .lean()
+      .exec();
+    const updatedAt = (latest as { updatedAt?: Date } | null)?.updatedAt;
+    return {
+      count,
+      lastSyncedAt: updatedAt ? new Date(updatedAt).toISOString() : null,
+    };
+  }
+
   // Paged browse: case-insensitive q across title OR content; optional forDevs
   // filter; title asc. Returns mapped safe shapes.
   async list(opts: MarketplaceListOptions): Promise<Paged<MarketplacePromptModel>> {

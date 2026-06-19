@@ -33,6 +33,10 @@ export interface User {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+  // True when this user's email is on the server's SUPER_ADMIN_EMAILS allowlist.
+  // Derived server-side and stamped onto the user the client receives; the web
+  // uses it only to reveal the /admin surface — the api guard is the real gate.
+  isAdmin?: boolean;
 }
 
 export interface Workspace extends Audited {
@@ -407,4 +411,45 @@ export interface RankedMarketplacePrompt {
   prompt: MarketplacePrompt;
   score: number; // 0-100 relevance
   reason: string; // one-line rationale
+}
+
+// ===== Super-admin panel =====
+// Per-user usage counts (items the user created), shown in the admin user detail.
+export interface AdminUserUsage {
+  projects: number;
+  pipelines: number;
+  prompts: number;
+  runs: number;
+  chats: number;
+}
+
+// A user row in the admin Users list.
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  name: string;
+  active: boolean;
+  isAdmin: boolean;
+  workspaceCount: number;
+  createdAt: string;
+}
+
+// Full admin view of one user: workspaces + usage breakdown.
+export interface AdminUserDetail extends AdminUserSummary {
+  updatedAt: string;
+  workspaces: { id: string; name: string; role: Role }[];
+  usage: AdminUserUsage;
+}
+
+// Platform-wide counts + recent signups for the admin Overview dashboard.
+export interface AdminOverview {
+  users: number;
+  workspaces: number;
+  projects: number;
+  pipelines: number;
+  prompts: number;
+  runs: number;
+  chats: number;
+  signups30d: number;
+  recentSignups: AdminUserSummary[];
 }

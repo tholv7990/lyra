@@ -1,22 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SUPPORTED_LANGS, type Lang } from '../i18n';
+import { LANG_STORAGE_KEY, SUPPORTED_LANGS, type Lang } from '../i18n';
 
 // ===== Theme =====
-// "system" follows the OS (prefers-color-scheme); "light"/"dark" force a choice.
-// The resolved light/dark value is reflected on <html data-theme>; the raw
-// preference is persisted so "system" keeps tracking the OS after reload.
-export type ThemePref = 'system' | 'light' | 'dark';
+// The resolved light/dark value is reflected on <html data-theme> and persisted
+// so public and authenticated pages share the same appearance.
+export type ThemePref = 'light' | 'dark';
 const THEME_KEY = 'lyra.theme';
+const THEME_EVENT = 'lyra-theme-change';
 
 export function getStoredTheme(): ThemePref {
   try {
     const v = localStorage.getItem(THEME_KEY);
-    if (v === 'light' || v === 'dark' || v === 'system') return v;
+    if (v === 'light' || v === 'dark') return v;
+    if (v === 'system') return systemTheme();
   } catch {
     // localStorage unavailable
   }
-  return 'system';
+  return systemTheme();
 }
 
 function systemTheme(): 'light' | 'dark' {
@@ -24,33 +25,44 @@ function systemTheme(): 'light' | 'dark' {
 }
 
 function resolveTheme(pref: ThemePref): 'light' | 'dark' {
-  return pref === 'system' ? systemTheme() : pref;
+  return pref;
 }
 
 function applyTheme(pref: ThemePref): void {
   document.documentElement.setAttribute('data-theme', resolveTheme(pref));
 }
 
+function persistTheme(pref: ThemePref): void {
+  try {
+    localStorage.setItem(THEME_KEY, pref);
+  } catch {
+    // ignore
+  }
+}
+
 export function useTheme() {
   const [theme, setThemeState] = useState<ThemePref>(getStoredTheme);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyTheme(theme);
-    if (theme !== 'system') return;
-    // Keep following the OS while in "system" mode.
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => applyTheme('system');
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    persistTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    const syncTheme = () => setThemeState(getStoredTheme());
+    window.addEventListener('storage', syncTheme);
+    window.addEventListener(THEME_EVENT, syncTheme);
+    return () => {
+      window.removeEventListener('storage', syncTheme);
+      window.removeEventListener(THEME_EVENT, syncTheme);
+    };
+  }, []);
+
   const setTheme = (pref: ThemePref) => {
-    try {
-      localStorage.setItem(THEME_KEY, pref);
-    } catch {
-      // ignore
-    }
+    persistTheme(pref);
+    applyTheme(pref);
     setThemeState(pref);
+    window.dispatchEvent(new Event(THEME_EVENT));
   };
 
   return { theme, setTheme, resolved: resolveTheme(theme) };
@@ -62,6 +74,20 @@ export function useTheme() {
 export function useLanguage() {
   const { i18n } = useTranslation();
   const lang = ((i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2) as Lang) ?? 'en';
-  const setLang = (l: Lang) => void i18n.changeLanguage(l);
+  useEffect(() => {
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, lang);
+    } catch {
+      // ignore
+    }
+  }, [lang]);
+  const setLang = (l: Lang) => {
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, l);
+    } catch {
+      // ignore
+    }
+    void i18n.changeLanguage(l);
+  };
   return { lang, setLang, supported: SUPPORTED_LANGS };
 }

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { BrandLogo } from '../components/BrandLogo';
 import { api } from '../lib/api';
 
 export function ResetPassword() {
@@ -39,7 +40,7 @@ export function ResetPassword() {
   return (
     <div className="center">
       <form className="auth-card" onSubmit={onSubmit}>
-        <img className="auth-logo" src="/lyra-logo-horizontal-light.svg" alt="Lyra" width={159} height={64} />
+        <BrandLogo className="auth-logo" width={159} height={64} />
         <h1>Set a new password</h1>
 
         {!token ? (
