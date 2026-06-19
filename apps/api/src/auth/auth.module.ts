@@ -10,6 +10,10 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { RefreshToken, RefreshTokenSchema } from './refresh-token.schema';
 import { PasswordReset, PasswordResetSchema } from './password-reset.schema';
+import {
+  EmailVerification,
+  EmailVerificationSchema,
+} from './email-verification.schema';
 
 @Module({
   imports: [
@@ -21,6 +25,7 @@ import { PasswordReset, PasswordResetSchema } from './password-reset.schema';
     MongooseModule.forFeature([
       { name: RefreshToken.name, schema: RefreshTokenSchema },
       { name: PasswordReset.name, schema: PasswordResetSchema },
+      { name: EmailVerification.name, schema: EmailVerificationSchema },
     ]),
   ],
   controllers: [AuthController],

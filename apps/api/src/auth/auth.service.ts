@@ -18,6 +18,10 @@ import { MembershipsService } from '../workspaces/memberships.service';
 import { MailerService } from '../mail/mailer.service';
 import { RefreshToken, RefreshTokenDocument } from './refresh-token.schema';
 import { PasswordReset, PasswordResetDocument } from './password-reset.schema';
+import {
+  EmailVerification,
+  EmailVerificationDocument,
+} from './email-verification.schema';
 import type { User as SafeUser } from '@lyra/shared';
 
 export interface AuthResult {
@@ -27,6 +31,7 @@ export interface AuthResult {
 
 const REFRESH_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const RESET_TTL_MS = 1000 * 60 * 60; // 1 hour
+const EMAIL_VERIFY_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
 
 @Injectable()
 export class AuthService {
@@ -42,6 +47,8 @@ export class AuthService {
     private readonly rtModel: Model<RefreshTokenDocument>,
     @InjectModel(PasswordReset.name)
     private readonly prModel: Model<PasswordResetDocument>,
+    @InjectModel(EmailVerification.name)
+    private readonly evModel: Model<EmailVerificationDocument>,
   ) {}
 
   private signAccess(userId: string): string {
@@ -68,11 +75,27 @@ export class AuthService {
     return raw;
   }
 
+  private webOrigin(): string {
+    return this.config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
+  }
+
+  private async sendVerificationEmail(userId: string, email: string): Promise<void> {
+    await this.evModel.deleteMany({ userId }).exec();
+    const raw = randomBytes(48).toString('hex');
+    await this.evModel.create({
+      userId,
+      tokenHash: this.hashToken(raw),
+      expiresAt: new Date(Date.now() + EMAIL_VERIFY_TTL_MS),
+    });
+    const url = `${this.webOrigin()}/auth/verify-email?token=${raw}`;
+    void this.mailer.sendEmailVerification(email, url);
+  }
+
   async signup(
     email: string,
     password: string,
     name: string,
-  ): Promise<{ auth: AuthResult; refreshToken: string }> {
+  ): Promise<{ ok: true }> {
     const existing = await this.users.findByEmail(email);
     if (existing) throw new ConflictException('Email already registered');
     const passwordHash = await argon2.hash(password);
@@ -81,7 +104,7 @@ export class AuthService {
     // membership — requires the replica set (see docker-compose / Atlas).
     const user = await this.connection.transaction(async (session) => {
       const created = await this.users.create(
-        { email, passwordHash, name },
+        { email, passwordHash, name, emailVerified: false },
         session,
       );
       const ws = await this.workspaces.createPersonal(
@@ -104,14 +127,8 @@ export class AuthService {
     });
 
     const userId = user._id.toString();
-    const refreshToken = await this.issueRefreshToken(userId);
-    return {
-      auth: {
-        accessToken: this.signAccess(userId),
-        user: this.users.toSafeUser(user),
-      },
-      refreshToken,
-    };
+    await this.sendVerificationEmail(userId, user.email);
+    return { ok: true };
   }
 
   async login(
@@ -125,6 +142,9 @@ export class AuthService {
     }
     const ok = await argon2.verify(user.passwordHash, password);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
+    if (user.emailVerified === false) {
+      throw new UnauthorizedException('Confirm your email to login');
+    }
     const userId = user._id.toString();
     const refreshToken = await this.issueRefreshToken(userId);
     return {
@@ -203,9 +223,7 @@ export class AuthService {
       tokenHash: this.hashToken(raw),
       expiresAt: new Date(Date.now() + RESET_TTL_MS),
     });
-    const origin =
-      this.config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
-    const url = `${origin}/reset-password?token=${raw}`;
+    const url = `${this.webOrigin()}/reset-password?token=${raw}`;
     // Fire-and-forget: don't let send latency widen an email-enumeration timing
     // oracle (the response is already uniform). Mirrors changePassword.
     void this.mailer.sendPasswordReset(user.email, url);
@@ -228,6 +246,24 @@ export class AuthService {
     await this.prModel.deleteMany({ userId: reset.userId }).exec();
     await this.rtModel.deleteMany({ userId: reset.userId }).exec();
     void this.mailer.sendPasswordChanged(user.email);
+  }
+
+  async verifyEmail(rawToken: string): Promise<void> {
+    const verification = await this.evModel
+      .findOne({ tokenHash: this.hashToken(rawToken), expiresAt: { $gt: new Date() } })
+      .exec();
+    if (!verification) {
+      throw new BadRequestException('This confirmation link is invalid or has expired');
+    }
+
+    const user = await this.users.findById(verification.userId);
+    if (!user) {
+      throw new BadRequestException('This confirmation link is invalid or has expired');
+    }
+
+    user.emailVerified = true;
+    await user.save();
+    await this.evModel.deleteMany({ userId: verification.userId }).exec();
   }
 
   // ===== Google sign-in (OAuth 2.0 authorization-code flow) =====
@@ -281,7 +317,10 @@ export class AuthService {
     let user = await this.users.findByEmail(email);
     if (!user) {
       user = await this.connection.transaction(async (session) => {
-        const created = await this.users.create({ email, name, googleId }, session);
+        const created = await this.users.create(
+          { email, name, googleId, emailVerified: true },
+          session,
+        );
         const ws = await this.workspaces.createPersonal(
           created._id.toString(),
           `${name}'s Workspace`,
@@ -303,6 +342,10 @@ export class AuthService {
     } else if (!user.googleId) {
       // existing email/password account — link Google to it
       user.googleId = googleId;
+      user.emailVerified = true;
+      await user.save();
+    } else if (user.emailVerified === false) {
+      user.emailVerified = true;
       await user.save();
     }
 

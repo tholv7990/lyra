@@ -12,6 +12,7 @@ import { MembershipsService } from '../workspaces/memberships.service';
 import { MailerService } from '../mail/mailer.service';
 import { RefreshToken } from './refresh-token.schema';
 import { PasswordReset } from './password-reset.schema';
+import { EmailVerification } from './email-verification.schema';
 
 // In-memory stand-in for the RefreshToken Mongoose model — keeps the unit
 // test free of any database so it runs in CI without downloading mongod.
@@ -78,6 +79,32 @@ function makePrModel() {
   };
 }
 
+function makeEvModel() {
+  const store: Array<{ _id: string; userId: string; tokenHash: string; expiresAt: Date }> = [];
+  let seq = 0;
+  return {
+    store,
+    create: jest.fn(async (doc: any) => {
+      const rec = { _id: `ev-${++seq}`, ...doc };
+      store.push(rec);
+      return rec;
+    }),
+    findOne: jest.fn((q: any) => ({
+      exec: async () =>
+        store.find((r) => r.tokenHash === q.tokenHash && r.expiresAt > q.expiresAt.$gt) ?? null,
+    })),
+    deleteMany: jest.fn((q: any) => ({
+      exec: async () => {
+        const before = store.length;
+        for (let i = store.length - 1; i >= 0; i--) {
+          if (!q.userId || store[i].userId === q.userId) store.splice(i, 1);
+        }
+        return { deletedCount: before - store.length };
+      },
+    })),
+  };
+}
+
 describe('AuthService', () => {
   let service: AuthService;
   let users: {
@@ -88,10 +115,17 @@ describe('AuthService', () => {
   };
   let rtModel: ReturnType<typeof makeRtModel>;
   let prModel: ReturnType<typeof makePrModel>;
+  let evModel: ReturnType<typeof makeEvModel>;
+  let mailer: {
+    sendPasswordReset: jest.Mock;
+    sendPasswordChanged: jest.Mock;
+    sendEmailVerification: jest.Mock;
+  };
 
   beforeEach(async () => {
     rtModel = makeRtModel();
     prModel = makePrModel();
+    evModel = makeEvModel();
     users = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
@@ -114,6 +148,11 @@ describe('AuthService', () => {
         fn({} as unknown),
       ),
     };
+    mailer = {
+      sendPasswordReset: jest.fn(),
+      sendPasswordChanged: jest.fn(),
+      sendEmailVerification: jest.fn(),
+    };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -125,35 +164,41 @@ describe('AuthService', () => {
         { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
         {
           provide: MailerService,
-          useValue: { sendPasswordReset: jest.fn(), sendPasswordChanged: jest.fn() },
+          useValue: mailer,
         },
         { provide: getConnectionToken(), useValue: connection },
         { provide: getModelToken(RefreshToken.name), useValue: rtModel },
         { provide: getModelToken(PasswordReset.name), useValue: prModel },
+        { provide: getModelToken(EmailVerification.name), useValue: evModel },
       ],
     }).compile();
 
     service = moduleRef.get(AuthService);
   });
 
-  it('signup hashes the password and never exposes it', async () => {
+  it('signup creates an unverified account, sends a verification email, and does not issue a session', async () => {
     users.findByEmail.mockResolvedValue(null);
     users.create.mockImplementation(async (d: any) => ({
       _id: 'u1',
       email: d.email,
       name: d.name,
       passwordHash: d.passwordHash,
+      emailVerified: d.emailVerified,
     }));
 
-    const { auth, refreshToken } = await service.signup('a@b.com', 'password123', 'Ann');
+    const result = await service.signup('a@b.com', 'password123', 'Ann');
 
     const created = users.create.mock.calls[0][0];
     expect(created.passwordHash).not.toBe('password123');
     await expect(argon2.verify(created.passwordHash, 'password123')).resolves.toBe(true);
-    expect(auth.accessToken).toBe('access.jwt.token');
-    expect((auth.user as any).passwordHash).toBeUndefined();
-    expect(refreshToken).toBeTruthy();
-    expect(JSON.stringify(auth)).not.toContain('password123');
+    expect(created.emailVerified).toBe(false);
+    expect(result).toEqual({ ok: true });
+    expect(rtModel.store).toHaveLength(0);
+    expect(mailer.sendEmailVerification).toHaveBeenCalledWith(
+      'a@b.com',
+      expect.stringContaining('/auth/verify-email?token='),
+    );
+    expect(JSON.stringify(result)).not.toContain('password123');
   });
 
   it('signup rejects a duplicate email', async () => {
@@ -184,16 +229,33 @@ describe('AuthService', () => {
     expect(ok.refreshToken).toBeTruthy();
   });
 
-  it('refresh rotates the token: the old one stops working, the new one works', async () => {
-    users.findByEmail.mockResolvedValue(null);
-    users.create.mockImplementation(async (d: any) => ({
+  it('login rejects an unverified email with a confirmation message', async () => {
+    const passwordHash = await argon2.hash('correct-password');
+    users.findByEmail.mockResolvedValue({
       _id: 'u1',
-      email: d.email,
-      name: d.name,
-      passwordHash: d.passwordHash,
-    }));
+      email: 'x@y.com',
+      name: 'X',
+      emailVerified: false,
+      passwordHash,
+    });
 
-    const { refreshToken: first } = await service.signup('a@b.com', 'password123', 'Ann');
+    await expect(service.login('x@y.com', 'correct-password')).rejects.toThrow(
+      'Confirm your email to login',
+    );
+    expect(rtModel.store).toHaveLength(0);
+  });
+
+  it('refresh rotates the token: the old one stops working, the new one works', async () => {
+    const passwordHash = await argon2.hash('password123');
+    users.findByEmail.mockResolvedValue({
+      _id: 'u1',
+      email: 'a@b.com',
+      name: 'Ann',
+      emailVerified: true,
+      passwordHash,
+    });
+
+    const { refreshToken: first } = await service.login('a@b.com', 'password123');
     const r1 = await service.refresh(first);
     expect(r1.refreshToken).not.toBe(first);
 
@@ -204,15 +266,16 @@ describe('AuthService', () => {
   });
 
   it('logout invalidates the refresh token', async () => {
-    users.findByEmail.mockResolvedValue(null);
-    users.create.mockImplementation(async (d: any) => ({
+    const passwordHash = await argon2.hash('password123');
+    users.findByEmail.mockResolvedValue({
       _id: 'u1',
-      email: d.email,
-      name: d.name,
-      passwordHash: d.passwordHash,
-    }));
+      email: 'a@b.com',
+      name: 'Ann',
+      emailVerified: true,
+      passwordHash,
+    });
 
-    const { refreshToken } = await service.signup('a@b.com', 'password123', 'Ann');
+    const { refreshToken } = await service.login('a@b.com', 'password123');
     await service.logout(refreshToken);
     await expect(service.refresh(refreshToken)).rejects.toBeInstanceOf(UnauthorizedException);
   });

@@ -31,6 +31,12 @@ export function Login() {
       : params.get('error') === 'google_unavailable'
         ? t('auth.googleUnavailable')
         : null;
+  const verifyMessage =
+    params.get('verified') === '1'
+      ? t('auth.emailConfirmed')
+      : params.get('verified') === '0'
+        ? t('auth.emailConfirmFailed')
+        : null;
   const [form, setForm] = useState<LoginDto>({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,6 +68,7 @@ export function Login() {
         <p className="sub muted">{t('auth.loginSubtitle')}</p>
 
         {(error || googleError) && <p className="error">{error ?? googleError}</p>}
+        {!error && !googleError && verifyMessage && <p className="notice">{verifyMessage}</p>}
 
         <GoogleButton />
         <div className="auth-or"><span>{t('auth.or')}</span></div>

@@ -56,12 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(async (dto: SignupDto) => {
-    const res = await api<AuthResponse>('/auth/signup', {
+    await api<{ ok: true }>('/auth/signup', {
       method: 'POST',
       body: JSON.stringify(dto),
     });
-    setAccessToken(res.accessToken);
-    setUser(res.user);
   }, []);
 
   const changePassword = useCallback(

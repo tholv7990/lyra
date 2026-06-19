@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { SignupDto } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
 import { AuthTopBar } from '../components/AuthTopBar';
@@ -7,11 +8,12 @@ import { BrandLogo } from '../components/BrandLogo';
 import { GoogleButton } from '../components/GoogleButton';
 
 export function Signup() {
+  const { t } = useTranslation();
   const { signup } = useAuth();
-  const navigate = useNavigate();
   const [form, setForm] = useState<SignupDto>({ name: '', email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -24,7 +26,7 @@ export function Signup() {
     setBusy(true);
     try {
       await signup(form);
-      navigate('/');
+      setSentTo(form.email);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {
@@ -37,54 +39,65 @@ export function Signup() {
       <AuthTopBar />
       <form className="auth-card" onSubmit={onSubmit}>
         <BrandLogo className="auth-logo" width={159} height={64} />
-        <h1>Create your account</h1>
-        <p className="sub muted">Start running the Lyra pipeline</p>
+        <h1>{sentTo ? t('auth.confirmTitle') : t('auth.signupTitle')}</h1>
+        <p className="sub muted">
+          {sentTo ? t('auth.confirmSubtitle') : t('auth.signupSubtitle')}
+        </p>
 
         {error && <p className="error">{error}</p>}
+        {sentTo && (
+          <p className="notice">
+            {t('auth.confirmSent', { email: sentTo })}
+          </p>
+        )}
 
-        <GoogleButton label="Sign up with Google" />
-        <div className="auth-or"><span>or</span></div>
+        {!sentTo && (
+          <>
+            <GoogleButton label={t('auth.signUpGoogle')} />
+            <div className="auth-or"><span>{t('auth.or')}</span></div>
 
-        <label className="field">
-          <span>Name</span>
-          <input
-            className="text-input"
-            type="text"
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-        </label>
+            <label className="field">
+              <span>{t('auth.name')}</span>
+              <input
+                className="text-input"
+                type="text"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </label>
 
-        <label className="field">
-          <span>Email</span>
-          <input
-            className="text-input"
-            type="email"
-            required
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-        </label>
+            <label className="field">
+              <span>{t('auth.email')}</span>
+              <input
+                className="text-input"
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </label>
 
-        <label className="field">
-          <span>Password</span>
-          <input
-            className="text-input"
-            type="password"
-            required
-            minLength={8}
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
-        </label>
+            <label className="field">
+              <span>{t('auth.password')}</span>
+              <input
+                className="text-input"
+                type="password"
+                required
+                minLength={8}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+            </label>
 
-        <button className="btn-primary" type="submit" disabled={busy}>
-          {busy ? 'Creating…' : 'Create account'}
-        </button>
+            <button className="btn-primary" type="submit" disabled={busy}>
+              {busy ? t('auth.signingUp') : t('auth.signUp')}
+            </button>
+          </>
+        )}
 
         <p className="switch">
-          Already have an account? <Link to="/login">Sign in</Link>
+          {t('auth.haveAccount')} <Link to="/login">{t('auth.signInLink')}</Link>
         </p>
       </form>
     </div>

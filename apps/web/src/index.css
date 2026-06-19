@@ -504,6 +504,13 @@ select.text-input {
   margin: 0 0 12px;
 }
 
+.notice {
+  color: var(--success);
+  font-size: 13px;
+  line-height: var(--lh-body);
+  margin: 0 0 12px;
+}
+
 .switch {
   text-align: center;
   margin-top: 16px;

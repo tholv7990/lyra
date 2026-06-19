@@ -49,15 +49,8 @@ export class AuthController {
   @Post('signup')
   async signup(
     @Body() body: SignupBody,
-    @Res({ passthrough: true }) res: Response,
   ) {
-    const { auth, refreshToken } = await this.auth.signup(
-      body.email,
-      body.password,
-      body.name,
-    );
-    this.setRefreshCookie(res, refreshToken);
-    return auth;
+    return this.auth.signup(body.email, body.password, body.name);
   }
 
   @Public()
@@ -105,6 +98,47 @@ export class AuthController {
 
   private webOrigin(): string {
     return this.config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
+  }
+
+  private renderVerifyEmailPage(
+    statusCode: 200 | 400,
+    title: string,
+    message: string,
+    actionLabel: string,
+    actionHref: string,
+    res: Response,
+  ) {
+    const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>
+      :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f7f7f8; color: #18181b; }
+      main { width: min(380px, calc(100vw - 32px)); padding: 28px; border: 1px solid #dedee3; border-radius: 14px; background: #fff; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08); text-align: center; }
+      .mark { width: 42px; height: 42px; margin: 0 auto 16px; border-radius: 999px; display: grid; place-items: center; background: ${statusCode === 200 ? '#ff6b1a' : '#f1c9c9'}; color: #fff; font-weight: 700; }
+      h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.2; }
+      p { margin: 0 0 20px; color: #66666f; line-height: 1.5; }
+      a { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; padding: 0 14px; border-radius: 8px; background: #ff6b1a; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #09090b; color: #f4f4f5; }
+        main { background: #18181b; border-color: #303038; box-shadow: none; }
+        p { color: #a1a1aa; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark">${statusCode === 200 ? 'OK' : '!'}</div>
+      <h1>${title}</h1>
+      <p>${message}</p>
+      <a href="${actionHref}">${actionLabel}</a>
+    </main>
+  </body>
+</html>`;
+    return res.status(statusCode).type('html').send(html);
   }
 
   // Google sign-in (redirect flow). Sets a short-lived CSRF `state` cookie, then
@@ -185,5 +219,41 @@ export class AuthController {
   async resetPassword(@Body() body: ResetPasswordBody) {
     await this.auth.resetPassword(body.token, body.newPassword);
     return { ok: true };
+  }
+
+  @Public()
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string | undefined, @Res() res: Response) {
+    const web = this.webOrigin();
+    if (!token) {
+      return this.renderVerifyEmailPage(
+        400,
+        'Confirmation link expired',
+        'This confirmation link is invalid or has expired. Please create an account again or request a fresh link.',
+        'Back to sign in',
+        `${web}/login`,
+        res,
+      );
+    }
+    try {
+      await this.auth.verifyEmail(token);
+      return this.renderVerifyEmailPage(
+        200,
+        'Your account is verified',
+        'Your Lyra account has been confirmed. You can now sign in and start using your workspace.',
+        'Sign in',
+        `${web}/login`,
+        res,
+      );
+    } catch {
+      return this.renderVerifyEmailPage(
+        400,
+        'Confirmation link expired',
+        'This confirmation link is invalid or has expired. Please create an account again or request a fresh link.',
+        'Back to sign in',
+        `${web}/login`,
+        res,
+      );
+    }
   }
 }

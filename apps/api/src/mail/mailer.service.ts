@@ -31,13 +31,13 @@ export class MailerService {
     }
   }
 
-  async send(to: string, subject: string, body: string): Promise<void> {
+  async send(to: string, subject: string, body: string, html?: string): Promise<void> {
     if (!this.transport) {
       this.logger.log(`✉  to=${to} · ${subject}\n${body}`);
       return;
     }
     try {
-      await this.transport.sendMail({ from: this.from, to, subject, text: body });
+      await this.transport.sendMail({ from: this.from, to, subject, text: body, html });
     } catch (err) {
       this.logger.error(`Failed to send "${subject}" to ${to}: ${(err as Error).message}`);
       this.logger.log(`✉  (not sent — logged) to=${to} · ${subject}\n${body}`);
@@ -49,6 +49,16 @@ export class MailerService {
       to,
       'Reset your Lyra password',
       `Reset your password using this link (valid for 1 hour):\n${resetUrl}\n\nIf you didn't request this, ignore this email.`,
+    );
+  }
+
+  async sendEmailVerification(to: string, verifyUrl: string): Promise<void> {
+    const body = `Confirm your email using this link (valid for 24 hours):\n${verifyUrl}\n\nIf you didn't create a Lyra account, ignore this email.`;
+    await this.send(
+      to,
+      'Confirm your Lyra email',
+      body,
+      `<p>Confirm your email using this link. It is valid for 24 hours.</p><p><a href="${verifyUrl}">Confirm email</a></p><p>If you didn't create a Lyra account, ignore this email.</p>`,
     );
   }
 
