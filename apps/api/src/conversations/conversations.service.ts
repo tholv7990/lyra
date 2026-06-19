@@ -109,22 +109,6 @@ export class ConversationsService extends BaseRepository<Conversation> {
       .exec();
   }
 
-  // All matching chats (same match/sort as findForPrompt), capped, as summaries.
-  async listForPrompt(
-    workspaceId: string,
-    userId: string,
-    promptId: string,
-    content: string,
-  ): Promise<ConversationSummary[]> {
-    const docs = await this.model
-      .find(this.promptHistoryFilter(workspaceId, userId, promptId, content), null, {
-        sort: { updatedAt: -1, createdAt: -1 },
-        limit: 20,
-      })
-      .exec();
-    return this.toSummaries(docs);
-  }
-
   // Validate provider/model and return the decrypted key — throws (-> 4xx)
   // before any streaming starts.
   async prepareRun(workspaceId: string, provider: Provider, model: string): Promise<string> {
