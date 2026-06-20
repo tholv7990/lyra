@@ -21,6 +21,7 @@ import type {
 } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { PromptsService } from './prompts.service';
 import { PromptAccessGuard } from './guards/prompt-access.guard';
 import {
@@ -47,6 +48,7 @@ export class PromptsController {
 
   @Post('workspaces/:id/prompts')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async create(
     @Param('id') workspaceId: string,
     @Body() body: CreatePromptBody,
@@ -175,6 +177,7 @@ export class PromptsController {
 
   @Post('prompts/:id/results')
   @UseGuards(PromptAccessGuard)
+  @RequireCreate()
   addResult(
     @CurrentPrompt() prompt: PromptDocument,
     @Body() body: SaveResultBody,

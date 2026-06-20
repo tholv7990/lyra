@@ -13,6 +13,7 @@ import { ProjectStatus, ProjectShare } from '@lyra/shared';
 import type { Project as ProjectModel, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import {
   CurrentMembership,
   RequestMembership,
@@ -36,6 +37,7 @@ export class ProjectsController {
 
   @Post('workspaces/:id/projects')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async create(
     @Param('id') workspaceId: string,
     @Body() body: CreateProjectBody,

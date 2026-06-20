@@ -17,6 +17,7 @@ export const PROVIDER_LABELS: Record<Provider, string> = {
 export const ROLE_LABELS: Record<Role, string> = {
   [Role.Owner]: 'Owner',
   [Role.Member]: 'Member',
+  [Role.Viewer]: 'Viewer',
 };
 
 // PromptStatus and ProjectStatus share the same 'draft'/'public' values, so one

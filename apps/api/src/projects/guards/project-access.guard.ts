@@ -7,10 +7,11 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { canViewProject, canEditProject, type MemberCtx } from '@lyra/shared';
+import { canViewProject, canEditProject, canCreate, type MemberCtx } from '@lyra/shared';
 import { ProjectsService } from '../projects.service';
 import { MembershipsService } from '../../workspaces/memberships.service';
 import { REQUIRE_PROJECT_EDIT_KEY } from '../decorators/project.decorators';
+import { REQUIRE_CREATE_KEY } from '../../workspaces/decorators/require-create.decorator';
 
 // Loads the project by :id, verifies the caller is a member of its workspace,
 // enforces view (always) and edit (@RequireProjectEdit) via the shared helpers,
@@ -55,6 +56,14 @@ export class ProjectAccessGuard implements CanActivate {
     );
     if (requireEdit && !canEditProject(project, ctx)) {
       throw new ForbiddenException('Cannot edit this project');
+    }
+
+    const requireCreate = this.reflector.getAllAndOverride<boolean>(
+      REQUIRE_CREATE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (requireCreate && !canCreate(ctx)) {
+      throw new ForbiddenException('Viewers cannot run — ask an owner to change your role');
     }
 
     (req as unknown as { project: unknown }).project = project;

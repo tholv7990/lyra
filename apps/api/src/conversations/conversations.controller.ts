@@ -19,8 +19,10 @@ import type {
   ConversationSummary,
   User,
 } from '@lyra/shared';
+import { canCreate } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { MembershipsService } from '../workspaces/memberships.service';
 import { ConversationsService } from './conversations.service';
 import type { ConversationDocument } from './conversation.schema';
@@ -41,6 +43,7 @@ export class ConversationsController {
   // Create an empty chat (the first message is sent via the streaming endpoint).
   @Post('workspaces/:id/conversations')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async create(
     @Param('id') workspaceId: string,
     @Body() body: CreateConversationBody,
@@ -104,6 +107,9 @@ export class ConversationsController {
     @Res() res: Response,
   ): Promise<void> {
     const convo = await this.requireOwn(id, user.id);
+    // Sending spends the workspace's BYO key — Viewers are read-only (no WorkspaceGuard
+    // on this route, so the role is checked explicitly here).
+    await this.requireCanSpend(convo.workspaceId, user.id);
     // Validate before opening the stream (these surface as normal 4xx).
     const apiKey = await this.convos.prepareRun(convo.workspaceId, body.provider, body.model);
 
@@ -178,5 +184,14 @@ export class ConversationsController {
     if (!membership) throw new ForbiddenException('Not a member of this workspace');
     if (convo.createdBy !== userId) throw new ForbiddenException('Not your conversation');
     return convo;
+  }
+
+  // Block a Viewer from the AI-spend path (the role gate the missing WorkspaceGuard
+  // would otherwise apply via @RequireCreate).
+  private async requireCanSpend(workspaceId: string, userId: string): Promise<void> {
+    const m = await this.memberships.findFor(workspaceId, userId);
+    if (m && !canCreate({ userId, role: m.role, canManageKeys: m.canManageKeys })) {
+      throw new ForbiddenException('Viewers cannot send chat messages — ask an owner to change your role');
+    }
   }
 }

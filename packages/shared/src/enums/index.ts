@@ -1,6 +1,7 @@
 export enum Role {
   Owner = 'owner',
   Member = 'member',
+  Viewer = 'viewer', // read-only: can view workspace content but not create/edit/run
 }
 
 // A project is a draft (private to its creator + workspace owners) until it's

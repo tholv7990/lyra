@@ -9,6 +9,7 @@ import { STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { canCreateIn } from '../lib/perms';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
@@ -25,6 +26,7 @@ export function Projects() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { current } = useWorkspace();
+  const mayCreate = canCreateIn(current);
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,9 +158,11 @@ export function Projects() {
             </div>
           )}
         </div>
-        <button className="lin-add" onClick={() => navigate('/projects/new')} title={t('projects.newProject')} aria-label={t('projects.newProject')}>
-          <PlusIcon />
-        </button>
+        {mayCreate && (
+          <button className="lin-add" onClick={() => navigate('/projects/new')} title={t('projects.newProject')} aria-label={t('projects.newProject')}>
+            <PlusIcon />
+          </button>
+        )}
       </div>
 
       {error && <p className="error">{error}</p>}
@@ -170,7 +174,7 @@ export function Projects() {
           icon={<ProjectsIcon width={26} height={26} />}
           title={t('projects.emptyTitle')}
           body={t('projects.emptyBody')}
-          cta={{ label: t('projects.newProject'), onClick: () => navigate('/projects/new') }}
+          cta={mayCreate ? { label: t('projects.newProject'), onClick: () => navigate('/projects/new') } : undefined}
         />
       ) : visible.length === 0 ? (
         <p className="empty">{t('projects.noMatch')}</p>

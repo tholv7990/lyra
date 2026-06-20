@@ -18,6 +18,7 @@ import {
 } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { PipelinesService } from './pipelines.service';
 import { PipelineAiService } from './pipeline-ai.service';
 import { PipelineAccessGuard } from './guards/pipeline-access.guard';
@@ -45,6 +46,7 @@ export class PipelinesController {
   // ===== Library =====
   @Post('workspaces/:id/pipelines')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async create(
     @Param('id') workspaceId: string,
     @Body() body: CreatePipelineBody,
@@ -71,6 +73,7 @@ export class PipelinesController {
   // draft (not saved) for the builder to pre-fill; runs on Claude (BYOK).
   @Post('workspaces/:id/pipelines/generate')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async generate(
     @Param('id') workspaceId: string,
     @Body() body: GeneratePipelineBody,
@@ -82,6 +85,7 @@ export class PipelinesController {
   // when it has enough, attaches a draft. Same library grounding as generate.
   @Post('workspaces/:id/pipelines/ai-chat')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async aiChat(
     @Param('id') workspaceId: string,
     @Body() body: AiChatBody,

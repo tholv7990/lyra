@@ -22,6 +22,7 @@ import { toggleInList } from '../lib/array';
 import { TYPE_COLOR } from '../lib/promptType';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { canCreateIn } from '../lib/perms';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
@@ -70,6 +71,7 @@ export function Prompts() {
   const { current } = useWorkspace();
   const navigate = useNavigate();
   const wsId = current?.id;
+  const mayCreate = canCreateIn(current);
   const { labels } = useLabels(wsId);
   const statusLabel = (s: PromptStatus) =>
     s === PromptStatus.Public ? t('prompts.statusPublic') : t('prompts.statusDraft');
@@ -315,9 +317,11 @@ export function Prompts() {
             </div>
           )}
         </div>
-        <button className="lin-add" onClick={() => navigate('/prompts/new')} title={t('prompts.newPrompt')} aria-label={t('prompts.newPrompt')}>
-          <PlusIcon />
-        </button>
+        {mayCreate && (
+          <button className="lin-add" onClick={() => navigate('/prompts/new')} title={t('prompts.newPrompt')} aria-label={t('prompts.newPrompt')}>
+            <PlusIcon />
+          </button>
+        )}
       </div>
 
       {error && <p className="error">{error}</p>}
@@ -330,7 +334,7 @@ export function Prompts() {
             icon={<PromptsIcon width={26} height={26} />}
             title={t('prompts.emptyTitle')}
             body={t('prompts.emptyBody')}
-            cta={{ label: t('prompts.emptyCta'), onClick: () => navigate('/prompts/new') }}
+            cta={mayCreate ? { label: t('prompts.emptyCta'), onClick: () => navigate('/prompts/new') } : undefined}
           />
         ) : (
           <p className="empty">{t('prompts.noMatch')}</p>

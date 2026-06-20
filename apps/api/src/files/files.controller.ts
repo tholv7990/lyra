@@ -15,6 +15,7 @@ import { MEDIA_MAX_BYTES, type PromptMedia, type User } from '@lyra/shared';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { FilesService, type UploadedFileLike } from './files.service';
 
 @Controller()
@@ -25,6 +26,7 @@ export class FilesController {
   // client adds to a prompt's media[].
   @Post('workspaces/:id/files')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: MEDIA_MAX_BYTES } }),
   )

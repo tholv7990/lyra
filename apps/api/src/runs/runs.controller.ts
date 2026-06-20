@@ -23,6 +23,7 @@ import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from '../pipelines/pipelines.service';
 import type { PipelineDocument } from '../pipelines/pipeline.schema';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { AssetsService } from '../assets/assets.service';
 import { RunsService } from './runs.service';
 import type { PipelineRunInput } from './runs.service';
@@ -86,6 +87,7 @@ export class RunsController {
   // Create a run by executing a composable pipeline in this project's context.
   @Post('projects/:id/pipelines/:pipelineId/runs')
   @UseGuards(ProjectAccessGuard)
+  @RequireCreate()
   async createFromPipeline(
     @CurrentProject() project: ProjectDocument,
     @Param('pipelineId') pipelineId: string,
@@ -108,6 +110,7 @@ export class RunsController {
   // executed through to its first gate / completion. "One product → many flows."
   @Post('projects/:id/runs/all')
   @UseGuards(ProjectAccessGuard)
+  @RequireCreate()
   async createForAllPipelines(
     @CurrentProject() project: ProjectDocument,
     @Body() body: RunPipelineBody,
@@ -132,6 +135,7 @@ export class RunsController {
   // pipeline's note; {product}/{niche}/{homepage} stay blank (no project).
   @Post('workspaces/:id/pipelines/:pipelineId/test-runs')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async createTestRun(
     @Param('id') workspaceId: string,
     @Param('pipelineId') pipelineId: string,
@@ -255,6 +259,7 @@ export class RunsController {
 
   @Patch('runs/:id/steps/:i/prompt')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   setPrompt(
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
@@ -266,6 +271,7 @@ export class RunsController {
 
   @Patch('runs/:id/rating')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   rate(
     @CurrentRun() run: RunDocument,
     @Body() body: RateRunBody,
@@ -276,6 +282,7 @@ export class RunsController {
 
   @Post('runs/:id/steps/:i/run')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   runStep(
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
@@ -286,6 +293,7 @@ export class RunsController {
 
   @Post('runs/:id/steps/:i/approve')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   approve(
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
@@ -296,18 +304,21 @@ export class RunsController {
 
   @Post('runs/:id/run-all')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   runAll(@CurrentRun() run: RunDocument, @CurrentUser() user: User): Promise<RunModel> {
     return this.runs.runAll(run, user.id);
   }
 
   @Post('runs/:id/stop')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   stop(@CurrentRun() run: RunDocument, @CurrentUser() user: User): Promise<RunModel> {
     return this.runs.stop(run, user.id);
   }
 
   @Post('runs/:id/reset')
   @UseGuards(RunAccessGuard)
+  @RequireCreate()
   reset(@CurrentRun() run: RunDocument, @CurrentUser() user: User): Promise<RunModel> {
     return this.runs.reset(run, user.id);
   }

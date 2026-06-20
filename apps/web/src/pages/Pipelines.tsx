@@ -8,6 +8,7 @@ import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { canCreateIn } from '../lib/perms';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
@@ -56,6 +57,7 @@ export function Pipelines() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { current } = useWorkspace();
+  const mayCreate = canCreateIn(current);
   const { labels } = useLabels(current?.id);
   const navigate = useNavigate();
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
@@ -190,9 +192,11 @@ export function Pipelines() {
           <span aria-hidden>✨</span>
           <span className="lin-ai-txt">{t('pipelines.buildWithAi')}</span>
         </button>
-        <button className="lin-add" onClick={() => navigate('/pipelines/new')} title={t('pipelines.newPipeline')} aria-label={t('pipelines.newPipeline')}>
-          <PlusIcon />
-        </button>
+        {mayCreate && (
+          <button className="lin-add" onClick={() => navigate('/pipelines/new')} title={t('pipelines.newPipeline')} aria-label={t('pipelines.newPipeline')}>
+            <PlusIcon />
+          </button>
+        )}
       </div>
 
       {aiOpen && wsId && <BuildWithAiModal wsId={wsId} onClose={() => setAiOpen(false)} />}
@@ -206,7 +210,7 @@ export function Pipelines() {
           icon={<PipelinesIcon width={26} height={26} />}
           title={t('pipelines.emptyTitle')}
           body={t('pipelines.emptyBody')}
-          cta={{ label: t('pipelines.newPipeline'), onClick: () => navigate('/pipelines/new') }}
+          cta={mayCreate ? { label: t('pipelines.newPipeline'), onClick: () => navigate('/pipelines/new') } : undefined}
         />
       ) : visible.length === 0 ? (
         <p className="empty">{t('pipelines.noMatch')}</p>

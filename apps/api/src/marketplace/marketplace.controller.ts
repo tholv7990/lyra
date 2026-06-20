@@ -17,6 +17,7 @@ import type {
 } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { MarketplaceService } from './marketplace.service';
 import { PromptRankService } from './prompt-rank.service';
 import { AdoptMarketplacePromptBody, MarketplaceRankBody } from './dto/marketplace.dto';
@@ -78,6 +79,7 @@ export class MarketplaceController {
   // AI filter: rank the catalog against a free-text need via the workspace's
   // Anthropic key.
   @Post('rank')
+  @RequireCreate()
   rank(
     @Param('id') workspaceId: string,
     @Body() body: MarketplaceRankBody,
@@ -87,6 +89,7 @@ export class MarketplaceController {
 
   // Adopt a catalog item into the workspace prompt library (creates a Prompt).
   @Post('adopt')
+  @RequireCreate()
   adopt(
     @Param('id') workspaceId: string,
     @Body() body: AdoptMarketplacePromptBody,

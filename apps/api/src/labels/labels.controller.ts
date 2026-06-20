@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import type { LabelInfo, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { LabelsService } from './labels.service';
 import { CreateLabelBody } from './dto/labels.dto';
 
@@ -17,6 +18,7 @@ export class LabelsController {
   }
 
   @Post('workspaces/:id/labels')
+  @RequireCreate()
   create(
     @Param('id') workspaceId: string,
     @Body() body: CreateLabelBody,

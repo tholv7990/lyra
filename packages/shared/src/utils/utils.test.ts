@@ -3,6 +3,7 @@ import {
   canViewProject,
   canEditProject,
   canManageKeys,
+  canCreate,
   evalCondition,
   fillPrompt,
   resolveStepRefs,
@@ -32,6 +33,22 @@ import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 const owner: MemberCtx = { userId: 'u-owner', role: Role.Owner, canManageKeys: false };
 const member: MemberCtx = { userId: 'u-member', role: Role.Member, canManageKeys: false };
 const other: MemberCtx = { userId: 'u-other', role: Role.Member, canManageKeys: false };
+const viewer: MemberCtx = { userId: 'u-viewer', role: Role.Viewer, canManageKeys: false };
+
+describe('canCreate', () => {
+  it('lets owners and members create, but not viewers', () => {
+    expect(canCreate(owner)).toBe(true);
+    expect(canCreate(member)).toBe(true);
+    expect(canCreate(viewer)).toBe(false);
+  });
+});
+
+describe('canEditProject — viewer is read-only', () => {
+  it('denies a viewer even on content they created', () => {
+    expect(canEditProject({ createdBy: 'u-viewer' }, viewer)).toBe(false);
+    expect(canEditProject({ createdBy: 'u-member' }, viewer)).toBe(false);
+  });
+});
 
 function project(
   overrides: Partial<{ createdBy: string; status: ProjectStatus; shared: ProjectShare; sharedWith: string[] }>,

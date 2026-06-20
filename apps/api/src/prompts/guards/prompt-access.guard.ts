@@ -7,10 +7,11 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { PromptStatus } from '@lyra/shared';
+import { PromptStatus, canCreate } from '@lyra/shared';
 import { PromptsService } from '../prompts.service';
 import { MembershipsService } from '../../workspaces/memberships.service';
 import { REQUIRE_PROMPT_OWNER_KEY } from '../decorators/prompt.decorators';
+import { REQUIRE_CREATE_KEY } from '../../workspaces/decorators/require-create.decorator';
 
 // Loads the prompt by :id, verifies the caller is a member of its workspace,
 // enforces visibility (public OR creator) and ownership (@RequirePromptOwner →
@@ -51,6 +52,17 @@ export class PromptAccessGuard implements CanActivate {
     } else if (prompt.status !== PromptStatus.Public && !isOwner) {
       // Drafts are visible only to their creator.
       throw new ForbiddenException('No access to this prompt');
+    }
+
+    const requireCreate = this.reflector.getAllAndOverride<boolean>(
+      REQUIRE_CREATE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (
+      requireCreate &&
+      !canCreate({ userId: user.id, role: membership.role, canManageKeys: membership.canManageKeys })
+    ) {
+      throw new ForbiddenException('Viewers cannot add to this prompt — ask an owner to change your role');
     }
 
     (req as unknown as { prompt: unknown }).prompt = prompt;

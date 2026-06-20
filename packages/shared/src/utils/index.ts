@@ -31,11 +31,19 @@ export function canEditProject(
   p: { createdBy: string },
   ctx: MemberCtx,
 ): boolean {
+  if (ctx.role === Role.Viewer) return false; // read-only, even on content they once created
   return ctx.role === Role.Owner || p.createdBy === ctx.userId;
 }
 
 export function canManageKeys(ctx: MemberCtx): boolean {
   return ctx.role === Role.Owner || ctx.canManageKeys;
+}
+
+// May the member create workspace content (prompts, pipelines, projects) and start
+// runs? Owner + Member can; a Viewer is read-only. Enforced in the api
+// (@RequireCreate / service checks) and reflected in the web (hide create actions).
+export function canCreate(ctx: MemberCtx): boolean {
+  return ctx.role !== Role.Viewer;
 }
 
 // Providers that make no external AI call and therefore need no BYOK key — a

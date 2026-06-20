@@ -16,9 +16,9 @@ import { IconButton } from '../components/IconButton';
 import { MembersIcon, PlusIcon, XIcon } from '../layout/icons';
 import './members.css';
 
-// The two assignable roles today (Viewer is a planned increment). The picker,
-// invite form, and role filter read labels from the shared ROLE_LABELS.
-const ROLES: Role[] = [Role.Owner, Role.Member];
+// Assignable roles. Owner = full control, Member = create/run, Viewer = read-only.
+// The picker, invite form, and role filter read labels from the shared ROLE_LABELS.
+const ROLES: Role[] = [Role.Owner, Role.Member, Role.Viewer];
 
 // Workspace Members: the owner-side counterpart to the notification bell. Any
 // member can see who's in the workspace; the owner can invite by email, change a

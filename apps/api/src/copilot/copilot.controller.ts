@@ -2,6 +2,7 @@ import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import type { CopilotResponse, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { CopilotService } from './copilot.service';
 import { CopilotChatBody } from './dto/copilot.dto';
 
@@ -13,6 +14,7 @@ export class CopilotController {
   // server-side); the copilot reads the workspace via tools to answer.
   @Post('workspaces/:id/copilot')
   @UseGuards(WorkspaceGuard)
+  @RequireCreate()
   async chat(
     @Param('id') workspaceId: string,
     @Body() body: CopilotChatBody,

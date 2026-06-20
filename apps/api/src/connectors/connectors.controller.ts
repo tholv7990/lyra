@@ -6,6 +6,7 @@ import type { ConnectorCredentialInfo, CrawlerCookieInfo, User } from '@lyra/sha
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireManageKeys } from '../workspaces/decorators/require-manage-keys.decorator';
+import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { ConnectorsProxy, rewriteDownload } from './connectors.proxy';
 import { ConnectorCredentialsService } from './connector-credentials.service';
 import { CrawlerCookiesService } from './crawler-cookies.service';
@@ -52,6 +53,7 @@ export class ConnectorsController {
   }
 
   @Post('publish')
+  @RequireCreate()
   async publish(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: PublishBody) {
     return this.proxy.forward(ws, u.id, 'POST', 'publish', b, await this.requireKey(ws));
   }
@@ -62,11 +64,13 @@ export class ConnectorsController {
   }
 
   @Post('resolve')
+  @RequireCreate()
   async resolve(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: ResolveBody) {
     return this.proxy.forward(ws, u.id, 'POST', 'resolve', await this.withCookies(ws, b));
   }
 
   @Post('download')
+  @RequireCreate()
   async download(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: DownloadBody) {
     return this.proxy.forward(ws, u.id, 'POST', 'download', await this.withCookies(ws, b)); // -> { jobId }
   }
