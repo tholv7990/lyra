@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
 import { fmtDate, initials } from '../lib/format';
+import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { deleteResult } from '../lib/promptResults';
 import { promptSegments } from '../lib/promptSegments';
@@ -47,7 +48,16 @@ export function PromptDetails({
   const [results, setResults] = useState<SavedResult[]>(prompt.results);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  useEffect(() => { setResults(prompt.results); }, [prompt.id]);
+  // Seed from the list snapshot, then refetch the prompt so answers saved in chat
+  // (which append to results[] elsewhere) show up even if the list item is stale.
+  useEffect(() => {
+    setResults(prompt.results);
+    let cancelled = false;
+    api<Prompt>(`/prompts/${prompt.id}`)
+      .then((fresh) => { if (!cancelled) setResults(fresh.results); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [prompt.id]);
 
   const canDelete = (r: SavedResult) =>
     !!user && (r.createdBy.id === user.id || prompt.createdBy.id === user.id);
