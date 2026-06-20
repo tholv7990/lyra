@@ -404,8 +404,14 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
+  /* Run workbench (title + run) first; Properties below it on phones. */
   .td-side {
     position: static;
-    order: -1;
+  }
+  .tw-title h1 {
+    font-size: 19px;
+  }
+  .tw-runhead-r {
+    flex-wrap: wrap;
   }
 }
