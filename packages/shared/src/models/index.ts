@@ -143,6 +143,7 @@ export interface Task extends Audited {
   priority: TaskPriority;
   assignee?: UserRef; // expanded; assigneeId carried in the DTO (unused in personal workspaces)
   pipelines: string[]; // workspace-library pipeline ids
+  tags: string[]; // workspace label names (colour resolved via labelColor)
 }
 
 // Fan-out config on a step: map the step's prompt over a named run collection,

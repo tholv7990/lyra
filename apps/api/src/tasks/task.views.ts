@@ -16,6 +16,7 @@ export function toTaskView(d: TaskDocument, refs: Map<string, UserRef>): TaskVie
     priority: d.priority ?? TaskPriority.None,
     assignee: d.assigneeId ? userRef(d.assigneeId, refs) : undefined,
     pipelines: d.pipelines ?? [],
+    tags: d.tags ?? [],
     active: d.active ?? true,
     createdBy: userRef(d.createdBy, refs),
     updatedBy: userRef(d.updatedBy, refs),

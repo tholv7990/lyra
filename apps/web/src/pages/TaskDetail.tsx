@@ -10,6 +10,7 @@ import {
   StepStatus,
   TaskStatus,
   TaskPriority,
+  labelColor,
   WorkspaceType,
   type ApiKeyInfo,
   type Asset,
@@ -36,6 +37,8 @@ import { ProviderIcon } from '../components/ProviderIcon';
 import { PencilIcon } from '../layout/icons';
 import { TaskStatusPicker } from '../components/TaskStatusPicker';
 import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
+import { LabelPicker } from '../components/LabelPicker';
+import { useLabels } from '../lib/useLabels';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 // Suppress unused import warning — fmtDate used in future task timeline
@@ -69,6 +72,7 @@ export function TaskDetail() {
   const { current } = useWorkspace();
   const wsId = current?.id;
   const { catalog } = useModels(wsId);
+  const { labels, createLabel } = useLabels(wsId);
   const modelLabel = (p: Provider, m: string) => catalog[p]?.find((o) => o.id === m)?.label ?? m;
 
   const [project, setProject] = useState<Project | null>(null);
@@ -197,6 +201,7 @@ export function TaskDetail() {
     priority?: TaskPriority;
     assigneeId?: string | null;
     pipelines?: string[];
+    tags?: string[];
   }) {
     if (!projectId || !taskId || !canEdit || savingTask) return;
     setSavingTask(true);
@@ -501,6 +506,25 @@ export function TaskDetail() {
                     </div>
                   )}
                 </div>
+              )}
+              {canEdit ? (
+                <LabelPicker
+                  value={task.tags}
+                  labels={labels}
+                  onChange={(tags) => void patchTask({ tags })}
+                  onCreate={createLabel}
+                />
+              ) : (
+                task.tags.length > 0 && (
+                  <div className="task-tags-read">
+                    {task.tags.map((name) => (
+                      <span className="tag-chip" key={name}>
+                        <span className="tdot" style={{ background: labelColor(name, labels) }} />
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )
               )}
             </div>
 

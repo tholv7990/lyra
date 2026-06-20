@@ -41,6 +41,9 @@ export class Task extends AuditedEntity {
 
   @Prop({ type: [String], default: [] })
   pipelines!: string[];
+
+  @Prop({ type: [String], default: [] })
+  tags!: string[];
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

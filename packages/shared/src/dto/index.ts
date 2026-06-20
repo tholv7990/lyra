@@ -75,6 +75,7 @@ export interface UpdateTaskDto {
   priority?: TaskPriority;
   assigneeId?: string | null; // null clears the assignee
   pipelines?: string[];
+  tags?: string[];
 }
 
 export interface InviteDto {

@@ -73,6 +73,7 @@ export class TasksService {
     if (dto.status !== undefined) set.status = dto.status;
     if (dto.priority !== undefined) set.priority = dto.priority;
     if (dto.pipelines !== undefined) set.pipelines = dto.pipelines;
+    if (dto.tags !== undefined) set.tags = dto.tags;
 
     if (dto.assigneeId !== undefined) {
       if (dto.assigneeId) {

@@ -8,6 +8,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
 import { TaskList } from '../components/TaskList';
+import { useLabels } from '../lib/useLabels';
 import { PencilIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
@@ -59,6 +60,8 @@ export function ProjectDetail() {
       ),
     [user, current, project],
   );
+
+  const { labels } = useLabels(project?.workspaceId);
 
   if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (!project) return <p className="empty">{error ?? t('projects.notFound')}</p>;
@@ -130,7 +133,7 @@ export function ProjectDetail() {
         </div>
 
         {/* Tasks */}
-        <TaskList projectId={project.id} canEdit={canEdit} />
+        <TaskList projectId={project.id} canEdit={canEdit} labels={labels} />
       </div>
     </EditorShell>
   );

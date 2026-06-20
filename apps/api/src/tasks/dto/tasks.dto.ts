@@ -49,4 +49,9 @@ export class UpdateTaskBody implements UpdateTaskDto {
   @IsArray()
   @IsString({ each: true })
   pipelines?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
 }

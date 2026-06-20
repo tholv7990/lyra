@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TaskPriority, type Task } from '@lyra/shared';
+import { TaskPriority, labelColor, type Task, type LabelInfo } from '@lyra/shared';
 import { api } from '../lib/api';
 import { initial, avatarStyle } from '../lib/format';
 import { TASK_STATUS_ORDER, groupTasksByStatus } from '../lib/taskStatus';
@@ -12,7 +12,15 @@ import { PlusIcon } from '../layout/icons';
 // The project's tasks, grouped under status section headers (Linear-style list).
 // Empty status groups are hidden so the page never shows blank columns. A row
 // opens the task-detail run workbench. Editors can add a task (lands in New).
-export function TaskList({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
+export function TaskList({
+  projectId,
+  canEdit,
+  labels,
+}: {
+  projectId: string;
+  canEdit: boolean;
+  labels: LabelInfo[];
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -148,6 +156,12 @@ export function TaskList({ projectId, canEdit }: { projectId: string; canEdit: b
                       <TaskStatusIcon status={s} size={16} />
                       <span className="trow-name">{task.name}</span>
                       <span className="trow-meta">
+                        {task.tags.map((name) => (
+                          <span className="tag-chip trow-tag" key={name}>
+                            <span className="tdot" style={{ background: labelColor(name, labels) }} />
+                            {name}
+                          </span>
+                        ))}
                         {task.priority !== TaskPriority.None && (
                           <TaskPriorityIcon priority={task.priority} size={15} />
                         )}
