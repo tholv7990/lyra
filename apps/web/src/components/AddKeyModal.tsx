@@ -82,8 +82,7 @@ export function AddKeyModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              style={{ width: 'auto', marginTop: 0 }}
+              className="btn-primary btn-inline"
               disabled={busy || !trimmed}
             >
               {busy ? t('settings.savingKey') : t('settings.saveKey')}

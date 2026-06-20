@@ -398,24 +398,21 @@ export function TaskDetail() {
               )}
               <div className="run-view-actions">
                 <button
-                  className="btn-primary"
-                  style={{ width: 'auto', marginTop: 0 }}
+                  className="btn-primary btn-inline"
                   disabled={busy || run.status === 'done'}
                   onClick={runAll}
                 >
                   {t('run.runAll')}
                 </button>
                 <button
-                  className="btn-ghost"
-                  style={{ width: 'auto', marginTop: 0 }}
+                  className="btn-ghost btn-inline"
                   disabled={busy || run.status !== 'running'}
                   onClick={stop}
                 >
                   {t('run.stop')}
                 </button>
                 <button
-                  className="btn-ghost"
-                  style={{ width: 'auto', marginTop: 0 }}
+                  className="btn-ghost btn-inline"
                   disabled={busy}
                   onClick={reset}
                 >
@@ -481,8 +478,7 @@ export function TaskDetail() {
                 {!isPersonal && (
                   <div className="task-assignee-wrap">
                     <button
-                      className="btn-ghost task-assignee-btn"
-                      style={{ width: 'auto', marginTop: 0 }}
+                      className="btn-ghost task-assignee-btn btn-inline"
                       disabled={!canEdit || savingTask}
                       onClick={() => setAssigneeOpen((o) => !o)}
                       aria-label={t('tasks.assignee')}
@@ -552,8 +548,7 @@ export function TaskDetail() {
               <div className="proj-sec-actions">
                 {assigned.length > 0 && (
                   <button
-                    className="btn-ghost"
-                    style={{ width: 'auto', marginTop: 0 }}
+                    className="btn-ghost btn-inline"
                     disabled={busy}
                     onClick={runAllPipelines}
                     title={t('projects.runAllTitle')}
@@ -564,8 +559,7 @@ export function TaskDetail() {
                 {canEdit && unassigned.length > 0 && (
                   <div className="proj-add-pipe">
                     <button
-                      className="btn-ghost"
-                      style={{ width: 'auto', marginTop: 0 }}
+                      className="btn-ghost btn-inline"
                       disabled={busy}
                       onClick={() => setAdding((s) => !s)}
                     >
@@ -641,8 +635,7 @@ export function TaskDetail() {
                             </button>
                           )}
                           <button
-                            className="btn-primary"
-                            style={{ width: 'auto', marginTop: 0 }}
+                            className="btn-primary btn-inline"
                             disabled={busy || p.steps.length === 0}
                             title={p.steps.length === 0 ? t('projects.addStepsFirst') : t('projects.runNamedTitle', { name: p.name })}
                             onClick={() => runPipeline(p)}

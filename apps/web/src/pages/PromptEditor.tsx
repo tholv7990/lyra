@@ -349,8 +349,7 @@ export function PromptEditor() {
               </button>
               <button
                 type="button"
-                className="btn-primary"
-                style={{ width: 'auto', marginTop: 0 }}
+                className="btn-primary btn-inline"
                 disabled={busy || !form.title.trim()}
                 onClick={async () => {
                   const ok = await persist();

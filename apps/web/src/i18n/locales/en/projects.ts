@@ -36,6 +36,7 @@ export default {
   noStepsYet: 'This pipeline has no steps yet. Add steps in the builder.',
   noDescription: 'No description yet — add one with Edit.',
   createdByOn: 'Created {{date}} by {{name}}',
+  createdLabel: 'Created',
   pipelineCount_one: 'pipeline',
   pipelineCount_other: 'pipelines',
   variableCount_one: 'variable',

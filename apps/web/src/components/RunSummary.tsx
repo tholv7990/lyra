@@ -16,10 +16,10 @@ function fmtCost(c?: number) {
 
 const STATUS_DOT: Record<string, string> = {
   idle: 'var(--ink-tertiary)',
-  running: '#d4a72c',
-  waiting: '#d4a72c',
-  done: '#2da44e',
-  error: '#e5484d',
+  running: 'var(--warning)',
+  waiting: 'var(--warning)',
+  done: 'var(--success)',
+  error: 'var(--danger)',
 };
 // Below the run canvas: surfaces the things you actually run a pipeline for —
 // the final deliverable, and a clear log of what each step did (incl. failures).
@@ -70,8 +70,7 @@ export function RunSummary({
             <span>{errored.error ?? t('run.stepIncomplete')}</span>
           </div>
           <button
-            className="btn-ghost run-error-retry"
-            style={{ width: 'auto', marginTop: 0 }}
+            className="btn-ghost run-error-retry btn-inline"
             disabled={busy}
             onClick={() => onRetry(errored.index)}
           >
@@ -85,12 +84,11 @@ export function RunSummary({
           <div className="run-final-head">
             <h3>{t('run.finalResult', { name: last?.name ? ` · ${last.name}` : '' })}</h3>
             <div className="run-final-actions">
-              <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} onClick={() => copy(finalResult)}>
+              <button className="btn-ghost btn-inline" onClick={() => copy(finalResult)}>
                 {copied ? t('common.copied') : t('common.copy')}
               </button>
               <button
-                className="btn-ghost"
-                style={{ width: 'auto', marginTop: 0 }}
+                className="btn-ghost btn-inline"
                 onClick={() => download(finalResult, `${(run.pipelineName ?? 'run').replace(/\s+/g, '-')}.md`)}
               >
                 {t('common.download')}

@@ -44,8 +44,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </button>
           <button
-            className={danger ? 'btn-danger' : 'btn-primary'}
-            style={{ width: 'auto', marginTop: 0 }}
+            className={`${danger ? 'btn-danger' : 'btn-primary'} btn-inline`}
             onClick={onConfirm}
             disabled={busy}
           >

@@ -211,7 +211,7 @@ export function ProjectEditor() {
                 </div>
               ))
             )}
-            <button className="btn-ghost pvars-add" style={{ width: 'auto', marginTop: 0 }} onClick={addVar}>
+            <button className="btn-ghost pvars-add btn-inline" onClick={addVar}>
               {t('projects.addVariable')}
             </button>
           </div>

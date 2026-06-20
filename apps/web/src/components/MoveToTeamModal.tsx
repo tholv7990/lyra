@@ -140,8 +140,7 @@ export function MoveToTeamModal({ projectId, teamWorkspaces, onClose }: Props) {
           </button>
           <button
             type="button"
-            className="btn-primary"
-            style={{ width: 'auto', marginTop: 0 }}
+            className="btn-primary btn-inline"
             disabled={busy || previewLoading || !preview || hasConflicts}
             onClick={() => void confirm()}
           >

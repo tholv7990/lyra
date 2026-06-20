@@ -42,8 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.error.message}
           </pre>
           <button
-            className="btn-primary"
-            style={{ width: 'auto', marginTop: 0 }}
+            className="btn-primary btn-inline"
             onClick={() => window.location.reload()}
           >
             {i18n.t('common.reload')}

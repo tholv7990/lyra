@@ -117,8 +117,7 @@ export function SaveAsPromptModal({
           </button>
           <button
             type="button"
-            className="btn-primary"
-            style={{ width: 'auto', marginTop: 0 }}
+            className="btn-primary btn-inline"
             disabled={busy || !title.trim() || !body.trim()}
             onClick={() => void save()}
           >

@@ -36,6 +36,7 @@ export default {
   noStepsYet: 'Pipeline này chưa có bước nào. Hãy thêm bước trong trình dựng.',
   noDescription: 'Chưa có mô tả — hãy thêm bằng cách chỉnh sửa.',
   createdByOn: 'Tạo ngày {{date}} bởi {{name}}',
+  createdLabel: 'Đã tạo',
   pipelineCount_one: 'pipeline',
   pipelineCount_other: 'pipeline',
   variableCount_one: 'biến',

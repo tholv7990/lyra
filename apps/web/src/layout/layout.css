@@ -883,11 +883,19 @@
 /* a whole row that's clickable (e.g. a recent run → opens it) */
 .row.clickable {
   cursor: pointer;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
 .row.clickable:hover {
   border-color: var(--hairline-strong);
   box-shadow: var(--shadow-md);
+}
+.row.clickable:active {
+  transform: translateY(1px);
+}
+.row.clickable:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
 }
 
 /* Project dashboard: section spacing + focused run-view header */
@@ -966,6 +974,32 @@
   border-color: var(--hairline);
   background: var(--card);
   box-shadow: var(--focus-ring);
+}
+
+/* Task status dropdown in the task header (keeps the native arrow). */
+.task-status-select {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.task-status-select:hover:not(:disabled) {
+  border-color: var(--hairline-strong);
+}
+.task-status-select:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+.task-status-select:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 .proj-head-top {
   display: flex;
@@ -1112,6 +1146,11 @@
 }
 .pipe-head:hover {
   background: var(--surface-1);
+}
+/* inset ring — the card clips overflow, so an outer box-shadow ring would be cut */
+.pipe-head:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 .pipe-chev {
   flex-shrink: 0;
@@ -8277,101 +8316,181 @@
   .notif-pop { top: 66px; left: 12px; right: 12px; width: auto; }
 }
 
-/* ===== Task board (project page) ===== */
-.task-board {
-  margin-top: 6px;
+/* ===== Project detail: two-pane layout + status-grouped task list ===== */
+
+/* Two-pane detail layout: content + a properties rail (Linear-style). Stacks to
+   one column under 900px — content first, rail below a hairline. */
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 248px;
+  gap: 40px;
+  align-items: start;
 }
-.task-board-head {
+.detail-main {
+  min-width: 0;
+}
+.detail-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+@media (max-width: 900px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .detail-main {
+    order: 1;
+  }
+  .detail-rail {
+    order: 2;
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hairline);
+  }
+}
+
+/* Properties rail rows — muted fixed-width label + value. */
+.prop {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.prop-k {
+  flex-shrink: 0;
+  width: 76px;
+  color: var(--ink-muted);
+}
+.prop-v {
+  min-width: 0;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.prop-block {
+  flex-direction: column;
+  gap: 8px;
+}
+.prop-empty {
+  color: var(--ink-tertiary);
+}
+.prop-action {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.detail-rail .proj-vars-view {
+  gap: 6px;
+}
+.detail-rail .proj-var-val {
+  max-width: 150px;
+}
+
+/* Task list — status section headers + dense Linear-style rows. */
+.tlist {
+  margin-top: 2px;
+}
+.tlist-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
-.task-board-head h2 {
+.tlist-head h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
-.task-add {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.task-add .text-input {
-  width: 200px;
-}
-.task-add-btn {
+.tlist-add {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
-.task-cols {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  align-items: start;
-}
-.task-col {
-  background: var(--surface-2);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  padding: 10px;
-  min-height: 80px;
-}
-.task-col-head {
+.tlist-add-form {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.tlist-add-form .text-input {
+  width: 220px;
+  max-width: 100%;
+}
+
+.tgroups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.tgroup-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 6px;
   font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--ink-muted);
 }
-.task-col-dot {
+.tgroup-dot {
   width: 8px;
   height: 8px;
   border-radius: 999px;
   flex-shrink: 0;
 }
-.task-col-count {
-  margin-left: auto;
+.tgroup-count {
   color: var(--ink-tertiary);
 }
-.task-col-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.tgroup-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-.task-card {
-  display: block;
+
+.trow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   text-align: left;
   cursor: pointer;
-  background: var(--surface-1);
-  border: 1px solid var(--hairline);
-  border-radius: 10px;
-  padding: 10px 12px;
+  padding: 9px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  transition: background 0.12s ease;
 }
-.task-card:hover {
-  border-color: var(--hairline-strong);
+.trow:hover {
+  background: var(--surface-2);
 }
-.task-card-name {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 600;
+.trow:active {
+  background: var(--surface-3);
+}
+.trow:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.trow-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.task-card-foot {
-  display: flex;
+.trow-meta {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 12px;
+  flex-shrink: 0;
 }
-.task-card-avatar {
+.trow-avatar {
   width: 22px;
   height: 22px;
   border-radius: 999px;
@@ -8381,13 +8500,40 @@
   font-weight: 600;
   flex-shrink: 0;
 }
-.task-card-pipes {
-  margin-left: auto;
-  font-size: 12px;
+.trow-pipes {
+  font-size: 12.5px;
   color: var(--ink-muted);
 }
-@media (max-width: 760px) {
-  .task-cols {
-    grid-template-columns: 1fr;
+.trow-chev {
+  color: var(--ink-tertiary);
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Task-list loading skeleton (no spinner). */
+.tlist-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.trow-skel {
+  pointer-events: none;
+  padding: 11px 12px;
+}
+.skel-line {
+  display: block;
+  height: 13px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: skel-shimmer 1.4s ease infinite;
+}
+@keyframes skel-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel-line {
+    animation: none;
   }
 }

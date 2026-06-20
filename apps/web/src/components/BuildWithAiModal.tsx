@@ -107,7 +107,7 @@ export function BuildWithAiModal({ wsId, onClose, current, onApply }: Props) {
             <span className="bwa-draft-info">
               ✨ <strong>{draft.name}</strong> · {t('pipelines.steps', { count: draft.steps.length })}
             </span>
-            <button type="button" className="btn-primary" style={{ width: 'auto', marginTop: 0 }} onClick={apply}>
+            <button type="button" className="btn-primary btn-inline" onClick={apply}>
               {t('pipelines.applyToBuilder')}
             </button>
           </div>
@@ -127,8 +127,7 @@ export function BuildWithAiModal({ wsId, onClose, current, onApply }: Props) {
           />
           <button
             type="button"
-            className="btn-primary bwa-send"
-            style={{ width: 'auto', marginTop: 0 }}
+            className="btn-primary bwa-send btn-inline"
             disabled={busy || !input.trim()}
             onClick={() => void send()}
           >

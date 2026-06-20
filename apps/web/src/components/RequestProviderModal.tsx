@@ -93,8 +93,7 @@ export function RequestProviderModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              style={{ width: 'auto', marginTop: 0 }}
+              className="btn-primary btn-inline"
               disabled={busy || !trimmed}
             >
               {busy ? t('settings.requestSending') : t('settings.requestSend')}

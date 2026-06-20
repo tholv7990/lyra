@@ -115,8 +115,7 @@ export function CopilotPanel({ wsId, onClose }: Props) {
             <span className="copilot-action-btns">
               <button
                 type="button"
-                className="btn-ghost"
-                style={{ width: 'auto', marginTop: 0 }}
+                className="btn-ghost btn-inline"
                 disabled={actBusy}
                 onClick={() => setPending((p) => p.filter((_, j) => j !== i))}
               >
@@ -124,8 +123,7 @@ export function CopilotPanel({ wsId, onClose }: Props) {
               </button>
               <button
                 type="button"
-                className="btn-primary"
-                style={{ width: 'auto', marginTop: 0 }}
+                className="btn-primary btn-inline"
                 disabled={actBusy}
                 onClick={() => void approveRun(a)}
               >
@@ -149,8 +147,7 @@ export function CopilotPanel({ wsId, onClose }: Props) {
           />
           <button
             type="button"
-            className="btn-primary bwa-send"
-            style={{ width: 'auto', marginTop: 0 }}
+            className="btn-primary bwa-send btn-inline"
             disabled={busy || !input.trim()}
             onClick={() => void send()}
           >

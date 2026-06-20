@@ -96,8 +96,7 @@ export function RequestTeamUpgradeModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              style={{ width: 'auto', marginTop: 0 }}
+              className="btn-primary btn-inline"
               disabled={busy || !trimmed}
             >
               {busy ? t('members.upgradeSending') : t('members.upgradeSend')}

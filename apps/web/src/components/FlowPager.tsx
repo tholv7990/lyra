@@ -47,11 +47,11 @@ export function FlowPagerControls({ pager, stepCount }: { pager: FlowPager; step
       : t('run.stepOf', { page, total: stepCount });
   return (
     <div className="flow-pager-bar">
-      <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={atStart} onClick={prev}>
+      <button className="btn-ghost btn-inline" disabled={atStart} onClick={prev}>
         ‹ {t('common.previous')}
       </button>
       <span className="flow-pager-label">{label}</span>
-      <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={atEnd} onClick={next}>
+      <button className="btn-ghost btn-inline" disabled={atEnd} onClick={next}>
         {t('common.next')} ›
       </button>
     </div>

@@ -119,20 +119,19 @@ export function RunStepCard(props: RunStepCardProps) {
         {(!locked && (step.status === StepStatus.Waiting || runnable)) || hasResult ? (
           <div className="rn-action">
             {!locked && step.status === StepStatus.Waiting && (
-              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onApprove}>
+              <button className="btn-primary btn-inline" disabled={busy} onClick={onApprove}>
                 {t('common.approve')}
               </button>
             )}
             {!locked && runnable && (
-              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onRun}>
+              <button className="btn-primary btn-inline" disabled={busy} onClick={onRun}>
                 {t('common.run')}
               </button>
             )}
             {hasResult && (
               <button
                 type="button"
-                className="btn-ghost rn-view"
-                style={{ width: 'auto', marginTop: 0 }}
+                className="btn-ghost rn-view btn-inline"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowResult(true);

@@ -23,8 +23,7 @@ export function PipelineVarsEditor({
     if (disabled) return null;
     return (
       <button
-        className="btn-ghost pvars-add pvars-empty"
-        style={{ width: 'auto', marginTop: 0 }}
+        className="btn-ghost pvars-add pvars-empty btn-inline"
         onClick={add}
         title={t('common.defineVariableTitle')}
       >
@@ -72,7 +71,7 @@ export function PipelineVarsEditor({
         </div>
       ))}
       {!disabled && (
-        <button className="btn-ghost pvars-add" style={{ width: 'auto', marginTop: 0 }} onClick={add}>
+        <button className="btn-ghost pvars-add btn-inline" onClick={add}>
           + {t('common.addVariable')}
         </button>
       )}

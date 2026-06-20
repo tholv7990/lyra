@@ -498,6 +498,14 @@ select.text-input {
   cursor: not-allowed;
 }
 
+/* Inline button modifier: opt out of .btn-primary's full-width/stacked default
+   for buttons that sit in a toolbar or row (replaces the inline width/margin
+   override that was copy-pasted across the app). */
+.btn-inline {
+  width: auto;
+  margin-top: 0;
+}
+
 .error {
   color: var(--danger);
   font-size: 13px;

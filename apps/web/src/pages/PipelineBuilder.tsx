@@ -518,8 +518,7 @@ export function PipelineBuilder() {
             )}
             {!isNew && (
               <button
-                className="btn-primary"
-                style={{ width: 'auto', marginTop: 0 }}
+                className="btn-primary btn-inline"
                 disabled={steps.length === 0 || creatingRun || saving}
                 onClick={triggerTest}
                 title={t('pipelines.testHint')}
@@ -547,13 +546,13 @@ export function PipelineBuilder() {
             <span className="run-bar-proj"><strong>{t('pipelines.testRun')}</strong></span>
             <span className={`badge status-${run.status}`}>{RUN_STATUS_LABEL_KEY[run.status] ? t(RUN_STATUS_LABEL_KEY[run.status]) : run.status}</span>
             <div className="run-view-actions">
-              <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
+              <button className="btn-primary btn-inline" disabled={runActions.busy || run.status === 'done'} onClick={runActions.runAll}>
                 {t('run.runAll')}
               </button>
-              <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
+              <button className="btn-ghost btn-inline" disabled={runActions.busy || run.status !== 'running'} onClick={runActions.stop}>
                 {t('run.stop')}
               </button>
-              <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={runActions.busy} onClick={runActions.reset}>
+              <button className="btn-ghost btn-inline" disabled={runActions.busy} onClick={runActions.reset}>
                 {t('run.reset')}
               </button>
             </div>

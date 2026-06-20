@@ -83,10 +83,10 @@ export function RunVariablesModal({
           ))}
         </div>
         <div className="runvars-actions">
-          <button className="btn-ghost" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={onCancel}>
+          <button className="btn-ghost btn-inline" disabled={busy} onClick={onCancel}>
             {t('common.cancel')}
           </button>
-          <button className="btn-primary" style={{ width: 'auto', marginTop: 0 }} disabled={busy} onClick={submit}>
+          <button className="btn-primary btn-inline" disabled={busy} onClick={submit}>
             {busy ? t('run.starting') : t('run.runButton')}
           </button>
         </div>
