@@ -53,6 +53,7 @@ export class MarketplaceController {
     @Query('type') type?: string | string[],
     @Query('category') category?: string | string[],
     @Query('tag') tag?: string | string[],
+    @Query('sort') sort?: string,
   ): Promise<Paged<MarketplacePrompt>> {
     const p = Math.max(1, parseInt(page ?? '1', 10) || 1);
     const l = Math.min(100, Math.max(1, parseInt(limit ?? '30', 10) || 30));
@@ -65,6 +66,7 @@ export class MarketplaceController {
       types: listQuery(type),
       categories: listQuery(category),
       tags: listQuery(tag),
+      sort: sort === 'newest' ? 'newest' : 'az',
       page: p,
       limit: l,
     });

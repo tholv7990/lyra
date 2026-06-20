@@ -503,11 +503,18 @@ export interface RankedMarketplacePrompt {
 }
 
 // Filter vocabularies for the marketplace browse filter (distinct categories +
-// tags across the catalog).
+// tags across the catalog), plus per-category counts + the catalog total that
+// drive the category-pill row.
 export interface MarketplaceFacets {
   categories: string[];
   tags: string[];
+  total: number;
+  categoryCounts: { name: string; count: number }[];
 }
+
+// Browse sort order. ("Most adopted" needs adoption tracking the catalog doesn't
+// have yet, so it's intentionally absent.)
+export type MarketplaceSort = 'az' | 'newest';
 
 // ===== Super-admin panel =====
 // Per-user usage counts (items the user created), shown in the admin user detail.

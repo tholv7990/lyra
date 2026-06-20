@@ -26,6 +26,7 @@ export interface MarketplaceListOptions {
   types?: string[];
   categories?: string[];
   tags?: string[];
+  sort?: 'az' | 'newest';
   page: number;
   limit: number;
 }
@@ -110,10 +111,14 @@ export class MarketplaceService {
       filter.tags = { $in: opts.tags.map((tag) => new RegExp(`^${escapeRegex(tag)}$`, 'i')) };
     }
 
+    // newest = createdAt desc (tiebreak title); default = title asc (A–Z).
+    const order: Record<string, 1 | -1> =
+      opts.sort === 'newest' ? { createdAt: -1, title: 1 } : { title: 1 };
+
     const total = await this.model.countDocuments(filter).exec();
     const docs = await this.model
       .find(filter)
-      .sort({ title: 1 })
+      .sort(order)
       .skip((opts.page - 1) * opts.limit)
       .limit(opts.limit)
       .exec();
@@ -128,15 +133,26 @@ export class MarketplaceService {
   // Filter vocabularies for the browse filter: distinct non-empty categories +
   // tags across the whole catalog, each sorted ascending.
   async facets(): Promise<MarketplaceFacets> {
-    const [categories, tags] = await Promise.all([
+    const [categories, tags, grouped, total] = await Promise.all([
       this.model.distinct('category').exec() as Promise<unknown[]>,
       this.model.distinct('tags').exec() as Promise<unknown[]>,
+      this.model
+        .aggregate<{ _id: string; count: number }>([
+          { $match: { category: { $type: 'string', $ne: '' } } },
+          { $group: { _id: '$category', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+        ])
+        .exec(),
+      this.model.countDocuments().exec(),
     ]);
     const clean = (values: unknown[]): string[] =>
       (values.filter((v): v is string => typeof v === 'string' && v.trim() !== '')).sort(
         (a, b) => a.localeCompare(b),
       );
-    return { categories: clean(categories), tags: clean(tags) };
+    const categoryCounts = grouped
+      .filter((g) => typeof g._id === 'string' && g._id.trim() !== '')
+      .map((g) => ({ name: g._id, count: g.count }));
+    return { categories: clean(categories), tags: clean(tags), total, categoryCounts };
   }
 
   // Adopt a catalog item into the workspace library: create a real Prompt

@@ -1,10 +1,22 @@
 export default {
-  // Page heading (sr-only landmark)
+  // Page heading
   heading: 'Chợ câu lệnh',
-  subtitle: 'Duyệt câu lệnh cộng đồng, để AI tìm đúng cái bạn cần và thêm vào thư viện.',
+  subtitle:
+    'Danh mục câu lệnh có sẵn từ cộng đồng. Tìm một cái, rồi thêm vào thư viện workspace chỉ với một cú nhấp.',
+
+  // Category pills + sort + result meta
+  allCategories: 'Tất cả',
+  sortLabel: 'Sắp xếp',
+  sortNewest: 'Mới nhất',
+  sortAz: 'A–Z',
+  showingRange: 'Hiển thị {{start}}–{{end}} trong {{total}} câu lệnh',
 
   // AI filter
   aiSearch: 'AI',
+  aiRank: 'Xếp hạng AI',
+  aiBannerTitle: 'Xếp hạng AI đang bật.',
+  aiBannerBody: 'Các thẻ được chấm điểm 0–100 theo tìm kiếm của bạn và sắp xếp theo mức phù hợp nhất.',
+  match: 'Phù hợp',
   aiSearchHint: 'Tìm prompt phù hợp bằng AI (dùng nội dung tìm kiếm)',
   aiRunning: 'Đang xếp hạng…',
   aiResultsFor: 'AI gợi ý cho “{{query}}”',
@@ -15,12 +27,17 @@ export default {
 
   // Browse mode
   searchPlaceholder: 'Tìm trong danh mục…',
+  aiPlaceholder: 'Mô tả điều bạn cần — AI sẽ xếp hạng danh mục…',
 
-  // Browse filter popover (Type / Category / Tags)
+  // Browse filter popover (Type / For developers)
   filter: 'Bộ lọc',
   filterType: 'Loại',
   filterCategory: 'Danh mục',
   filterTags: 'Thẻ',
+  filterForDevs: 'Cho nhà phát triển',
+  preview: 'Xem trước',
+  adopt: 'Thêm',
+  done: 'Xong',
 
   // Card
   by: 'bởi {{name}}',

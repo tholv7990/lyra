@@ -2,6 +2,7 @@ import { api } from './api';
 import type {
   MarketplaceFacets,
   MarketplacePrompt,
+  MarketplaceSort,
   Paged,
   Prompt,
   RankedMarketplacePrompt,
@@ -17,6 +18,7 @@ interface ListParams {
   types?: string[];
   categories?: string[];
   tags?: string[];
+  sort?: MarketplaceSort;
 }
 
 export const marketplaceApi = {
@@ -24,7 +26,7 @@ export const marketplaceApi = {
   // default (mixed) catalog is returned when the filter is off. Multi-select
   // type/category/tag filters are sent as repeated params (`type`/`category`/
   // `tag`) — same encoding the prompts list uses, matching the api.
-  list: (ws: string, { page, limit, q, forDevs, types, categories, tags }: ListParams = {}) => {
+  list: (ws: string, { page, limit, q, forDevs, types, categories, tags, sort }: ListParams = {}) => {
     const params = new URLSearchParams();
     if (page != null) params.set('page', String(page));
     if (limit != null) params.set('limit', String(limit));
@@ -33,6 +35,7 @@ export const marketplaceApi = {
     types?.forEach((ty) => params.append('type', ty));
     categories?.forEach((c) => params.append('category', c));
     tags?.forEach((tag) => params.append('tag', tag));
+    if (sort) params.set('sort', sort);
     const qs = params.toString();
     return api<Paged<MarketplacePrompt>>(`${base(ws)}/prompts${qs ? `?${qs}` : ''}`);
   },

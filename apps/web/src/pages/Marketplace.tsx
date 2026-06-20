@@ -7,22 +7,25 @@ import {
   labelColor,
   type MarketplaceFacets,
   type MarketplacePrompt,
+  type MarketplaceSort,
   type RankedMarketplacePrompt,
 } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useAuth } from '../auth/useAuth';
+import { initials } from '../lib/format';
 import { marketplaceApi } from '../lib/marketplace';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
+import { Checkbox } from '../components/Checkbox';
 import { MarketplaceDetails } from '../components/MarketplaceDetails';
 import {
-  ChatsIcon,
   CheckIcon,
   CopyIcon,
   EyeIcon,
+  FilterIcon,
   MarketplaceIcon,
   PlusIcon,
   SparkleIcon,
@@ -30,14 +33,20 @@ import {
 import './marketplace.css';
 
 const PAGE_SIZE = 30;
-
-// Catalog types are a small fixed vocabulary (mirrors the marketplace schema).
 const TYPE_VALUES = ['text', 'structured'] as const;
-// Tags can be a long list — collapse them behind a <details> like Prompts does.
-const TAG_COLLAPSE_THRESHOLD = 8;
 
 // Tracks the adopt state of a single row so the action can flip to "Added".
 type AdoptState = 'idle' | 'busy' | 'done';
+
+// Inline search glyph (no shared SearchIcon yet) — matches the design's search box.
+function SearchGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+      <circle cx="7" cy="7" r="4.4" />
+      <path d="m10.4 10.4 3 3" />
+    </svg>
+  );
+}
 
 export function Marketplace() {
   const { t } = useTranslation();
@@ -45,8 +54,7 @@ export function Marketplace() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const ws = current?.id;
-  // Unverified password signups can browse the marketplace but not adopt (the api
-  // blocks it too); the "Add" action is disabled until they confirm their email.
+  // Unverified password signups can browse but not adopt (the api blocks it too).
   const unverified = user?.emailVerified === false;
 
   // Browse state
@@ -57,18 +65,23 @@ export function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Browse filters (Linear-style: search always visible, type/category/tag
-  // added via the + Filter popover). Multi-select each.
+  // Filters: category is a single-select pill row; Type + For-developers live in
+  // the Filter popover; sort drives the result order.
+  const [category, setCategory] = useState('');
   const [types, setTypes] = useState<string[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [facets, setFacets] = useState<MarketplaceFacets>({ categories: [], tags: [] });
+  const [forDevs, setForDevs] = useState(false);
+  const [sort, setSort] = useState<MarketplaceSort>('az');
+  const [facets, setFacets] = useState<MarketplaceFacets>({
+    categories: [],
+    tags: [],
+    total: 0,
+    categoryCounts: [],
+  });
   const [filterMenu, setFilterMenu] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  // AI-filter state. `ranked` non-null = we're in AI-results mode (browse hidden).
+  // AI-rank state. `ranked` non-null = AI-results mode (pills/meta/pager hidden).
   const [ranked, setRanked] = useState<RankedMarketplacePrompt[] | null>(null);
-  const [rankedFor, setRankedFor] = useState('');
   const [ranking, setRanking] = useState(false);
 
   // Per-card adopt state, transient copy confirmation, and a toast.
@@ -76,17 +89,17 @@ export function Marketplace() {
   const [copied, setCopied] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  // The catalog prompt shown in the detail modal (null = closed).
   const [detail, setDetail] = useState<MarketplacePrompt | null>(null);
-
-  // Pending adopt — gates the "Add" action behind a confirm to avoid accidents.
   const [confirmAdopt, setConfirmAdopt] = useState<MarketplacePrompt | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filterCount = types.length + categories.length + tags.length;
-  const hasFilters = filterCount > 0 || !!q.trim();
+  const filterCount = types.length + (forDevs ? 1 : 0);
+  const hasFilters = filterCount > 0 || !!category || !!q.trim();
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
+  const showRanked = ranked !== null;
 
-  useEffect(() => setPage(1), [q, types, categories, tags]);
+  useEffect(() => setPage(1), [q, types, category, forDevs, sort]);
 
   // Load the browse catalog (skipped while AI results are showing).
   useEffect(() => {
@@ -96,7 +109,15 @@ export function Marketplace() {
     setError(null);
     const timer = setTimeout(() => {
       marketplaceApi
-        .list(ws, { page, limit: PAGE_SIZE, q, types, categories, tags })
+        .list(ws, {
+          page,
+          limit: PAGE_SIZE,
+          q,
+          types,
+          categories: category ? [category] : [],
+          forDevs: forDevs || undefined,
+          sort,
+        })
         .then((res) => {
           if (cancelled) return;
           setItems(res.items);
@@ -113,10 +134,9 @@ export function Marketplace() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [ws, page, q, types, categories, tags, ranked, t]);
+  }, [ws, page, q, types, category, forDevs, sort, ranked, t]);
 
-  // Load filter vocabularies once per workspace (categories + tags across the
-  // whole catalog) so the popover options stay stable as other filters narrow.
+  // Load facets (categories + per-category counts + total) once per workspace.
   useEffect(() => {
     if (!ws) return;
     let cancelled = false;
@@ -129,17 +149,12 @@ export function Marketplace() {
     };
   }, [ws]);
 
-  // Close the filter popover on outside click or Escape (a11y, mirrors Prompts).
   useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
   useEffect(() => {
     if (!filterMenu) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setFilterMenu(false);
-    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFilterMenu(false);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [filterMenu]);
 
   const runRank = useCallback(async () => {
@@ -150,10 +165,7 @@ export function Marketplace() {
     try {
       const res = await marketplaceApi.rank(ws, query, PAGE_SIZE);
       setRanked(res);
-      setRankedFor(query);
     } catch (err) {
-      // The api returns a friendly 400 when no Anthropic key is configured —
-      // surface that message verbatim.
       setError(err instanceof Error ? err.message : t('marketplace.errRank'));
     } finally {
       setRanking(false);
@@ -162,8 +174,13 @@ export function Marketplace() {
 
   function clearRank() {
     setRanked(null);
-    setRankedFor('');
     setError(null);
+  }
+
+  // AI rank toggles: off → rank the current query; on → back to browse.
+  function toggleAi() {
+    if (showRanked) clearRank();
+    else void runRank();
   }
 
   async function adoptPrompt(p: MarketplacePrompt) {
@@ -176,13 +193,10 @@ export function Marketplace() {
       window.setTimeout(() => setToast(null), 3200);
     } catch (err) {
       setAdopt((s) => ({ ...s, [p.id]: 'idle' }));
-      // Friendly 400 (e.g. missing Anthropic key) bubbles up here too.
       setError(err instanceof Error ? err.message : t('marketplace.errAdopt'));
     }
   }
 
-  // Copy the raw prompt to the clipboard — the grab-and-go action this catalog
-  // is built around. Flips the icon to a check for a beat.
   function copyPrompt(p: MarketplacePrompt) {
     void navigator.clipboard?.writeText(p.content);
     setCopied(p.id);
@@ -191,8 +205,6 @@ export function Marketplace() {
     window.setTimeout(() => setCopied((c) => (c === p.id ? null : c)), 1500);
   }
 
-  // Try the prompt immediately in a fresh chat (composer pre-seeded). Not a
-  // library prompt yet, so no originPromptId — just a draft with a back-link.
   function openInChat(p: MarketplacePrompt) {
     navigate('/chats', {
       state: {
@@ -204,7 +216,6 @@ export function Marketplace() {
     });
   }
 
-  const showRanked = ranked !== null;
   const rankedEmpty = showRanked && ranked!.length === 0;
 
   const card = (p: MarketplacePrompt, rank?: RankedMarketplacePrompt) => (
@@ -218,157 +229,142 @@ export function Marketplace() {
       onAdopt={() => setConfirmAdopt(p)}
       onView={() => setDetail(p)}
       onCopy={() => copyPrompt(p)}
-      onOpenInChat={() => openInChat(p)}
       t={t}
     />
   );
 
-  return (
-    <div>
-      <h1 className="sr-only">{t('marketplace.heading')}</h1>
+  // Category pills: All (catalog total) + each category with its count.
+  const pills = [
+    { key: '', label: t('marketplace.allCategories'), count: facets.total },
+    ...facets.categoryCounts.map((c) => ({ key: c.name, label: c.name, count: c.count })),
+  ];
 
-      {/* Browse toolbar — search · AI (ranks the search text) · Filter.
-          Hidden while AI results are showing. */}
-      {!showRanked && (
-        <form
-          className="lin-toolbar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void runRank();
-          }}
-        >
+  return (
+    <div className="mkt-page">
+      <header className="mkt-head">
+        <h1>{t('marketplace.heading')}</h1>
+        <p>{t('marketplace.subtitle')}</p>
+      </header>
+
+      {/* Toolbar — search · AI rank (toggle) · Filter. */}
+      <div className="mkt-toolbar">
+        <label className="mkt-search">
+          <SearchGlyph />
           <input
-            className="lin-search"
-            placeholder={t('marketplace.searchPlaceholder')}
             value={q}
+            placeholder={showRanked ? t('marketplace.aiPlaceholder') : t('marketplace.searchPlaceholder')}
             onChange={(e) => setQ(e.target.value)}
             aria-label={t('marketplace.searchPlaceholder')}
           />
+        </label>
+        <button
+          type="button"
+          className={`mkt-tool-btn mkt-ai-toggle${showRanked ? ' active' : ''}`}
+          onClick={toggleAi}
+          disabled={!showRanked && (ranking || !q.trim())}
+          title={t('marketplace.aiSearchHint')}
+        >
+          <SparkleIcon width={15} height={15} />
+          {ranking ? t('marketplace.aiRunning') : t('marketplace.aiRank')}
+        </button>
+        <div className="mkt-filter" ref={filterRef}>
           <button
-            type="submit"
-            className="mkt-ai-btn"
-            disabled={ranking || !q.trim()}
-            title={t('marketplace.aiSearchHint')}
+            type="button"
+            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
+            aria-expanded={filterMenu}
+            aria-haspopup="true"
+            onClick={() => setFilterMenu((s) => !s)}
           >
-            <SparkleIcon width={14} height={14} />
-            {ranking ? t('marketplace.aiRunning') : t('marketplace.aiSearch')}
+            <FilterIcon width={15} height={15} />
+            {t('marketplace.filter')}
+            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
           </button>
-          <div className="lin-filter" ref={filterRef}>
-            <button
-              type="button"
-              className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
-              aria-expanded={filterMenu}
-              aria-haspopup="true"
-              onClick={() => setFilterMenu((s) => !s)}
-            >
-              + {t('marketplace.filter')}
-              {filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
-            </button>
-            {filterMenu && (
-              <div className="lin-menu" role="menu">
-                <div className="lin-menu-actions">
-                  <button
-                    type="button"
-                    className="lin-menu-clear"
-                    disabled={filterCount === 0}
-                    onClick={() => {
-                      setTypes([]);
-                      setCategories([]);
-                      setTags([]);
-                    }}
-                  >
-                    {t('marketplace.clear')}
-                  </button>
-                </div>
-
-                <div className="lin-menu-label">{t('marketplace.filterType')}</div>
-                {TYPE_VALUES.map((ty) => (
-                  <button
-                    key={ty}
-                    type="button"
-                    className="lin-menu-item"
-                    onClick={() => setTypes((list) => toggleInList(list, ty))}
-                  >
-                    {ty === 'structured'
-                      ? t('marketplace.typeStructured')
-                      : t('marketplace.typeText')}
-                    {types.includes(ty) && <span className="lin-menu-check">✓</span>}
-                  </button>
-                ))}
-
-                {facets.categories.length > 0 && (
-                  <>
-                    <div className="lin-menu-label">{t('marketplace.filterCategory')}</div>
-                    {facets.categories.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className="lin-menu-item"
-                        onClick={() => setCategories((list) => toggleInList(list, c))}
-                      >
-                        <span className="dot" style={{ background: labelColor(c, []) }} />
-                        {c}
-                        {categories.includes(c) && <span className="lin-menu-check">✓</span>}
-                      </button>
-                    ))}
-                  </>
-                )}
-
-                {facets.tags.length > 0 &&
-                  (facets.tags.length > TAG_COLLAPSE_THRESHOLD ? (
-                    <details className="lin-menu-section">
-                      <summary className="lin-menu-summary">
-                        <span>{t('marketplace.filterTags')}</span>
-                        {tags.length > 0 && (
-                          <span className="lin-menu-summary-count">{tags.length}</span>
-                        )}
-                      </summary>
-                      {facets.tags.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          className="lin-menu-item"
-                          onClick={() => setTags((list) => toggleInList(list, tag))}
-                        >
-                          <span className="dot" style={{ background: labelColor(tag, []) }} />
-                          {tag}
-                          {tags.includes(tag) && <span className="lin-menu-check">✓</span>}
-                        </button>
-                      ))}
-                    </details>
-                  ) : (
-                    <>
-                      <div className="lin-menu-label">{t('marketplace.filterTags')}</div>
-                      {facets.tags.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          className="lin-menu-item"
-                          onClick={() => setTags((list) => toggleInList(list, tag))}
-                        >
-                          <span className="dot" style={{ background: labelColor(tag, []) }} />
-                          {tag}
-                          {tags.includes(tag) && <span className="lin-menu-check">✓</span>}
-                        </button>
-                      ))}
-                    </>
-                  ))}
+          {filterMenu && (
+            <div className="mkt-filter-menu" role="menu">
+              <div className="mkt-filter-label">{t('marketplace.filterType')}</div>
+              {TYPE_VALUES.map((ty) => (
+                <Checkbox
+                  key={ty}
+                  checked={types.includes(ty)}
+                  onChange={() => setTypes((list) => toggleInList(list, ty))}
+                  label={ty === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
+                />
+              ))}
+              <div className="mkt-filter-sep" />
+              <Checkbox
+                checked={forDevs}
+                onChange={() => setForDevs((v) => !v)}
+                label={t('marketplace.filterForDevs')}
+              />
+              <div className="mkt-filter-foot">
+                <button
+                  type="button"
+                  className="btn-ghost btn-inline btn-sm"
+                  disabled={filterCount === 0}
+                  onClick={() => {
+                    setTypes([]);
+                    setForDevs(false);
+                  }}
+                >
+                  {t('marketplace.clear')}
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary btn-inline btn-sm"
+                  onClick={() => setFilterMenu(false)}
+                >
+                  {t('marketplace.done')}
+                </button>
               </div>
-            )}
-          </div>
-        </form>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* AI banner */}
+      {showRanked && !rankedEmpty && (
+        <div className="mkt-banner">
+          <SparkleIcon width={16} height={16} />
+          <span>
+            <strong>{t('marketplace.aiBannerTitle')}</strong> {t('marketplace.aiBannerBody')}
+          </span>
+        </div>
       )}
 
-      {/* AI results header */}
-      {showRanked && (
-        <div className="mkt-ai-head">
-          <div className="mkt-ai-head-text">
-            <span className="mkt-ai-title">{t('marketplace.aiResultsFor', { query: rankedFor })}</span>
-            <span className="mkt-ai-hint">{t('marketplace.aiHint')}</span>
-          </div>
-          <button type="button" className="btn-ghost btn-sm" onClick={clearRank}>
-            {t('marketplace.browseAll')}
-          </button>
+      {/* Category pills (browse only) */}
+      {!showRanked && pills.length > 1 && (
+        <div className="mkt-pills">
+          {pills.map((p) => (
+            <button
+              key={p.key || 'all'}
+              type="button"
+              className={`mkt-pill${category === p.key ? ' active' : ''}`}
+              onClick={() => setCategory(p.key)}
+            >
+              {p.label}
+              <span className="mkt-pill-count">{p.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Result meta + sort (browse only) */}
+      {!showRanked && !loading && total > 0 && (
+        <div className="mkt-meta">
+          <span className="mkt-meta-count">
+            {t('marketplace.showingRange', { start: rangeStart, end: rangeEnd, total })}
+          </span>
+          <label className="mkt-sort">
+            {t('marketplace.sortLabel')}
+            <select
+              className="mkt-sort-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as MarketplaceSort)}
+            >
+              <option value="newest">{t('marketplace.sortNewest')}</option>
+              <option value="az">{t('marketplace.sortAz')}</option>
+            </select>
+          </label>
         </div>
       )}
 
@@ -397,13 +393,32 @@ export function Marketplace() {
         <>
           <div className="mkt-grid">{items.map((p) => card(p))}</div>
           {totalPages > 1 && (
-            <div className="pager">
-              <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
-                ← {t('marketplace.prev')}
+            <div className="mkt-pager">
+              <button
+                type="button"
+                className="mkt-page-btn"
+                disabled={page <= 1}
+                onClick={() => setPage((n) => n - 1)}
+              >
+                ‹ {t('marketplace.prev')}
               </button>
-              <span className="pager-info">{t('marketplace.pagerInfo', { page, totalPages, total })}</span>
-              <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
-                {t('marketplace.next')} →
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`mkt-page-num${n === page ? ' active' : ''}`}
+                  onClick={() => setPage(n)}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="mkt-page-btn"
+                disabled={page >= totalPages}
+                onClick={() => setPage((n) => n + 1)}
+              >
+                {t('marketplace.next')} ›
               </button>
             </div>
           )}
@@ -448,111 +463,120 @@ interface CardProps {
   prompt: MarketplacePrompt;
   rank?: RankedMarketplacePrompt;
   state: AdoptState;
-  locked?: boolean; // unverified email → adopt disabled
+  locked?: boolean;
   copied: boolean;
   onAdopt: () => void;
   onView: () => void;
   onCopy: () => void;
-  onOpenInChat: () => void;
   t: TFn;
 }
 
-// One catalog entry as a browsable card — prompts.chat-style gallery in the
-// app's own tokens. Title/body open the detail modal; copy / open-in-chat /
-// adopt are the grab-and-go actions.
-function Card({ prompt, rank, state, locked, copied, onAdopt, onView, onCopy, onOpenInChat, t }: CardProps) {
+// One catalog entry — badges, title + desc, optional AI score, mono preview,
+// tags/vars, then a footer of contributor + Preview / Copy / Adopt.
+function Card({ prompt, rank, state, locked, copied, onAdopt, onView, onCopy, t }: CardProps) {
   const contributor = prompt.contributor?.trim();
   const done = state === 'done';
+  const catColor = prompt.category ? labelColor(prompt.category, []) : undefined;
   return (
     <article className="mkt-card">
-      <div className="mkt-card-head">
-        <button type="button" className="mkt-card-title" onClick={onView} title={t('marketplace.view')}>
-          <span className="nm">{prompt.title}</span>
-        </button>
-        <span className="mkt-card-badges">
-          {prompt.category && <span className="badge mkt-cat">{prompt.category}</span>}
-          <span className="badge mkt-type">
-            {prompt.type === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
+      <div className="mkt-card-badges">
+        {prompt.category && (
+          <span className="mkt-cat-pill">
+            <span className="mkt-dot" style={{ background: catColor }} />
+            {prompt.category}
           </span>
+        )}
+        <span className="mkt-type-pill">
+          {prompt.type === 'structured' ? t('marketplace.typeStructured') : t('marketplace.typeText')}
         </span>
       </div>
 
+      <button type="button" className="mkt-card-title" onClick={onView} title={t('marketplace.view')}>
+        {prompt.title}
+      </button>
+      {prompt.description && (
+        <p className="mkt-card-desc" onClick={onView}>
+          {prompt.description}
+        </p>
+      )}
+
       {rank && (
-        <div className="mkt-rank">
-          <span className="mkt-rank-score">{t('marketplace.relevance', { score: Math.round(rank.score) })}</span>
-          {rank.reason && <span className="mkt-rank-reason">{rank.reason}</span>}
+        <div className="mkt-score">
+          <span className="mkt-score-num">{Math.round(rank.score)}</span>
+          {rank.reason && (
+            <span className="mkt-score-reason">
+              <strong>{t('marketplace.match')} · </strong>
+              {rank.reason}
+            </span>
+          )}
         </div>
       )}
 
-      {prompt.description && <p className="mkt-card-desc" onClick={onView}>{prompt.description}</p>}
-
-      {/* Prompt preview in a monospace code-block (prompts.chat's signature look);
-          a plain block clamps reliably, title + eye are the accessible openers. */}
       <p className="mkt-card-code" onClick={onView} title={t('marketplace.view')}>
         {prompt.content}
       </p>
 
-      {prompt.tags.length > 0 && (
-        <div className="mkt-card-tags">
+      {(prompt.tags.length > 0 || prompt.variables.length > 0) && (
+        <div className="mkt-card-chips">
           {prompt.tags.map((tag) => {
             const c = labelColor(tag, []);
             return (
-              <span
-                key={tag}
-                className="mkt-tag"
-                style={{ background: `${c}1f`, borderColor: `${c}3a` }}
-              >
-                <span className="mkt-tag-dot" style={{ background: c }} />
+              <span key={tag} className="mkt-chip">
+                <span className="mkt-dot" style={{ background: c }} />
                 {tag}
               </span>
             );
           })}
-        </div>
-      )}
-
-      {prompt.variables.length > 0 && (
-        <div className="mkt-card-vars">
-          {prompt.variables.slice(0, 5).map((v) => (
-            <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
+          {prompt.variables.slice(0, 4).map((v) => (
+            <span key={v} className="mkt-var-chip">{`{${v}}`}</span>
           ))}
-          {prompt.variables.length > 5 && <span className="more">+{prompt.variables.length - 5}</span>}
         </div>
       )}
 
       <div className="mkt-card-foot">
-        <span className="mkt-card-by" title={t('marketplace.openSource', { source: prompt.source })}>
-          {contributor ? t('marketplace.by', { name: contributor }) : t('marketplace.byUnknown')}
+        <span className="mkt-by" title={t('marketplace.openSource', { source: prompt.source })}>
+          <span
+            className="mkt-by-avatar"
+            style={{ background: labelColor(contributor || prompt.source, []), color: 'var(--on-accent)' }}
+            aria-hidden
+          >
+            {initials(contributor || prompt.source)}
+          </span>
+          <span className="mkt-by-name">
+            {contributor || t('marketplace.byUnknown')}
+          </span>
         </span>
         <div className="mkt-card-actions">
           <IconButton
+            boxed
+            size="sm"
+            icon={<EyeIcon width={15} height={15} />}
+            label={t('marketplace.preview')}
+            onClick={onView}
+          />
+          <IconButton
+            boxed
             size="sm"
             icon={copied ? <CheckIcon width={15} height={15} /> : <CopyIcon width={15} height={15} />}
             label={copied ? t('marketplace.copied') : t('marketplace.copy')}
             onClick={onCopy}
           />
-          <IconButton
-            size="sm"
-            icon={<ChatsIcon width={15} height={15} />}
-            label={t('marketplace.openInChat')}
-            onClick={onOpenInChat}
-          />
-          <IconButton
-            size="sm"
-            icon={<EyeIcon width={15} height={15} />}
-            label={t('marketplace.view')}
-            onClick={onView}
-          />
           {done ? (
-            <span className="mkt-added">{t('marketplace.added')}</span>
+            <span className="mkt-added">
+              <CheckIcon width={14} height={14} />
+              {t('marketplace.added')}
+            </span>
           ) : (
-            <IconButton
-              variant="primary"
-              size="sm"
-              icon={<PlusIcon width={14} height={14} />}
-              label={locked ? t('marketplace.confirmEmailToAdd') : state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
+            <button
+              type="button"
+              className="btn-primary btn-inline btn-sm mkt-adopt"
               disabled={state === 'busy' || !!locked}
+              title={locked ? t('marketplace.confirmEmailToAdd') : undefined}
               onClick={onAdopt}
-            />
+            >
+              <PlusIcon width={14} height={14} />
+              {state === 'busy' ? t('marketplace.adding') : t('marketplace.adopt')}
+            </button>
           )}
         </div>
       </div>

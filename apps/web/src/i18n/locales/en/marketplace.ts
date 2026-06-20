@@ -1,10 +1,22 @@
 export default {
-  // Page heading (sr-only landmark)
+  // Page heading
   heading: 'Prompt Marketplace',
-  subtitle: 'Browse community prompts, let AI find the right one, and add it to your library.',
+  subtitle:
+    'A community catalog of ready-made prompts. Find one, then adopt it into your workspace library in a click.',
+
+  // Category pills + sort + result meta
+  allCategories: 'All',
+  sortLabel: 'Sort',
+  sortNewest: 'Newest',
+  sortAz: 'A–Z',
+  showingRange: 'Showing {{start}}–{{end}} of {{total}} prompts',
 
   // AI filter
   aiSearch: 'AI',
+  aiRank: 'AI rank',
+  aiBannerTitle: 'AI rank is on.',
+  aiBannerBody: 'Cards are scored 0–100 against your search and sorted by best match.',
+  match: 'Match',
   aiSearchHint: 'Find matching prompts with AI (uses the search text)',
   aiRunning: 'Ranking…',
   aiResultsFor: 'AI picks for “{{query}}”',
@@ -15,12 +27,17 @@ export default {
 
   // Browse mode
   searchPlaceholder: 'Search the catalog…',
+  aiPlaceholder: 'Describe what you need — AI ranks the catalog…',
 
-  // Browse filter popover (Type / Category / Tags)
+  // Browse filter popover (Type / For developers)
   filter: 'Filter',
   filterType: 'Type',
   filterCategory: 'Category',
   filterTags: 'Tags',
+  filterForDevs: 'For developers',
+  preview: 'Preview',
+  adopt: 'Adopt',
+  done: 'Done',
 
   // Card
   by: 'by {{name}}',
