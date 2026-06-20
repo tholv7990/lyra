@@ -987,10 +987,10 @@
 }
 
 /* Linear-style status control: an icon + label trigger that opens a state menu. */
-.task-status-wrap {
+.menupick-wrap {
   position: relative;
 }
-.task-status-btn {
+.menupick-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1005,20 +1005,20 @@
   cursor: pointer;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
-.task-status-btn:hover:not(:disabled) {
+.menupick-btn:hover:not(:disabled) {
   border-color: var(--hairline-strong);
 }
-.task-status-btn:focus-visible {
+.menupick-btn:focus-visible {
   outline: none;
   border-color: var(--primary);
   box-shadow: var(--focus-ring);
 }
-.task-status-btn:disabled {
+.menupick-btn:disabled {
   opacity: 0.6;
   cursor: default;
 }
 /* the shared .lin-menu is right-anchored; the status menu opens left-aligned. */
-.task-status-menu {
+.menupick-menu {
   right: auto;
   left: 0;
   min-width: 180px;
