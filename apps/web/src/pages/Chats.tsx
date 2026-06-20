@@ -394,8 +394,10 @@ export function Chats() {
     try {
       const updated = await saveResult(sourcePromptId, {
         output: m.content,
-        provider: m.provider,
-        model: m.model,
+        // A missing provider would fail the strict SaveResultBody validation;
+        // fall back to the chat's selected provider·model.
+        provider: m.provider ?? provider,
+        model: m.model ?? model,
         sourceConversationId: id,
       });
       setResults(updated.results);
@@ -426,13 +428,18 @@ export function Chats() {
       try {
         const updated = await saveResult(prompt.id, {
           output: answer.content,
-          provider: answer.provider,
-          model: answer.model,
+          // Fall back to the chat's selected provider·model if the message
+          // somehow lacks them (a missing provider would 400 the save).
+          provider: answer.provider ?? provider,
+          model: answer.model ?? model,
           sourceConversationId: id,
         });
         setResults(updated.results);
         setSavedMsgIds((s) => new Set(s).add(answer.id));
-      } catch { /* ignore */ }
+      } catch (e) {
+        // Don't swallow — surface why the answer couldn't be attached.
+        setError(e instanceof Error ? e.message : t('prompts.errSave'));
+      }
     }
     loadList();
   }
