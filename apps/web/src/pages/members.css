@@ -1,3 +1,10 @@
+/* "Request sent" confirmation after asking to upgrade to a team. */
+.members-ok {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--success);
+}
+
 .members {
   max-width: 980px;
   margin: 0 auto;

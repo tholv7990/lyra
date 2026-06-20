@@ -76,7 +76,7 @@ export function Members() {
         </header>
 
         {upgradeSent ? (
-          <p className="admin-ok" role="status" aria-live="polite">
+          <p className="members-ok" role="status" aria-live="polite">
             {t('members.upgradeSent')}
           </p>
         ) : (

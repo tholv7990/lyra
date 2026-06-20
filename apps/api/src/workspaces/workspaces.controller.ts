@@ -14,7 +14,7 @@ import {
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Role } from '@lyra/shared';
+import { Role, WorkspaceType } from '@lyra/shared';
 import type { Invite, MemberView, WorkspaceView, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspacesService } from './workspaces.service';
@@ -86,7 +86,7 @@ export class WorkspacesController {
   ): Promise<void> {
     const ws = await this.workspaces.findById(id);
     if (!ws) throw new NotFoundException('Workspace not found');
-    if (ws.type === 'personal') {
+    if (ws.type === WorkspaceType.Personal) {
       throw new BadRequestException('Cannot delete your personal workspace');
     }
     await this.cascade.deleteWorkspace(id, m.userId);

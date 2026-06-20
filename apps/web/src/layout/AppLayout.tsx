@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { WorkspaceType } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initials } from '../lib/format';
@@ -167,7 +168,7 @@ export function AppLayout() {
               <span className="nav-txt">{t('nav.connections')}</span>
             </NavLink>
 
-            {current?.type === 'team' && (
+            {current?.type === WorkspaceType.Team && (
               <NavLink to="/members" title={t('nav.members')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
                 <MembersIcon />
                 <span className="nav-txt">{t('nav.members')}</span>
