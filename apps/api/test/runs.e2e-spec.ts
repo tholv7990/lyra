@@ -6,6 +6,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
 import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
+import { ImageStepProvider } from '../src/runs/providers/image.provider';
 import { UsersService } from '../src/users/users.service';
 
 // Run state machine + real StepProvider dispatch over a composable pipeline. The
@@ -33,6 +34,16 @@ describe('Runs (e2e)', () => {
           onDelta('[stub]');
           return { text: '[stub] source output', usage: { tokens: 5 } };
         },
+      })
+      // Stub image generation — the real provider fetches OpenAI. Returns one
+      // asset per execute() (so a fan-out over N items yields N assets).
+      .overrideProvider(ImageStepProvider)
+      .useValue({
+        execute: async () => ({
+          result: '[stub] generated 1 image.',
+          assets: [{ type: 'image', url: 'https://test.local/generated/stub.png', meta: { role: 'generated', model: 'img-1' } }],
+          usage: { tokens: 0 },
+        }),
       })
       .compile();
     app = moduleRef.createNestApplication();
@@ -186,7 +197,7 @@ describe('Runs (e2e)', () => {
 
   it('an image step persists assets, listed via /runs/:id/assets', async () => {
     await http()
-      .put(`/workspaces/${wsId}/keys/image`)
+      .put(`/workspaces/${wsId}/keys/openai`)
       .set(auth(token))
       .send({ key: 'img-test' })
       .expect(200);
@@ -235,7 +246,7 @@ describe('Runs (e2e)', () => {
 
   it('fans an image step out over a collection → one asset per item', async () => {
     await http()
-      .put(`/workspaces/${wsId}/keys/image`)
+      .put(`/workspaces/${wsId}/keys/openai`)
       .set(auth(token))
       .send({ key: 'img-test' })
       .expect(200);
