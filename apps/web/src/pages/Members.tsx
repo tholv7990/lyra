@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Role } from '@lyra/shared';
+import { Role, WorkspaceType } from '@lyra/shared';
 import type { Invite, MemberView } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -13,6 +12,7 @@ import { ROLE_LABELS } from '../lib/constants';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconButton } from '../components/IconButton';
+import { RequestTeamUpgradeModal } from '../components/RequestTeamUpgradeModal';
 import { MembersIcon, PlusIcon, XIcon } from '../layout/icons';
 import './members.css';
 
@@ -39,6 +39,8 @@ export function Members() {
   const [roleFilters, setRoleFilters] = useState<Role[]>([]);
   const [filterMenu, setFilterMenu] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeSent, setUpgradeSent] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -63,8 +65,44 @@ export function Members() {
   useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   if (!current) return <p className="empty">{t('members.loading')}</p>;
-  // Members is a team-workspace feature; personal workspaces are solo.
-  if (current.type !== 'team') return <Navigate to="/" replace />;
+
+  // Personal workspaces: show the upgrade prompt instead of the members UI.
+  if (current.type !== WorkspaceType.Team) {
+    return (
+      <div className="members">
+        <header className="mem-head">
+          <h1>{t('members.upgradeTitle')}</h1>
+          <p>{t('members.upgradeBody')}</p>
+        </header>
+
+        {upgradeSent ? (
+          <p className="admin-ok" role="status" aria-live="polite">
+            {t('members.upgradeSent')}
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="btn-primary"
+            style={{ width: 'auto' }}
+            onClick={() => setUpgradeOpen(true)}
+          >
+            {t('members.upgradeCta')}
+          </button>
+        )}
+
+        {upgradeOpen && (
+          <RequestTeamUpgradeModal
+            workspaceId={current.id}
+            onClose={() => setUpgradeOpen(false)}
+            onSubmitted={() => {
+              setUpgradeOpen(false);
+              setUpgradeSent(true);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   const ql = q.trim().toLowerCase();
   const filtered = members.filter(

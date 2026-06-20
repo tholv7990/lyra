@@ -26,4 +26,19 @@ export default {
   cantRemoveSelf: 'Bạn không thể tự xóa chính mình',
   removeTitle: 'Xóa thành viên',
   removeConfirm: 'Xóa',
+  // Upgrade prompt (personal workspaces)
+  upgradeTitle: 'Thành viên yêu cầu không gian làm việc nhóm',
+  upgradeBody: 'Không gian làm việc của bạn là cá nhân (solo). Yêu cầu nâng cấp nhóm để mời cộng tác viên.',
+  upgradeCta: 'Yêu cầu nâng cấp nhóm',
+  upgradeSent: 'Yêu cầu của bạn đã được gửi. Chúng tôi sẽ xem xét sớm.',
+  upgradeFailed: 'Không thể gửi yêu cầu. Vui lòng thử lại.',
+  // Upgrade modal
+  upgradeModalTitle: 'Yêu cầu nâng cấp nhóm',
+  upgradeModalSub: 'Cho chúng tôi biết tên nhóm và lý do bạn muốn nâng cấp.',
+  upgradeNameLabel: 'Tên nhóm',
+  upgradeNamePlaceholder: 'vd. Acme Marketing',
+  upgradeNoteLabel: 'Lý do (tùy chọn)',
+  upgradeNotePlaceholder: 'Tại sao bạn cần không gian làm việc nhóm?',
+  upgradeSend: 'Gửi yêu cầu',
+  upgradeSending: 'Đang gửi…',
 } as const;

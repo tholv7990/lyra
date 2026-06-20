@@ -26,4 +26,19 @@ export default {
   cantRemoveSelf: "You can't remove yourself",
   removeTitle: 'Remove member',
   removeConfirm: 'Remove',
+  // Upgrade prompt (personal workspaces)
+  upgradeTitle: 'Members require a team workspace',
+  upgradeBody: 'Your workspace is personal (solo). Request a team upgrade to invite collaborators.',
+  upgradeCta: 'Request team upgrade',
+  upgradeSent: "Your request has been sent. We'll review it shortly.",
+  upgradeFailed: 'Could not submit your request. Please try again.',
+  // Upgrade modal
+  upgradeModalTitle: 'Request team upgrade',
+  upgradeModalSub: "Tell us the name for your team workspace and why you'd like to upgrade.",
+  upgradeNameLabel: 'Team name',
+  upgradeNamePlaceholder: 'e.g. Acme Marketing',
+  upgradeNoteLabel: 'Reason (optional)',
+  upgradeNotePlaceholder: 'Why do you need a team workspace?',
+  upgradeSend: 'Send request',
+  upgradeSending: 'Sending…',
 } as const;
