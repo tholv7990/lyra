@@ -38,6 +38,18 @@ export function WorkspaceMenu() {
     };
   }, [open]);
 
+  // Single workspace → no switcher dropdown; just a static identity marker.
+  if (workspaces.length < 2) {
+    return (
+      <div className="ws">
+        <div className="ws-trigger ws-static" title={current?.name ?? t('common.workspace')}>
+          <span className="ws-avatar">{initial(current?.name ?? 'W', 'W')}</span>
+          {current && <WsType type={current.type} />}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ws" ref={ref}>
       <button className="ws-trigger" onClick={() => setOpen((o) => !o)} title={current?.name ?? t('common.workspace')}>

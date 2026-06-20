@@ -306,6 +306,14 @@
   background: var(--surface-2);
 }
 
+/* Single-workspace static marker: no dropdown, so no pointer/hover affordance. */
+.ws-trigger.ws-static {
+  cursor: default;
+}
+.ws-trigger.ws-static:hover {
+  background: transparent;
+}
+
 .ws-avatar {
   width: 22px;
   height: 22px;
