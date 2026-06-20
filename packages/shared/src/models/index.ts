@@ -13,6 +13,7 @@ import {
   RequestType,
   RequestStatus,
   WorkspaceType,
+  TaskStatus,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -125,7 +126,21 @@ export interface Project extends Audited {
   status: ProjectStatus;
   shared: ProjectShare; // who a public project reaches
   sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto (when shared='people')
-  pipelines: string[]; // referenced pipeline ids (workspace library)
+  pipelines: string[]; // referenced pipeline ids (workspace library) — moving to Task (removed in the Task-layer cutover)
+}
+
+// A unit of work inside a project (the project board's card). Holds the
+// pipelines that produce its output; carries a manual status + a single
+// optional assignee. Runs scope to (taskId, pipelineId).
+export interface Task extends Audited {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  name: string;
+  description: string;
+  status: TaskStatus;
+  assignee?: UserRef; // expanded; assigneeId carried in the DTO (unused in personal workspaces)
+  pipelines: string[]; // workspace-library pipeline ids
 }
 
 // Fan-out config on a step: map the step's prompt over a named run collection,
@@ -181,6 +196,7 @@ export interface RunRating {
 export interface Run extends Audited {
   id: string;
   projectId?: string; // absent for a builder "test run" (no project)
+  taskId?: string; // the task this run belongs to (absent for a builder test run)
   workspaceId: string;
   pipelineId?: string; // set when the run came from a composable pipeline
   pipelineName?: string;

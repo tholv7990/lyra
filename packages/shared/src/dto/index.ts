@@ -1,4 +1,4 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus } from '../enums';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus } from '../enums';
 import type { FanOutConfig, PipelineOrigin, PromptMedia, StepCondition } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -62,6 +62,20 @@ export interface CreateWorkspaceDto {
 
 export interface UpdateWorkspaceDto {
   name: string;
+}
+
+// ===== Tasks (project board) =====
+export interface CreateTaskDto {
+  name: string;
+  description?: string;
+  pipelines?: string[];
+}
+export interface UpdateTaskDto {
+  name?: string;
+  description?: string;
+  status?: TaskStatus;
+  assigneeId?: string | null; // null clears the assignee
+  pipelines?: string[];
 }
 
 export interface InviteDto {

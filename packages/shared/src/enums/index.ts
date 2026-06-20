@@ -104,3 +104,12 @@ export enum RequestStatus {
   Resolved = 'resolved',
   Declined = 'declined',
 }
+
+// Manual status of a Task on the project board (kanban columns). Not coupled to
+// runs — a human moves the task; 'complete' means the work was judged done.
+export enum TaskStatus {
+  New = 'new',
+  InProgress = 'in_progress',
+  OnHold = 'on_hold',
+  Complete = 'complete',
+}
