@@ -1,0 +1,18 @@
+export default {
+  heading: 'Công việc',
+  loading: 'Đang tải công việc…',
+  loadFailed: 'Không thể tải công việc.',
+  empty: 'Chưa có công việc nào. Thêm một cái để bắt đầu.',
+  add: 'Thêm công việc',
+  cancel: 'Hủy',
+  namePlaceholder: 'Tên công việc',
+  addFailed: 'Không thể thêm công việc.',
+  pipelineCount: '{{count}} pipeline',
+  pipelineCount_other: '{{count}} pipeline',
+  status: {
+    new: 'Mới',
+    in_progress: 'Đang làm',
+    on_hold: 'Tạm dừng',
+    complete: 'Hoàn thành',
+  },
+} as const;

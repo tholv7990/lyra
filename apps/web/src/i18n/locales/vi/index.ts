@@ -15,5 +15,6 @@ import admin from './admin';
 import notifications from './notifications';
 import members from './members';
 import landing from './landing';
+import tasks from './tasks';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing, tasks };
