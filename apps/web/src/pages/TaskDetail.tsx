@@ -32,6 +32,7 @@ import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { ProviderIcon } from '../components/ProviderIcon';
+import { PencilIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 // Suppress unused import warning — fmtDate used in future task timeline
@@ -69,8 +70,6 @@ export function TaskDetail() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [task, setTask] = useState<Task | null>(null);
-  const [taskNameDraft, setTaskNameDraft] = useState('');
-  const [taskDescDraft, setTaskDescDraft] = useState('');
   const [savingTask, setSavingTask] = useState(false);
   const [closedPipes, setClosedPipes] = useState<Set<string>>(new Set());
   const togglePipe = (pid: string) =>
@@ -128,12 +127,6 @@ export function TaskDetail() {
   }, [projectId, taskId, t]);
 
   useEffect(() => { void load(); }, [load]);
-
-  useEffect(() => {
-    if (!task) return;
-    setTaskNameDraft(task.name);
-    setTaskDescDraft(task.description ?? '');
-  }, [task?.id, task?.name, task?.description]);
 
   useEffect(() => {
     if (!run) { setRunAssets([]); return; }
@@ -212,26 +205,10 @@ export function TaskDetail() {
       setTask(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('projects.saveFailed'));
-      if (task) {
-        setTaskNameDraft(task.name);
-        setTaskDescDraft(task.description ?? '');
-      }
     } finally {
       setSavingTask(false);
     }
   }
-
-  const commitTaskName = () => {
-    if (!task) return;
-    const next = taskNameDraft.trim();
-    if (!next) { setTaskNameDraft(task.name); return; }
-    if (next !== task.name) void patchTask({ name: next });
-  };
-
-  const commitTaskDesc = () => {
-    if (!task) return;
-    if (taskDescDraft !== (task.description ?? '')) void patchTask({ description: taskDescDraft });
-  };
 
   const byId = useMemo(() => new Map(library.map((p) => [p.id, p])), [library]);
   const assigned = useMemo(
@@ -358,25 +335,22 @@ export function TaskDetail() {
       wide
       onBack={() => navigate(`/projects/${projectId}`)}
       title={
-        runView && run ? (
-          <h2 className="eshell-name">{run.pipelineName ?? t('projects.runFallback')}</h2>
-        ) : canEdit ? (
-          <input
-            className="eshell-name"
-            value={taskNameDraft}
-            disabled={savingTask}
-            aria-label={t('tasks.namePlaceholder')}
-            placeholder={t('tasks.namePlaceholder')}
-            onChange={(e) => setTaskNameDraft(e.target.value)}
-            onBlur={commitTaskName}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-              if (e.key === 'Escape') { setTaskNameDraft(task.name); e.currentTarget.blur(); }
-            }}
-          />
-        ) : (
-          <h2 className="eshell-name">{task.name}</h2>
-        )
+        <h2 className="eshell-name">
+          {runView && run ? run.pipelineName ?? t('projects.runFallback') : task.name}
+        </h2>
+      }
+      actions={
+        !runView && canEdit ? (
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={t('common.edit')}
+            title={t('common.edit')}
+            onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}
+          >
+            <PencilIcon width={16} height={16} />
+          </button>
+        ) : undefined
       }
     >
       {askVarsFor && (
@@ -453,24 +427,21 @@ export function TaskDetail() {
         ) : (
           /* ---- Task dashboard ---- */
           <>
-            {/* Description */}
-            {canEdit ? (
-              <textarea
-                className="proj-desc-input"
-                value={taskDescDraft}
-                disabled={savingTask}
-                rows={2}
-                placeholder={t('tasks.descriptionPlaceholder')}
-                aria-label={t('tasks.descriptionPlaceholder')}
-                onChange={(e) => setTaskDescDraft(e.target.value)}
-                onBlur={commitTaskDesc}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') { setTaskDescDraft(task.description ?? ''); e.currentTarget.blur(); }
-                }}
-              />
-            ) : (
-              <p className="proj-product">{task.description || t('tasks.descriptionPlaceholder')}</p>
+            {/* Desktop edit entry (the nav header is hidden on desktop). */}
+            {canEdit && (
+              <div className="proj-toolbar">
+                <button
+                  type="button"
+                  className="btn-ghost btn-inline"
+                  onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}
+                >
+                  <PencilIcon width={14} height={14} /> {t('common.edit')}
+                </button>
+              </div>
             )}
+
+            {/* Description */}
+            <p className="proj-product">{task.description || t('tasks.descriptionPlaceholder')}</p>
 
             {/* Info: status + assignee */}
             <div className="task-info">
