@@ -135,8 +135,9 @@
 }
 .pd-context {
   flex: none;
-  padding-bottom: 16px;
-  margin-bottom: 4px;
+  /* The `wide` shell has no padding, so the page provides its own gutter; the
+     border-bottom stays full-bleed across the shell width. */
+  padding: 18px 24px 14px;
   border-bottom: 1px solid var(--hairline);
 }
 .pd-meta {
@@ -206,6 +207,9 @@
 @media (max-width: 760px) {
   .pd {
     height: auto;
+  }
+  .pd-context {
+    padding: 15px 15px 14px;
   }
   .pd-act .pd-act-label {
     display: none;

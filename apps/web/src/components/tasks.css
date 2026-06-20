@@ -6,7 +6,7 @@
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 0 8px;
+  padding: 16px 24px 20px;
 }
 .tboard-cols {
   display: flex;
@@ -189,14 +189,16 @@
   .tboard {
     flex: none;
     overflow-x: visible;
+    padding: 14px 15px 24px;
   }
   .tboard-cols {
     flex-direction: column;
+    align-items: stretch; /* full-width sections (not shrink-to-content) */
     gap: 18px;
     height: auto;
   }
   .tcol {
-    width: auto;
+    width: 100%;
     max-width: none;
     max-height: none;
     background: transparent;
