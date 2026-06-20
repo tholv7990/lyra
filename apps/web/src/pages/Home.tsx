@@ -13,13 +13,13 @@ import {
 } from '../lib/gettingStarted';
 import {
   ProjectsIcon,
-  PromptsIcon,
+  PromptGlyphIcon,
   ChatsIcon,
   PipelinesIcon,
   MarketplaceIcon,
   ImportIcon,
   PublishIcon,
-  SettingsIcon,
+  KeyIcon,
   MembersIcon,
   CheckIcon,
   ChevronIcon,
@@ -45,12 +45,12 @@ interface Tile {
 // Chats is reached from the floating AI button, so it's intentionally absent here.
 const TILES: Tile[] = [
   { to: '/marketplace', icon: MarketplaceIcon, accent: 'var(--accent-marketplace)', key: 'marketplace', cta: true },
-  { to: '/prompts', icon: PromptsIcon, accent: 'var(--accent-prompts)', key: 'prompts', cta: true, count: 'prompts' },
+  { to: '/prompts', icon: PromptGlyphIcon, accent: 'var(--accent-prompts)', key: 'prompts', cta: true, count: 'prompts' },
   { to: '/pipelines', icon: PipelinesIcon, accent: 'var(--accent-pipelines)', key: 'pipelines', cta: true, count: 'pipelines' },
   { to: '/projects', icon: ProjectsIcon, accent: 'var(--accent-projects)', key: 'projects', cta: true, count: 'projects' },
   { to: '/import', icon: ImportIcon, accent: 'var(--accent-import)', key: 'import', cta: true },
   { to: '/publish', icon: PublishIcon, accent: 'var(--accent-publish)', key: 'publish', cta: true },
-  { to: '/settings', icon: SettingsIcon, accent: 'var(--accent-keys)', key: 'keys', cta: true, keyTile: true },
+  { to: '/settings', icon: KeyIcon, accent: 'var(--accent-keys)', key: 'keys', cta: true, keyTile: true },
   { icon: MembersIcon, accent: 'var(--accent-members)', key: 'members', soon: true },
 ];
 

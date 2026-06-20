@@ -53,6 +53,13 @@ export const PromptsIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// `</>` prompt/template glyph — the Prompts home tile (distinct from the Chats bubble).
+export const PromptGlyphIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 3.4 2.2 8 4 12.6M12 3.4 13.8 8 12 12.6M9.4 4.2 6.6 11.8" />
+  </svg>
+);
+
 // Storefront — awning over a shop front — the Prompt Marketplace section.
 export const MarketplaceIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
@@ -105,6 +112,14 @@ export const SettingsIcon = (p: SVGProps<SVGSVGElement>) => (
       clipRule="evenodd"
       d="M8 2.1a5.9 5.9 0 1 0 0 11.8 5.9 5.9 0 0 0 0-11.8Zm0 3.6a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6Z"
     />
+  </svg>
+);
+
+// Key — the Provider keys home tile (BYO encrypted keys); bow top-left, toothed shaft.
+export const KeyIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="5.6" cy="5.6" r="3" />
+    <path d="m7.7 7.7 5 5M11 11.3l1.4-1.4M9.4 9.7 11 8.1" />
   </svg>
 );
 
