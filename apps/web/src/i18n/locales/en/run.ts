@@ -12,6 +12,11 @@ export default {
   editRerun: 'Edit & rerun',
   saveRerun: 'Save & rerun',
   queuedNote: 'Queued — runs once the step above completes.',
+  // Run workbench (task detail)
+  runNumber: 'Run #{{n}}',
+  startedBy: 'started {{date}} · {{name}}',
+  earlierRuns: 'Earlier runs',
+  noRunsForPipeline: 'No runs yet — start one to see the steps light up.',
   step: 'Step {{n}}',
   stepOf: 'Step {{page}} of {{total}}',
   result: 'Result',

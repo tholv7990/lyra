@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -33,6 +33,7 @@ import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { PencilIcon, PipelinesIcon, PlayIcon, PlusIcon, XIcon } from '../layout/icons';
+import { TaskStatusIcon } from '../components/TaskStatusIcon';
 import { TaskStatusPicker } from '../components/TaskStatusPicker';
 import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
 import { LabelPicker } from '../components/LabelPicker';
@@ -78,7 +79,9 @@ export function TaskDetail() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [run, setRun] = useState<Run | null>(null);
   const [runAssets, setRunAssets] = useState<Asset[]>([]);
-  const [runView, setRunView] = useState(false);
+  const [activePipeId, setActivePipeId] = useState<string | null>(null);
+  const [runSelOpen, setRunSelOpen] = useState(false);
+  const initedRef = useRef(false);
   const [keysSet, setKeysSet] = useState<Set<string>>(new Set());
   const [askVarsFor, setAskVarsFor] = useState<Pipeline | null>(null);
   const [adding, setAdding] = useState(false);
@@ -87,10 +90,7 @@ export function TaskDetail() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useBreadcrumb(
-    runView && run ? run.pipelineName ?? task?.name ?? '…' : task?.name ?? '…',
-    { label: project?.name ?? '…', to: `/projects/${projectId}` },
-  );
+  useBreadcrumb(task?.name ?? '…', { label: project?.name ?? '…', to: `/projects/${projectId}` });
 
   const load = useCallback(async () => {
     if (!projectId || !taskId) return;
@@ -221,6 +221,40 @@ export function TaskDetail() {
     [project],
   );
 
+  // Workbench: pipeline tabs + the run shown for the active tab. Run #N is the
+  // creation order within a pipeline (oldest = #1).
+  const activePipeline = activePipeId ? byId.get(activePipeId) ?? null : null;
+  const pipeRuns = useMemo(() => runs.filter((r) => r.pipelineId === activePipeId), [runs, activePipeId]);
+  const earlierRuns = useMemo(() => pipeRuns.filter((r) => r.id !== run?.id), [pipeRuns, run]);
+  const runNumber = useMemo(() => {
+    const m = new Map<string, number>();
+    const groups = new Map<string, Run[]>();
+    for (const r of runs) {
+      const k = r.pipelineId ?? '';
+      const arr = groups.get(k) ?? [];
+      arr.push(r);
+      groups.set(k, arr);
+    }
+    for (const arr of groups.values()) [...arr].reverse().forEach((r, i) => m.set(r.id, i + 1));
+    return m;
+  }, [runs]);
+
+  // Pick the first tab + its latest run once the data lands.
+  useEffect(() => {
+    if (initedRef.current || loading || assigned.length === 0) return;
+    initedRef.current = true;
+    const first = runs[0];
+    const pid = first && assigned.some((p) => p.id === first.pipelineId) ? first.pipelineId! : assigned[0].id;
+    setActivePipeId(pid);
+    setRun(runs.find((r) => r.pipelineId === pid) ?? null);
+  }, [loading, assigned, runs]);
+
+  const selectPipe = (pid: string) => {
+    setActivePipeId(pid);
+    setRunSelOpen(false);
+    setRun(runs.find((r) => r.pipelineId === pid) ?? null);
+  };
+
   const savePipelines = (ids: string[]) =>
     act(async () => {
       const updated = await api<Task>(`/projects/${projectId}/tasks/${taskId}`, {
@@ -249,7 +283,7 @@ export function TaskDetail() {
       });
       setRun(created);
       setRuns((r) => [created, ...r]);
-      setRunView(true);
+      setActivePipeId(pipelineId);
       setAskVarsFor(null);
     });
 
@@ -267,7 +301,7 @@ export function TaskDetail() {
       if (created.length > 0) setRuns((r) => [...created, ...r]);
     });
 
-  const openRun = (r: Run) => { setRun(r); setRunView(true); };
+  const openRun = (r: Run) => { setRun(r); setActivePipeId(r.pipelineId ?? null); };
 
   const runAll = () =>
     run &&
@@ -330,12 +364,10 @@ export function TaskDetail() {
       wide
       onBack={() => navigate(`/projects/${projectId}`)}
       title={
-        <h2 className="eshell-name">
-          {runView && run ? run.pipelineName ?? t('projects.runFallback') : task.name}
-        </h2>
+        <h2 className="eshell-name">{task.name}</h2>
       }
       actions={
-        !runView && canEdit ? (
+        canEdit ? (
           <button
             type="button"
             className="icon-btn"
@@ -361,73 +393,18 @@ export function TaskDetail() {
       )}
 
       <div className="proj-page">
-        {runView && run ? (
-          /* ---- Focused run view ---- */
-          <div className="run-view">
-            <div className="run-bar run-view-bar">
-              <button className="txt-btn run-back" onClick={() => setRunView(false)}>
-                {t('run.backToProject')}
-              </button>
-              <span className="run-bar-proj">
-                <strong>{run.pipelineName ?? t('projects.runFallback')}</strong>
-              </span>
-              <span className={`badge status-${run.status}`}>{statusLabel(run.status)}</span>
-              {run.steps.some((s) => s.status === StepStatus.Done) && (
-                <RunRating value={run.rating} disabled={busy} onRate={rate} />
-              )}
-              <div className="run-view-actions">
-                <button
-                  className="btn-primary btn-inline"
-                  disabled={busy || run.status === 'done'}
-                  onClick={runAll}
-                >
-                  {t('run.runAll')}
-                </button>
-                <button
-                  className="btn-ghost btn-inline"
-                  disabled={busy || run.status !== 'running'}
-                  onClick={stop}
-                >
-                  {t('run.stop')}
-                </button>
-                <button
-                  className="btn-ghost btn-inline"
-                  disabled={busy}
-                  onClick={reset}
-                >
-                  {t('run.reset')}
-                </button>
-              </div>
-            </div>
-            {error && <p className="error">{error}</p>}
-            {run.steps.length === 0 ? (
-              <p className="empty">{t('projects.noStepsYet')}</p>
-            ) : (
-              <div className="rt-wrap">
-                <RunTimeline
-                  run={run}
-                  busy={busy}
-                  hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(keyProviderFor(p as Provider))}
-                  onRunStep={runStep}
-                  onApprove={approve}
-                  onSavePrompt={savePrompt}
-                  assets={runAssets}
-                  historyForStep={historyForStep}
-                />
-                <RunSummary run={run} busy={busy} onRetry={runStep} />
-              </div>
-            )}
-          </div>
-        ) : (
-          /* ---- Task dashboard (two-column: workbench + Properties sidebar) ---- */
           <div className="td-grid">
             <div className="td-main">
-            {/* Description */}
-            <p className="proj-product">{task.description || t('tasks.descriptionPlaceholder')}</p>
-
             {error && <p className="error">{error}</p>}
 
-            {assigned.length === 0 && (
+            {/* Task title + status */}
+            <div className="tw-title">
+              <TaskStatusIcon status={task.status} size={20} />
+              <h1>{task.name}</h1>
+            </div>
+            <p className="tw-desc">{task.description || t('tasks.descriptionPlaceholder')}</p>
+
+            {assigned.length === 0 ? (
               <div className="prompt-empty">
                 <h3>{t('projects.noPipelinesTitle')}</h3>
                 <p>
@@ -444,35 +421,109 @@ export function TaskDetail() {
                   )}
                 </p>
               </div>
-            )}
-
-            {/* Recent runs */}
-            {runs.length > 0 && (
+            ) : (
               <>
-                <div className="section-head proj-sec">
-                  <h2>{t('run.recentRuns')}</h2>
-                </div>
-                <div className="list">
-                  {runs.map((r) => (
-                    <div
-                      className="row clickable"
-                      key={r.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openRun(r)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') openRun(r); }}
-                    >
-                      <div className="grow">
-                        <div className="title">{r.pipelineName ?? t('projects.runFallback')}</div>
-                        <div className="sub">{new Date(r.createdAt).toLocaleString()}</div>
-                      </div>
-                      <span className={`badge status-${r.status}`}>{statusLabel(r.status)}</span>
-                      <span className="row-actions" onClick={(e) => e.stopPropagation()}>
-                        <button className="txt-btn" onClick={() => openRun(r)}>{t('common.open')}</button>
-                      </span>
-                    </div>
+                {/* Pipeline tabs */}
+                <div className="tw-tabs">
+                  {assigned.map((p) => (
+                    <button key={p.id} type="button" className={`tw-tab${activePipeId === p.id ? ' active' : ''}`} onClick={() => selectPipe(p.id)}>
+                      <PipelinesIcon width={14} height={14} /> {p.name}
+                    </button>
                   ))}
+                  {canEdit && unassigned.length > 0 && (
+                    <div className="tw-tab-assign">
+                      <button type="button" className="tw-tab muted" onClick={() => setAdding((s) => !s)}>
+                        {t('projects.addPipeline')}
+                      </button>
+                      {adding && (
+                        <div className="lin-menu tw-assign-menu">
+                          {unassigned.map((p) => (
+                            <button key={p.id} className="lin-menu-item" disabled={busy} onClick={() => void attachPipeline(p.id)}>
+                              {p.name}
+                              <span className="lin-menu-count">{t('projects.stepCount', { count: p.steps.length })}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Run header + timeline, or a no-run start state */}
+                {run && run.pipelineId === activePipeId ? (
+                  <>
+                    <div className="tw-runhead">
+                      <div className="tw-runhead-l">
+                        <div className="tw-runsel-wrap">
+                          <button type="button" className="tw-runsel" disabled={pipeRuns.length <= 1} onClick={() => setRunSelOpen((o) => !o)}>
+                            {t('run.runNumber', { n: runNumber.get(run.id) ?? 1 })}
+                            {pipeRuns.length > 1 && (
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--ink-tertiary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m4.5 6.5 3.5 3 3.5-3" /></svg>
+                            )}
+                          </button>
+                          {runSelOpen && (
+                            <div className="lin-menu tw-runsel-menu">
+                              {pipeRuns.map((r) => (
+                                <button key={r.id} className="lin-menu-item" onClick={() => { setRun(r); setRunSelOpen(false); }}>
+                                  {t('run.runNumber', { n: runNumber.get(r.id) ?? 1 })}
+                                  <span className={`badge status-${r.status}`}>{statusLabel(r.status)}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`tw-runstatus status-${run.status}`}><span className="tw-runstatus-dot" />{statusLabel(run.status)}</span>
+                        <span className="tw-runmeta">{t('run.startedBy', { date: fmtDate(run.createdAt), name: run.createdBy.name })}</span>
+                      </div>
+                      <div className="tw-runhead-r">
+                        <button className="btn-ghost btn-inline btn-sm" disabled={busy || run.status === 'done'} onClick={runAll}>{t('run.runAll')}</button>
+                        <button className="btn-ghost btn-inline btn-sm" disabled={busy || run.status !== 'running'} onClick={stop}>{t('run.stop')}</button>
+                        <button className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={reset}>{t('run.reset')}</button>
+                        {run.steps.some((s) => s.status === StepStatus.Done) && <RunRating value={run.rating} disabled={busy} onRate={rate} />}
+                      </div>
+                    </div>
+                    {run.steps.length === 0 ? (
+                      <p className="empty">{t('projects.noStepsYet')}</p>
+                    ) : (
+                      <>
+                        <RunTimeline
+                          run={run}
+                          busy={busy}
+                          hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(keyProviderFor(p as Provider))}
+                          onRunStep={runStep}
+                          onApprove={approve}
+                          onSavePrompt={savePrompt}
+                          assets={runAssets}
+                          historyForStep={historyForStep}
+                        />
+                        <RunSummary run={run} busy={busy} onRetry={runStep} />
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="tw-norun">
+                    <p className="muted">{t('run.noRunsForPipeline')}</p>
+                    {canEdit && activePipeline && (
+                      <button className="btn-primary btn-inline" disabled={busy || activePipeline.steps.length === 0} onClick={() => runPipeline(activePipeline)}>
+                        <PlayIcon width={13} height={13} /> {t('projects.runPipeline')}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Earlier runs */}
+                {earlierRuns.length > 0 && (
+                  <div className="tw-earlier">
+                    <div className="tw-earlier-h">{t('run.earlierRuns')}</div>
+                    {earlierRuns.map((r) => (
+                      <button key={r.id} type="button" className="tw-earlier-row" onClick={() => openRun(r)}>
+                        <span className={`tw-earlier-ico status-${r.status}`}><TaskStatusIcon status={task.status} size={16} /></span>
+                        <span className="tw-earlier-name">{t('run.runNumber', { n: runNumber.get(r.id) ?? 1 })} · {statusLabel(r.status)}</span>
+                        <span className="tw-earlier-date">{fmtDate(r.createdAt)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </>
             )}
             </div>
@@ -660,7 +711,6 @@ export function TaskDetail() {
               </div>
             </aside>
           </div>
-        )}
       </div>
     </EditorShell>
   );

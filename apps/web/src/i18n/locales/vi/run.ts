@@ -12,6 +12,11 @@ export default {
   editRerun: 'Sửa & chạy lại',
   saveRerun: 'Lưu & chạy lại',
   queuedNote: 'Đang chờ — chạy khi bước trên hoàn tất.',
+  // Run workbench (task detail)
+  runNumber: 'Lần #{{n}}',
+  startedBy: 'bắt đầu {{date}} · {{name}}',
+  earlierRuns: 'Các lần chạy trước',
+  noRunsForPipeline: 'Chưa có lần chạy nào — bắt đầu để xem các bước sáng lên.',
   step: 'Bước {{n}}',
   stepOf: 'Bước {{page}} / {{total}}',
   result: 'Kết quả',
