@@ -584,7 +584,7 @@ export function Chats() {
                 if (m.role === 'user') {
                   const editingThis = editingMsgId === m.id;
                   return (
-                    <div key={m.id} className="cmsg">
+                    <div key={m.id} className="cmsg user">
                       <div className="cavatar user">{initials(user?.name)}</div>
                       <div className="cbody">
                         <div className="cmsg-meta">

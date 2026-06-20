@@ -6857,6 +6857,31 @@
   word-break: break-word;
 }
 
+/* User turns sit on the right as an orange bubble (design): no avatar/meta,
+   right-aligned actions. Bot turns keep the left avatar + content layout. */
+.cmsg.user {
+  justify-content: flex-end;
+}
+.cmsg.user .cavatar,
+.cmsg.user .cmsg-meta {
+  display: none;
+}
+.cmsg.user .cbody {
+  flex: 0 1 auto;
+  max-width: 80%;
+  align-items: flex-end;
+}
+.cmsg.user .cbubble {
+  align-self: flex-end;
+  background: var(--primary);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 14px 14px 4px 14px;
+}
+.cmsg.user .cactions {
+  justify-content: flex-end;
+}
+
 .cmsg-editor {
   width: min(680px, 100%);
   display: flex;
@@ -7185,8 +7210,10 @@
 }
 
 /* Chat composer carries the Lyra-orange brand accent on its border (full orange
-   on focus via the rule above). */
+   on focus via the rule above). Width matches the thread's content column (the
+   720 thread box minus its 20px side padding) so it lines up with the messages. */
 .chat-composer .composer-box {
+  max-width: 680px;
   border-color: color-mix(in srgb, var(--primary) 45%, transparent);
 }
 .chat-composer .composer-box:focus-within {
@@ -7458,7 +7485,7 @@
   font-size: 12px;
 }
 
-/* New-chat button at the top of the chat sidebar */
+/* New-chat button at the top of the chat sidebar — the primary CTA (design). */
 .chat-new {
   display: flex;
   align-items: center;
@@ -7466,15 +7493,16 @@
   gap: 8px;
   margin: 8px 8px 0;
   padding: 9px 12px;
-  border: 1px solid var(--hairline-strong);
+  border: none;
   border-radius: var(--radius-button);
-  background: var(--field);
-  color: var(--ink);
+  background: var(--primary);
+  color: var(--on-accent);
   font-size: var(--text-small);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button);
 }
-.chat-new:hover { background: var(--surface-hover); }
+.chat-new:hover { background: var(--primary-hover); }
 
 /* chat-history list rows (title + model + delete on hover) */
 .cl-item {
@@ -8518,10 +8546,22 @@
 .bwa-send {
   flex: none;
 }
+/* Lyra Copilot — a primary-tint companion to the New-chat CTA (design). */
 .chat-copilot {
-  width: 100%;
+  width: auto;
   justify-content: center;
-  margin: 0 0 8px;
+  margin: 6px 8px 8px;
+  background: var(--primary-tint);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.chat-copilot:hover {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.chat-copilot .icon,
+.chat-copilot svg {
+  color: var(--primary);
 }
 .copilot-tools {
   font-size: 11px;
