@@ -1,0 +1,81 @@
+/* ===== Task detail dashboard — design's two-column layout: workbench (left) +
+   Properties sidebar (right). The run view + RunFlow are unchanged. Token-only. */
+
+.td-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 24px;
+  align-items: start;
+}
+.td-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.td-side {
+  position: sticky;
+  top: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 13px;
+  background: var(--canvas);
+  padding: 16px 16px 14px;
+}
+.td-side-h {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 12px;
+}
+
+.td-prop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+.td-prop.tags {
+  align-items: flex-start;
+  padding-top: 4px;
+}
+.td-prop-k {
+  width: 70px;
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+}
+.td-prop-v {
+  flex: 1;
+  min-width: 0;
+}
+/* the assignee inline picker needs to anchor its menu */
+.td-prop .task-assignee-wrap {
+  position: relative;
+}
+
+.td-side-sep {
+  height: 1px;
+  background: var(--hairline);
+  margin: 13px 0;
+}
+.td-meta {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  line-height: 1.7;
+}
+
+/* Mobile: stack the sidebar above the workbench (properties first, like the
+   design's compact mobile detail). */
+@media (max-width: 760px) {
+  .td-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .td-side {
+    position: static;
+    order: -1;
+  }
+}

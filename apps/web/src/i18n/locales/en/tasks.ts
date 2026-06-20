@@ -22,6 +22,8 @@ export default {
   runDone_one: '{{count}} run done',
   runDone_other: '{{count}} runs done',
   statusLabel: 'Status',
+  properties: 'Properties',
+  tagsLabel: 'Tags',
   assignee: 'Assignee',
   unassigned: 'Unassigned',
   descriptionPlaceholder: 'Describe what this task is about…',

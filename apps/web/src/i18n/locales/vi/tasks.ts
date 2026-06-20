@@ -22,6 +22,8 @@ export default {
   runDone_one: '{{count}} lần chạy xong',
   runDone_other: '{{count}} lần chạy xong',
   statusLabel: 'Trạng thái',
+  properties: 'Thuộc tính',
+  tagsLabel: 'Nhãn',
   assignee: 'Người phụ trách',
   unassigned: 'Chưa phân công',
   descriptionPlaceholder: 'Mô tả nhiệm vụ này…',

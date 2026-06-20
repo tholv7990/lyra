@@ -40,9 +40,8 @@ import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
 import { LabelPicker } from '../components/LabelPicker';
 import { useLabels } from '../lib/useLabels';
 import { useBreadcrumb } from '../layout/breadcrumb';
+import './taskdetail.css';
 
-// Suppress unused import warning — fmtDate used in future task timeline
-void fmtDate;
 // Suppress unused import — ProjectStatus used for type-narrowing imports only
 void ProjectStatus;
 
@@ -433,100 +432,11 @@ export function TaskDetail() {
             )}
           </div>
         ) : (
-          /* ---- Task dashboard ---- */
-          <>
-            {/* Desktop edit entry (the nav header is hidden on desktop). */}
-            {canEdit && (
-              <div className="proj-toolbar">
-                <button
-                  type="button"
-                  className="btn-ghost btn-inline"
-                  onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}
-                >
-                  <PencilIcon width={14} height={14} /> {t('common.edit')}
-                </button>
-              </div>
-            )}
-
+          /* ---- Task dashboard (two-column: workbench + Properties sidebar) ---- */
+          <div className="td-grid">
+            <div className="td-main">
             {/* Description */}
             <p className="proj-product">{task.description || t('tasks.descriptionPlaceholder')}</p>
-
-            {/* Info: status + assignee */}
-            <div className="task-info">
-              <TaskStatusPicker
-                status={task.status}
-                disabled={!canEdit || savingTask}
-                onChange={(s) => void patchTask({ status: s })}
-              />
-              <TaskPriorityPicker
-                priority={task.priority}
-                disabled={!canEdit || savingTask}
-                onChange={(p) => void patchTask({ priority: p })}
-              />
-              {/* Assignee picker — hidden for personal workspaces */}
-              {!isPersonal && (
-                <div className="task-assignee-wrap">
-                  <button
-                    className="btn-ghost task-assignee-btn btn-inline"
-                    disabled={!canEdit || savingTask}
-                    onClick={() => setAssigneeOpen((o) => !o)}
-                    aria-label={t('tasks.assignee')}
-                  >
-                    {task.assignee ? (
-                      <>
-                        <span className="prow-updated-icon" style={avatarStyle(task.assignee.name)} aria-hidden="true">
-                          {initial(task.assignee.name)}
-                        </span>
-                        {task.assignee.name}
-                      </>
-                    ) : (
-                      t('tasks.unassigned')
-                    )}
-                  </button>
-                  {assigneeOpen && canEdit && (
-                    <div className="lin-menu task-assignee-menu">
-                      <button
-                        className="lin-menu-item"
-                        onClick={() => { void patchTask({ assigneeId: null }); setAssigneeOpen(false); }}
-                      >
-                        {t('tasks.unassigned')}
-                      </button>
-                      {members.map((m) => (
-                        <button
-                          key={m.userId}
-                          className="lin-menu-item"
-                          onClick={() => { void patchTask({ assigneeId: m.userId }); setAssigneeOpen(false); }}
-                        >
-                          <span className="prow-updated-icon" style={avatarStyle(m.name)} aria-hidden="true">
-                            {initial(m.name)}
-                          </span>
-                          {m.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              {canEdit ? (
-                <LabelPicker
-                  value={task.tags}
-                  labels={labels}
-                  onChange={(tags) => void patchTask({ tags })}
-                  onCreate={createLabel}
-                />
-              ) : (
-                task.tags.length > 0 && (
-                  <div className="task-tags-read">
-                    {task.tags.map((name) => (
-                      <span className="tag-chip" key={name}>
-                        <span className="tdot" style={{ background: labelColor(name, labels) }} />
-                        {name}
-                      </span>
-                    ))}
-                  </div>
-                )
-              )}
-            </div>
 
             {error && <p className="error">{error}</p>}
 
@@ -688,7 +598,123 @@ export function TaskDetail() {
                 </div>
               </>
             )}
-          </>
+            </div>
+
+            <aside className="td-side">
+              <div className="td-side-h">{t('tasks.properties')}</div>
+
+              <div className="td-prop">
+                <span className="td-prop-k">{t('tasks.statusLabel')}</span>
+                <span className="td-prop-v">
+                  <TaskStatusPicker
+                    status={task.status}
+                    disabled={!canEdit || savingTask}
+                    onChange={(s) => void patchTask({ status: s })}
+                  />
+                </span>
+              </div>
+              <div className="td-prop">
+                <span className="td-prop-k">{t('tasks.priorityLabel')}</span>
+                <span className="td-prop-v">
+                  <TaskPriorityPicker
+                    priority={task.priority}
+                    disabled={!canEdit || savingTask}
+                    onChange={(p) => void patchTask({ priority: p })}
+                  />
+                </span>
+              </div>
+              {!isPersonal && (
+                <div className="td-prop">
+                  <span className="td-prop-k">{t('tasks.assignee')}</span>
+                  <span className="td-prop-v">
+                    <div className="task-assignee-wrap">
+                      <button
+                        className="btn-ghost task-assignee-btn btn-inline"
+                        disabled={!canEdit || savingTask}
+                        onClick={() => setAssigneeOpen((o) => !o)}
+                        aria-label={t('tasks.assignee')}
+                      >
+                        {task.assignee ? (
+                          <>
+                            <span className="prow-updated-icon" style={avatarStyle(task.assignee.name)} aria-hidden="true">
+                              {initial(task.assignee.name)}
+                            </span>
+                            {task.assignee.name}
+                          </>
+                        ) : (
+                          t('tasks.unassigned')
+                        )}
+                      </button>
+                      {assigneeOpen && canEdit && (
+                        <div className="lin-menu task-assignee-menu">
+                          <button
+                            className="lin-menu-item"
+                            onClick={() => { void patchTask({ assigneeId: null }); setAssigneeOpen(false); }}
+                          >
+                            {t('tasks.unassigned')}
+                          </button>
+                          {members.map((m) => (
+                            <button
+                              key={m.userId}
+                              className="lin-menu-item"
+                              onClick={() => { void patchTask({ assigneeId: m.userId }); setAssigneeOpen(false); }}
+                            >
+                              <span className="prow-updated-icon" style={avatarStyle(m.name)} aria-hidden="true">
+                                {initial(m.name)}
+                              </span>
+                              {m.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </span>
+                </div>
+              )}
+              <div className="td-prop tags">
+                <span className="td-prop-k">{t('tasks.tagsLabel')}</span>
+                <span className="td-prop-v">
+                  {canEdit ? (
+                    <LabelPicker
+                      value={task.tags}
+                      labels={labels}
+                      onChange={(tags) => void patchTask({ tags })}
+                      onCreate={createLabel}
+                    />
+                  ) : task.tags.length > 0 ? (
+                    <div className="task-tags-read">
+                      {task.tags.map((name) => (
+                        <span className="tag-chip" key={name}>
+                          <span className="tdot" style={{ background: labelColor(name, labels) }} />
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                </span>
+              </div>
+
+              {canEdit && (
+                <>
+                  <div className="td-side-sep" />
+                  <button
+                    type="button"
+                    className="btn-ghost btn-inline"
+                    onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}
+                  >
+                    <PencilIcon width={14} height={14} /> {t('common.edit')}
+                  </button>
+                </>
+              )}
+
+              <div className="td-side-sep" />
+              <div className="td-meta">
+                {t('projects.createdByOn', { date: fmtDate(task.createdAt), name: task.createdBy.name })}
+              </div>
+            </aside>
+          </div>
         )}
       </div>
     </EditorShell>
