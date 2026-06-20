@@ -541,6 +541,7 @@ function RequestsSection() {
           <option value="">{t('admin.reqAllTypes')}</option>
           <option value="provider">{t('admin.reqType.provider')}</option>
           <option value="bug">{t('admin.reqType.bug')}</option>
+          <option value="team-upgrade">{t('admin.reqType.team-upgrade')}</option>
         </select>
         <select
           className="text-input admin-req-filter"
@@ -605,6 +606,12 @@ function RequestRow({
       <div className="admin-req-foot">
         <span className="admin-req-meta">
           {t('admin.reqBy', { name: row.createdBy.name, date: fmtDate(row.createdAt) })}
+          {row.workspaceId && (
+            <>
+              <span className="pd-dot" aria-hidden="true"> · </span>
+              {t('admin.reqWorkspace', { id: row.workspaceId })}
+            </>
+          )}
         </span>
         <select
           className={`text-input admin-req-status status-${row.status}`}

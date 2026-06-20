@@ -22,6 +22,7 @@ export default {
   reqType: {
     provider: 'Nhà cung cấp',
     bug: 'Lỗi',
+    'team-upgrade': 'Nâng cấp nhóm',
   },
   reqStatus: {
     open: 'Đang mở',
@@ -29,6 +30,7 @@ export default {
     declined: 'Từ chối',
   },
   reqBy: 'Bởi {{name}} · {{date}}',
+  reqWorkspace: 'Không gian {{id}}',
   reqVotes: 'Lượt bình chọn',
   reqEmptyTitle: 'Chưa có yêu cầu',
   reqEmptyBody: 'Chưa có gì để xử lý. Yêu cầu nhà cung cấp từ Cài đặt sẽ hiện ở đây.',

@@ -22,6 +22,7 @@ export default {
   reqType: {
     provider: 'Provider',
     bug: 'Bug',
+    'team-upgrade': 'Team upgrade',
   },
   reqStatus: {
     open: 'Open',
@@ -29,6 +30,7 @@ export default {
     declined: 'Declined',
   },
   reqBy: 'By {{name}} · {{date}}',
+  reqWorkspace: 'Workspace {{id}}',
   reqVotes: 'Votes',
   reqEmptyTitle: 'No requests',
   reqEmptyBody: 'Nothing to triage yet. Provider requests from Settings show up here.',
