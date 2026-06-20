@@ -8347,6 +8347,22 @@
   margin-left: 2px;
 }
 
+/* Edit entry in the body — shown on desktop, where the nav header (and its edit
+   action) is hidden. On mobile the nav header carries the edit action instead. */
+.proj-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+.proj-toolbar .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+@media (max-width: 820px) {
+  .proj-toolbar { display: none; }
+}
+
 /* Task list — separated from the project info by a hairline; status section
    headers + dense Linear-style rows. */
 .tlist {
@@ -8496,5 +8512,27 @@
 @media (prefers-reduced-motion: reduce) {
   .skel-line {
     animation: none;
+  }
+}
+
+/* Mobile: the task list reads as a card list (each row becomes a bordered card). */
+@media (max-width: 600px) {
+  .tgroup-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .trow {
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--surface-1);
+    padding: 12px;
+  }
+  .trow:hover {
+    background: var(--surface-1);
+    border-color: var(--hairline-strong);
+  }
+  .trow:active {
+    background: var(--surface-2);
   }
 }

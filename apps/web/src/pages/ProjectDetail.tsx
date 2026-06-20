@@ -8,6 +8,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
 import { TaskList } from '../components/TaskList';
+import { PencilIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
@@ -15,6 +16,10 @@ const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Public]: 'projects.statusPublic',
 };
 
+// The project detail is a read view (Linear-style): name in the nav, then a
+// readable description, info, variables, and the task list. Editing the project
+// (name / description / variables / status) happens on the project editor, which
+// owns the explicit ✓/✕ save flow — the detail page never edits in place.
 export function ProjectDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -22,11 +27,8 @@ export function ProjectDetail() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
-  const [nameDraft, setNameDraft] = useState('');
-  const [descriptionDraft, setDescriptionDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [savingMeta, setSavingMeta] = useState(false);
 
   useBreadcrumb(project?.name ?? null);
 
@@ -45,12 +47,6 @@ export function ProjectDetail() {
 
   useEffect(() => { void load(); }, [load]);
 
-  useEffect(() => {
-    if (!project) return;
-    setNameDraft(project.name);
-    setDescriptionDraft(project.description ?? '');
-  }, [project?.id, project?.name, project?.description]);
-
   const canEdit = useMemo(
     () =>
       !!user &&
@@ -64,83 +60,39 @@ export function ProjectDetail() {
     [user, current, project],
   );
 
-  async function saveProjectMeta(patch: Partial<Pick<Project, 'name' | 'description'>>) {
-    if (!id || !project || !canEdit || savingMeta) return;
-    setSavingMeta(true);
-    setError(null);
-    try {
-      const updated = await api<Project>(`/projects/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(patch),
-      });
-      setProject(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('projects.saveFailed'));
-      setNameDraft(project.name);
-      setDescriptionDraft(project.description ?? '');
-    } finally {
-      setSavingMeta(false);
-    }
-  }
-
-  const commitName = () => {
-    if (!project) return;
-    const next = nameDraft.trim();
-    if (!next) { setNameDraft(project.name); return; }
-    if (next !== project.name) void saveProjectMeta({ name: next });
-  };
-
-  const commitDescription = () => {
-    if (!project) return;
-    if (descriptionDraft !== (project.description ?? '')) void saveProjectMeta({ description: descriptionDraft });
-  };
-
   if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (!project) return <p className="empty">{error ?? t('projects.notFound')}</p>;
 
-  // Project name lives in the nav header (consistent with the other detail/editor
-  // pages), inline-editable for editors.
-  const headerTitle = canEdit ? (
-    <input
-      className="eshell-name"
-      value={nameDraft}
-      disabled={savingMeta}
-      aria-label={t('projects.namePlaceholder')}
-      placeholder={t('projects.namePlaceholder')}
-      onChange={(e) => setNameDraft(e.target.value)}
-      onBlur={commitName}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-        if (e.key === 'Escape') { setNameDraft(project.name); e.currentTarget.blur(); }
-      }}
-    />
-  ) : (
-    <h2 className="eshell-name">{project.name}</h2>
-  );
+  const editUrl = `/projects/${project.id}/edit`;
+  const goEdit = () => navigate(editUrl);
 
   return (
-    <EditorShell wide onBack={() => navigate('/projects')} title={headerTitle}>
+    <EditorShell
+      wide
+      onBack={() => navigate('/projects')}
+      title={<h2 className="eshell-name">{project.name}</h2>}
+      actions={
+        canEdit ? (
+          <button type="button" className="icon-btn" aria-label={t('common.edit')} title={t('common.edit')} onClick={goEdit}>
+            <PencilIcon width={16} height={16} />
+          </button>
+        ) : undefined
+      }
+    >
       <div className="proj-page">
         {error && <p className="error">{error}</p>}
 
-        {/* Description */}
-        {canEdit ? (
-          <textarea
-            className="proj-desc-input"
-            value={descriptionDraft}
-            disabled={savingMeta}
-            rows={2}
-            placeholder={t('projects.descriptionPlaceholder')}
-            aria-label={t('projects.descriptionLabel')}
-            onChange={(e) => setDescriptionDraft(e.target.value)}
-            onBlur={commitDescription}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') { setDescriptionDraft(project.description ?? ''); e.currentTarget.blur(); }
-            }}
-          />
-        ) : (
-          <p className="proj-product">{project.description || t('projects.noDescription')}</p>
+        {/* Desktop edit entry (the nav header is hidden on desktop). */}
+        {canEdit && (
+          <div className="proj-toolbar">
+            <button type="button" className="btn-ghost btn-inline" onClick={goEdit}>
+              <PencilIcon width={14} height={14} /> {t('common.edit')}
+            </button>
+          </div>
         )}
+
+        {/* Description */}
+        <p className="proj-product">{project.description || t('projects.noDescription')}</p>
 
         {/* Info — status · creator · date */}
         <div className="proj-meta">
@@ -171,7 +123,7 @@ export function ProjectDetail() {
             <span className="proj-vars-none">{t('projects.noVariables')}</span>
           )}
           {canEdit && (
-            <Link className="txt-btn" to={`/projects/${project.id}/edit`}>
+            <Link className="txt-btn" to={editUrl}>
               {t('projects.editVariables')}
             </Link>
           )}
