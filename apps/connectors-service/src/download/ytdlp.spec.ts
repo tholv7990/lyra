@@ -58,6 +58,14 @@ describe('arg builders', () => {
   it('downloadArgs requests --newline so progress is parseable', () => {
     expect(downloadArgs('https://x/v', '/tmp/o')).toContain('--newline');
   });
+  it('resolveArgs/downloadArgs add --cookies only when a cookie file is given', () => {
+    expect(resolveArgs('https://x/v', '/tmp/c.txt')).toEqual(['-J', '--no-warnings', '--cookies', '/tmp/c.txt', 'https://x/v']);
+    expect(resolveArgs('https://x/v')).not.toContain('--cookies');
+    expect(downloadArgs('https://x/v', '/tmp/o', undefined, undefined, '/tmp/c.txt')).toEqual(
+      expect.arrayContaining(['--cookies', '/tmp/c.txt']),
+    );
+    expect(downloadArgs('https://x/v', '/tmp/o')).not.toContain('--cookies');
+  });
 });
 
 describe('isTransient', () => {

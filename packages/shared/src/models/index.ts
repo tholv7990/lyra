@@ -434,6 +434,13 @@ export interface DownloadJob {
   error?: string; // present when status === 'error'
 }
 
+// Safe transport shape for a workspace's stored Crawler cookies.txt — reports only
+// whether one is set (never the cookie contents, which are session secrets).
+export interface CrawlerCookieInfo {
+  present: boolean;
+  updatedAt?: string;
+}
+
 // Safe transport shape for a stored connector credential (e.g. the Postiz API
 // key) — reports only whether it's set + a last-4 hint, never the key itself.
 export interface ConnectorCredentialInfo {

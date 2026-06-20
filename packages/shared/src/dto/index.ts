@@ -335,3 +335,8 @@ export interface DownloadDto {
   indices?: number[];
   format?: string; // yt-dlp -f selector chosen from a MediaItem's qualities
 }
+// Upload a workspace's Crawler cookies.txt (Netscape format). Server stores it
+// encrypted and forwards it to yt-dlp for logged-in/age-gated downloads.
+export interface SetCrawlerCookiesDto {
+  cookies: string;
+}

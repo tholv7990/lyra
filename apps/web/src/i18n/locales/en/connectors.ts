@@ -54,6 +54,10 @@ export default {
   quality: 'Quality',
   audioOnly: 'Audio only',
   downloading: 'Downloading…',
+  cookiesActive: 'Login cookies active',
+  cookiesUpload: 'Use my login (upload cookies.txt)',
+  cookiesRemove: 'Remove',
+  cookiesHint: 'For content you own or have rights to. Stored encrypted; used for logged-in or age-restricted videos.',
   tosNote: 'Import content you own or have the rights to use. Subject to each platform\'s terms.',
   nothingResolved: 'Nothing to import from that link.',
 

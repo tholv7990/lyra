@@ -5,6 +5,7 @@ import { ConnectorsController } from './connectors.controller';
 import { ConnectorsProxy } from './connectors.proxy';
 import { ConnectorCredential, ConnectorCredentialSchema } from './connector-credential.schema';
 import { ConnectorCredentialsService } from './connector-credentials.service';
+import { CrawlerCookiesService } from './crawler-cookies.service';
 import { EncryptionService } from '../keys/encryption.service';
 
 // Thin proxy module for the built-in connectors (publish + media import). Connector
@@ -16,6 +17,6 @@ import { EncryptionService } from '../keys/encryption.service';
     MongooseModule.forFeature([{ name: ConnectorCredential.name, schema: ConnectorCredentialSchema }]),
   ],
   controllers: [ConnectorsController],
-  providers: [ConnectorsProxy, ConnectorCredentialsService, EncryptionService],
+  providers: [ConnectorsProxy, ConnectorCredentialsService, CrawlerCookiesService, EncryptionService],
 })
 export class ConnectorsModule {}

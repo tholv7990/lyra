@@ -32,7 +32,7 @@ export class DownloadController {
   @Post('resolve')
   async resolve(@Body() b: ResolveBody) {
     try {
-      return { items: await this.svc.resolve(b.url) };
+      return { items: await this.svc.resolve(b.url, b.cookies) };
     } catch (err) {
       throw asHttp(err);
     }
@@ -41,7 +41,7 @@ export class DownloadController {
   @Post('download')
   download(@Body() b: DownloadBody) {
     try {
-      return { jobId: this.svc.startDownload(b.url, b.indices, b.format) };
+      return { jobId: this.svc.startDownload(b.url, b.indices, b.format, b.cookies) };
     } catch (err) {
       throw asHttp(err); // SSRF guard (sync); yt-dlp failures land on the job, not here
     }

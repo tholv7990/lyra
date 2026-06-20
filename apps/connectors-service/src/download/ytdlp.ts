@@ -65,14 +65,21 @@ export function mapResolveJson(json: YtEntry): MediaItem[] {
   return [toItem(json ?? {}, 0)];
 }
 
-export function resolveArgs(url: string): string[] {
-  return ['-J', '--no-warnings', url];
+export function resolveArgs(url: string, cookiePath?: string): string[] {
+  return ['-J', '--no-warnings', ...(cookiePath ? ['--cookies', cookiePath] : []), url];
 }
 
-export function downloadArgs(url: string, outTemplate: string, indices?: number[], format?: string): string[] {
+export function downloadArgs(
+  url: string,
+  outTemplate: string,
+  indices?: number[],
+  format?: string,
+  cookiePath?: string,
+): string[] {
   // --newline puts each progress update on its own line so runYtDlp can parse it.
   const args = ['-o', outTemplate, '--no-warnings', '--newline'];
   if (format) args.push('-f', format);
+  if (cookiePath) args.push('--cookies', cookiePath);
   if (indices?.length) args.push('--playlist-items', indices.map((i) => i + 1).join(','));
   args.push(url);
   return args;

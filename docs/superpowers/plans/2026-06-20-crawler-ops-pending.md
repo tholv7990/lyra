@@ -5,7 +5,14 @@ Plans for the parked items after the Crawler quality+progress+TikTok work shippe
 
 ---
 
-## A. Durability — stop running dev off the worktree + detached procs
+## A. Durability — ✅ DONE 2026-06-20
+
+Main tree fast-forwarded to origin/dev; all three servers now run from it under **pm2**
+(`ecosystem.config.js`, untracked) with auto-restart + reboot survival (Startup-folder
+`pm2 resurrect` + `pm2 save`). A3 (Dockerfile Deno + nightly yt-dlp) shipped separately.
+Original plan retained below.
+
+### A (original plan) — stop running dev off the worktree + detached procs
 
 **Problem:** dev.getlyras.app tunnels to `:5173/:3001/:9100`, all started as **detached
 `Start-Process` node** off the **worktree** (`feat/members-page`). Won't survive a
@@ -43,7 +50,15 @@ no Deno → it would fail YouTube's JS challenge. Edits:
 
 ---
 
-## B. Crawler cookie support — logged-in / age-gated / region videos
+## B. Crawler cookie support — ✅ DONE 2026-06-20
+
+Per-workspace encrypted `cookies.txt` shipped: AES-256-GCM store (reuses
+`ConnectorCredential`, `connector='crawler-cookies'`), api decrypts + injects into the
+api→connectors request, connectors-service writes a 0600 temp file → `--cookies` →
+deletes it. Upload/delete gated on `canManageKeys`; never returned/logged; 256KB cap.
+`security-reviewer` → SECURE TO MERGE. Original plan retained below.
+
+### B (original plan) — logged-in / age-gated / region videos
 
 **Why:** some videos need the user's session (private/age-gated) or a region the
 server isn't in (region locks are **IP-based → a proxy, not cookies, fixes those** —

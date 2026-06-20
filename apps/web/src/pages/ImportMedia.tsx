@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { MediaItem, MediaQuality } from '@lyra/shared';
+import type { CrawlerCookieInfo, MediaItem, MediaQuality } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import { downloadFile } from '../lib/api';
@@ -66,6 +66,30 @@ export function ImportMedia() {
   const [error, setError] = useState<string | null>(null);
   const [pick, setPick] = useState<Record<number, string>>({}); // item index → chosen -f selector
   const [dl, setDl] = useState<Record<number, number>>({}); // index → download % in flight; key -1 = "download all"
+  const [cookieInfo, setCookieInfo] = useState<CrawlerCookieInfo | null>(null);
+
+  useEffect(() => {
+    if (!ws) return;
+    connectorsApi.cookieStatus(ws).then(setCookieInfo).catch(() => setCookieInfo(null));
+  }, [ws]);
+
+  const uploadCookies = (file: File) => {
+    if (!ws) return;
+    setError(null);
+    file
+      .text()
+      .then((text) => connectorsApi.setCookies(ws, text))
+      .then(setCookieInfo)
+      .catch((err) => setError(err instanceof Error ? err.message : t('connectors.error')));
+  };
+
+  const removeCookies = () => {
+    if (!ws) return;
+    connectorsApi
+      .deleteCookies(ws)
+      .then(setCookieInfo)
+      .catch((err) => setError(err instanceof Error ? err.message : t('connectors.error')));
+  };
 
   const fetchState = fetchButtonState({
     hasWorkspace: Boolean(ws),
@@ -137,6 +161,27 @@ export function ImportMedia() {
       </div>
       {fetchState.statusKey && <p className="cx-status">{t(`connectors.${fetchState.statusKey}`)}</p>}
       <div className="cx-plats">{t('connectors.supported')}</div>
+
+      <div className="cx-cookies">
+        {cookieInfo?.present ? (
+          <span className="cx-ck-on">
+            🔒 {t('connectors.cookiesActive')}
+            <button type="button" className="cx-ck-remove" onClick={removeCookies}>{t('connectors.cookiesRemove')}</button>
+          </span>
+        ) : (
+          <label className="cx-ck-upload">
+            {t('connectors.cookiesUpload')}
+            <input
+              type="file"
+              accept=".txt"
+              hidden
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCookies(f); e.target.value = ''; }}
+            />
+          </label>
+        )}
+        <span className="cx-ck-hint">{t('connectors.cookiesHint')}</span>
+      </div>
+
       {error && <p className="cx-error">{error}</p>}
 
       {items.length > 0 && (

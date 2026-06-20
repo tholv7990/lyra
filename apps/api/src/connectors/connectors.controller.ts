@@ -1,14 +1,15 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { Readable } from 'node:stream';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
-import type { ConnectorCredentialInfo, User } from '@lyra/shared';
+import type { ConnectorCredentialInfo, CrawlerCookieInfo, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireManageKeys } from '../workspaces/decorators/require-manage-keys.decorator';
 import { ConnectorsProxy, rewriteDownload } from './connectors.proxy';
 import { ConnectorCredentialsService } from './connector-credentials.service';
-import { DownloadBody, PublishBody, ResolveBody, SaveCredentialBody } from './dto/connectors.dto';
+import { CrawlerCookiesService } from './crawler-cookies.service';
+import { DownloadBody, PublishBody, ResolveBody, SaveCredentialBody, SetCookiesBody } from './dto/connectors.dto';
 
 const POSTIZ = 'postiz';
 
@@ -21,6 +22,7 @@ export class ConnectorsController {
   constructor(
     private readonly proxy: ConnectorsProxy,
     private readonly credentials: ConnectorCredentialsService,
+    private readonly cookies: CrawlerCookiesService,
   ) {}
 
   @Put('credentials')
@@ -60,13 +62,41 @@ export class ConnectorsController {
   }
 
   @Post('resolve')
-  resolve(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: ResolveBody) {
-    return this.proxy.forward(ws, u.id, 'POST', 'resolve', b);
+  async resolve(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: ResolveBody) {
+    return this.proxy.forward(ws, u.id, 'POST', 'resolve', await this.withCookies(ws, b));
   }
 
   @Post('download')
-  download(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: DownloadBody) {
-    return this.proxy.forward(ws, u.id, 'POST', 'download', b); // -> { jobId }
+  async download(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: DownloadBody) {
+    return this.proxy.forward(ws, u.id, 'POST', 'download', await this.withCookies(ws, b)); // -> { jobId }
+  }
+
+  // --- Crawler cookies (logged-in / age-gated downloads). Stored encrypted, never
+  // returned. Upload/remove require canManageKeys; status is member-level. ---
+  @Put('cookies')
+  @RequireManageKeys()
+  setCookies(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: SetCookiesBody): Promise<CrawlerCookieInfo> {
+    return this.cookies.set(ws, b.cookies, u.id);
+  }
+
+  @Get('cookies')
+  cookieStatus(@Param('id') ws: string): Promise<CrawlerCookieInfo> {
+    return this.cookies.status(ws);
+  }
+
+  @Delete('cookies')
+  @RequireManageKeys()
+  async removeCookies(@Param('id') ws: string, @CurrentUser() u: User): Promise<CrawlerCookieInfo> {
+    await this.cookies.remove(ws, u.id);
+    return { present: false };
+  }
+
+  // Merge the workspace's decrypted cookies.txt into a resolve/download body so the
+  // microservice can pass it to yt-dlp. Absent → unchanged. The cookie is a secret:
+  // it only ever flows server-to-server (never back to the browser, never logged).
+  private async withCookies(ws: string, body: object): Promise<object> {
+    const cookies = await this.cookies.getDecrypted(ws);
+    return cookies ? { ...body, cookies } : body;
   }
 
   // Poll a download job; once done, rewrite the service's fileIds to browser file URLs.

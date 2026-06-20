@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Channel, ConnectorCredentialInfo, DownloadJob, MediaItem, PublishJob } from '@lyra/shared';
+import type { Channel, ConnectorCredentialInfo, CrawlerCookieInfo, DownloadJob, MediaItem, PublishJob } from '@lyra/shared';
 
 const base = (ws: string) => `/workspaces/${ws}/connectors`;
 
@@ -41,4 +41,12 @@ export const connectorsApi = {
 
   downloadJob: (ws: string, jobId: string) =>
     api<DownloadJob>(`${base(ws)}/download-jobs/${jobId}`),
+
+  cookieStatus: (ws: string) => api<CrawlerCookieInfo>(`${base(ws)}/cookies`),
+
+  setCookies: (ws: string, cookies: string) =>
+    api<CrawlerCookieInfo>(`${base(ws)}/cookies`, { method: 'PUT', body: JSON.stringify({ cookies }) }),
+
+  deleteCookies: (ws: string) =>
+    api<CrawlerCookieInfo>(`${base(ws)}/cookies`, { method: 'DELETE' }),
 };
