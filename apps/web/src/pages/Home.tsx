@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { ApiKeyInfo, Paged, Pipeline, Project, Prompt } from '@lyra/shared';
+import { WorkspaceType, type ApiKeyInfo, type Paged, type Pipeline, type Project, type Prompt } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { initial } from '../lib/format';
 import {
   gettingStartedProgress,
   gettingStartedSteps,
@@ -23,6 +24,7 @@ import {
   CheckIcon,
   ChevronIcon,
   PlusIcon,
+  SparkleIcon,
 } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
 
@@ -34,19 +36,28 @@ interface Tile {
   key: string;
   cta?: boolean;
   soon?: boolean;
+  // show this workspace count as a badge (top-right of the tile)
+  count?: keyof WorkspaceStats;
+  // the provider-keys tile: highlight ring + "Action needed" badge when no key is set
+  keyTile?: boolean;
 }
 
+// Chats is reached from the floating AI button, so it's intentionally absent here.
 const TILES: Tile[] = [
-  { to: '/chats', icon: ChatsIcon, accent: 'var(--accent-chats)', key: 'chats', cta: true },
   { to: '/marketplace', icon: MarketplaceIcon, accent: 'var(--accent-marketplace)', key: 'marketplace', cta: true },
-  { to: '/prompts', icon: PromptsIcon, accent: 'var(--accent-prompts)', key: 'prompts', cta: true },
-  { to: '/pipelines', icon: PipelinesIcon, accent: 'var(--accent-pipelines)', key: 'pipelines', cta: true },
-  { to: '/projects', icon: ProjectsIcon, accent: 'var(--accent-projects)', key: 'projects', cta: true },
+  { to: '/prompts', icon: PromptsIcon, accent: 'var(--accent-prompts)', key: 'prompts', cta: true, count: 'prompts' },
+  { to: '/pipelines', icon: PipelinesIcon, accent: 'var(--accent-pipelines)', key: 'pipelines', cta: true, count: 'pipelines' },
+  { to: '/projects', icon: ProjectsIcon, accent: 'var(--accent-projects)', key: 'projects', cta: true, count: 'projects' },
   { to: '/import', icon: ImportIcon, accent: 'var(--accent-import)', key: 'import', cta: true },
   { to: '/publish', icon: PublishIcon, accent: 'var(--accent-publish)', key: 'publish', cta: true },
-  { to: '/settings', icon: SettingsIcon, accent: 'var(--accent-keys)', key: 'keys', cta: true },
+  { to: '/settings', icon: SettingsIcon, accent: 'var(--accent-keys)', key: 'keys', cta: true, keyTile: true },
   { icon: MembersIcon, accent: 'var(--accent-members)', key: 'members', soon: true },
 ];
+
+function roleLabel(role: string): string {
+  // 'owner' -> 'home.roleOwner', etc.
+  return `home.role${role.charAt(0).toUpperCase()}${role.slice(1)}`;
+}
 
 // i18n key prefix per checklist step: 'keys' -> gsKeys*, 'prompt' -> gsPrompt*, …
 const GS_LABEL: Record<string, string> = {
@@ -124,18 +135,39 @@ export function Home() {
 
   return (
     <div>
-      <div className="home-head">
-        <h2>{t('home.greeting', { name: user?.name?.split(' ')[0] ?? '' })}</h2>
-        <p>
-          {current
-            ? t('home.workspaceMeta', {
-                name: current.name,
-                type: current.type,
-                role: current.role,
-              })
-            : t('home.noWorkspace')}
-        </p>
-      </div>
+      <header className="home-hero">
+        <div className="home-hero-main">
+          <h2 className="home-greeting">
+            {t('home.greeting', { name: user?.name?.split(' ')[0] ?? '' })}
+          </h2>
+          {current ? (
+            <div className="home-ws-meta">
+              <span className="home-ws">
+                <span className="home-ws-avatar" aria-hidden>{initial(current.name)}</span>
+                {current.name}
+              </span>
+              <span className="home-dot" aria-hidden />
+              <span>
+                {t(current.type === WorkspaceType.Team ? 'home.wsTypeTeam' : 'home.wsTypePersonal')}
+              </span>
+              <span className="home-dot" aria-hidden />
+              <span className="home-role-pill">{t(roleLabel(current.role))}</span>
+            </div>
+          ) : (
+            <p className="home-ws-empty">{t('home.noWorkspace')}</p>
+          )}
+        </div>
+        <div className="home-hero-actions">
+          <Link to="/projects/new" className="btn-ghost btn-inline">
+            <PlusIcon width={14} height={14} />
+            {t('home.newProject')}
+          </Link>
+          <Link to="/chats" className="btn-primary btn-inline">
+            <ChatsIcon width={14} height={14} />
+            {t('home.startChat')}
+          </Link>
+        </div>
+      </header>
 
       {unverified && (
         <div className="gs-verify">
@@ -152,6 +184,9 @@ export function Home() {
       {showGetStarted && (
         <section className="gs-card" aria-label={t('home.gsTitle')}>
           <div className="gs-head">
+            <span className="gs-head-ico" aria-hidden>
+              <SparkleIcon width={18} height={18} />
+            </span>
             <div className="gs-head-text">
               <h3 className="gs-title">{t('home.gsTitle')}</h3>
               <p className="gs-sub">{t('home.gsSubtitle')}</p>
@@ -198,11 +233,9 @@ export function Home() {
                   ) : (
                     <Link
                       to={step.to}
-                      className={`icon-button ${active ? 'ib-primary' : 'ib-default'} ib-sm gs-step-cta`}
-                      title={t(`home.gs${label}Cta`)}
-                      aria-label={t(`home.gs${label}Cta`)}
+                      className={`btn-${active ? 'primary' : 'ghost'} btn-inline btn-sm gs-step-cta`}
                     >
-                      <PlusIcon width={14} height={14} />
+                      {t(`home.gs${label}Cta`)}
                     </Link>
                   )}
                 </li>
@@ -213,29 +246,49 @@ export function Home() {
         </section>
       )}
 
+      <div className="home-explore">
+        <h3>{t('home.exploreLabel')}</h3>
+      </div>
+
       <div className="panel-grid">
         {TILES.map((tile) => {
+          const needsKey = !!tile.keyTile && !!stats && stats.keys === 0;
+          let badge: ReactNode = null;
+          let badgeClass = 'badge';
+          if (tile.soon) {
+            badge = t('home.soon');
+          } else if (needsKey) {
+            badge = t('home.keysAction');
+            badgeClass = 'badge status-draft';
+          } else if (tile.count && stats) {
+            badge = String(stats[tile.count]);
+          }
+
           const inner = (
             <>
-              <div
-                className="panel-ico"
-                style={{
-                  color: tile.accent,
-                  background: `color-mix(in srgb, ${tile.accent} 9%, transparent)`,
-                }}
-              >
-                <tile.icon width={20} height={20} />
+              <div className="panel-top">
+                <div
+                  className="panel-ico"
+                  style={{
+                    color: tile.accent,
+                    background: `color-mix(in srgb, ${tile.accent} 9%, transparent)`,
+                  }}
+                >
+                  <tile.icon width={20} height={20} />
+                </div>
+                {badge !== null && <span className={badgeClass}>{badge}</span>}
               </div>
-              <h3>
-                {t(`home.${tile.key}Title`)}
-                {tile.soon && <span className="soon">{t('home.soon')}</span>}
-              </h3>
+              <h3>{t(`home.${tile.key}Title`)}</h3>
               <p>{t(`home.${tile.key}Body`)}</p>
               {tile.cta && <span className="panel-go">{t(`home.${tile.key}Cta`)} →</span>}
             </>
           );
           return tile.to ? (
-            <Link key={tile.key} to={tile.to} className="panel panel-link">
+            <Link
+              key={tile.key}
+              to={tile.to}
+              className={`panel panel-link${needsKey ? ' panel-attn' : ''}`}
+            >
               {inner}
             </Link>
           ) : (

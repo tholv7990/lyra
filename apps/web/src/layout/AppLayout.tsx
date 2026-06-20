@@ -7,6 +7,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initials } from '../lib/format';
 import { BrandLogo } from '../components/BrandLogo';
+import { IconButton } from '../components/IconButton';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
 import { WorkspaceMenu } from './WorkspaceMenu';
 import { NotificationBell } from './NotificationBell';
@@ -203,21 +204,20 @@ export function AppLayout() {
               <div className="name">{user?.name}</div>
               <div className="email">{user?.email}</div>
             </div>
+            <IconButton
+              className="sidebar-logout"
+              icon={<LogoutIcon width={16} height={16} />}
+              label={t('nav.logout')}
+              size="sm"
+              onClick={() => {
+                // Land on the public homepage (Landing), not /login. Navigate to '/'
+                // first so when `user` clears we are already on the route that
+                // renders Landing for logged-out visitors.
+                navigate('/');
+                void logout();
+              }}
+            />
           </div>
-          <button
-            className="nav-item"
-            title={t('nav.logout')}
-            onClick={() => {
-              // Land on the public homepage (Landing), not /login. Navigate to '/'
-              // first so when `user` clears we are already on the route that
-              // renders Landing for logged-out visitors.
-              navigate('/');
-              void logout();
-            }}
-          >
-            <LogoutIcon />
-            <span className="nav-txt">{t('nav.logout')}</span>
-          </button>
         </aside>
 
         <div className="main">
