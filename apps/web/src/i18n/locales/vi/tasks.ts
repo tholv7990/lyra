@@ -9,6 +9,10 @@ export default {
   addFailed: 'Không thể thêm công việc.',
   pipelineCount: '{{count}} pipeline',
   pipelineCount_other: '{{count}} pipeline',
+  statusLabel: 'Trạng thái',
+  assignee: 'Người phụ trách',
+  unassigned: 'Chưa phân công',
+  descriptionPlaceholder: 'Mô tả nhiệm vụ này…',
   status: {
     new: 'Mới',
     in_progress: 'Đang làm',

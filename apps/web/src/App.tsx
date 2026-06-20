@@ -29,6 +29,7 @@ import { Connections } from './pages/Connections';
 import { PublishComposer } from './pages/PublishComposer';
 import { ImportMedia } from './pages/ImportMedia';
 import { Members } from './pages/Members';
+import { TaskDetail } from './pages/TaskDetail';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -82,6 +83,7 @@ const router = createBrowserRouter([
       { path: 'projects/new', element: <ProjectEditor /> },
       { path: 'projects/:id', element: <ProjectDetail /> },
       { path: 'projects/:id/edit', element: <ProjectEditor /> },
+      { path: 'projects/:id/tasks/:taskId', element: <TaskDetail /> },
       { path: 'prompts', element: <Prompts /> },
       { path: 'prompts/new', element: <PromptEditor /> },
       { path: 'prompts/:id', element: <PromptEditor /> },

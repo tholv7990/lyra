@@ -9,6 +9,10 @@ export default {
   addFailed: 'Could not add the task.',
   pipelineCount: '{{count}} pipeline',
   pipelineCount_other: '{{count}} pipelines',
+  statusLabel: 'Status',
+  assignee: 'Assignee',
+  unassigned: 'Unassigned',
+  descriptionPlaceholder: 'Describe what this task is about…',
   status: {
     new: 'New',
     in_progress: 'In progress',
