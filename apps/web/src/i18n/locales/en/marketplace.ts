@@ -38,6 +38,8 @@ export default {
   preview: 'Preview',
   adopt: 'Adopt',
   done: 'Done',
+  fillsVariables: 'Fills these variables',
+  addedView: 'Added — view in library',
 
   // Card
   by: 'by {{name}}',

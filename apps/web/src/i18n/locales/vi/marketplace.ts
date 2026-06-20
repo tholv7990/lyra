@@ -38,6 +38,8 @@ export default {
   preview: 'Xem trước',
   adopt: 'Thêm',
   done: 'Xong',
+  fillsVariables: 'Điền các biến này',
+  addedView: 'Đã thêm — xem trong thư viện',
 
   // Card
   by: 'bởi {{name}}',

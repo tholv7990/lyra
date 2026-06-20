@@ -432,6 +432,7 @@ export function Marketplace() {
           locked={unverified}
           onAdopt={() => setConfirmAdopt(detail)}
           onOpenInChat={() => openInChat(detail)}
+          onViewLibrary={() => navigate('/prompts')}
           onClose={() => setDetail(null)}
         />
       )}
