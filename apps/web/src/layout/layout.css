@@ -3277,8 +3277,8 @@
   min-width: 0;
   border: none;
   background: transparent;
-  border-radius: 7px;
-  padding: 7px 9px;
+  border-radius: 6px;
+  padding: 7px 8px;
   font-size: 13px;
   text-align: left;
   color: var(--ink);
