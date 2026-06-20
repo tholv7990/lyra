@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { WorkspaceView } from '@lyra/shared';
+import { WorkspaceType } from '@lyra/shared';
 import { api, setWorkspaceId } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 
@@ -55,7 +56,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const valid = currentId && workspaces.some((w) => w.id === currentId);
     const next = valid
       ? currentId!
-      : (workspaces.find((w) => w.type === 'personal')?.id ?? workspaces[0].id);
+      : (workspaces.find((w) => w.type === WorkspaceType.Personal)?.id ?? workspaces[0].id);
     if (next !== currentId) setCurrentId(next);
     setWorkspaceId(next);
     localStorage.setItem(LS_KEY, next);

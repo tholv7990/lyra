@@ -384,12 +384,6 @@
   color: var(--ink-tertiary);
 }
 
-.ws-pop-divider {
-  height: 1px;
-  background: var(--hairline);
-  margin: 5px 4px;
-}
-
 .ws-create {
   display: grid;
   gap: 6px;

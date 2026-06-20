@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { WorkspaceType } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initial } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
@@ -7,13 +8,13 @@ import { ChevronIcon, CheckIcon, MembersIcon, PersonIcon } from './icons';
 
 // Workspace type marker: a team (group) or personal (single person) icon,
 // shown next to the workspace name in the switcher.
-function WsType({ type }: { type: 'personal' | 'team' }) {
+function WsType({ type }: { type: WorkspaceType }) {
   const { t } = useTranslation();
-  const label = type === 'team' ? t('common.teamWorkspace') : t('common.personalWorkspace');
+  const label = type === WorkspaceType.Team ? t('common.teamWorkspace') : t('common.personalWorkspace');
 
   return (
     <span className="ws-type" title={label}>
-      {type === 'team' ? <MembersIcon width={13} height={13} /> : <PersonIcon width={13} height={13} />}
+      {type === WorkspaceType.Team ? <MembersIcon width={13} height={13} /> : <PersonIcon width={13} height={13} />}
     </span>
   );
 }
