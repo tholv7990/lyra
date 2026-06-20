@@ -16,6 +16,10 @@ export class CreateRequestBody implements CreateRequestDto {
   @IsString()
   @MaxLength(2000)
   body?: string;
+
+  @IsOptional()
+  @IsString()
+  workspaceId?: string;
 }
 
 export class UpdateRequestStatusBody implements UpdateRequestStatusDto {

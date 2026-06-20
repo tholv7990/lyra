@@ -7,6 +7,7 @@ import { AdminRequestsController } from './admin-requests.controller';
 import { UsersModule } from '../users/users.module';
 import { AdminModule } from '../admin/admin.module';
 import { AdminGuard } from '../admin/admin.guard';
+import { WorkspacesModule } from '../workspaces/workspaces.module';
 
 // User requests: a user-facing submit endpoint + the super-admin triage list.
 // AdminModule is imported for AdminService (the AdminGuard dependency).
@@ -14,6 +15,7 @@ import { AdminGuard } from '../admin/admin.guard';
   imports: [
     UsersModule, // UsersService.refMap
     AdminModule, // AdminService backs AdminGuard
+    WorkspacesModule, // WorkspacesService + MembershipsService for team-upgrade validation
     MongooseModule.forFeature([{ name: UserRequest.name, schema: UserRequestSchema }]),
   ],
   controllers: [RequestsController, AdminRequestsController],
