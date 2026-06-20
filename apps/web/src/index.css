@@ -25,10 +25,10 @@
   --primary-hover: #ff7d35;
   --primary-pressed: #e25a0e;
   --primary-tint: rgba(255, 107, 26, 0.12);
-  --danger: #e5484d;
-  --success: #2da44e;
+  --danger: #eb5757;
+  --success: #4cb782;
   --warning: #d4a72c;
-  --info: #0a84ff;
+  --info: #4ea7fc;
   /* Text/icons on a filled accent (primary/success/danger) — white in both
      themes since the fill stays colored. One token for every on-color label. */
   --on-accent: #ffffff;
@@ -117,10 +117,10 @@
   --primary-hover: #ff7d35;
   --primary-pressed: #e25a0e;
   --primary-tint: rgba(255, 107, 26, 0.2);
-  --danger: #f0686d;
-  --success: #3fb950;
-  --warning: #e0b54a;
-  --info: #4c9dff;
+  --danger: #eb5757;
+  --success: #4cb782;
+  --warning: #f2c94c;
+  --info: #4ea7fc;
   /* Error surface, dark variants — a desaturated red border + near-black red
      wash that read as "error" on the dark canvas (light pinks would glare). */
   --danger-tint: #5a2a2c;
