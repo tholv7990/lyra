@@ -181,3 +181,41 @@
   display: flex;
   gap: 6px;
 }
+
+/* Mobile (design): the board stops being a horizontal kanban and becomes a
+   single vertical stack of status sections — header (icon · name · count) + cards,
+   no column chrome. Adding is via the header "New task" (the modal picks status). */
+@media (max-width: 760px) {
+  .tboard {
+    flex: none;
+    overflow-x: visible;
+  }
+  .tboard-cols {
+    flex-direction: column;
+    gap: 18px;
+    height: auto;
+  }
+  .tcol {
+    width: auto;
+    max-width: none;
+    max-height: none;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  .tcol-head {
+    padding: 0 0 9px;
+  }
+  .tcol-body {
+    padding: 0;
+    overflow: visible;
+  }
+  .tcard {
+    border-radius: 11px;
+    box-shadow: var(--shadow-sm);
+  }
+  .tcol-add,
+  .tcol-addrow {
+    display: none;
+  }
+}

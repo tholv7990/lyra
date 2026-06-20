@@ -74,11 +74,11 @@ export function ProjectDetail() {
       actions={
         canEdit ? (
           <>
-            <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => navigate(editUrl)}>
-              <PencilIcon width={14} height={14} /> {t('projects.editProject')}
+            <button type="button" className="btn-ghost btn-inline btn-sm pd-act" onClick={() => navigate(editUrl)} title={t('projects.editProject')}>
+              <PencilIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.editProject')}</span>
             </button>
-            <button type="button" className="btn-primary btn-inline btn-sm" onClick={() => setAddTick((n) => n + 1)}>
-              <PlusIcon width={14} height={14} /> {t('projects.newTask')}
+            <button type="button" className="btn-primary btn-inline btn-sm pd-act" onClick={() => setAddTick((n) => n + 1)} title={t('projects.newTask')}>
+              <PlusIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.newTask')}</span>
             </button>
           </>
         ) : undefined

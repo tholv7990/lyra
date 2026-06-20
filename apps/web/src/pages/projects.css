@@ -199,3 +199,19 @@
 .pd-var-k { color: var(--primary); }
 .pd-var-eq { color: var(--ink-tertiary); }
 .pd-var-v { color: var(--ink-muted); }
+
+/* Mobile: the board stacks vertically, so the page grows with content and the
+   shell body scrolls (no fixed-height flex column). Header actions collapse to
+   icons (the design's compact mobile header). */
+@media (max-width: 760px) {
+  .pd {
+    height: auto;
+  }
+  .pd-act .pd-act-label {
+    display: none;
+  }
+  .pd-act {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+}
