@@ -11,6 +11,7 @@ import {
   ProjectShare,
   Role,
   WorkspaceType,
+  canCreate,
   type TransferPreview,
   type TransferProjectDto,
   type Project as ProjectModel,
@@ -26,6 +27,8 @@ import type { PromptDocument } from '../prompts/prompt.schema';
 import { Workspace } from '../workspaces/workspace.schema';
 import { Membership } from '../workspaces/membership.schema';
 import { ApiKey } from '../keys/api-key.schema';
+import { Run } from '../runs/run.schema';
+import { Asset } from '../assets/asset.schema';
 import { ProjectsService } from './projects.service';
 import { UsersService } from '../users/users.service';
 import type { TransferConflict } from '@lyra/shared';
@@ -40,6 +43,8 @@ export class TransferService {
     @InjectModel(Workspace.name) private readonly workspaceModel: Model<Workspace>,
     @InjectModel(Membership.name) private readonly membershipModel: Model<Membership>,
     @InjectModel(ApiKey.name) private readonly apiKeyModel: Model<ApiKey>,
+    @InjectModel(Run.name) private readonly runModel: Model<Run>,
+    @InjectModel(Asset.name) private readonly assetModel: Model<Asset>,
     @InjectConnection() private readonly connection: Connection,
     private readonly projects: ProjectsService,
     private readonly users: UsersService,
@@ -47,9 +52,10 @@ export class TransferService {
 
   /** Gather the bundle for a project P: tasks, pipelines via tasks, prompts via pipelines. */
   private async gatherBundle(project: ProjectDocument, sourceWorkspaceId: string) {
-    // 1. Tasks belonging to the project
+    // 1. Tasks belonging to the project (must also be in the source workspace so
+    //    a foreign task cannot inject foreign pipeline ids into the bundle).
     const tasks = await this.taskModel
-      .find({ projectId: project._id.toString(), active: { $ne: false } })
+      .find({ projectId: project._id.toString(), workspaceId: sourceWorkspaceId, active: { $ne: false } })
       .exec();
 
     // 2. Pipeline IDs referenced by the tasks
@@ -143,13 +149,20 @@ export class TransferService {
     project: ProjectDocument,
     userId: string,
     dto: TransferProjectDto,
+    emailVerified: boolean,
   ) {
-    // 1. Caller must be project creator
+    // 1. Caller must have a verified email — mirrors enforceCreateGate / userEmailVerified.
+    //    An unverified user can browse but must not move (create) content into a team.
+    if (!emailVerified) {
+      throw new ForbiddenException('Confirm your email before moving a project to a team');
+    }
+
+    // 2. Caller must be project creator
     if (project.createdBy !== userId) {
       throw new ForbiddenException('Only the project creator can move it');
     }
 
-    // 2. Source must be personal workspace
+    // 3. Source must be personal workspace
     const sourceWorkspace = await this.workspaceModel
       .findOne({ _id: project.workspaceId })
       .exec();
@@ -157,7 +170,7 @@ export class TransferService {
       throw new BadRequestException('Projects can only be moved from a personal workspace');
     }
 
-    // 3. Target must be a team workspace the user is a member of with create rights
+    // 4. Target must be a team workspace the user is a member of with create rights
     const targetWorkspace = await this.workspaceModel
       .findOne({ _id: dto.targetWorkspaceId, type: WorkspaceType.Team })
       .exec();
@@ -175,7 +188,9 @@ export class TransferService {
     if (!targetMembership) {
       throw new ForbiddenException('You are not a member of the target workspace');
     }
-    if (targetMembership.role === Role.Viewer) {
+    // Use the shared canCreate helper (not an inline Role.Viewer literal) so the
+    // rule stays in one place across all create-gated surfaces.
+    if (!canCreate({ userId, role: targetMembership.role as Role, canManageKeys: false })) {
       throw new ForbiddenException('You need create rights in the target workspace');
     }
 
@@ -186,8 +201,9 @@ export class TransferService {
     project: ProjectDocument,
     userId: string,
     dto: TransferProjectDto,
+    emailVerified = true,
   ): Promise<TransferPreview> {
-    await this.validateTransfer(project, userId, dto);
+    await this.validateTransfer(project, userId, dto, emailVerified);
 
     const bundle = await this.gatherBundle(project, project.workspaceId);
     const conflicts = await this.detectConflicts(bundle, project, project.workspaceId);
@@ -223,8 +239,9 @@ export class TransferService {
     userId: string,
     dto: TransferProjectDto,
     actorId: string,
+    emailVerified = true,
   ): Promise<ProjectModel> {
-    await this.validateTransfer(project, userId, dto);
+    await this.validateTransfer(project, userId, dto, emailVerified);
 
     const bundle = await this.gatherBundle(project, project.workspaceId);
     const conflicts = await this.detectConflicts(bundle, project, project.workspaceId);
@@ -279,12 +296,45 @@ export class TransferService {
         }
 
         // Move prompts
+        // Note: Conversation.originPromptId references (per-user chat history) are
+        // intentionally NOT re-pointed — chats stay with the mover's personal account.
         if (bundle.prompts.length > 0) {
           await this.promptModel.updateMany(
             { _id: { $in: bundle.prompts.map((p) => p._id) } },
             { $set: { workspaceId: targetId, updatedBy: actorId, updatedAt: now } },
             { session },
           );
+        }
+
+        // Move runs that belong to the bundle tasks (Finding B).
+        // Left in the personal workspace they would become dangling cross-workspace rows
+        // and surface in the team via the non-workspace-scoped listForTask query.
+        const bundleTaskIds = bundle.tasks.map((t) => t._id.toString());
+        if (bundleTaskIds.length > 0) {
+          // Collect run ids before re-pointing so we can use them for the asset update.
+          // Asset.runId references Run._id (not taskId), so we need the actual run ids.
+          const runDocs = await this.runModel
+            .find({ taskId: { $in: bundleTaskIds } }, { _id: 1 }, { session })
+            .lean()
+            .exec();
+          const runIds = runDocs.map((r: { _id: unknown }) => String(r._id));
+
+          await this.runModel.updateMany(
+            { taskId: { $in: bundleTaskIds } },
+            { $set: { workspaceId: targetId, updatedBy: actorId } },
+            { session },
+          );
+
+          // Move assets that belong to those runs.
+          // Asset carries its own workspaceId (asset.schema.ts) and references runId
+          // (a Run document _id) — re-point alongside the runs.
+          if (runIds.length > 0) {
+            await this.assetModel.updateMany(
+              { workspaceId: project.workspaceId, runId: { $in: runIds } },
+              { $set: { workspaceId: targetId, updatedBy: actorId } },
+              { session },
+            );
+          }
         }
       });
     } finally {

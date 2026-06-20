@@ -14,6 +14,7 @@ function makeTransferService(opts: {
   pipelineUsedByOtherTask?: boolean;
   promptUsedByOutsidePipeline?: boolean;
   targetKeys?: string[];
+  emailVerified?: boolean;
 } = {}) {
   const {
     sourceType = WorkspaceType.Personal,
@@ -26,6 +27,7 @@ function makeTransferService(opts: {
     pipelineUsedByOtherTask = false,
     promptUsedByOutsidePipeline = false,
     targetKeys = [],
+    emailVerified = true,
   } = opts;
 
   const actorId = 'u1';
@@ -105,6 +107,21 @@ function makeTransferService(opts: {
     }),
   };
 
+  const runModel = {
+    find: jest.fn().mockReturnValue({
+      lean: jest.fn().mockReturnValue({
+        exec: jest.fn().mockResolvedValue(
+          tasks.map((t) => ({ _id: `run-for-${t._id}` })),
+        ),
+      }),
+    }),
+    updateMany: jest.fn().mockResolvedValue({ modifiedCount: 0 }),
+  };
+
+  const assetModel = {
+    updateMany: jest.fn().mockResolvedValue({ modifiedCount: 0 }),
+  };
+
   const session = {
     withTransaction: jest.fn().mockImplementation(async (fn: () => Promise<void>) => { await fn(); }),
     endSession: jest.fn(),
@@ -133,12 +150,14 @@ function makeTransferService(opts: {
     workspaceModel as never,
     membershipModel as never,
     apiKeyModel as never,
+    runModel as never,
+    assetModel as never,
     connection as never,
     projectsService as never,
     usersService as never,
   );
 
-  return { service, project, actorId, targetWsId };
+  return { service, project, actorId, targetWsId, taskModel, runModel, assetModel, emailVerified };
 }
 
 const targetDto = { targetWorkspaceId: 'ws-team' };
@@ -220,6 +239,13 @@ describe('TransferService.preview', () => {
     const { service, project, actorId } = makeTransferService({ targetMemberRole: null });
     await expect(service.preview(project as never, actorId, targetDto)).rejects.toThrow(ForbiddenException);
   });
+
+  it('rejects when the user email is not verified (Finding D)', async () => {
+    const { service, project, actorId } = makeTransferService({ emailVerified: false });
+    await expect(
+      service.preview(project as never, actorId, targetDto, false),
+    ).rejects.toThrow(ForbiddenException);
+  });
 });
 
 describe('TransferService.transfer', () => {
@@ -240,5 +266,26 @@ describe('TransferService.transfer', () => {
     });
     const result = await service.transfer(project as never, actorId, targetDto, actorId);
     expect(result.workspaceId).toBe('ws-team');
+  });
+
+  it('re-points runs belonging to bundle tasks inside the transaction (Finding B)', async () => {
+    const { service, project, actorId, runModel } = makeTransferService({
+      tasks: [{ _id: 't1', pipelines: ['pl1'] }],
+      pipelines: [{ _id: 'pl1', name: 'Pipeline', steps: [{ promptId: 'pr1', provider: 'anthropic' }], workspaceId: 'ws-personal' }],
+      prompts: [{ _id: 'pr1', title: 'Prompt', workspaceId: 'ws-personal' }],
+    });
+    await service.transfer(project as never, actorId, targetDto, actorId);
+    expect(runModel.updateMany).toHaveBeenCalledWith(
+      { taskId: { $in: ['t1'] } },
+      { $set: { workspaceId: 'ws-team', updatedBy: actorId } },
+      expect.objectContaining({}), // session
+    );
+  });
+
+  it('rejects transfer when the user email is not verified (Finding D)', async () => {
+    const { service, project, actorId } = makeTransferService({ emailVerified: false });
+    await expect(
+      service.transfer(project as never, actorId, targetDto, actorId, false),
+    ).rejects.toThrow(ForbiddenException);
   });
 });

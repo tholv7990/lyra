@@ -15,6 +15,8 @@ import { Prompt, PromptSchema } from '../prompts/prompt.schema';
 import { Workspace, WorkspaceSchema } from '../workspaces/workspace.schema';
 import { Membership, MembershipSchema } from '../workspaces/membership.schema';
 import { ApiKey, ApiKeySchema } from '../keys/api-key.schema';
+import { Run, RunSchema } from '../runs/run.schema';
+import { Asset, AssetSchema } from '../assets/asset.schema';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { ApiKey, ApiKeySchema } from '../keys/api-key.schema';
       { name: Workspace.name, schema: WorkspaceSchema },
       { name: Membership.name, schema: MembershipSchema },
       { name: ApiKey.name, schema: ApiKeySchema },
+      { name: Run.name, schema: RunSchema },
+      { name: Asset.name, schema: AssetSchema },
     ]),
   ],
   controllers: [ProjectsController, TransferController],

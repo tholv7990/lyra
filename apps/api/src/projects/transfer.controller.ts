@@ -7,6 +7,7 @@ import { CurrentProject } from './decorators/project.decorators';
 import type { ProjectDocument } from './project.schema';
 import { TransferService } from './transfer.service';
 import { TransferProjectBody } from './dto/transfer.dto';
+import { userEmailVerified } from '../workspaces/guards/create-gate';
 
 @Controller()
 export class TransferController {
@@ -21,7 +22,7 @@ export class TransferController {
     @CurrentUser() user: User,
     @Body() body: TransferProjectBody,
   ): Promise<TransferPreview> {
-    return this.transferService.preview(project, user.id, body);
+    return this.transferService.preview(project, user.id, body, userEmailVerified(user));
   }
 
   @Post('projects/:id/transfer')
@@ -33,6 +34,6 @@ export class TransferController {
     @CurrentUser() user: User,
     @Body() body: TransferProjectBody,
   ): Promise<ProjectModel> {
-    return this.transferService.transfer(project, user.id, body, user.id);
+    return this.transferService.transfer(project, user.id, body, user.id, userEmailVerified(user));
   }
 }
