@@ -39,12 +39,19 @@ export class TasksService {
   ): Promise<TaskView> {
     const name = dto.name?.trim();
     if (!name) throw new BadRequestException('A task name is required.');
+    if (dto.assigneeId) {
+      const member = await this.memberships.findFor(workspaceId, dto.assigneeId);
+      if (!member) throw new BadRequestException('Assignee must be a member of the workspace.');
+    }
     const doc = await this.model.create({
       workspaceId,
       projectId,
       name: name.slice(0, MAX_NAME),
       description: (dto.description ?? '').trim().slice(0, MAX_DESC),
-      status: TaskStatus.New,
+      status: dto.status ?? TaskStatus.New,
+      ...(dto.priority ? { priority: dto.priority } : {}),
+      ...(dto.assigneeId ? { assigneeId: dto.assigneeId } : {}),
+      tags: dto.tags ?? [],
       pipelines: dto.pipelines ?? [],
       createdBy: actorId,
       updatedBy: actorId,

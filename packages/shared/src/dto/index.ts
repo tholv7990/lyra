@@ -66,6 +66,10 @@ export interface UpdateWorkspaceDto {
 export interface CreateTaskDto {
   name: string;
   description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  assigneeId?: string | null;
+  tags?: string[];
   pipelines?: string[];
 }
 export interface UpdateTaskDto {

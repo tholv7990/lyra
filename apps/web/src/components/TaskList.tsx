@@ -7,21 +7,24 @@ import { initials } from '../lib/format';
 import { TASK_STATUS_ORDER, groupTasksByStatus } from '../lib/taskStatus';
 import { TaskStatusIcon } from './TaskStatusIcon';
 import { TaskPriorityIcon } from './TaskPriorityIcon';
+import { TaskCreateModal } from './TaskCreateModal';
 import { PlusIcon } from '../layout/icons';
 import './tasks.css';
 
 // The project's task board (design): a horizontal row of status columns
 // (New · In progress · On hold · Complete), each a scrollable stack of task
-// cards. A card opens the task-detail run workbench. Editors can add a task to
-// any column (it's created, then moved if the column isn't New). The page-header
-// "New task" button opens the New-column composer via `openAddTick`.
+// cards. A card opens the task-detail run workbench. Editors add a task via the
+// design's create modal (name + properties + pipelines), pre-set to the column
+// it was opened from. The page-header "New task" opens it on New via `openAddTick`.
 export function TaskList({
   projectId,
+  projectName,
   canEdit,
   labels,
   openAddTick = 0,
 }: {
   projectId: string;
+  projectName: string;
   canEdit: boolean;
   labels: LabelInfo[];
   openAddTick?: number;
@@ -31,9 +34,7 @@ export function TaskList({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [addingCol, setAddingCol] = useState<TaskStatus | null>(null);
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,36 +46,10 @@ export function TaskList({
     return () => { cancelled = true; };
   }, [projectId, t]);
 
-  // Page-header "New task" → open the New column's composer.
+  // Page-header "New task" → open the create modal on the New column.
   useEffect(() => {
-    if (openAddTick) { setAddingCol(TaskStatus.New); setName(''); }
+    if (openAddTick) setCreateFor(TaskStatus.New);
   }, [openAddTick]);
-
-  async function addTask(status: TaskStatus) {
-    const n = name.trim();
-    if (!n || busy) return;
-    setBusy(true);
-    try {
-      // The create endpoint always lands a task in New; move it if needed.
-      let created = await api<Task>(`/projects/${projectId}/tasks`, {
-        method: 'POST',
-        body: JSON.stringify({ name: n }),
-      });
-      if (status !== TaskStatus.New) {
-        created = await api<Task>(`/projects/${projectId}/tasks/${created.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status }),
-        });
-      }
-      setTasks((ts) => [created, ...ts]);
-      setName('');
-      setAddingCol(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t('tasks.addFailed'));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   const grouped = groupTasksByStatus(tasks);
 
@@ -111,13 +86,7 @@ export function TaskList({
               <span className="tcol-count">{grouped[s].length}</span>
               <div style={{ flex: 1 }} />
               {canEdit && (
-                <button
-                  type="button"
-                  className="tcol-add"
-                  title={t('tasks.add')}
-                  aria-label={t('tasks.add')}
-                  onClick={() => { setAddingCol(s); setName(''); }}
-                >
+                <button type="button" className="tcol-add" title={t('tasks.add')} aria-label={t('tasks.add')} onClick={() => setCreateFor(s)}>
                   <PlusIcon width={14} height={14} />
                 </button>
               )}
@@ -163,39 +132,25 @@ export function TaskList({
                 </button>
               ))}
 
-              {canEdit && addingCol === s ? (
-                <form
-                  className="tcol-addform"
-                  onSubmit={(e) => { e.preventDefault(); void addTask(s); }}
-                >
-                  <input
-                    className="text-input"
-                    autoFocus
-                    placeholder={t('tasks.namePlaceholder')}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Escape') { setAddingCol(null); setName(''); } }}
-                  />
-                  <div className="tcol-addform-actions">
-                    <button type="submit" className="btn-primary btn-inline btn-sm" disabled={busy || !name.trim()}>
-                      {t('tasks.add')}
-                    </button>
-                    <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => { setAddingCol(null); setName(''); }}>
-                      {t('tasks.cancel')}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                canEdit && (
-                  <button type="button" className="tcol-addrow" onClick={() => { setAddingCol(s); setName(''); }}>
-                    <PlusIcon width={13} height={13} /> {t('tasks.add')}
-                  </button>
-                )
+              {canEdit && (
+                <button type="button" className="tcol-addrow" onClick={() => setCreateFor(s)}>
+                  <PlusIcon width={13} height={13} /> {t('tasks.add')}
+                </button>
               )}
             </div>
           </div>
         ))}
       </div>
+
+      {createFor !== null && (
+        <TaskCreateModal
+          projectId={projectId}
+          projectName={projectName}
+          initialStatus={createFor}
+          onClose={() => setCreateFor(null)}
+          onCreated={(task) => { setTasks((ts) => [task, ...ts]); setCreateFor(null); }}
+        />
+      )}
     </div>
   );
 }

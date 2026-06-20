@@ -14,6 +14,23 @@ export class CreateTaskBody implements CreateTaskDto {
   description?: string;
 
   @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
+
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
+
+  @IsOptional()
+  @IsString()
+  assigneeId?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   pipelines?: string[];

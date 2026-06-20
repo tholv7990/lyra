@@ -114,7 +114,7 @@ export function ProjectDetail() {
           )}
         </div>
 
-        <TaskList projectId={project.id} canEdit={canEdit} labels={labels} openAddTick={addTick} />
+        <TaskList projectId={project.id} projectName={project.name} canEdit={canEdit} labels={labels} openAddTick={addTick} />
       </div>
     </EditorShell>
   );
