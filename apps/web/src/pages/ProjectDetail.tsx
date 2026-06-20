@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
   ProjectStatus,
+  WorkspaceType,
   type Project,
 } from '@lyra/shared';
 import { api } from '../lib/api';
@@ -12,6 +13,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
 import { TaskBoard } from '../components/TaskBoard';
+import { MoveToTeamModal } from '../components/MoveToTeamModal';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
@@ -24,7 +26,7 @@ export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { current } = useWorkspace();
+  const { current, workspaces } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [descriptionDraft, setDescriptionDraft] = useState('');
@@ -101,6 +103,22 @@ export function ProjectDetail() {
     if (descriptionDraft !== (project.description ?? '')) void saveProjectMeta({ description: descriptionDraft });
   };
 
+  const [showMoveModal, setShowMoveModal] = useState(false);
+
+  // Team workspaces the user belongs to — shown only when current is Personal
+  const teamWorkspaces = useMemo(
+    () => workspaces.filter((w) => w.type === WorkspaceType.Team),
+    [workspaces],
+  );
+
+  const canMoveToTeam =
+    !!user &&
+    !!current &&
+    current.type === WorkspaceType.Personal &&
+    teamWorkspaces.length > 0 &&
+    !!project &&
+    project.createdBy.id === user.id;
+
   // Suppress unused warning for busy (kept for future use / symmetric API)
   void busy;
   void setBusy;
@@ -162,6 +180,18 @@ export function ProjectDetail() {
             </span>
             <span className="dot">·</span>
             <span>{t('projects.createdByOn', { date: fmtDate(project.createdAt), name: project.createdBy.name })}</span>
+            {canMoveToTeam && (
+              <>
+                <span className="dot">·</span>
+                <button
+                  type="button"
+                  className="txt-btn"
+                  onClick={() => setShowMoveModal(true)}
+                >
+                  {t('projects.moveToTeamAction')}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -191,6 +221,13 @@ export function ProjectDetail() {
 
         <TaskBoard projectId={project.id} canEdit={canEdit} />
       </div>
+      {showMoveModal && canMoveToTeam && (
+        <MoveToTeamModal
+          projectId={project.id}
+          teamWorkspaces={teamWorkspaces}
+          onClose={() => setShowMoveModal(false)}
+        />
+      )}
     </EditorShell>
   );
 }

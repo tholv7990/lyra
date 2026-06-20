@@ -80,4 +80,18 @@ export default {
   varValuePlaceholder: 'giá trị',
   removeVariable: 'Xóa biến',
   addVariable: '+ Thêm biến',
+
+  // Move to team
+  moveToTeamAction: 'Chuyển vào nhóm',
+  moveToTeamTitle: 'Chuyển dự án vào nhóm',
+  moveToTeamSub: 'Chuyển dự án này cùng các nhiệm vụ, pipeline và prompt vào một workspace nhóm.',
+  moveToTeamTarget: 'Nhóm đích',
+  transferBundle: '{{tasks}} nhiệm vụ · {{pipelines}} pipeline · {{prompts}} prompt sẽ được chuyển.',
+  transferKeysWarning: 'Nhóm cần khóa API cho các nhà cung cấp sau:',
+  transferConflictsTitle: 'Xung đột — giải quyết trước khi chuyển:',
+  transferOneWayWarning: 'Thao tác này sẽ chuyển dự án vào {{team}} vĩnh viễn. Bạn sẽ làm việc với nó ở đó và nó thuộc về nhóm.',
+  transferConfirm: 'Chuyển vào nhóm',
+  transferring: 'Đang chuyển…',
+  transferFailed: 'Không thể chuyển dự án',
+  transferPreviewFailed: 'Không thể tải bản xem trước chuyển nhượng',
 } as const;

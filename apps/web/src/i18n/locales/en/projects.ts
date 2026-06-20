@@ -80,4 +80,18 @@ export default {
   varValuePlaceholder: 'value',
   removeVariable: 'Remove variable',
   addVariable: '+ Add variable',
+
+  // Move to team
+  moveToTeamAction: 'Move to team',
+  moveToTeamTitle: 'Move project to team',
+  moveToTeamSub: 'Move this project and its tasks, pipelines, and prompts into a team workspace.',
+  moveToTeamTarget: 'Target team',
+  transferBundle: '{{tasks}} tasks · {{pipelines}} pipelines · {{prompts}} prompts will move.',
+  transferKeysWarning: 'The team needs keys for these providers:',
+  transferConflictsTitle: 'Conflicts — resolve before moving:',
+  transferOneWayWarning: "This moves the project into {{team}} permanently. You'll work with it there, and it stays with the team.",
+  transferConfirm: 'Move to team',
+  transferring: 'Moving…',
+  transferFailed: 'Could not move project',
+  transferPreviewFailed: 'Could not load transfer preview',
 } as const;
