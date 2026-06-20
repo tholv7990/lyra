@@ -18,8 +18,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
 import { Composer } from '../components/Composer';
-import { Markdown } from '../components/Markdown';
-import { CheckIcon, PencilIcon, XIcon } from '../layout/icons';
+import { CheckIcon } from '../layout/icons';
 import { TypeSelect } from '../components/TypeSelect';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
@@ -64,16 +63,6 @@ export function PromptEditor() {
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
-  // Mobile: the title shows as text in the top menu; tapping ✎ edits it in place.
-  // (On desktop the title is always an editable input — CSS hides these toggles.)
-  const [renaming, setRenaming] = useState(false);
-  const titleRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (renaming) {
-      titleRef.current?.focus();
-      titleRef.current?.select();
-    }
-  }, [renaming]);
 
   // Unsaved-changes guard: the form is dirty when it differs from the last-saved
   // snapshot. Block in-app navigation (back/breadcrumb/sidebar) with a "Save
@@ -190,127 +179,76 @@ export function PromptEditor() {
     return <p className="empty">{t('prompts.onlyEditOwn')}</p>;
   }
 
+  const detectedVars = [...new Set(form.content.match(/\{[^{}]+\}/g) ?? [])];
+  const isPublic = form.status === PromptStatus.Public;
+
   return (
-    <form className="pe" onSubmit={(e) => { e.preventDefault(); void save(); }}>
-      {/* Top menu: ✎ edit-name + title (left) · ✓ save (green) · ✕ cancel (red).
-          On mobile this is the app-style header bar; on desktop the title is an
-          always-editable input (the ✎ / read-only text are CSS-hidden there). */}
-      <div className={`pe-titlerow ${renaming ? 'renaming' : ''}`}>
-        <button
-          type="button"
-          className="pe-rename-btn"
-          title={t('prompts.editName')}
-          aria-label={t('prompts.editName')}
-          onClick={() => setRenaming(true)}
-        >
-          <PencilIcon />
-        </button>
-        <button
-          type="button"
-          className="pe-title-text"
-          onClick={() => setRenaming(true)}
-        >
-          {form.title.trim() || t('prompts.untitled')}
-        </button>
+    <form className="pe2" onSubmit={(e) => { e.preventDefault(); void save(); }}>
+      {/* Header: title (left) · Cancel + Save prompt (right). The "Prompts / …"
+          breadcrumb is in the app top bar (useBreadcrumb). */}
+      <div className="pe2-head">
         <input
-          ref={titleRef}
-          className="pe-title"
+          className="pe2-title"
           placeholder={t('prompts.promptTitlePlaceholder')}
-          autoFocus
+          autoFocus={!isEdit}
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
-          onBlur={() => setRenaming(false)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              setRenaming(false);
-              titleRef.current?.blur();
-            }
-          }}
         />
-        <div className="pe-actions">
-          <button
-            type="submit"
-            className="icon-btn-success"
-            title={isEdit ? t('prompts.saveChanges') : t('prompts.createPrompt')}
-            aria-label={isEdit ? t('prompts.saveChanges') : t('prompts.createPrompt')}
-            disabled={busy || !form.title.trim()}
-          >
-            <CheckIcon width={16} height={16} />
+        <div className="pe2-actions">
+          <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => navigate('/prompts')}>
+            {t('common.cancel')}
           </button>
-          <button
-            type="button"
-            className="icon-btn-danger"
-            title={t('common.cancel')}
-            aria-label={t('common.cancel')}
-            onClick={() => navigate('/prompts')}
-          >
-            <XIcon />
+          <button type="submit" className="btn-primary btn-inline btn-sm" disabled={busy || !form.title.trim()}>
+            <CheckIcon width={14} height={14} />
+            {busy ? t('common.saving') : t('prompts.savePrompt')}
           </button>
         </div>
       </div>
 
       {error && <p className="error pe-error">{error}</p>}
 
-      {/* Output type (metadata only) + visibility toggle — one row. The toggle's
-          own "Public" text labels it, so no separate status label. */}
-      <div className="pe-row">
-        <div className="pe-field pe-type">
-          <span className="pe-field-label" id="pe-type-label">{t('prompts.typeLabel')}</span>
-          <TypeSelect
-            value={form.type}
-            onChange={(type) => setForm({ ...form, type })}
-            labelledBy="pe-type-label"
+      {/* Type (metadata) + Public/Draft visibility toggle */}
+      <div className="pe2-meta">
+        <div className="pe2-field">
+          <span className="pe2-mini-label" id="pe-type-label">{t('prompts.typeLabel')}</span>
+          <TypeSelect value={form.type} onChange={(type) => setForm({ ...form, type })} labelledBy="pe-type-label" />
+        </div>
+        <label className="pe-toggle" title={t('prompts.publicHint')}>
+          <span className={`pe-toggle-text${isPublic ? ' on' : ''}`}>
+            {isPublic ? t('prompts.publicLabel') : t('prompts.statusDraft')}
+          </span>
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
           />
-        </div>
-        <div className="pe-field pe-status">
-          <label className="pe-toggle" title={t('prompts.publicHint')}>
-            <span className="pe-toggle-text">{t('prompts.publicLabel')}</span>
-            <input
-              type="checkbox"
-              checked={form.status === PromptStatus.Public}
-              onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
-            />
-            <span className="pe-track"><span className="pe-knob" /></span>
-          </label>
-        </div>
+          <span className="pe-track"><span className="pe-knob" /></span>
+        </label>
       </div>
 
       {/* Labels */}
-      <div className="pe-row">
-        <div className="pe-field pe-tags">
-          <span className="pe-field-label">{t('prompts.label')}</span>
-          <div className="pe-field-control">
-            <LabelPicker
-              value={form.tags}
-              labels={labels}
-              onChange={(tags) => setForm({ ...form, tags })}
-              onCreate={createLabel}
-            />
-          </div>
-        </div>
+      <div className="pe2-labels">
+        <span className="pe2-mini-label">{t('prompts.labelsPlural')}</span>
+        <LabelPicker
+          value={form.tags}
+          labels={labels}
+          onChange={(tags) => setForm({ ...form, tags })}
+          onCreate={createLabel}
+        />
       </div>
 
-      {/* live preview (the "answer" area) — grows and scrolls */}
-      <div className="pe-preview-scroll">
-        {form.content.trim() ? (
-          <Markdown>{form.content}</Markdown>
-        ) : (
-          <div className="pe-preview-hint">
-            <h3>{t('prompts.writeHeading')}</h3>
-            <p>{t('prompts.writeHint')}</p>
-            <p className="pe-preview-vars">
-              {t('prompts.variables')}: <code>{'{product}'}</code> <code>{'{niche}'}</code> <code>{'{homepage}'}</code> <code>{'{note}'}</code>{' '}
-              — {t('prompts.variablesPipeline')} <code>{'{input}'}</code> ({t('prompts.variablesPrevStep')}){' '}
-              {t('prompts.variablesOr')} <code>{'{step:Name}'}</code> ({t('prompts.variablesAnyStep')}).
-            </p>
-          </div>
-        )}
+      {/* Write-your-prompt heading + variables hint */}
+      <div className="pe2-write">
+        <h3>{t('prompts.writeHeading')}</h3>
+        <p>
+          {t('prompts.writeHint')}{' '}
+          <code>{'{product}'}</code> <code>{'{niche}'}</code> <code>{'{homepage}'}</code> — <code>{'{input}'}</code> / <code>{'{step:Name}'}</code>
+        </p>
       </div>
 
-      {/* shared composer (same component as the Try page) — blends into the page */}
+      {/* The composer is the prompt-content editor (textarea + media + model + send). */}
       <Composer
-        className="pe-composer"
+        className="pe2-composer"
         value={form.content}
         onChange={(v) => setForm((f) => ({ ...f, content: v }))}
         onSubmit={() => void save()}
@@ -332,6 +270,16 @@ export function PromptEditor() {
           </span>
         }
       />
+
+      {/* Detected variables */}
+      {detectedVars.length > 0 && (
+        <div className="pe2-vars">
+          <span className="pe2-mini-label">{t('prompts.variablesDetected')}</span>
+          {detectedVars.map((v) => (
+            <span key={v} className="pe2-var">{v}</span>
+          ))}
+        </div>
+      )}
 
       {blocker.state === 'blocked' && (
         <div className="dialog-scrim" onClick={() => blocker.reset?.()}>
