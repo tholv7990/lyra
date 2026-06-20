@@ -13,6 +13,7 @@ import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadc
 import {
   HomeIcon,
   ProjectsIcon,
+  ComponentsIcon,
   PromptsIcon,
   MarketplaceIcon,
   ChatsIcon,
@@ -88,6 +89,7 @@ export function AppLayout() {
     '/publish': 'nav.publish',
     '/import': 'nav.import',
     '/connections': 'nav.connections',
+    '/components': 'nav.components',
     '/members': 'nav.members',
     '/settings': 'nav.settings',
     '/admin': 'nav.admin',
@@ -166,6 +168,10 @@ export function AppLayout() {
             <NavLink to="/connections" title={t('nav.connections')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ConnectionsIcon />
               <span className="nav-txt">{t('nav.connections')}</span>
+            </NavLink>
+            <NavLink to="/components" title={t('nav.components')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ComponentsIcon />
+              <span className="nav-txt">{t('nav.components')}</span>
             </NavLink>
 
             {current?.type === WorkspaceType.Team && (

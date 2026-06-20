@@ -21,6 +21,15 @@ export const ProjectsIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const ComponentsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <rect x="2" y="2" width="5" height="5" rx="1.4" />
+    <rect x="9" y="2" width="5" height="5" rx="1.4" />
+    <rect x="2" y="9" width="5" height="5" rx="1.4" />
+    <rect x="9" y="9" width="5" height="5" rx="1.4" />
+  </svg>
+);
+
 export const MembersIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
     <circle cx="5.6" cy="5.5" r="2.4" />
