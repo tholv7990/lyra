@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '@lyra/shared';
 import { InvitesService } from './invites.service';
 
@@ -29,6 +29,51 @@ function makeService() {
   const s = new InvitesService(model, memberships as never, users, workspaces, connection);
   return { s, memberships };
 }
+
+describe('InvitesService createInvite workspace guard', () => {
+  function makeServiceWithWorkspace(wsType: string | null) {
+    const model = {
+      save: jest.fn().mockResolvedValue({}),
+    } as never;
+    const memberships = {
+      findFor: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({}),
+    } as never;
+    const users = { refMap: jest.fn().mockResolvedValue(new Map()) } as never;
+    const workspaces = {
+      findById: jest.fn().mockResolvedValue(
+        wsType === null ? null : { name: 'Acme', type: wsType }
+      ),
+    } as never;
+    const connection = { transaction: jest.fn(async (cb: (s: unknown) => unknown) => cb({})) } as never;
+    return new InvitesService(model, memberships, users, workspaces, connection);
+  }
+
+  it('createInvite rejects a personal workspace', async () => {
+    const s = makeServiceWithWorkspace('personal');
+    await expect(
+      s.createInvite({ workspaceId: 'w1', email: 'x@y.z', role: Role.Member, invitedBy: 'owner1' }),
+    ).rejects.toThrow(/team workspace/i);
+  });
+
+  it('createInvite rejects when workspace not found', async () => {
+    const s = makeServiceWithWorkspace(null);
+    await expect(
+      s.createInvite({ workspaceId: 'w1', email: 'x@y.z', role: Role.Member, invitedBy: 'owner1' }),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it('createInvite allows a team workspace (proceeds to create)', async () => {
+    const s = makeServiceWithWorkspace('team');
+    // Mock the create method to avoid real DB
+    const saveSpy = jest.spyOn(s as any, 'create').mockResolvedValue({
+      workspaceId: 'w1', email: 'x@y.z', role: Role.Member,
+    } as never);
+    const result = await s.createInvite({ workspaceId: 'w1', email: 'x@y.z', role: Role.Member, invitedBy: 'owner1' });
+    expect(saveSpy).toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+});
 
 describe('InvitesService in-app accept/decline', () => {
   it('acceptById rejects a different email (403)', async () => {

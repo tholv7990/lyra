@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -6,7 +7,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { createHash, randomBytes } from 'node:crypto';
-import { Role, type Invite as InviteModel, type MyInvite } from '@lyra/shared';
+import { Role, WorkspaceType, type Invite as InviteModel, type MyInvite } from '@lyra/shared';
 import { Invite, InviteDocument } from './invite.schema';
 import { MembershipsService } from './memberships.service';
 import { WorkspacesService } from './workspaces.service';
@@ -50,6 +51,11 @@ export class InvitesService extends BaseRepository<Invite> {
     role: Role;
     invitedBy: string;
   }): Promise<{ invite: InviteDocument; token: string }> {
+    const ws = await this.workspaces.findById(data.workspaceId);
+    if (!ws) throw new NotFoundException('Workspace not found');
+    if (ws.type !== WorkspaceType.Team) {
+      throw new BadRequestException('Invites require a team workspace');
+    }
     const raw = randomBytes(32).toString('hex');
     const invite = await this.create({
       workspaceId: data.workspaceId,
