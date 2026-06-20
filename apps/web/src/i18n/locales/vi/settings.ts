@@ -26,6 +26,8 @@ export default {
   addedBy: 'Thêm bởi {{name}} · {{date}}',
   loadModels: 'Tải model',
   loadingModels: 'Đang tải…',
+  expand: 'Mở rộng',
+  collapse: 'Thu gọn',
   removeKeyFailed: 'Không thể gỡ khóa. Hãy thử lại.',
   comingSoon: 'Sắp có',
   providerFootnote: 'Hình ảnh chạy bằng khóa OpenAI của bạn, và Video đã tích hợp sẵn.',

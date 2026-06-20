@@ -2350,7 +2350,6 @@
 }
 .prov-chevron {
   flex-shrink: 0;
-  color: var(--ink-tertiary);
   transition: transform 0.15s ease;
 }
 .prov-card.collapsed .prov-chevron {
@@ -2358,17 +2357,34 @@
 }
 .prov-actions {
   display: flex;
+  align-items: center;
   gap: 2px;
   flex-shrink: 0;
 }
-.prov-actions .icon-btn {
-  color: var(--ink-tertiary);
+/* Bare, colourful action icons — no border or background, tinted per action. */
+.prov-act {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  line-height: 0;
+  transition: background 0.12s ease;
 }
-.prov-actions .icon-btn:hover {
-  color: var(--ink);
+.prov-act:hover {
+  background: var(--surface-2);
 }
-.prov-actions .prov-del:hover {
+.prov-edit {
+  color: var(--accent-pipelines);
+}
+.prov-del {
   color: var(--danger);
+}
+.prov-collapse {
+  color: var(--accent-keys);
 }
 
 .prov-body {
@@ -2391,19 +2407,22 @@
   font-size: 13px;
   font-weight: 600;
 }
-/* Icon-only — bare RefreshIcon, no background or border. */
+/* Icon-only — bare RefreshIcon, no background or border, tinted like the row actions. */
 .prov-load {
-  display: inline-flex;
-  align-items: center;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
   background: none;
   border: 0;
-  padding: 4px;
-  color: var(--ink-tertiary);
+  border-radius: 7px;
+  color: var(--accent-projects);
   cursor: pointer;
   line-height: 0;
+  transition: background 0.12s ease;
 }
 .prov-load:hover {
-  color: var(--ink);
+  background: var(--surface-2);
 }
 .prov-load:disabled {
   color: var(--ink-tertiary);

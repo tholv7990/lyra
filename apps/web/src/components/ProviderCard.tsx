@@ -53,23 +53,49 @@ export function ProviderCard({
             <span className="key-dot on" />
             {t('settings.keySet', { last4: keyInfo.last4 })}
           </span>
-          <span className="prov-mods">
-            {entry.modalities.map((m) => (
-              <ModalityIcon key={m} type={m} title={t(`settings.modality.${m}`)} />
-            ))}
-          </span>
-          <ChevronIcon className="prov-chevron" width={16} height={16} aria-hidden="true" />
+          {/* Collapsed shows only name + key indicator + actions. */}
+          {!collapsed && (
+            <span className="prov-mods">
+              {entry.modalities.map((m) => (
+                <ModalityIcon key={m} type={m} title={t(`settings.modality.${m}`)} />
+              ))}
+            </span>
+          )}
         </button>
-        {canManage && (
-          <div className="prov-actions">
-            <button type="button" className="icon-btn" title={t('settings.replaceKey')} aria-label={t('settings.replaceKey')} onClick={onReplace}>
-              <PencilIcon width={15} height={15} />
-            </button>
-            <button type="button" className="icon-btn prov-del" title={t('settings.removeKeyTitle')} aria-label={t('settings.removeKeyTitle')} onClick={onRemove}>
-              <TrashIcon width={15} height={15} />
-            </button>
-          </div>
-        )}
+        <div className="prov-actions">
+          {canManage && (
+            <>
+              <button
+                type="button"
+                className="prov-act prov-edit"
+                title={t('settings.replaceKey')}
+                aria-label={t('settings.replaceKey')}
+                onClick={onReplace}
+              >
+                <PencilIcon width={15} height={15} />
+              </button>
+              <button
+                type="button"
+                className="prov-act prov-del"
+                title={t('settings.removeKeyTitle')}
+                aria-label={t('settings.removeKeyTitle')}
+                onClick={onRemove}
+              >
+                <TrashIcon width={15} height={15} />
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className="prov-act prov-collapse"
+            onClick={toggle}
+            aria-expanded={!collapsed}
+            title={t(collapsed ? 'settings.expand' : 'settings.collapse')}
+            aria-label={t(collapsed ? 'settings.expand' : 'settings.collapse')}
+          >
+            <ChevronIcon className="prov-chevron" width={16} height={16} aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       {!collapsed && (

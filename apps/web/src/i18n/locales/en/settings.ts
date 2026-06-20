@@ -26,6 +26,8 @@ export default {
   addedBy: 'Added by {{name}} · {{date}}',
   loadModels: 'Load models',
   loadingModels: 'Loading…',
+  expand: 'Expand',
+  collapse: 'Collapse',
   removeKeyFailed: 'Could not remove the key. Try again.',
   comingSoon: 'Coming soon',
   providerFootnote: 'Images run on your OpenAI key, and Video is built-in.',
