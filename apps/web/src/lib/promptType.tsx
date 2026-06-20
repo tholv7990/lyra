@@ -24,3 +24,19 @@ export const TYPE_ICON: Record<PromptType, ComponentType<SVGProps<SVGSVGElement>
   [PromptType.Audio]: AudioTypeIcon,
   [PromptType.Video]: VideoTypeIcon,
 };
+
+// A single modality glyph, tinted by its type — the content-true marker used on
+// provider cards and per-model tags. `title` makes it a labelled image for SR.
+export function ModalityIcon({ type, size = 13, title }: { type: PromptType; size?: number; title?: string }) {
+  const Icon = TYPE_ICON[type];
+  return (
+    <Icon
+      width={size}
+      height={size}
+      style={{ color: TYPE_COLOR[type] }}
+      role={title ? 'img' : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+    />
+  );
+}

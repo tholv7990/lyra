@@ -1,30 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Provider, canManageKeys, type ApiKeyInfo, type ModelOption } from '@lyra/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { AddKeyModal } from '../components/AddKeyModal';
+import { ProviderCard } from '../components/ProviderCard';
+import { ProviderBadge } from '../components/ProviderBadge';
+import { ModalityIcon } from '../lib/promptType';
+import {
+  AVAILABLE_PROVIDERS,
+  PROVIDER_CATALOG,
+  SOON_PROVIDERS,
+  type ProviderCatalogEntry,
+} from '../lib/providerCatalog';
 import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
-import { CheckIcon, RefreshIcon, XIcon } from '../layout/icons';
-
-// `keyUrl` points at each provider's API-key console so a new user can find
-// their key without leaving the flow. Image reuses the OpenAI key (no separate
-// image key — see keyProviderFor in shared); Video is still a mock, no key.
-const PROVIDERS: { id: Provider; label: string; hintKey: string; keyUrl?: string }[] = [
-  { id: Provider.OpenAI, label: 'OpenAI', hintKey: 'openai', keyUrl: 'https://platform.openai.com/api-keys' },
-  { id: Provider.Anthropic, label: 'Anthropic', hintKey: 'anthropic', keyUrl: 'https://console.anthropic.com/settings/keys' },
-  { id: Provider.DeepSeek, label: 'DeepSeek', hintKey: 'deepseek', keyUrl: 'https://platform.deepseek.com/api_keys' },
-  { id: Provider.Image, label: 'Image', hintKey: 'image', keyUrl: 'https://platform.openai.com/api-keys' },
-  { id: Provider.Video, label: 'Video', hintKey: 'video' },
-];
-const LABEL: Record<Provider, string> = Object.fromEntries(
-  PROVIDERS.map((p) => [p.id, p.label]),
-) as Record<Provider, string>;
-const MASKED_KEY_VALUE = '••••••••••';
-
-// Providers that expose a live /models listing we can fetch and save.
-const LISTABLE: Provider[] = [Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek];
+import { PlusIcon } from '../layout/icons';
 
 export function Settings() {
   const { t } = useTranslation();
@@ -33,24 +25,36 @@ export function Settings() {
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [keys, setKeys] = useState<Record<string, ApiKeyInfo>>({});
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [editingKeys, setEditingKeys] = useState<Partial<Record<Provider, boolean>>>({});
+  const [keys, setKeys] = useState<Partial<Record<Provider, ApiKeyInfo>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toSave, setToSave] = useState<Provider | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [toRemove, setToRemove] = useState<Provider | null>(null);
-  const [removing, setRemoving] = useState(false);
   const [models, setModels] = useState<Partial<Record<Provider, ModelOption[]>>>({});
   const [refreshing, setRefreshing] = useState<Provider | null>(null);
   const [refreshMsg, setRefreshMsg] = useState<Partial<Record<Provider, string>>>({});
+
+  // Add/replace-key modal + delete confirmation.
+  const [pick, setPick] = useState('');
+  const [addEntry, setAddEntry] = useState<ProviderCatalogEntry | null>(null);
+  const [addReplace, setAddReplace] = useState(false);
+  const [addBusy, setAddBusy] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [toRemove, setToRemove] = useState<ProviderCatalogEntry | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const wsId = current?.id;
   const canManage =
     !!current &&
     !!user &&
     canManageKeys({ userId: user.id, role: current.role, canManageKeys: current.canManageKeys });
+
+  const addedProviders = useMemo(
+    () => AVAILABLE_PROVIDERS.filter((p) => p.provider && keys[p.provider]),
+    [keys],
+  );
+  const addable = useMemo(
+    () => AVAILABLE_PROVIDERS.filter((p) => p.provider && !keys[p.provider]),
+    [keys],
+  );
 
   useEffect(() => {
     if (!wsId) return;
@@ -59,30 +63,31 @@ export function Settings() {
     api<ApiKeyInfo[]>(`/workspaces/${wsId}/keys`)
       .then((list) => {
         if (cancelled) return;
-        setKeys(Object.fromEntries(list.map((k) => [k.provider, k])));
+        setKeys(Object.fromEntries(list.map((k) => [k.provider, k])) as Partial<Record<Provider, ApiKeyInfo>>);
       })
       .catch(() => !cancelled && setKeys({}))
       .finally(() => !cancelled && setLoading(false));
     api<Record<Provider, ModelOption[]>>(`/workspaces/${wsId}/models`)
       .then((m) => !cancelled && setModels(m))
       .catch(() => {
-        /* best-effort — section just shows "refresh to fetch" */
+        /* best-effort — cards just show their Load button */
       });
     return () => {
       cancelled = true;
     };
   }, [wsId]);
 
+  // Keep the dropdown pointed at a still-addable provider.
+  useEffect(() => {
+    if (addable.length && !addable.some((p) => p.id === pick)) setPick(addable[0].id);
+  }, [addable, pick]);
+
   async function refreshModels(provider: Provider) {
     if (!wsId) return;
     setRefreshing(provider);
     setRefreshMsg((m) => ({ ...m, [provider]: '' }));
-    setError(null);
     try {
-      const list = await api<ModelOption[]>(
-        `/workspaces/${wsId}/keys/${provider}/models`,
-        { method: 'POST' },
-      );
+      const list = await api<ModelOption[]>(`/workspaces/${wsId}/keys/${provider}/models`, { method: 'POST' });
       setModels((m) => ({ ...m, [provider]: list }));
       setRefreshMsg((m) => ({ ...m, [provider]: t('settings.modelsUpdated', { count: list.length }) }));
     } catch (err) {
@@ -95,64 +100,46 @@ export function Settings() {
     }
   }
 
-  async function save(provider: Provider) {
-    const key = (drafts[provider] ?? '').trim();
-    if (!wsId || !key || key === MASKED_KEY_VALUE) return;
-    setError(null);
+  function openAdd(id: string, replace = false) {
+    const entry = PROVIDER_CATALOG.find((p) => p.id === id);
+    if (!entry) return;
+    setAddError(null);
+    setAddReplace(replace);
+    setAddEntry(entry);
+  }
+
+  async function saveKey(plain: string) {
+    if (!wsId || !addEntry?.provider) return;
+    setAddBusy(true);
+    setAddError(null);
     try {
-      const info = await api<ApiKeyInfo>(`/workspaces/${wsId}/keys/${provider}`, {
+      const info = await api<ApiKeyInfo>(`/workspaces/${wsId}/keys/${addEntry.provider}`, {
         method: 'PUT',
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ key: plain }),
       });
-      setKeys((k) => ({ ...k, [provider]: info }));
-      setDrafts((d) => ({ ...d, [provider]: '' }));
-      setEditingKeys((d) => ({ ...d, [provider]: false }));
+      setKeys((k) => ({ ...k, [addEntry.provider!]: info }));
+      setAddEntry(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('settings.saveKeyFailed'));
-    }
-  }
-
-  async function confirmSave() {
-    if (!toSave) return;
-    setSaving(true);
-    try {
-      await save(toSave);
-      setToSave(null);
+      setAddError(err instanceof Error ? err.message : t('settings.saveKeyFailed'));
     } finally {
-      setSaving(false);
+      setAddBusy(false);
     }
-  }
-
-  async function remove(provider: Provider) {
-    if (!wsId) return;
-    await api(`/workspaces/${wsId}/keys/${provider}`, { method: 'DELETE' });
-    setKeys((k) => {
-      const next = { ...k };
-      delete next[provider];
-      return next;
-    });
-    setDrafts((d) => ({ ...d, [provider]: '' }));
-    setEditingKeys((d) => ({ ...d, [provider]: false }));
-  }
-
-  function startKeyEdit(provider: Provider, existing?: ApiKeyInfo) {
-    setEditingKeys((d) => ({ ...d, [provider]: true }));
-    if (existing) {
-      setDrafts((d) => ({ ...d, [provider]: d[provider] || MASKED_KEY_VALUE }));
-    }
-  }
-
-  function cancelKeyEdit(provider: Provider) {
-    setDrafts((d) => ({ ...d, [provider]: '' }));
-    setEditingKeys((d) => ({ ...d, [provider]: false }));
   }
 
   async function confirmRemove() {
-    if (!toRemove) return;
+    if (!toRemove?.provider || !wsId) return;
     setRemoving(true);
+    setError(null);
     try {
-      await remove(toRemove);
+      await api(`/workspaces/${wsId}/keys/${toRemove.provider}`, { method: 'DELETE' });
+      setKeys((k) => {
+        const next = { ...k };
+        delete next[toRemove.provider!];
+        return next;
+      });
       setToRemove(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('settings.removeKeyFailed'));
     } finally {
       setRemoving(false);
     }
@@ -202,166 +189,93 @@ export function Settings() {
         </div>
       </section>
 
-      {/* ===== Section: Provider keys ===== */}
+      {/* ===== Providers (keys + models, unified) ===== */}
       <section className="set-section">
         <div className="set-section-head">
-          <h2>{t('settings.providerKeys')}</h2>
+          <h2>{t('settings.providers')}</h2>
           <p>
-            {t('settings.providerKeysLongHint')}
-            {!canManage && t('settings.keyManagePermissionHint')}
+            {t('settings.providersHint')}
+            {!canManage && ` ${t('settings.keyManagePermissionHint')}`}
           </p>
         </div>
 
-        {loading ? (
-          <p className="empty">{t('settings.loadingKeys')}</p>
-        ) : (
-          <div className="list">
-            {PROVIDERS.map((p) => {
-              const existing = keys[p.id];
-              const draft = drafts[p.id] ?? '';
-              const isEditing = !!editingKeys[p.id] || draft.length > 0;
-              const canSaveDraft = !!draft.trim() && draft !== MASKED_KEY_VALUE;
-              return (
-                <div className="key-row" key={p.id}>
-                  <div className="key-row-info">
-                    <div className="title">
-                      {p.label}
-                      <span className="key-set">
-                        <span className={`key-dot ${existing ? 'on' : ''}`} />
-                        {existing ? t('settings.keySet', { last4: existing.last4 }) : t('settings.notSet')}
-                      </span>
-                    </div>
-                    <div className="sub">
-                      {t(`settings.providerHints.${p.hintKey}`)}
-                      {!existing && p.keyUrl && (
-                        <>
-                          {' · '}
-                          <a className="key-getlink" href={p.keyUrl} target="_blank" rel="noreferrer">
-                            {t('settings.getKey')} ↗
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {canManage && (
-                    <div className="key-row-form">
-                      {isEditing ? (
-                        <input
-                          className="text-input key-input"
-                          type="password"
-                          name={`lyra-key-${p.id}-draft`}
-                          autoComplete="new-password"
-                          data-1p-ignore="true"
-                          data-lpignore="true"
-                          data-form-type="other"
-                          placeholder={existing ? t('settings.replaceKey') : t('settings.pasteKey')}
-                          value={draft}
-                          onFocus={(e) => {
-                            if (existing && draft === MASKED_KEY_VALUE) e.currentTarget.select();
-                          }}
-                          onChange={(e) => {
-                            setEditingKeys((d) => ({ ...d, [p.id]: true }));
-                            setDrafts((d) => ({ ...d, [p.id]: e.target.value }));
-                          }}
-                        />
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-input key-input key-input-trigger"
-                          onClick={() => startKeyEdit(p.id, existing)}
-                        >
-                          {existing ? MASKED_KEY_VALUE : t('settings.pasteKey')}
-                        </button>
-                      )}
-                      {isEditing && (
-                        <div className="key-row-btns">
-                          <button
-                            type="button"
-                            className="icon-btn-primary"
-                            title={t('settings.saveKeyTitle')}
-                            disabled={!canSaveDraft}
-                            onClick={() => setToSave(p.id)}
-                          >
-                            <CheckIcon width={16} height={16} />
-                          </button>
-                          <button
-                            type="button"
-                            className="icon-btn-danger"
-                            title={t('settings.cancelEditing')}
-                            onPointerDown={(e) => {
-                              e.preventDefault();
-                              cancelKeyEdit(p.id);
-                            }}
-                            onClick={() => cancelKeyEdit(p.id)}
-                          >
-                            <XIcon width={16} height={16} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {canManage && addable.length > 0 && (
+          <div className="prov-add">
+            <select
+              className="text-input prov-select"
+              value={pick}
+              onChange={(e) => setPick(e.target.value)}
+              aria-label={t('settings.chooseProvider')}
+            >
+              {addable.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="btn-primary prov-add-btn" onClick={() => openAdd(pick)} disabled={!pick}>
+              <PlusIcon width={15} height={15} />
+              {t('settings.addProvider')}
+            </button>
           </div>
         )}
-      </section>
 
-      {/* ===== Section 2: Models, grouped by provider ===== */}
-      <section className="set-section">
-        <div className="set-section-head">
-          <h2>{t('settings.models')}</h2>
-          <p>{t('settings.modelsHint')}</p>
-        </div>
+        {loading ? (
+          <p className="empty">{t('settings.loadingKeys')}</p>
+        ) : addedProviders.length === 0 ? (
+          <p className="prov-empty">{t('settings.noProvidersYet')}</p>
+        ) : (
+          <div className="prov-list">
+            {addedProviders.map((p) => (
+              <ProviderCard
+                key={p.id}
+                entry={p}
+                keyInfo={keys[p.provider!]!}
+                models={models[p.provider!] ?? []}
+                loading={refreshing === p.provider}
+                loadMsg={refreshMsg[p.provider!]}
+                canManage={canManage}
+                onLoad={() => void refreshModels(p.provider!)}
+                onReplace={() => openAdd(p.id, true)}
+                onRemove={() => setToRemove(p)}
+              />
+            ))}
+          </div>
+        )}
 
-        <div className="model-groups">
-          {LISTABLE.map((p) => {
-            const existing = keys[p];
-            const list = models[p] ?? [];
-            const msg = refreshMsg[p];
-            return (
-              <div className="model-group" key={p}>
-                <div className="model-group-head">
-                  <span className="mg-title">{LABEL[p]}</span>
-                  <span className="mg-count">{t('settings.modelsCount', { count: list.length })}</span>
-                  {canManage && existing && (
-                    <button
-                      className="icon-btn mg-refresh"
-                      title={t('settings.fetchLatestModels')}
-                      disabled={refreshing === p}
-                      onClick={() => void refreshModels(p)}
-                    >
-                      <RefreshIcon width={16} height={16} className={refreshing === p ? 'icon spin' : 'icon'} />
-                    </button>
-                  )}
-                </div>
-
-                {!existing ? (
-                  <p className="mg-hint">{t('settings.addProviderKeyToFetch', { provider: LABEL[p] })}</p>
-                ) : list.length === 0 ? (
-                  <p className="mg-hint">{t('settings.noModelsYet')}</p>
-                ) : (
-                  <div className="mg-models">
-                    {list.map((m) => (
-                      <span className="model-tag" key={m.id} title={m.id}>{m.label}</span>
-                    ))}
-                  </div>
-                )}
-
-                {msg && <p className="mg-msg">{msg}</p>}
-              </div>
-            );
-          })}
+        {/* Roadmap — listed so users see what's coming; request flow lands here later. */}
+        <div className="prov-soon">
+          <span className="prov-soon-label">{t('settings.comingSoon')}</span>
+          <div className="prov-soon-chips">
+            {SOON_PROVIDERS.map((p) => (
+              <span className="prov-chip" key={p.id}>
+                <ProviderBadge entry={p} size={18} />
+                {p.label}
+                <span className="prov-chip-mods">
+                  {p.modalities.map((m) => (
+                    <ModalityIcon key={m} type={m} size={11} title={t(`settings.modality.${m}`)} />
+                  ))}
+                </span>
+              </span>
+            ))}
+          </div>
+          <p className="prov-soon-foot">{t('settings.providerFootnote')}</p>
         </div>
       </section>
 
-      {/* ===== Section 3: Password ===== */}
+      {/* ===== Password ===== */}
       <section className="set-section">
         <div className="set-section-head">
           <h2>{t('settings.password')}</h2>
           <p>{t('settings.passwordHint')}</p>
         </div>
-        <form className="pw-form" onSubmit={(e) => { e.preventDefault(); void submitPassword(); }}>
+        <form
+          className="pw-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submitPassword();
+          }}
+        >
           <input
             className="text-input"
             type="password"
@@ -398,20 +312,21 @@ export function Settings() {
         </form>
       </section>
 
-      <ConfirmDialog
-        open={!!toSave}
-        title={t('settings.saveProviderKeyTitle')}
-        message={t('settings.saveProviderKeyMessage', { provider: toSave ? LABEL[toSave] : '' })}
-        confirmLabel={t('settings.saveKeyTitle')}
-        busy={saving}
-        onConfirm={() => void confirmSave()}
-        onCancel={() => setToSave(null)}
-      />
+      {addEntry && (
+        <AddKeyModal
+          entry={addEntry}
+          replace={addReplace}
+          busy={addBusy}
+          error={addError}
+          onSave={(key) => void saveKey(key)}
+          onClose={() => setAddEntry(null)}
+        />
+      )}
 
       <ConfirmDialog
         open={!!toRemove}
         title={t('settings.removeKeyTitle')}
-        message={t('settings.removeKeyMessage', { provider: toRemove ? LABEL[toRemove] : '' })}
+        message={t('settings.removeKeyMessage', { provider: toRemove?.label ?? '' })}
         confirmLabel={t('settings.remove')}
         danger
         busy={removing}

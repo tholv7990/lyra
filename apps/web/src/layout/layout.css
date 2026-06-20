@@ -2254,39 +2254,8 @@
   max-width: 60ch;
 }
 
-/* --- Provider key row --- */
-.key-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
-}
-
-.key-row-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.key-row-info .title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.key-row-info .sub {
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--ink-muted);
-}
-
-/* "Get a key ↗" deep-link to the provider's key console, shown only when the
-   key is missing — guides onboarding step 1 without leaving the page. */
+/* "Get a key ↗" deep-link to the provider's key console — guides onboarding
+   step 1 without leaving the page (used in the add-key modal). */
 .key-getlink {
   color: var(--primary);
   font-weight: 500;
@@ -2297,129 +2266,148 @@
   text-decoration: underline;
 }
 
-.key-row-form {
+/* --- Add-provider row: dropdown + Add (your "same line" control) --- */
+.prov-add {
   display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.prov-select {
+  flex: 1;
+  max-width: 280px;
+}
+.prov-add-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 6px;
+  width: auto;
+  white-space: nowrap;
 }
 
-.key-row-form .key-input {
-  width: 230px;
-}
-
-.key-input-trigger {
-  color: var(--muted);
-  cursor: text;
-  font: inherit;
-  text-align: left;
-}
-
-.key-input-trigger:hover {
-  border-color: var(--border-strong);
-}
-
-.key-row-btns {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.key-row-btns .icon-btn-primary,
-.key-row-btns .icon-btn-danger {
-  background: transparent;
-  border: 0;
+.prov-empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
   color: var(--ink-muted);
-  box-shadow: none;
 }
 
-.key-row-btns .icon-btn-primary:hover,
-.key-row-btns .icon-btn-danger:hover {
-  background: transparent;
-  color: var(--ink);
-}
-
-.key-row-btns .icon-btn-primary:disabled {
-  background: transparent;
-  color: var(--ink-tertiary);
-  cursor: not-allowed;
-}
-
-.key-row-btns .icon-btn-danger {
-  color: var(--danger);
-}
-
-.key-row-btns .icon-btn-danger:hover {
-  color: var(--danger);
-}
-
-/* Mobile: input goes full-width, action buttons drop below it, right-aligned. */
-@media (max-width: 560px) {
-  .key-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .key-row-form {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .key-row-form .key-input {
-    width: 100%;
-  }
-
-  .key-row-btns {
-    justify-content: flex-end;
-  }
-}
-
-/* --- Models grouped by provider --- */
-.model-groups {
+/* --- Provider cards (key + models, collapsible) --- */
+.prov-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-.model-group {
+.prov-card {
   background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  padding: 14px 16px;
   box-shadow: var(--shadow-sm);
 }
-
-.model-group-head {
+.prov-head {
   display: flex;
   align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+}
+.prov-head-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+.prov-name {
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.prov-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prov-mods {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.prov-chevron {
+  flex-shrink: 0;
+  color: var(--ink-tertiary);
+  transition: transform 0.15s ease;
+}
+.prov-card.collapsed .prov-chevron {
+  transform: rotate(-90deg);
+}
+.prov-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.prov-actions .icon-btn {
+  color: var(--ink-tertiary);
+}
+.prov-actions .icon-btn:hover {
+  color: var(--ink);
+}
+.prov-actions .prov-del:hover {
+  color: var(--danger);
+}
+
+.prov-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--hairline);
+}
+.prov-meta {
+  margin: 10px 0 12px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.prov-models-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
 }
-
-.mg-title {
-  font-size: 14px;
+.prov-models-title {
+  font-size: 13px;
   font-weight: 600;
 }
-
-.mg-count {
-  font-size: 12px;
-  color: var(--ink-muted);
+.prov-load {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 5px 10px;
+  font-size: 12.5px;
 }
-
-.mg-refresh {
-  margin-left: auto;
-}
-
-.mg-models {
+.prov-models {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-
 .model-tag {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   padding: 4px 10px;
   border-radius: var(--radius-control);
   border: 1px solid var(--hairline-strong);
@@ -2427,18 +2415,126 @@
   font-size: 12.5px;
   color: var(--ink);
 }
-
-.mg-hint {
+.prov-hint {
   margin: 0;
   font-size: 13px;
   color: var(--ink-muted);
 }
-
-.mg-msg {
+.prov-msg {
   margin: 10px 0 0;
   font-size: 12px;
   font-weight: 500;
   color: var(--primary);
+}
+
+/* Lettered brand tile for not-yet-wired providers (no logomark yet). */
+.prov-badge-soon {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* --- Coming-soon roadmap --- */
+.prov-soon {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+}
+.prov-soon-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.prov-soon-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prov-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.prov-chip-mods {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.prov-soon-foot {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+}
+
+/* --- Add-key modal --- */
+.dialog.add-key {
+  max-width: 420px;
+  text-align: left;
+}
+.add-key-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.add-key-head h3 {
+  margin: 0;
+}
+.add-key-sub {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.add-key-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.add-key-error {
+  margin: 8px 0 0;
+}
+.add-key-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.add-key-actions .btn-primary,
+.add-key-actions .btn-ghost {
+  width: auto;
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .prov-add {
+    flex-direction: column;
+  }
+  .prov-select {
+    max-width: none;
+  }
+  .prov-add-btn {
+    justify-content: center;
+  }
+  .prov-head {
+    flex-wrap: wrap;
+  }
+  .prov-mods {
+    margin-left: 0;
+  }
 }
 
 .icon-btn-primary {
