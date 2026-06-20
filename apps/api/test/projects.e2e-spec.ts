@@ -91,7 +91,6 @@ describe('Projects (e2e)', () => {
     expect(res.body.shared).toBe('all');
     expect(res.body.description).toBe('A cozy plush sofa for pets');
     expect(res.body.variables).toEqual([]);
-    expect(res.body.pipelines).toEqual([]);
     expect(res.body.sharedWith).toEqual([]);
     expect(res.body.active).toBe(true);
     // audit envelope: createdBy/updatedBy expanded to { id, name }

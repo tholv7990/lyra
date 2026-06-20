@@ -159,34 +159,40 @@ describe('Pipelines (e2e)', () => {
     expect(res.body.steps).toHaveLength(1);
   });
 
-  it('attaches + detaches a pipeline via project.pipelines', async () => {
-    // attach by editing the project's pipeline-reference array
-    let proj = (
+  it('attaches + detaches a pipeline via task.pipelines', async () => {
+    // Pipelines now live on a Task under a project, not on the project itself.
+    // Create a task, attach the pipeline, read it back, then detach.
+    let task = (
       await http()
-        .patch(`/projects/${projectId}`)
+        .post(`/projects/${projectId}/tasks`)
         .set(auth(ownerToken))
-        .send({ pipelines: [pipelineId] })
-        .expect(200)
+        .send({ name: 'Attach test', pipelines: [pipelineId] })
+        .expect(201)
     ).body;
-    expect(proj.pipelines).toEqual([pipelineId]);
+    expect(task.pipelines).toEqual([pipelineId]);
 
     // round-trips on read
-    proj = (await http().get(`/projects/${projectId}`).set(auth(ownerToken)).expect(200)).body;
-    expect(proj.pipelines).toEqual([pipelineId]);
-
-    // detach
-    proj = (
+    task = (
       await http()
-        .patch(`/projects/${projectId}`)
+        .get(`/projects/${projectId}/tasks/${task.id as string}`)
+        .set(auth(ownerToken))
+        .expect(200)
+    ).body;
+    expect(task.pipelines).toEqual([pipelineId]);
+
+    // detach by clearing the task's pipeline list
+    task = (
+      await http()
+        .patch(`/projects/${projectId}/tasks/${task.id as string}`)
         .set(auth(ownerToken))
         .send({ pipelines: [] })
         .expect(200)
     ).body;
-    expect(proj.pipelines).toEqual([]);
+    expect(task.pipelines).toEqual([]);
   });
 
-  it('drops a soft-deleted pipeline ref from project.pipelines on read', async () => {
-    // a disposable pipeline attached to the project
+  it('drops a soft-deleted pipeline ref from task.pipelines on read', async () => {
+    // a disposable pipeline attached to a task
     const tempPipeline = (
       await http()
         .post(`/workspaces/${teamId}/pipelines`)
@@ -194,18 +200,24 @@ describe('Pipelines (e2e)', () => {
         .send({ name: 'Temp', steps: [step({ promptId })] })
         .expect(201)
     ).body.id as string;
-    await http()
-      .patch(`/projects/${projectId}`)
-      .set(auth(ownerToken))
-      .send({ pipelines: [tempPipeline] })
-      .expect(200);
+    const taskRes = (
+      await http()
+        .post(`/projects/${projectId}/tasks`)
+        .set(auth(ownerToken))
+        .send({ name: 'Temp task', pipelines: [tempPipeline] })
+        .expect(201)
+    ).body as { id: string; pipelines: string[] };
+    expect(taskRes.pipelines).toContain(tempPipeline);
 
-    // soft-delete the pipeline → its ref must no longer surface on the project
+    // soft-delete the pipeline → its ref must no longer surface on the task
     await http().delete(`/pipelines/${tempPipeline}`).set(auth(ownerToken)).expect(204);
-    const proj = (
-      await http().get(`/projects/${projectId}`).set(auth(ownerToken)).expect(200)
-    ).body;
-    expect(proj.pipelines).not.toContain(tempPipeline);
+    const task = (
+      await http()
+        .get(`/projects/${projectId}/tasks/${taskRes.id}`)
+        .set(auth(ownerToken))
+        .expect(200)
+    ).body as { pipelines: string[] };
+    expect(task.pipelines).not.toContain(tempPipeline);
   });
 
   it('reports how many pipelines use a prompt (delete-warning)', async () => {

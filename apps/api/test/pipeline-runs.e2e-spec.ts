@@ -50,6 +50,7 @@ describe('Pipeline runs (e2e)', () => {
   let token: string;
   let wsId: string;
   let projectId: string;
+  let taskId: string;
   let prompt1: string;
   let prompt2: string;
 
@@ -99,6 +100,14 @@ describe('Pipeline runs (e2e)', () => {
         })
         .expect(201)
     ).body.id;
+    // Create the task that will hold pipelines for this project.
+    taskId = (
+      await http()
+        .post(`/projects/${projectId}/tasks`)
+        .set(auth(token))
+        .send({ name: 'General' })
+        .expect(201)
+    ).body.id;
     prompt1 = (
       await http()
         .post(`/workspaces/${wsId}/prompts`)
@@ -125,26 +134,46 @@ describe('Pipeline runs (e2e)', () => {
     ).body.id as string;
   }
 
+  // Helper: add a pipeline to the shared task, then POST a run for it.
+  async function runPipeline(
+    pipelineId: string,
+    body: Record<string, unknown> = {},
+  ): Promise<Record<string, unknown>> {
+    // Fetch current task pipelines and append the new one (idempotent if already present).
+    const currentTask = (
+      await http().get(`/projects/${projectId}/tasks/${taskId}`).set(auth(token)).expect(200)
+    ).body as { pipelines: string[] };
+    if (!currentTask.pipelines.includes(pipelineId)) {
+      await http()
+        .patch(`/projects/${projectId}/tasks/${taskId}`)
+        .set(auth(token))
+        .send({ pipelines: [...currentTask.pipelines, pipelineId] })
+        .expect(200);
+    }
+    return (
+      await http()
+        .post(`/projects/${projectId}/tasks/${taskId}/pipelines/${pipelineId}/runs`)
+        .set(auth(token))
+        .send(body)
+        .expect(201)
+    ).body as Record<string, unknown>;
+  }
+
   it('creates a run from a pipeline: steps snapshotted raw, variables captured', async () => {
     const pipelineId = await makePipeline([
       newStep({ name: 'Brief', promptId: prompt1 }),
       newStep({ name: 'Refine', promptId: prompt2 }),
     ]);
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .expect(201)
-    ).body;
+    const run = await runPipeline(pipelineId);
     expect(run.pipelineId).toBe(pipelineId);
-    expect(run.steps).toHaveLength(2);
-    expect(run.steps[0].name).toBe('Brief');
-    expect(run.steps[0].provider).toBe('anthropic');
+    expect((run.steps as unknown[]).length).toBe(2);
+    expect((run.steps as { name: string }[])[0].name).toBe('Brief');
+    expect((run.steps as { provider: string }[])[0].provider).toBe('anthropic');
     // Phase 2: prompts are snapshotted raw — project/custom/system vars resolve at
     // run time from the run's variable snapshot, not at creation.
-    expect(run.steps[0].prompt).toBe('Brief for {product}');
-    expect(run.variables.product).toBe('Runner X');
-    expect(run.steps[0].key).toBeUndefined(); // composable step, no StepKey
+    expect((run.steps as { prompt: string }[])[0].prompt).toBe('Brief for {product}');
+    expect((run.variables as { product: string }).product).toBe('Runner X');
+    expect((run.steps as { key?: string }[])[0].key).toBeUndefined(); // composable step, no StepKey
   });
 
   it('runs all steps, chaining output into {input}', async () => {
@@ -152,14 +181,9 @@ describe('Pipeline runs (e2e)', () => {
       newStep({ name: 'Brief', promptId: prompt1 }),
       newStep({ name: 'Refine', promptId: prompt2 }),
     ]);
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .expect(201)
-    ).body;
+    const run = await runPipeline(pipelineId);
     const done = (
-      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+      await http().post(`/runs/${run.id as string}/run-all`).set(auth(token)).expect(201)
     ).body;
     expect(done.status).toBe('done');
     expect(done.steps.every((s: { status: string }) => s.status === 'done')).toBe(true);
@@ -171,19 +195,14 @@ describe('Pipeline runs (e2e)', () => {
     const pipelineId = await makePipeline([
       newStep({ name: 'Gated', promptId: prompt1, mode: 'gate' }),
     ]);
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .expect(201)
-    ).body;
+    const run = await runPipeline(pipelineId);
     let state = (
-      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+      await http().post(`/runs/${run.id as string}/run-all`).set(auth(token)).expect(201)
     ).body;
     expect(state.status).toBe('awaiting_gate');
     expect(state.steps[0].status).toBe('waiting');
-    await http().post(`/runs/${run.id}/steps/0/approve`).set(auth(token)).expect(201);
-    state = (await http().get(`/runs/${run.id}`).set(auth(token)).expect(200)).body;
+    await http().post(`/runs/${run.id as string}/steps/0/approve`).set(auth(token)).expect(201);
+    state = (await http().get(`/runs/${run.id as string}`).set(auth(token)).expect(200)).body;
     expect(state.status).toBe('done');
   });
 
@@ -199,17 +218,13 @@ describe('Pipeline runs (e2e)', () => {
       newStep({ name: 'Brand each', promptId: fanPrompt, fanOut: { over: 'images' } }),
     ]);
     // arbitrary N — three items here, but the engine maps over however many
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .send({ collections: { images: ['Red', 'Blue', 'Green'] } })
-        .expect(201)
-    ).body;
-    expect(run.steps[0].fanOut).toEqual({ over: 'images' });
+    const run = await runPipeline(pipelineId, {
+      collections: { images: ['Red', 'Blue', 'Green'] },
+    });
+    expect((run.steps as { fanOut: unknown }[])[0].fanOut).toEqual({ over: 'images' });
 
     const done = (
-      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+      await http().post(`/runs/${run.id as string}/run-all`).set(auth(token)).expect(201)
     ).body;
     expect(done.status).toBe('done');
     // the echo stub returns each item's filled prompt — all three appear
@@ -231,15 +246,9 @@ describe('Pipeline runs (e2e)', () => {
     const pipelineId = await makePipeline([
       newStep({ name: 'Brand each', promptId: fanPrompt, fanOut: { over: 'images' } }),
     ]);
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .send({ collections: {} })
-        .expect(201)
-    ).body;
+    const run = await runPipeline(pipelineId, { collections: {} });
     const done = (
-      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+      await http().post(`/runs/${run.id as string}/run-all`).set(auth(token)).expect(201)
     ).body;
     expect(done.status).toBe('done');
     expect(done.steps[0].result).toContain('empty');
@@ -258,13 +267,8 @@ describe('Pipeline runs (e2e)', () => {
     await http().delete(`/prompts/${tempPrompt}`).set(auth(token)).expect(204);
 
     // run creation must not 500 — the step just gets an empty prompt
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .expect(201)
-    ).body;
-    expect(run.steps[0].prompt).toBe('');
+    const run = await runPipeline(pipelineId);
+    expect((run.steps as { prompt: string }[])[0].prompt).toBe('');
   });
 
   it('skips a step whose guard fails, runs one whose guard holds', async () => {
@@ -280,16 +284,11 @@ describe('Pipeline runs (e2e)', () => {
       newStep({ name: 'Maybe', promptId, condition: { variable: 'product', op: 'eq', value: 'Nope' } }),
       newStep({ name: 'Always', promptId, condition: { variable: 'product', op: 'exists' } }),
     ]);
-    const run = (
-      await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
-        .set(auth(token))
-        .expect(201)
-    ).body;
-    expect(run.steps[0].condition).toEqual({ variable: 'product', op: 'eq', value: 'Nope' });
+    const run = await runPipeline(pipelineId);
+    expect((run.steps as { condition: unknown }[])[0].condition).toEqual({ variable: 'product', op: 'eq', value: 'Nope' });
 
     const done = (
-      await http().post(`/runs/${run.id}/run-all`).set(auth(token)).expect(201)
+      await http().post(`/runs/${run.id as string}/run-all`).set(auth(token)).expect(201)
     ).body;
     expect(done.status).toBe('done');
     expect(done.steps[0].status).toBe('skipped'); // product !== 'Nope'
@@ -297,7 +296,7 @@ describe('Pipeline runs (e2e)', () => {
     expect(done.steps[1].result).toContain('Brand Runner X');
   });
 
-  it('runs all of a project’s pipelines at once (composition)', async () => {
+  it("runs all of a task's pipelines at once (composition)", async () => {
     const promptId = (
       await http()
         .post(`/workspaces/${wsId}/prompts`)
@@ -307,14 +306,21 @@ describe('Pipeline runs (e2e)', () => {
     ).body.id;
     const pA = await makePipeline([newStep({ name: 'A', promptId })]);
     const pB = await makePipeline([newStep({ name: 'B', promptId })]);
-    await http()
-      .patch(`/projects/${projectId}`)
-      .set(auth(token))
-      .send({ pipelines: [pA, pB] })
-      .expect(200);
+    // Create a dedicated task that only holds pA and pB so the run count is predictable.
+    const compTaskId = (
+      await http()
+        .post(`/projects/${projectId}/tasks`)
+        .set(auth(token))
+        .send({ name: 'Composition', pipelines: [pA, pB] })
+        .expect(201)
+    ).body.id as string;
 
     const runs = (
-      await http().post(`/projects/${projectId}/runs/all`).set(auth(token)).send({}).expect(201)
+      await http()
+        .post(`/projects/${projectId}/tasks/${compTaskId}/runs/all`)
+        .set(auth(token))
+        .send({})
+        .expect(201)
     ).body as { status: string; pipelineId: string }[];
     expect(runs).toHaveLength(2);
     expect(runs.every((r) => r.status === 'done')).toBe(true);

@@ -12,6 +12,7 @@ import { Conversation } from '../../conversations/conversation.schema';
 import { Pipeline } from '../../pipelines/pipeline.schema';
 import { ProviderModel } from '../../models/provider-model.schema';
 import { Asset } from '../../assets/asset.schema';
+import { Task } from '../../tasks/task.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
 // so there are no circular module dependencies.
@@ -31,6 +32,7 @@ export class CascadeService {
     @InjectModel(ProviderModel.name)
     private readonly providerModels: Model<ProviderModel>,
     @InjectModel(Asset.name) private readonly assets: Model<Asset>,
+    @InjectModel(Task.name) private readonly taskModel: Model<Task>,
   ) {}
 
   async deleteWorkspace(workspaceId: string, actorId: string) {
@@ -62,16 +64,22 @@ export class CascadeService {
     if (runIds.length) await this.assets.updateMany({ runId: { $in: runIds } }, patch);
   }
 
-  // Soft-delete a library pipeline and pull its id out of every project that
-  // referenced it, so no dangling pipeline ref surfaces on a project read.
+  // Soft-delete a library pipeline and pull its id out of every task (and
+  // legacy project) that referenced it, so no dangling pipeline ref surfaces.
   async deletePipeline(pipelineId: string, actorId: string) {
     await this.pipelines.updateOne(
       { _id: pipelineId },
       { active: false, updatedBy: actorId },
     );
-    await this.proj.updateMany(
-      { pipelines: pipelineId },
-      { $pull: { pipelines: pipelineId }, $set: { updatedBy: actorId } },
-    );
+    await Promise.all([
+      this.taskModel.updateMany(
+        { pipelines: pipelineId },
+        { $pull: { pipelines: pipelineId }, $set: { updatedBy: actorId } },
+      ),
+      this.proj.updateMany(
+        { pipelines: pipelineId },
+        { $pull: { pipelines: pipelineId }, $set: { updatedBy: actorId } },
+      ),
+    ]);
   }
 }

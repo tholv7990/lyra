@@ -53,11 +53,12 @@ describe('Runs (e2e)', () => {
   let wsId: string;
   let projectId: string;
   let pipelineId: string;
+  let taskId: string;
 
-  // Create a run by executing the test pipeline in the project's context.
+  // Create a run by executing the test pipeline in the task's context.
   const createRun = () =>
     http()
-      .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+      .post(`/projects/${projectId}/tasks/${taskId}/pipelines/${pipelineId}/runs`)
       .set(auth(token))
       .expect(201);
 
@@ -110,6 +111,14 @@ describe('Runs (e2e)', () => {
             },
           ],
         })
+        .expect(201)
+    ).body.id;
+    // Pipelines now live on a Task under the project.
+    taskId = (
+      await http()
+        .post(`/projects/${projectId}/tasks`)
+        .set(auth(token))
+        .send({ name: 'General', pipelines: [pipelineId] })
         .expect(201)
     ).body.id;
   });
@@ -198,9 +207,15 @@ describe('Runs (e2e)', () => {
         })
         .expect(201)
     ).body.id;
+    // Add the image pipeline to the existing task.
+    await http()
+      .patch(`/projects/${projectId}/tasks/${taskId}`)
+      .set(auth(token))
+      .send({ pipelines: [pipelineId, imgPipelineId] })
+      .expect(200);
     const run = (
       await http()
-        .post(`/projects/${projectId}/pipelines/${imgPipelineId}/runs`)
+        .post(`/projects/${projectId}/tasks/${taskId}/pipelines/${imgPipelineId}/runs`)
         .set(auth(token))
         .expect(201)
     ).body;
@@ -231,7 +246,7 @@ describe('Runs (e2e)', () => {
         .send({ title: 'Render each', content: 'Brand {item}', status: 'public' })
         .expect(201)
     ).body.id;
-    const pipelineId = (
+    const fanPipelineId = (
       await http()
         .post(`/workspaces/${wsId}/pipelines`)
         .set(auth(token))
@@ -250,9 +265,18 @@ describe('Runs (e2e)', () => {
         })
         .expect(201)
     ).body.id;
+    // Add the fan pipeline to the task (append alongside existing ones).
+    const currentTask = (
+      await http().get(`/projects/${projectId}/tasks/${taskId}`).set(auth(token)).expect(200)
+    ).body as { pipelines: string[] };
+    await http()
+      .patch(`/projects/${projectId}/tasks/${taskId}`)
+      .set(auth(token))
+      .send({ pipelines: [...currentTask.pipelines, fanPipelineId] })
+      .expect(200);
     const run = (
       await http()
-        .post(`/projects/${projectId}/pipelines/${pipelineId}/runs`)
+        .post(`/projects/${projectId}/tasks/${taskId}/pipelines/${fanPipelineId}/runs`)
         .set(auth(token))
         .send({ collections: { shots: ['hero', 'lifestyle', 'detail', 'packaging'] } })
         .expect(201)
