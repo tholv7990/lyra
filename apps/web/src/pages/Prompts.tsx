@@ -205,6 +205,19 @@ export function Prompts() {
         { method: 'POST', body: JSON.stringify({ promptId: p.id, content: p.content }) },
       );
       if (existing) {
+        // Ensure the conversation is linked to this prompt — otherwise the chat's
+        // "Save answer" button never appears (it gates on the parent prompt). A
+        // legacy/content match returns an unlinked conversation; link it now.
+        if (existing.originPromptId !== p.id) {
+          try {
+            await api(`/conversations/${existing.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ originPromptId: p.id }),
+            });
+          } catch {
+            // non-fatal: the chat still opens (just without the save link)
+          }
+        }
         navigate(`/chats/${existing.id}`, { state: { from } });
         return;
       }
