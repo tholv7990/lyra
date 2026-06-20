@@ -16,7 +16,6 @@ export function toProject(
     status: p.status,
     shared: p.shared,
     sharedWith: userRefs(p.sharedWith, refs),
-    pipelines: p.pipelines ?? [],
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),

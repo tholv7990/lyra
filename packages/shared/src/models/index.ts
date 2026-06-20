@@ -126,7 +126,7 @@ export interface Project extends Audited {
   status: ProjectStatus;
   shared: ProjectShare; // who a public project reaches
   sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto (when shared='people')
-  pipelines: string[]; // referenced pipeline ids (workspace library) — moving to Task (removed in the Task-layer cutover)
+  // pipelines now live on a Task (the project is a board of tasks).
 }
 
 // A unit of work inside a project (the project board's card). Holds the

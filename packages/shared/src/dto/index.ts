@@ -43,7 +43,6 @@ export interface CreateProjectDto {
   status?: ProjectStatus;
   shared?: ProjectShare;
   sharedWith?: string[];
-  pipelines?: string[];
 }
 
 export interface UpdateProjectDto {
@@ -53,7 +52,6 @@ export interface UpdateProjectDto {
   status?: ProjectStatus;
   shared?: ProjectShare;
   sharedWith?: string[];
-  pipelines?: string[];
 }
 
 export interface CreateWorkspaceDto {

@@ -47,10 +47,6 @@ export class Project extends AuditedEntity {
   // User ids (when shared = 'people'); expanded to UserRef[] in responses.
   @Prop({ type: [String], default: [] })
   sharedWith!: string[];
-
-  // Referenced workspace-library pipeline ids.
-  @Prop({ type: [String], default: [] })
-  pipelines!: string[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

@@ -55,11 +55,6 @@ export class CreateProjectBody implements CreateProjectDto {
   @IsArray()
   @IsString({ each: true })
   sharedWith?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  pipelines?: string[];
 }
 
 export class UpdateProjectBody implements UpdateProjectDto {
@@ -91,9 +86,4 @@ export class UpdateProjectBody implements UpdateProjectDto {
   @IsArray()
   @IsString({ each: true })
   sharedWith?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  pipelines?: string[];
 }

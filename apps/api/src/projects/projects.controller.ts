@@ -53,7 +53,6 @@ export class ProjectsController {
       status: body.status ?? ProjectStatus.Draft,
       shared: body.shared ?? ProjectShare.All,
       sharedWith: body.sharedWith ?? [],
-      pipelines: body.pipelines ?? [],
     });
     return this.projects.toView(project);
   }
