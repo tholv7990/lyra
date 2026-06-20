@@ -506,6 +506,71 @@ select.text-input {
   margin-top: 0;
 }
 
+/* ===== Checkbox ===== */
+.cbx { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--ink); }
+.cbx input { position: absolute; opacity: 0; width: 0; height: 0; }
+.cbx-box {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 1px solid var(--hairline-strong); border-radius: var(--radius-button);
+  background: var(--surface-1); color: transparent;
+  display: grid; place-items: center;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.cbx-box svg { width: 11px; height: 11px; }
+.cbx input:checked + .cbx-box { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
+.cbx input:focus-visible + .cbx-box { box-shadow: var(--focus-ring); border-color: var(--primary); }
+.cbx input:disabled + .cbx-box { opacity: 0.5; }
+.cbx:has(input:disabled) { cursor: default; color: var(--ink-muted); }
+
+/* ===== Toggle / switch ===== */
+.tgl { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--ink); }
+.tgl input { position: absolute; opacity: 0; width: 0; height: 0; }
+.tgl-track {
+  width: 32px; height: 18px; flex-shrink: 0; position: relative;
+  border-radius: 999px; background: var(--surface-3); transition: background 0.16s ease;
+}
+.tgl-knob {
+  position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+  border-radius: 999px; background: var(--card); box-shadow: var(--shadow-sm);
+  transition: transform 0.16s ease;
+}
+.tgl input:checked + .tgl-track { background: var(--primary); }
+.tgl input:checked + .tgl-track .tgl-knob { transform: translateX(14px); }
+.tgl input:focus-visible + .tgl-track { box-shadow: var(--focus-ring); }
+.tgl input:disabled + .tgl-track { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) { .tgl-track, .tgl-knob, .cbx-box { transition: none; } }
+
+/* ===== Tooltip ===== */
+.tip-wrap { position: relative; display: inline-flex; }
+.tip {
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  background: var(--ink); color: var(--app-bg);
+  font-size: var(--text-micro); line-height: 1.3; padding: 5px 8px;
+  border-radius: 4px; white-space: nowrap;
+  box-shadow: var(--shadow-tooltip); opacity: 0; pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease; z-index: 70;
+}
+.tip-wrap:hover .tip, .tip-wrap:focus-within .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (prefers-reduced-motion: reduce) { .tip { transition: opacity 0.12s ease; } }
+
+/* ===== Toast ===== */
+.toast {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--card); border: 1px solid var(--hairline);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-popover);
+  padding: 10px 12px; font-size: 13px; color: var(--ink); max-width: 360px;
+}
+.toast-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; background: var(--info); }
+.toast-success .toast-dot { background: var(--success); }
+.toast-error .toast-dot { background: var(--danger); }
+.toast-msg { min-width: 0; }
+.toast-x {
+  margin-left: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer;
+  color: var(--ink-tertiary); font-size: 16px; line-height: 1; padding: 0 2px;
+}
+.toast-x:hover { color: var(--ink); }
+
 .error {
   color: var(--danger);
   font-size: 13px;

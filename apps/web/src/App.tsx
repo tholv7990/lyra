@@ -31,6 +31,7 @@ import { ImportMedia } from './pages/ImportMedia';
 import { Members } from './pages/Members';
 import { TaskDetail } from './pages/TaskDetail';
 import { TaskEditor } from './pages/TaskEditor';
+import { Components } from './pages/Components';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -86,6 +87,7 @@ const router = createBrowserRouter([
       { path: 'projects/:id/edit', element: <ProjectEditor /> },
       { path: 'projects/:id/tasks/:taskId', element: <TaskDetail /> },
       { path: 'projects/:id/tasks/:taskId/edit', element: <TaskEditor /> },
+      { path: 'components', element: <Components /> },
       { path: 'prompts', element: <Prompts /> },
       { path: 'prompts/new', element: <PromptEditor /> },
       { path: 'prompts/:id', element: <PromptEditor /> },
