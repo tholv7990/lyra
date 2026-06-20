@@ -23,7 +23,6 @@ import { api } from '../lib/api';
 import { fmtDate, initial, avatarStyle } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
-import { useIsMobile } from '../lib/useIsMobile';
 import { useModels } from '../lib/useModels';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
@@ -66,7 +65,6 @@ export function TaskDetail() {
   const { current } = useWorkspace();
   const wsId = current?.id;
   const { catalog } = useModels(wsId);
-  const isMobile = useIsMobile();
   const modelLabel = (p: Provider, m: string) => catalog[p]?.find((o) => o.id === m)?.label ?? m;
 
   const [project, setProject] = useState<Project | null>(null);
@@ -360,12 +358,24 @@ export function TaskDetail() {
       wide
       onBack={() => navigate(`/projects/${projectId}`)}
       title={
-        isMobile ? (
-          <h2 className="eshell-name">
-            {runView && run ? run.pipelineName ?? t('projects.runFallback') : task.name}
-          </h2>
+        runView && run ? (
+          <h2 className="eshell-name">{run.pipelineName ?? t('projects.runFallback')}</h2>
+        ) : canEdit ? (
+          <input
+            className="eshell-name"
+            value={taskNameDraft}
+            disabled={savingTask}
+            aria-label={t('tasks.namePlaceholder')}
+            placeholder={t('tasks.namePlaceholder')}
+            onChange={(e) => setTaskNameDraft(e.target.value)}
+            onBlur={commitTaskName}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+              if (e.key === 'Escape') { setTaskNameDraft(task.name); e.currentTarget.blur(); }
+            }}
+          />
         ) : (
-          <span className="eshell-spacer" aria-hidden />
+          <h2 className="eshell-name">{task.name}</h2>
         )
       }
     >
@@ -443,101 +453,82 @@ export function TaskDetail() {
         ) : (
           /* ---- Task dashboard ---- */
           <>
-            {/* Task header */}
-            <div className="proj-head">
-              <div className="proj-title-row">
-                {canEdit ? (
-                  <input
-                    className="proj-title-input"
-                    value={taskNameDraft}
-                    disabled={savingTask}
-                    aria-label={t('tasks.namePlaceholder')}
-                    onChange={(e) => setTaskNameDraft(e.target.value)}
-                    onBlur={commitTaskName}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-                      if (e.key === 'Escape') { setTaskNameDraft(task.name); e.currentTarget.blur(); }
-                    }}
-                  />
-                ) : (
-                  <h1 className="proj-title-static">{task.name}</h1>
-                )}
-                {/* Status dropdown */}
-                <select
-                  className="task-status-select"
-                  value={task.status}
-                  disabled={!canEdit || savingTask}
-                  aria-label={t('tasks.statusLabel')}
-                  onChange={(e) => void patchTask({ status: e.target.value as TaskStatus })}
-                >
-                  {TASK_STATUS_VALUES.map((s) => (
-                    <option key={s} value={s}>{t(`tasks.status.${s}`)}</option>
-                  ))}
-                </select>
-                {/* Assignee picker — hidden for personal workspaces */}
-                {!isPersonal && (
-                  <div className="task-assignee-wrap">
-                    <button
-                      className="btn-ghost task-assignee-btn btn-inline"
-                      disabled={!canEdit || savingTask}
-                      onClick={() => setAssigneeOpen((o) => !o)}
-                      aria-label={t('tasks.assignee')}
-                    >
-                      {task.assignee ? (
-                        <>
-                          <span className="prow-updated-icon" style={avatarStyle(task.assignee.name)} aria-hidden="true">
-                            {initial(task.assignee.name)}
-                          </span>
-                          {task.assignee.name}
-                        </>
-                      ) : (
-                        t('tasks.unassigned')
-                      )}
-                    </button>
-                    {assigneeOpen && canEdit && (
-                      <div className="lin-menu task-assignee-menu">
-                        <button
-                          className="lin-menu-item"
-                          onClick={() => { void patchTask({ assigneeId: null }); setAssigneeOpen(false); }}
-                        >
-                          {t('tasks.unassigned')}
-                        </button>
-                        {members.map((m) => (
-                          <button
-                            key={m.userId}
-                            className="lin-menu-item"
-                            onClick={() => { void patchTask({ assigneeId: m.userId }); setAssigneeOpen(false); }}
-                          >
-                            <span className="prow-updated-icon" style={avatarStyle(m.name)} aria-hidden="true">
-                              {initial(m.name)}
-                            </span>
-                            {m.name}
-                          </button>
-                        ))}
-                      </div>
+            {/* Description */}
+            {canEdit ? (
+              <textarea
+                className="proj-desc-input"
+                value={taskDescDraft}
+                disabled={savingTask}
+                rows={2}
+                placeholder={t('tasks.descriptionPlaceholder')}
+                aria-label={t('tasks.descriptionPlaceholder')}
+                onChange={(e) => setTaskDescDraft(e.target.value)}
+                onBlur={commitTaskDesc}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { setTaskDescDraft(task.description ?? ''); e.currentTarget.blur(); }
+                }}
+              />
+            ) : (
+              <p className="proj-product">{task.description || t('tasks.descriptionPlaceholder')}</p>
+            )}
+
+            {/* Info: status + assignee */}
+            <div className="task-info">
+              <select
+                className="task-status-select"
+                value={task.status}
+                disabled={!canEdit || savingTask}
+                aria-label={t('tasks.statusLabel')}
+                onChange={(e) => void patchTask({ status: e.target.value as TaskStatus })}
+              >
+                {TASK_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>{t(`tasks.status.${s}`)}</option>
+                ))}
+              </select>
+              {/* Assignee picker — hidden for personal workspaces */}
+              {!isPersonal && (
+                <div className="task-assignee-wrap">
+                  <button
+                    className="btn-ghost task-assignee-btn btn-inline"
+                    disabled={!canEdit || savingTask}
+                    onClick={() => setAssigneeOpen((o) => !o)}
+                    aria-label={t('tasks.assignee')}
+                  >
+                    {task.assignee ? (
+                      <>
+                        <span className="prow-updated-icon" style={avatarStyle(task.assignee.name)} aria-hidden="true">
+                          {initial(task.assignee.name)}
+                        </span>
+                        {task.assignee.name}
+                      </>
+                    ) : (
+                      t('tasks.unassigned')
                     )}
-                  </div>
-                )}
-              </div>
-              <div className="proj-desc-row">
-                {canEdit ? (
-                  <textarea
-                    className="proj-desc-input"
-                    value={taskDescDraft}
-                    disabled={savingTask}
-                    rows={2}
-                    placeholder={t('tasks.descriptionPlaceholder')}
-                    aria-label={t('tasks.descriptionPlaceholder')}
-                    onChange={(e) => setTaskDescDraft(e.target.value)}
-                    onBlur={commitTaskDesc}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') { setTaskDescDraft(task.description ?? ''); e.currentTarget.blur(); }
-                    }}
-                  />
-                ) : (
-                  <p className="proj-product">{task.description || t('tasks.descriptionPlaceholder')}</p>
-                )}
-              </div>
+                  </button>
+                  {assigneeOpen && canEdit && (
+                    <div className="lin-menu task-assignee-menu">
+                      <button
+                        className="lin-menu-item"
+                        onClick={() => { void patchTask({ assigneeId: null }); setAssigneeOpen(false); }}
+                      >
+                        {t('tasks.unassigned')}
+                      </button>
+                      {members.map((m) => (
+                        <button
+                          key={m.userId}
+                          className="lin-menu-item"
+                          onClick={() => { void patchTask({ assigneeId: m.userId }); setAssigneeOpen(false); }}
+                        >
+                          <span className="prow-updated-icon" style={avatarStyle(m.name)} aria-hidden="true">
+                            {initial(m.name)}
+                          </span>
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && <p className="error">{error}</p>}

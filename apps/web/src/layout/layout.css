@@ -977,6 +977,15 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Task info row (status + assignee) under the task description. */
+.task-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 /* Task status dropdown in the task header (keeps the native arrow). */
 .task-status-select {
   border: 1px solid var(--hairline);
