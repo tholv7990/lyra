@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
+import { WorkspaceType } from '@lyra/shared';
 import type { WorkspaceView } from '@lyra/shared';
 import { Workspace } from './workspace.schema';
 import type { WorkspaceDocument } from './workspace.schema';
@@ -21,9 +22,21 @@ export class WorkspacesService extends BaseRepository<Workspace> {
 
   createPersonal(userId: string, name: string, session?: ClientSession) {
     return this.create(
-      { name, type: 'personal', createdBy: userId, updatedBy: userId },
+      { name, type: WorkspaceType.Personal, createdBy: userId, updatedBy: userId },
       session,
     );
+  }
+
+  // One-way upgrade: personal → team. Returns the updated doc, or null if
+  // the workspace doesn't exist or is already a team workspace.
+  upgradeToTeam(id: string, actorId: string): Promise<WorkspaceDocument | null> {
+    return this.model
+      .findOneAndUpdate(
+        { _id: id, type: WorkspaceType.Personal },
+        { $set: { type: WorkspaceType.Team, updatedBy: actorId } },
+        { returnDocument: 'after' },
+      )
+      .exec();
   }
 
   rename(id: string, name: string, updatedBy: string) {
