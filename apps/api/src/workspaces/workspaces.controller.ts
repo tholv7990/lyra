@@ -28,7 +28,6 @@ import {
   RequestMembership,
 } from './decorators/current-membership.decorator';
 import {
-  CreateWorkspaceBody,
   UpdateWorkspaceBody,
   InviteBody,
   UpdateMemberBody,
@@ -47,32 +46,6 @@ export class WorkspacesController {
     private readonly cascade: CascadeService,
     @InjectConnection() private readonly connection: Connection,
   ) {}
-
-  @Post()
-  async create(
-    @Body() body: CreateWorkspaceBody,
-    @CurrentUser() user: User,
-  ): Promise<WorkspaceView> {
-    const workspace = await this.connection.transaction(async (session) => {
-      const ws = await this.workspaces.create(
-        { name: body.name, type: 'team', createdBy: user.id, updatedBy: user.id },
-        session,
-      );
-      await this.memberships.create(
-        {
-          workspaceId: ws._id.toString(),
-          userId: user.id,
-          role: Role.Owner,
-          canManageKeys: false,
-          createdBy: user.id,
-          updatedBy: user.id,
-        },
-        session,
-      );
-      return ws;
-    });
-    return this.workspaces.toView(workspace, Role.Owner, false);
-  }
 
   @Get()
   list(@CurrentUser() user: User): Promise<WorkspaceView[]> {
