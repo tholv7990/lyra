@@ -86,6 +86,10 @@ export class RequestsService {
       )
       .exec();
     if (!doc) throw new NotFoundException('Request not found.');
+    // Side effect: when a team-upgrade request is approved, flip the workspace.
+    if (doc.type === RequestType.TeamUpgrade && dto.status === RequestStatus.Resolved && doc.workspaceId) {
+      await this.workspaces.upgradeToTeam(doc.workspaceId, actorId);
+    }
     return this.toView(doc);
   }
 

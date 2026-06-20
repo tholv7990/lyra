@@ -2,6 +2,9 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Role, RequestType, RequestStatus, WorkspaceType } from '@lyra/shared';
 import { RequestsService } from './requests.service';
 
+// Helper to create a chainable findOne mock (top-level so reusable across describe blocks)
+// Note: findOneExec is defined here and used in both describe blocks below
+
 // Helper to create a chainable findOne mock
 function findOneExec(value: unknown) {
   return { exec: jest.fn().mockResolvedValue(value) };
@@ -100,5 +103,88 @@ describe('RequestsService team-upgrade', () => {
     await expect(
       service.create(ownerId, { type: RequestType.TeamUpgrade, subject: 'My Team', workspaceId: wsId }),
     ).rejects.toThrow(BadRequestException);
+  });
+});
+
+describe('RequestsService updateStatus team-upgrade', () => {
+  const ownerId = 'owner1';
+  const adminId = 'admin1';
+  const wsId = 'ws1';
+
+  function makeUpdateService(opts: { requestType?: string; workspaceId?: string } = {}) {
+    const { requestType = RequestType.TeamUpgrade, workspaceId = wsId } = opts;
+
+    const requestDoc = {
+      _id: 'req1',
+      id: 'req1',
+      type: requestType,
+      subject: 'T',
+      subjectKey: 't',
+      body: '',
+      status: RequestStatus.Resolved,
+      workspaceId,
+      voters: [ownerId],
+      createdBy: ownerId,
+      updatedBy: adminId,
+      toObject: () => ({}),
+    };
+
+    const model = {
+      create: jest.fn(),
+      findOne: jest.fn().mockReturnValue(findOneExec(null)),
+      findByIdAndUpdate: jest.fn().mockReturnValue(findOneExec(requestDoc)),
+    } as never;
+
+    const upgradeToTeam = jest.fn().mockResolvedValue({ type: WorkspaceType.Team });
+    const workspaces = { findById: jest.fn(), upgradeToTeam } as never;
+    const memberships = { findFor: jest.fn() } as never;
+    const users = {
+      refMap: jest.fn().mockResolvedValue(new Map([
+        [ownerId, { id: ownerId, name: 'Owner' }],
+        [adminId, { id: adminId, name: 'Admin' }],
+      ])),
+    } as never;
+
+    const service = new RequestsService(model, users, workspaces, memberships);
+    return { service, upgradeToTeam };
+  }
+
+  it('resolving a team-upgrade request calls upgradeToTeam', async () => {
+    const { service, upgradeToTeam } = makeUpdateService();
+    await service.updateStatus('req1', { status: RequestStatus.Resolved }, adminId);
+    expect(upgradeToTeam).toHaveBeenCalledWith(wsId, adminId);
+  });
+
+  it('declining a team-upgrade does NOT call upgradeToTeam', async () => {
+    const requestDoc = {
+      _id: 'req1', id: 'req1',
+      type: RequestType.TeamUpgrade, subject: 'T', subjectKey: 't', body: '',
+      status: RequestStatus.Declined, workspaceId: wsId,
+      voters: ['owner1'], createdBy: 'owner1', updatedBy: adminId,
+      toObject: () => ({}),
+    };
+    const model = {
+      create: jest.fn(),
+      findOne: jest.fn().mockReturnValue(findOneExec(null)),
+      findByIdAndUpdate: jest.fn().mockReturnValue(findOneExec(requestDoc)),
+    } as never;
+    const upgradeToTeam = jest.fn();
+    const workspaces = { upgradeToTeam } as never;
+    const memberships = { findFor: jest.fn() } as never;
+    const users = {
+      refMap: jest.fn().mockResolvedValue(new Map([
+        ['owner1', { id: 'owner1', name: 'Owner' }],
+        [adminId, { id: adminId, name: 'Admin' }],
+      ])),
+    } as never;
+    const service = new RequestsService(model, users, workspaces, memberships);
+    await service.updateStatus('req1', { status: RequestStatus.Declined }, adminId);
+    expect(upgradeToTeam).not.toHaveBeenCalled();
+  });
+
+  it('resolving a non-team-upgrade request does NOT call upgradeToTeam', async () => {
+    const { service, upgradeToTeam } = makeUpdateService({ requestType: RequestType.Provider });
+    await service.updateStatus('req1', { status: RequestStatus.Resolved }, adminId);
+    expect(upgradeToTeam).not.toHaveBeenCalled();
   });
 });
