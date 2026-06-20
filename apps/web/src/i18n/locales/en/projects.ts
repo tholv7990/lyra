@@ -36,6 +36,8 @@ export default {
   shareChosen: 'Public · Chosen people',
 
   // Project detail
+  editProject: 'Edit project',
+  newTask: 'New task',
   loadFailed: 'Could not load project',
   actionFailed: 'Action failed',
   notFound: 'Project not found.',

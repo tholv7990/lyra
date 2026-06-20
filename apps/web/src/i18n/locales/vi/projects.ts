@@ -36,6 +36,8 @@ export default {
   shareChosen: 'Công khai · Người được chọn',
 
   // Project detail
+  editProject: 'Sửa dự án',
+  newTask: 'Công việc mới',
   loadFailed: 'Không thể tải dự án',
   actionFailed: 'Thao tác không thành công',
   notFound: 'Không tìm thấy dự án.',
