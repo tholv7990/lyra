@@ -8,8 +8,30 @@ export default {
   tab: {
     overview: 'Tổng quan',
     users: 'Người dùng',
+    requests: 'Yêu cầu',
     platform: 'Nền tảng',
   },
+
+  // Requests
+  requestsTitle: 'Yêu cầu người dùng',
+  requestsDesc: 'Yêu cầu nhà cung cấp và, sau này, báo lỗi từ khắp nền tảng.',
+  reqFilterType: 'Lọc theo loại',
+  reqFilterStatus: 'Lọc theo trạng thái',
+  reqAllTypes: 'Tất cả loại',
+  reqAllStatuses: 'Tất cả trạng thái',
+  reqType: {
+    provider: 'Nhà cung cấp',
+    bug: 'Lỗi',
+  },
+  reqStatus: {
+    open: 'Đang mở',
+    resolved: 'Đã xử lý',
+    declined: 'Từ chối',
+  },
+  reqBy: 'Bởi {{name}} · {{date}}',
+  reqVotes: 'Lượt bình chọn',
+  reqEmptyTitle: 'Chưa có yêu cầu',
+  reqEmptyBody: 'Chưa có gì để xử lý. Yêu cầu nhà cung cấp từ Cài đặt sẽ hiện ở đây.',
 
   // Overview
   overviewDesc: 'Tổng số liệu toàn nền tảng trên mọi không gian làm việc.',

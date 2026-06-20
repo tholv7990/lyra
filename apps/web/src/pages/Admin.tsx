@@ -5,17 +5,20 @@ import type {
   AdminOverview,
   AdminUserDetail,
   AdminUserSummary,
+  RequestStatus,
+  UserRequest,
 } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
 import { initial, avatarStyle } from '../lib/format';
 import { adminApi, type CatalogStats } from '../lib/admin';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { MembersIcon, RefreshIcon, XIcon } from '../layout/icons';
+import { ListIcon, MembersIcon, RefreshIcon, XIcon } from '../layout/icons';
 import './admin.css';
 
-type Tab = 'overview' | 'users' | 'platform';
-const TABS: Tab[] = ['overview', 'users', 'platform'];
+type Tab = 'overview' | 'users' | 'requests' | 'platform';
+const TABS: Tab[] = ['overview', 'users', 'requests', 'platform'];
+const REQUEST_STATUSES: RequestStatus[] = ['open', 'resolved', 'declined'] as RequestStatus[];
 const PAGE_SIZE = 15;
 
 // Format an ISO timestamp for the "Last synced" fact. Locale-aware (matches the
@@ -67,6 +70,7 @@ export function Admin() {
 
       {tab === 'overview' && <OverviewSection />}
       {tab === 'users' && <UsersSection />}
+      {tab === 'requests' && <RequestsSection />}
       {tab === 'platform' && <PlatformSection />}
     </div>
   );
@@ -474,6 +478,148 @@ function UserDetailView({ row, isSelf, onBack, onActiveChanged }: UserDetailView
         onCancel={() => setConfirm(false)}
       />
     </section>
+  );
+}
+
+// ===== Requests =====
+
+// User submissions (provider requests now; bug reports later). Filter by type +
+// status; change a request's status inline. Voting lands here later (voteCount
+// already rides on every row).
+function RequestsSection() {
+  const { t } = useTranslation();
+  const [rows, setRows] = useState<UserRequest[]>([]);
+  const [typeF, setTypeF] = useState('');
+  const [statusF, setStatusF] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    adminApi
+      .requests({ type: typeF || undefined, status: statusF || undefined })
+      .then((r) => {
+        if (cancelled) return;
+        setRows(r);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : t('admin.error'));
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [typeF, statusF, t]);
+
+  async function changeStatus(id: string, status: RequestStatus) {
+    try {
+      const updated = await adminApi.setRequestStatus(id, status);
+      setRows((list) => list.map((r) => (r.id === id ? updated : r)));
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('admin.error'));
+    }
+  }
+
+  return (
+    <section aria-labelledby="admin-requests-title">
+      <div className="set-section-head">
+        <h2 id="admin-requests-title">{t('admin.requestsTitle')}</h2>
+        <p>{t('admin.requestsDesc')}</p>
+      </div>
+
+      <div className="lin-toolbar admin-req-toolbar">
+        <select
+          className="text-input admin-req-filter"
+          value={typeF}
+          onChange={(e) => setTypeF(e.target.value)}
+          aria-label={t('admin.reqFilterType')}
+        >
+          <option value="">{t('admin.reqAllTypes')}</option>
+          <option value="provider">{t('admin.reqType.provider')}</option>
+          <option value="bug">{t('admin.reqType.bug')}</option>
+        </select>
+        <select
+          className="text-input admin-req-filter"
+          value={statusF}
+          onChange={(e) => setStatusF(e.target.value)}
+          aria-label={t('admin.reqFilterStatus')}
+        >
+          <option value="">{t('admin.reqAllStatuses')}</option>
+          {REQUEST_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {t(`admin.reqStatus.${s}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+
+      {loading ? (
+        <p className="empty">{t('admin.loading')}</p>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={<ListIcon width={26} height={26} />}
+          title={t('admin.reqEmptyTitle')}
+          body={t('admin.reqEmptyBody')}
+        />
+      ) : (
+        <div className="admin-req-list">
+          {rows.map((r) => (
+            <RequestRow key={r.id} row={r} onStatus={changeStatus} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RequestRow({
+  row,
+  onStatus,
+}: {
+  row: UserRequest;
+  onStatus: (id: string, status: RequestStatus) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="admin-req-card">
+      <div className="admin-req-head">
+        <span className={`badge admin-req-type type-${row.type}`}>{t(`admin.reqType.${row.type}`)}</span>
+        <span className="admin-req-subject">{row.subject}</span>
+        {row.voteCount > 1 && (
+          <span className="admin-req-votes" title={t('admin.reqVotes')}>
+            ▲ {row.voteCount}
+          </span>
+        )}
+      </div>
+      {row.body && <p className="admin-req-body">{row.body}</p>}
+      <div className="admin-req-foot">
+        <span className="admin-req-meta">
+          {t('admin.reqBy', { name: row.createdBy.name, date: fmtDate(row.createdAt) })}
+        </span>
+        <select
+          className={`text-input admin-req-status status-${row.status}`}
+          value={row.status}
+          onChange={(e) => onStatus(row.id, e.target.value as RequestStatus)}
+          aria-label={t('admin.reqFilterStatus')}
+        >
+          {REQUEST_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {t(`admin.reqStatus.${s}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
   );
 }
 

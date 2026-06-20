@@ -8,8 +8,30 @@ export default {
   tab: {
     overview: 'Overview',
     users: 'Users',
+    requests: 'Requests',
     platform: 'Platform',
   },
+
+  // Requests
+  requestsTitle: 'User requests',
+  requestsDesc: 'Provider requests and, later, bug reports from across the platform.',
+  reqFilterType: 'Filter by type',
+  reqFilterStatus: 'Filter by status',
+  reqAllTypes: 'All types',
+  reqAllStatuses: 'All statuses',
+  reqType: {
+    provider: 'Provider',
+    bug: 'Bug',
+  },
+  reqStatus: {
+    open: 'Open',
+    resolved: 'Resolved',
+    declined: 'Declined',
+  },
+  reqBy: 'By {{name}} · {{date}}',
+  reqVotes: 'Votes',
+  reqEmptyTitle: 'No requests',
+  reqEmptyBody: 'Nothing to triage yet. Provider requests from Settings show up here.',
 
   // Overview
   overviewDesc: 'Platform-wide totals across every workspace.',

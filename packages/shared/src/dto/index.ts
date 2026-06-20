@@ -1,4 +1,4 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode } from '../enums';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus } from '../enums';
 import type { FanOutConfig, PipelineOrigin, PromptMedia, StepCondition } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -339,4 +339,17 @@ export interface DownloadDto {
 // encrypted and forwards it to yt-dlp for logged-in/age-gated downloads.
 export interface SetCrawlerCookiesDto {
   cookies: string;
+}
+
+// ===== User requests (provider requests now; bug reports later) =====
+// A signed-in user submits a request to the platform admins.
+export interface CreateRequestDto {
+  type: RequestType;
+  subject: string; // provider name (or bug title)
+  body?: string; // optional details
+}
+// Admin triages a request: change status, optionally leave a note.
+export interface UpdateRequestStatusDto {
+  status: RequestStatus;
+  adminNote?: string;
 }

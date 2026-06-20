@@ -81,3 +81,18 @@ export enum PromptType {
   Audio = 'audio',
   Video = 'video',
 }
+
+// A user submission to the platform admins. One collection, discriminated by
+// type — provider requests today; bug reports (and more) reuse the same table.
+export enum RequestType {
+  Provider = 'provider',
+  Bug = 'bug',
+}
+
+// Triage state of a UserRequest. Open → Resolved/Declined (no separate
+// "reviewing" state — kept deliberately minimal).
+export enum RequestStatus {
+  Open = 'open',
+  Resolved = 'resolved',
+  Declined = 'declined',
+}

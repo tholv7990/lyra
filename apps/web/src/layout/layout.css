@@ -2391,13 +2391,23 @@
   font-size: 13px;
   font-weight: 600;
 }
+/* Icon-only — bare RefreshIcon, no background or border. */
 .prov-load {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  width: auto;
-  padding: 5px 10px;
-  font-size: 12.5px;
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  line-height: 0;
+}
+.prov-load:hover {
+  color: var(--ink);
+}
+.prov-load:disabled {
+  color: var(--ink-tertiary);
+  cursor: default;
 }
 .prov-models {
   display: flex;
@@ -2444,14 +2454,34 @@
   padding-top: 18px;
   border-top: 1px solid var(--hairline);
 }
+.prov-soon-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 .prov-soon-label {
   display: block;
-  margin-bottom: 10px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink-tertiary);
+}
+.prov-request-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  margin-top: 0;
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+.req-note {
+  resize: vertical;
+  min-height: 64px;
+  font: inherit;
 }
 .prov-soon-chips {
   display: flex;

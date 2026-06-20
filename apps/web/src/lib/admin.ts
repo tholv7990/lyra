@@ -3,6 +3,8 @@ import type {
   AdminUserDetail,
   AdminUserSummary,
   Paged,
+  RequestStatus,
+  UserRequest,
 } from '@lyra/shared';
 import { api } from './api';
 
@@ -52,4 +54,20 @@ export const adminApi = {
   // Re-import the catalog from prompts.chat. Returns how many were imported.
   syncCatalog: () =>
     api<{ imported: number }>('/admin/marketplace/sync', { method: 'POST' }),
+
+  // User requests (provider requests now; bug reports later), newest first.
+  requests: (filter: { type?: string; status?: string } = {}) => {
+    const params = new URLSearchParams();
+    if (filter.type) params.set('type', filter.type);
+    if (filter.status) params.set('status', filter.status);
+    const qs = params.toString();
+    return api<UserRequest[]>(`/admin/requests${qs ? `?${qs}` : ''}`);
+  },
+
+  // Triage a request: set its status (note reserved for later).
+  setRequestStatus: (id: string, status: RequestStatus) =>
+    api<UserRequest>(`/admin/requests/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };

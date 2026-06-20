@@ -20,6 +20,7 @@ import { FilesModule } from './files/files.module';
 import { ConnectorsModule } from './connectors/connectors.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { AdminModule } from './admin/admin.module';
+import { RequestsModule } from './requests/requests.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -53,6 +54,7 @@ import { HealthController } from './health.controller';
     ConnectorsModule,
     MarketplaceModule,
     AdminModule,
+    RequestsModule,
     AuthModule,
   ],
   controllers: [HealthController],

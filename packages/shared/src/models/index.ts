@@ -10,6 +10,8 @@ import {
   PromptType,
   MediaType,
   Provider,
+  RequestType,
+  RequestStatus,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -526,4 +528,19 @@ export interface AdminOverview {
   chats: number;
   signups30d: number;
   recentSignups: AdminUserSummary[];
+}
+
+// A user's submission to the platform admins (provider request now, bug report
+// later — same collection, keyed by `type`). Safe transport shape: `voteCount`
+// is derived server-side from the voters list; the raw voter ids stay server-only.
+// `createdBy` (from Audited) is the requester.
+export interface UserRequest extends Audited {
+  id: string;
+  type: RequestType;
+  subject: string; // provider name (or bug title)
+  body: string; // optional details/note
+  status: RequestStatus;
+  adminNote?: string; // admin's reply / reason
+  workspaceId?: string; // context it was sent from
+  voteCount: number; // reserved for the upcoming request-voting board
 }

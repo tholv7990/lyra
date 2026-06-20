@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AddKeyModal } from '../components/AddKeyModal';
+import { RequestProviderModal } from '../components/RequestProviderModal';
 import { ProviderCard } from '../components/ProviderCard';
 import { ProviderBadge } from '../components/ProviderBadge';
 import { ModalityIcon } from '../lib/promptType';
@@ -40,6 +41,8 @@ export function Settings() {
   const [addError, setAddError] = useState<string | null>(null);
   const [toRemove, setToRemove] = useState<ProviderCatalogEntry | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requested, setRequested] = useState(false);
 
   const wsId = current?.id;
   const canManage =
@@ -243,9 +246,16 @@ export function Settings() {
           </div>
         )}
 
-        {/* Roadmap — listed so users see what's coming; request flow lands here later. */}
+        {/* Roadmap — listed so users see what's coming; "Request a provider"
+            captures anything not here for the admins to triage. */}
         <div className="prov-soon">
-          <span className="prov-soon-label">{t('settings.comingSoon')}</span>
+          <div className="prov-soon-top">
+            <span className="prov-soon-label">{t('settings.comingSoon')}</span>
+            <button type="button" className="btn-ghost prov-request-btn" onClick={() => setRequestOpen(true)}>
+              <PlusIcon width={14} height={14} />
+              {t('settings.requestProvider')}
+            </button>
+          </div>
           <div className="prov-soon-chips">
             {SOON_PROVIDERS.map((p) => (
               <span className="prov-chip" key={p.id}>
@@ -260,6 +270,11 @@ export function Settings() {
             ))}
           </div>
           <p className="prov-soon-foot">{t('settings.providerFootnote')}</p>
+          {requested && (
+            <p className="prov-msg" role="status" aria-live="polite">
+              {t('settings.requestThanks')}
+            </p>
+          )}
         </div>
       </section>
 
@@ -320,6 +335,16 @@ export function Settings() {
           error={addError}
           onSave={(key) => void saveKey(key)}
           onClose={() => setAddEntry(null)}
+        />
+      )}
+
+      {requestOpen && (
+        <RequestProviderModal
+          onClose={() => setRequestOpen(false)}
+          onSubmitted={() => {
+            setRequestOpen(false);
+            setRequested(true);
+          }}
         />
       )}
 

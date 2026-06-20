@@ -80,9 +80,15 @@ export function ProviderCard({
           <div className="prov-models-head">
             <span className="prov-models-title">{t('settings.modelsCount', { count: models.length })}</span>
             {canManage && (
-              <button type="button" className="btn-ghost prov-load" disabled={loading} onClick={onLoad}>
-                <RefreshIcon width={14} height={14} className={loading ? 'icon spin' : 'icon'} />
-                {loading ? t('settings.loadingModels') : t('settings.loadModels')}
+              <button
+                type="button"
+                className="prov-load"
+                disabled={loading}
+                onClick={onLoad}
+                title={t('settings.loadModels')}
+                aria-label={t('settings.loadModels')}
+              >
+                <RefreshIcon width={15} height={15} className={loading ? 'icon spin' : 'icon'} />
               </button>
             )}
           </div>
