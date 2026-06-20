@@ -1,0 +1,242 @@
+/* ===== Run-step timeline (Task Detail) — design's vertical rail of steps.
+   Token-only. Reuses the run actions; full output opens StepResultModal. */
+
+/* Centered workbench column (the run-view body is full-bleed for the old canvas). */
+.rt-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 24px 48px;
+}
+
+.rt {
+  display: flex;
+  flex-direction: column;
+}
+
+.rt-step {
+  display: flex;
+  gap: 13px;
+}
+.rt-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+}
+.rt-ico {
+  display: inline-flex;
+  flex: none;
+}
+.rt-line {
+  flex: 1;
+  width: 2px;
+  background: var(--hairline);
+  margin: 4px 0;
+  min-height: 14px;
+}
+
+.rt-content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 18px;
+}
+
+.rt-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 7px;
+  flex-wrap: wrap;
+}
+.rt-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.rt-name.muted {
+  color: var(--ink-muted);
+}
+.rt-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+.rt-gated {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-tint);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+.rt-flex {
+  flex: 1;
+}
+.rt-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  flex: none;
+}
+.rt-toggle:hover {
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+
+/* output card */
+.rt-out {
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--surface-1);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.rt-out-text {
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.rt-out-text.err {
+  color: var(--danger);
+}
+.rt-assets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 13px 11px;
+}
+.rt-asset {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+}
+.rt-asset img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rt-asset.glyph {
+  color: var(--ink-muted);
+  font-size: 18px;
+}
+.rt-out-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 13px;
+  border-top: 1px solid var(--hairline);
+  font-size: 11.5px;
+}
+.rt-across {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.rt-across-label {
+  font-weight: 600;
+  color: var(--ink-tertiary);
+}
+.rt-across-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-muted);
+}
+.rt-across-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-tertiary);
+}
+.rt-across-item.status-done .rt-across-dot { background: var(--success); }
+.rt-across-item.status-error .rt-across-dot { background: var(--danger); }
+.rt-across-item.status-waiting .rt-across-dot { background: var(--primary); }
+.rt-full {
+  flex: none;
+}
+
+/* gate panel */
+.rt-gate {
+  border: 1.5px solid var(--primary);
+  border-radius: 11px;
+  background: var(--primary-tint);
+  padding: 13px 14px;
+}
+.rt-gate-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.rt-gate-top > svg {
+  flex: none;
+  margin-top: 1px;
+}
+.rt-gate-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.rt-gate-sub {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+.rt-gate-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* edit & rerun + run */
+.rt-edit {
+  margin-top: 4px;
+}
+.rt-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rt-run {
+  margin-top: 2px;
+}
+.rt-queued {
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+  font-style: italic;
+}
+.rt-locked {
+  font-size: 13px;
+}

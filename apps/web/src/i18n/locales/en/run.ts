@@ -1,5 +1,17 @@
 export default {
   viewResult: 'View result',
+  // Run-step timeline (task detail)
+  gated: 'Gated',
+  viewOutput: 'View output',
+  hideOutput: 'Hide output',
+  acrossRuns: 'This step across runs',
+  viewFull: 'View full output',
+  gatedTitle: 'This step is gated',
+  gatedSub: 'Review the output before the pipeline saves it and continues.',
+  approveContinue: 'Approve & continue',
+  editRerun: 'Edit & rerun',
+  saveRerun: 'Save & rerun',
+  queuedNote: 'Queued — runs once the step above completes.',
   step: 'Step {{n}}',
   stepOf: 'Step {{page}} of {{total}}',
   result: 'Result',

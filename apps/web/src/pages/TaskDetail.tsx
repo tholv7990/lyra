@@ -27,7 +27,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
-import { RunFlow } from '../components/RunFlow';
+import { RunTimeline } from '../components/RunTimeline';
 import { RunRating } from '../components/RunRating';
 import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
@@ -403,20 +403,19 @@ export function TaskDetail() {
             {run.steps.length === 0 ? (
               <p className="empty">{t('projects.noStepsYet')}</p>
             ) : (
-              <>
-                <RunFlow
+              <div className="rt-wrap">
+                <RunTimeline
                   run={run}
                   busy={busy}
                   hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(keyProviderFor(p as Provider))}
                   onRunStep={runStep}
                   onApprove={approve}
                   onSavePrompt={savePrompt}
-                  mobileLayout="flow"
                   assets={runAssets}
                   historyForStep={historyForStep}
                 />
                 <RunSummary run={run} busy={busy} onRetry={runStep} />
-              </>
+              </div>
             )}
           </div>
         ) : (

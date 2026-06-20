@@ -1,5 +1,17 @@
 export default {
   viewResult: 'Xem kết quả',
+  // Run-step timeline (task detail)
+  gated: 'Có cổng',
+  viewOutput: 'Xem kết quả',
+  hideOutput: 'Ẩn kết quả',
+  acrossRuns: 'Bước này qua các lần chạy',
+  viewFull: 'Xem đầy đủ',
+  gatedTitle: 'Bước này cần duyệt',
+  gatedSub: 'Xem kết quả trước khi pipeline lưu lại và tiếp tục.',
+  approveContinue: 'Duyệt & tiếp tục',
+  editRerun: 'Sửa & chạy lại',
+  saveRerun: 'Lưu & chạy lại',
+  queuedNote: 'Đang chờ — chạy khi bước trên hoàn tất.',
   step: 'Bước {{n}}',
   stepOf: 'Bước {{page}} / {{total}}',
   result: 'Kết quả',
