@@ -3,34 +3,29 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   canEditProject,
+  labelColor,
+  ProjectShare,
   ProjectStatus,
+  type MemberView,
   type Project,
   type ProjectVariable,
 } from '@lyra/shared';
 import { api } from '../lib/api';
-import { STATUS_COLOR } from '../lib/constants';
+import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
-import { CheckIcon, XIcon } from '../layout/icons';
+import { CheckIcon, PlusIcon, XIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
-
-const STATUS_KEY: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'projects.statusDraft',
-  [ProjectStatus.Public]: 'projects.statusPublic',
-};
-// Shown beneath the toggle; reflects what the current status actually does.
-// (Member-level sharing is deferred — a public project is visible to everyone.)
-const STATUS_HELP_KEY: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'projects.statusHelpDraft',
-  [ProjectStatus.Public]: 'projects.statusHelpPublic',
-};
+import './projecteditor.css';
 
 interface Form {
   name: string;
   description: string;
   variables: ProjectVariable[];
   status: ProjectStatus;
+  shared: ProjectShare;
+  sharedWith: string[]; // member userIds
 }
 
 const empty: Form = {
@@ -38,7 +33,11 @@ const empty: Form = {
   description: '',
   variables: [],
   status: ProjectStatus.Draft,
+  shared: ProjectShare.All,
+  sharedWith: [],
 };
+
+const QUICK_KEYS = ['product', 'niche', 'homepage'];
 
 export function ProjectEditor() {
   const { t } = useTranslation();
@@ -51,10 +50,13 @@ export function ProjectEditor() {
 
   const [form, setForm] = useState<Form>(empty);
   useBreadcrumb(isEdit ? form.name.trim() || '…' : t('projects.breadcrumbNew'));
+  const [members, setMembers] = useState<MemberView[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
+
+  const isPublic = form.status === ProjectStatus.Public;
 
   useEffect(() => {
     if (!id) return;
@@ -76,40 +78,53 @@ export function ProjectEditor() {
           description: p.description ?? '',
           variables: p.variables ?? [],
           status: p.status,
+          shared: p.shared ?? ProjectShare.All,
+          sharedWith: (p.sharedWith ?? []).map((u) => u.id),
         });
       })
       .catch((e) => setError(e instanceof Error ? e.message : t('projects.loadFailed')))
       .finally(() => setLoading(false));
   }, [id, user, current]);
 
+  // Members are only needed for the "specific people" picker.
+  useEffect(() => {
+    if (!wsId) return;
+    api<MemberView[]>(`/workspaces/${wsId}/members`).then(setMembers).catch(() => setMembers([]));
+  }, [wsId]);
+
   const cancelTo = isEdit ? `/projects/${id}` : '/projects';
 
-  // Variables editor helpers (key/value rows; key sanitized like PipelineVarsEditor).
   const setVar = (i: number, patch: Partial<ProjectVariable>) =>
-    setForm((f) => ({
-      ...f,
-      variables: f.variables.map((v, idx) => (idx === i ? { ...v, ...patch } : v)),
-    }));
+    setForm((f) => ({ ...f, variables: f.variables.map((v, idx) => (idx === i ? { ...v, ...patch } : v)) }));
   const removeVar = (i: number) =>
     setForm((f) => ({ ...f, variables: f.variables.filter((_, idx) => idx !== i) }));
-  const addVar = () =>
-    setForm((f) => ({ ...f, variables: [...f.variables, { key: '', value: '' }] }));
+  const addVar = (key = '') =>
+    setForm((f) => ({ ...f, variables: [...f.variables, { key, value: '' }] }));
+  const toggleMember = (uid: string) =>
+    setForm((f) => ({
+      ...f,
+      sharedWith: f.sharedWith.includes(uid) ? f.sharedWith.filter((x) => x !== uid) : [...f.sharedWith, uid],
+    }));
 
   async function save() {
     if (!wsId || !form.name.trim() || busy) return;
     setBusy(true);
     setError(null);
-    // Drop blank-key rows; trimmed keys.
     const variables = form.variables
       .map((v) => ({ key: v.key.trim(), value: v.value }))
       .filter((v) => v.key);
-    // `shared` is intentionally omitted — the member picker is deferred, so a
-    // published project is visible to everyone (backend defaults `shared: all`).
     const payload = {
       name: form.name.trim(),
       description: form.description,
       variables,
       status: form.status,
+      // Visibility only matters for a public project; a draft is creator-only.
+      ...(isPublic
+        ? {
+            shared: form.shared,
+            sharedWith: form.shared === ProjectShare.People ? form.sharedWith : [],
+          }
+        : {}),
     };
     try {
       if (isEdit) {
@@ -129,9 +144,7 @@ export function ProjectEditor() {
   }
 
   if (loading) return <p className="empty">{t('common.loading')}</p>;
-  if (denied) {
-    return <p className="empty">{t('projects.editDenied')}</p>;
-  }
+  if (denied) return <p className="empty">{t('projects.editDenied')}</p>;
 
   return (
     <EditorShell
@@ -148,98 +161,163 @@ export function ProjectEditor() {
       }
       actions={
         <>
-          <button type="button" className="icon-btn-danger" title={t('common.cancel')} aria-label={t('common.cancel')} onClick={() => navigate(cancelTo)}>
-            <XIcon />
+          <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => navigate(cancelTo)}>
+            {t('common.cancel')}
           </button>
           <button
             type="button"
-            className="icon-btn-success"
-            title={isEdit ? t('projects.saveChanges') : t('projects.createProject')}
-            aria-label={isEdit ? t('projects.saveChanges') : t('projects.createProject')}
+            className="btn-primary btn-inline btn-sm"
             disabled={busy || !form.name.trim()}
             onClick={() => void save()}
           >
-            <CheckIcon width={16} height={16} />
+            <CheckIcon width={14} height={14} />
+            {isEdit ? t('projects.saveChanges') : t('projects.saveProject')}
           </button>
         </>
       }
     >
-      {error && <p className="error">{error}</p>}
-      <div className="project-edit">
-        <section className="project-edit-section">
-          <div className="project-edit-section-head">
-            <span className="pf-label">{t('projects.descriptionLabel')}</span>
-            <p>{t('projects.descriptionHelp')}</p>
-          </div>
-          <div className="project-field project-field-stack">
-            <textarea
-              className="project-input project-textarea"
-              placeholder={t('projects.descriptionPlaceholder')}
-              rows={3}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-          </div>
+      <div className="pe-edit">
+        {error && <p className="error">{error}</p>}
+
+        <p className="pe-help">
+          {t('projects.titleHelpPre')}<code>{'{key}'}</code>{t('projects.titleHelpPost')}
+        </p>
+
+        {/* Description */}
+        <section className="pe-section">
+          <div className="pe-label">{t('projects.descriptionLabel')}</div>
+          <div className="pe-sub">{t('projects.descriptionHelp')}</div>
+          <textarea
+            className="pe-textarea"
+            placeholder={t('projects.descriptionPlaceholder')}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
         </section>
 
-        <section className="project-edit-section">
-          <div className="project-edit-section-head">
-            <span className="pf-label">{t('projects.variablesLabel')}</span>
-            <p>{t('projects.variablesHelpPre')} <code>{'{key}'}</code> {t('projects.variablesHelpPost')}</p>
+        {/* Variables */}
+        <section className="pe-section">
+          <div className="pe-label">{t('projects.variablesLabel')}</div>
+          <div className="pe-sub">
+            {t('projects.variablesHelpPre')} <code>{'{key}'}</code> {t('projects.variablesHelpPost')}
           </div>
-          <div className="project-vars">
-            {form.variables.length === 0 ? (
-              <p className="project-vars-empty">{t('projects.variablesEmptyPre')} <code>product</code>, <code>niche</code>, {t('projects.variablesEmptyOr')} <code>homepage</code>.</p>
-            ) : (
-              form.variables.map((v, i) => (
-                <div key={i} className="project-vars-row">
+
+          {form.variables.length > 0 ? (
+            <div className="pe-vars">
+              {form.variables.map((v, i) => (
+                <div key={i} className="pe-var-row">
+                  <span className="pe-key-wrap">
+                    <span className="pe-brace l">{'{'}</span>
+                    <input
+                      className="pe-var-key"
+                      placeholder={t('projects.varKeyPlaceholder')}
+                      value={v.key}
+                      onChange={(e) => setVar(i, { key: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
+                    />
+                    <span className="pe-brace r">{'}'}</span>
+                  </span>
+                  <span className="pe-eq">=</span>
                   <input
-                    className="text-input"
-                    placeholder={t('projects.varKeyPlaceholder')}
-                    value={v.key}
-                    onChange={(e) => setVar(i, { key: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
-                  />
-                  <input
-                    className="text-input"
+                    className="pe-var-val"
                     placeholder={t('projects.varValuePlaceholder')}
                     value={v.value}
                     onChange={(e) => setVar(i, { value: e.target.value })}
                   />
-                  <button className="icon-mini danger" title={t('projects.removeVariable')} onClick={() => removeVar(i)}>
-                    ×
+                  <button type="button" className="pe-var-del" title={t('projects.removeVariable')} aria-label={t('projects.removeVariable')} onClick={() => removeVar(i)}>
+                    <XIcon width={14} height={14} />
                   </button>
                 </div>
-              ))
-            )}
-            <button className="btn-ghost pvars-add btn-inline" onClick={addVar}>
-              {t('projects.addVariable')}
+              ))}
+            </div>
+          ) : (
+            <div className="pe-quick">
+              {t('projects.quickAddLabel')}{' '}
+              {QUICK_KEYS.map((k) => (
+                <button key={k} type="button" className="pe-quick-chip" onClick={() => addVar(k)}>{k}</button>
+              ))}
+            </div>
+          )}
+
+          <button type="button" className="pe-add" onClick={() => addVar()}>
+            <PlusIcon width={14} height={14} />
+            {t('projects.addVariable').replace('+ ', '')}
+          </button>
+        </section>
+
+        {/* Status toggle */}
+        <section className="pe-section">
+          <div className="pe-status-row">
+            <div>
+              <div className="pe-label">{t('projects.status')}</div>
+              <div className="pe-sub" style={{ marginBottom: 0 }}>
+                {isPublic ? t('projects.statusHelpPublic') : t('projects.statusHelpDraft')}
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPublic}
+              className={`pe-toggle${isPublic ? ' on' : ''}`}
+              onClick={() => setForm({ ...form, status: isPublic ? ProjectStatus.Draft : ProjectStatus.Public })}
+            >
+              <span className="pe-toggle-label">{isPublic ? t('projects.statusPublic') : t('projects.statusDraft')}</span>
+              <span className="pe-toggle-track"><span className="pe-toggle-knob" /></span>
             </button>
           </div>
         </section>
 
-        <section className="project-edit-section">
-          <div className="project-status-row">
-            <div className="project-status-text">
-              <span className="pf-label">{t('projects.status')}</span>
-              <p>{t(STATUS_HELP_KEY[form.status])}</p>
+        {/* Visibility — public only */}
+        {isPublic && (
+          <section className="pe-vis">
+            <div className="pe-label">{t('projects.visibilityLabel')}</div>
+            <div className="pe-sub">{t('projects.visibilityHelp')}</div>
+            <div className="pe-vis-cards">
+              <button
+                type="button"
+                className={`pe-vis-card${form.shared === ProjectShare.All ? ' active' : ''}`}
+                onClick={() => setForm({ ...form, shared: ProjectShare.All })}
+              >
+                <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="8" cy="8" r="5.4" /><path d="M2.6 8h10.8M8 2.6c1.5 1.6 1.5 9.2 0 10.8M8 2.6C6.5 4.2 6.5 11.8 8 13.4" /></svg>
+                <span>{t('projects.reachAll')}</span>
+              </button>
+              <button
+                type="button"
+                className={`pe-vis-card${form.shared === ProjectShare.People ? ' active' : ''}`}
+                onClick={() => setForm({ ...form, shared: ProjectShare.People })}
+              >
+                <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="8" cy="5.4" r="2.4" /><path d="M3.4 12.6a4.6 4.6 0 0 1 9.2 0" /></svg>
+                <span>{t('projects.reachPeople')}</span>
+              </button>
             </div>
-            <div className="seg" role="radiogroup" aria-label={t('projects.statusAria')}>
-              {Object.values(ProjectStatus).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  role="radio"
-                  aria-checked={form.status === s}
-                  className={`seg-btn ${form.status === s ? 'active' : ''}`}
-                  onClick={() => setForm({ ...form, status: s })}
-                >
-                  <span className="sdot" style={{ background: STATUS_COLOR[s] }} />
-                  {t(STATUS_KEY[s])}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
+            {form.shared === ProjectShare.People && (
+              <div className="pe-members">
+                <div className="pe-members-help">{t('projects.peopleHelp', { count: form.sharedWith.length })}</div>
+                <div className="pe-members-list">
+                  {members
+                    .filter((m) => m.userId !== user?.id)
+                    .map((m) => {
+                      const selected = form.sharedWith.includes(m.userId);
+                      return (
+                        <button
+                          key={m.membershipId}
+                          type="button"
+                          className={`pe-member${selected ? ' selected' : ''}`}
+                          onClick={() => toggleMember(m.userId)}
+                        >
+                          <span className="pe-member-av" style={{ background: labelColor(m.name, []) }}>{initials(m.name)}</span>
+                          <span className="pe-member-id">
+                            <span className="pe-member-name">{m.name}</span>
+                            <span className="pe-member-role">{m.role}</span>
+                          </span>
+                          <span className="pe-member-check">{selected && <CheckIcon width={12} height={12} />}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </EditorShell>
   );

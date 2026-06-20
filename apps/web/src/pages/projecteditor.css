@@ -1,0 +1,327 @@
+/* ===== Project editor (design: title + helper · Description · Variables ·
+   Status toggle · Visibility + member picker). Token-only. Scoped to .pe-edit. */
+
+.pe-edit {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+.pe-help {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 2px 0 24px;
+}
+.pe-help code,
+.pe-sub code {
+  font-family: var(--font-mono);
+  color: var(--primary);
+  font-size: 0.92em;
+}
+
+.pe-section {
+  margin-bottom: 26px;
+}
+.pe-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pe-sub {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  margin: 3px 0 12px;
+  line-height: 1.45;
+}
+.pe-textarea {
+  width: 100%;
+  min-height: 78px;
+  resize: vertical;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 9px;
+  background: var(--field);
+  outline: none;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  padding: 11px 12px;
+}
+.pe-textarea:focus {
+  border-color: var(--primary);
+}
+
+/* Variables — {key} = value rows */
+.pe-vars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pe-var-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pe-key-wrap {
+  position: relative;
+  flex: 0 0 220px;
+  display: flex;
+  align-items: center;
+}
+.pe-key-wrap .pe-brace {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-tertiary);
+  pointer-events: none;
+}
+.pe-key-wrap .pe-brace.l { left: 10px; }
+.pe-key-wrap .pe-brace.r { right: 10px; }
+.pe-var-key {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  background: var(--field);
+  outline: none;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  padding: 0 16px 0 18px;
+}
+.pe-eq {
+  color: var(--ink-tertiary);
+  font-size: 13px;
+}
+.pe-var-val {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  background: var(--field);
+  outline: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  padding: 0 12px;
+}
+.pe-var-key:focus,
+.pe-var-val:focus { border-color: var(--primary); }
+.pe-var-del {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-tertiary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.pe-var-del:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Quick-add (empty state) */
+.pe-quick {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-bottom: 12px;
+}
+.pe-quick-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--primary);
+  background: var(--primary-tint);
+  border: 0;
+  border-radius: 6px;
+  padding: 2px 7px;
+  cursor: pointer;
+  margin: 0 1px;
+}
+
+.pe-add {
+  width: 100%;
+  height: 38px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.pe-add:hover {
+  background: var(--surface-1);
+  color: var(--ink);
+}
+
+/* Status toggle switch */
+.pe-status-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.pe-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+}
+.pe-toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+.pe-toggle.on .pe-toggle-label {
+  color: var(--success);
+}
+.pe-toggle-track {
+  position: relative;
+  width: 40px;
+  height: 23px;
+  border-radius: 980px;
+  background: var(--surface-3);
+  transition: background 0.16s ease;
+  flex: none;
+}
+.pe-toggle.on .pe-toggle-track {
+  background: var(--primary);
+}
+.pe-toggle-knob {
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px #0000003d;
+  transition: transform 0.16s ease;
+}
+.pe-toggle.on .pe-toggle-knob {
+  transform: translateX(17px);
+}
+
+/* Visibility */
+.pe-vis {
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
+}
+.pe-vis-cards {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.pe-vis-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1.5px solid var(--hairline-strong);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.pe-vis-card.active {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+.pe-vis-card span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pe-members {
+  border-top: 1px solid var(--hairline);
+  padding-top: 13px;
+}
+.pe-members-help {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-bottom: 9px;
+}
+.pe-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pe-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.pe-member.selected {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+}
+.pe-member-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex: none;
+}
+.pe-member-id {
+  flex: 1;
+  min-width: 0;
+}
+.pe-member-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pe-member-role {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+}
+.pe-member-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--hairline-strong);
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--on-accent);
+}
+.pe-member.selected .pe-member-check {
+  border-color: var(--primary);
+  background: var(--primary);
+}
