@@ -20,4 +20,12 @@ export default {
     on_hold: 'On hold',
     complete: 'Complete',
   },
+  priorityLabel: 'Priority',
+  priority: {
+    none: 'No priority',
+    urgent: 'Urgent',
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
+  },
 } as const;

@@ -9,6 +9,7 @@ import {
   StepMode,
   StepStatus,
   TaskStatus,
+  TaskPriority,
   WorkspaceType,
   type ApiKeyInfo,
   type Asset,
@@ -34,6 +35,7 @@ import { RunVariablesModal } from '../components/RunVariablesModal';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { PencilIcon } from '../layout/icons';
 import { TaskStatusPicker } from '../components/TaskStatusPicker';
+import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 // Suppress unused import warning — fmtDate used in future task timeline
@@ -192,6 +194,7 @@ export function TaskDetail() {
     name?: string;
     description?: string;
     status?: TaskStatus;
+    priority?: TaskPriority;
     assigneeId?: string | null;
     pipelines?: string[];
   }) {
@@ -449,6 +452,11 @@ export function TaskDetail() {
                 status={task.status}
                 disabled={!canEdit || savingTask}
                 onChange={(s) => void patchTask({ status: s })}
+              />
+              <TaskPriorityPicker
+                priority={task.priority}
+                disabled={!canEdit || savingTask}
+                onChange={(p) => void patchTask({ priority: p })}
               />
               {/* Assignee picker — hidden for personal workspaces */}
               {!isPersonal && (

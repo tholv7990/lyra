@@ -1,4 +1,4 @@
-import type { Task as TaskView, UserRef } from '@lyra/shared';
+import { TaskPriority, type Task as TaskView, type UserRef } from '@lyra/shared';
 import type { TaskDocument } from './task.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';
@@ -13,6 +13,7 @@ export function toTaskView(d: TaskDocument, refs: Map<string, UserRef>): TaskVie
     name: d.name,
     description: d.description ?? '',
     status: d.status,
+    priority: d.priority ?? TaskPriority.None,
     assignee: d.assigneeId ? userRef(d.assigneeId, refs) : undefined,
     pipelines: d.pipelines ?? [],
     active: d.active ?? true,

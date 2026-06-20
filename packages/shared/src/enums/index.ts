@@ -113,3 +113,12 @@ export enum TaskStatus {
   OnHold = 'on_hold',
   Complete = 'complete',
 }
+
+// Manual priority of a Task (Linear-style). 'none' is the default (no priority).
+export enum TaskPriority {
+  None = 'none',
+  Urgent = 'urgent',
+  High = 'high',
+  Medium = 'medium',
+  Low = 'low',
+}

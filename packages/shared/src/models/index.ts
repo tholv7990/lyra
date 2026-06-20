@@ -14,6 +14,7 @@ import {
   RequestStatus,
   WorkspaceType,
   TaskStatus,
+  TaskPriority,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -139,6 +140,7 @@ export interface Task extends Audited {
   name: string;
   description: string;
   status: TaskStatus;
+  priority: TaskPriority;
   assignee?: UserRef; // expanded; assigneeId carried in the DTO (unused in personal workspaces)
   pipelines: string[]; // workspace-library pipeline ids
 }

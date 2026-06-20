@@ -71,6 +71,7 @@ export class TasksService {
     if (dto.name !== undefined) set.name = dto.name.trim().slice(0, MAX_NAME);
     if (dto.description !== undefined) set.description = dto.description.trim().slice(0, MAX_DESC);
     if (dto.status !== undefined) set.status = dto.status;
+    if (dto.priority !== undefined) set.priority = dto.priority;
     if (dto.pipelines !== undefined) set.pipelines = dto.pipelines;
 
     if (dto.assigneeId !== undefined) {

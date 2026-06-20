@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { type Task } from '@lyra/shared';
+import { TaskPriority, type Task } from '@lyra/shared';
 import { api } from '../lib/api';
 import { initial, avatarStyle } from '../lib/format';
 import { TASK_STATUS_ORDER, groupTasksByStatus } from '../lib/taskStatus';
 import { TaskStatusIcon } from './TaskStatusIcon';
+import { TaskPriorityIcon } from './TaskPriorityIcon';
 import { PlusIcon } from '../layout/icons';
 
 // The project's tasks, grouped under status section headers (Linear-style list).
@@ -147,6 +148,9 @@ export function TaskList({ projectId, canEdit }: { projectId: string; canEdit: b
                       <TaskStatusIcon status={s} size={16} />
                       <span className="trow-name">{task.name}</span>
                       <span className="trow-meta">
+                        {task.priority !== TaskPriority.None && (
+                          <TaskPriorityIcon priority={task.priority} size={15} />
+                        )}
                         {task.assignee && (
                           <span className="trow-avatar" style={avatarStyle(task.assignee.name)} title={task.assignee.name}>
                             {initial(task.assignee.name)}

@@ -20,4 +20,12 @@ export default {
     on_hold: 'Tạm dừng',
     complete: 'Hoàn thành',
   },
+  priorityLabel: 'Mức ưu tiên',
+  priority: {
+    none: 'Không ưu tiên',
+    urgent: 'Khẩn cấp',
+    high: 'Cao',
+    medium: 'Trung bình',
+    low: 'Thấp',
+  },
 } as const;

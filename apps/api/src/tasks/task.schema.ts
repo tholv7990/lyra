@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { TaskStatus } from '@lyra/shared';
+import { TaskStatus, TaskPriority } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
 
 export type TaskDocument = HydratedDocument<Task>;
@@ -28,6 +28,13 @@ export class Task extends AuditedEntity {
     index: true,
   })
   status!: TaskStatus;
+
+  @Prop({
+    required: true,
+    enum: Object.values(TaskPriority),
+    default: TaskPriority.None,
+  })
+  priority!: TaskPriority;
 
   @Prop()
   assigneeId?: string;

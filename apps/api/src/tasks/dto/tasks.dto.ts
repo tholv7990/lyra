@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { TaskStatus } from '@lyra/shared';
+import { TaskStatus, TaskPriority } from '@lyra/shared';
 import type { CreateTaskDto, UpdateTaskDto } from '@lyra/shared';
 
 export class CreateTaskBody implements CreateTaskDto {
@@ -34,6 +34,10 @@ export class UpdateTaskBody implements UpdateTaskDto {
   @IsOptional()
   @IsEnum(TaskStatus)
   status?: TaskStatus;
+
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
 
   // `null` clears the assignee — @IsOptional() skips validation for null/undefined,
   // so a string is validated and null passes through to mean "clear".
