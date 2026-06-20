@@ -25,7 +25,6 @@ import { api } from '../lib/api';
 import { fmtDate, initial, avatarStyle } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
-import { useModels } from '../lib/useModels';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
 import { RunFlow } from '../components/RunFlow';
@@ -33,8 +32,7 @@ import { RunRating } from '../components/RunRating';
 import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
-import { ProviderIcon } from '../components/ProviderIcon';
-import { PencilIcon } from '../layout/icons';
+import { PencilIcon, PipelinesIcon, PlayIcon, PlusIcon, XIcon } from '../layout/icons';
 import { TaskStatusPicker } from '../components/TaskStatusPicker';
 import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
 import { LabelPicker } from '../components/LabelPicker';
@@ -70,21 +68,11 @@ export function TaskDetail() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const wsId = current?.id;
-  const { catalog } = useModels(wsId);
   const { labels, createLabel } = useLabels(wsId);
-  const modelLabel = (p: Provider, m: string) => catalog[p]?.find((o) => o.id === m)?.label ?? m;
 
   const [project, setProject] = useState<Project | null>(null);
   const [task, setTask] = useState<Task | null>(null);
   const [savingTask, setSavingTask] = useState(false);
-  const [closedPipes, setClosedPipes] = useState<Set<string>>(new Set());
-  const togglePipe = (pid: string) =>
-    setClosedPipes((s) => {
-      const n = new Set(s);
-      if (n.has(pid)) n.delete(pid);
-      else n.add(pid);
-      return n;
-    });
   const [library, setLibrary] = useState<Pipeline[]>([]);
   const [members, setMembers] = useState<MemberView[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -440,50 +428,7 @@ export function TaskDetail() {
 
             {error && <p className="error">{error}</p>}
 
-            {/* Pipelines section */}
-            <div className="section-head proj-sec">
-              <h2>{t('projects.pipelines')}</h2>
-              <div className="proj-sec-actions">
-                {assigned.length > 0 && (
-                  <button
-                    className="btn-ghost btn-inline"
-                    disabled={busy}
-                    onClick={runAllPipelines}
-                    title={t('projects.runAllTitle')}
-                  >
-                    {t('projects.runAllPipelines')}
-                  </button>
-                )}
-                {canEdit && unassigned.length > 0 && (
-                  <div className="proj-add-pipe">
-                    <button
-                      className="btn-ghost btn-inline"
-                      disabled={busy}
-                      onClick={() => setAdding((s) => !s)}
-                    >
-                      {t('projects.addPipeline')}
-                    </button>
-                    {adding && (
-                      <div className="lin-menu proj-add-menu">
-                        {unassigned.map((p) => (
-                          <button
-                            key={p.id}
-                            className="lin-menu-item"
-                            disabled={busy}
-                            onClick={() => void attachPipeline(p.id)}
-                          >
-                            {p.name}
-                            <span className="lin-menu-count">{t('projects.stepCount', { count: p.steps.length })}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {assigned.length === 0 ? (
+            {assigned.length === 0 && (
               <div className="prompt-empty">
                 <h3>{t('projects.noPipelinesTitle')}</h3>
                 <p>
@@ -499,73 +444,6 @@ export function TaskDetail() {
                     <>{t('projects.noPipelinesViewer')}</>
                   )}
                 </p>
-              </div>
-            ) : (
-              <div className="list">
-                {assigned.map((p) => {
-                  const open = !closedPipes.has(p.id);
-                  return (
-                    <div className={`pipe-card${open ? ' open' : ''}`} key={p.id}>
-                      <div
-                        className="pipe-head"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => togglePipe(p.id)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePipe(p.id); } }}
-                      >
-                        <span className="pipe-chev" aria-hidden>{open ? '▾' : '▸'}</span>
-                        <div className="grow">
-                          <div className="title">{p.name}</div>
-                          <div className="sub">
-                            {t('projects.stepCount', { count: p.steps.length })}
-                            {p.description ? ` · ${p.description}` : ''}
-                          </div>
-                        </div>
-                        <span className="row-actions" onClick={(e) => e.stopPropagation()}>
-                          {canEdit && (
-                            <button
-                              className="txt-btn danger"
-                              disabled={busy}
-                              title={t('projects.removeFromProject', { name: p.name })}
-                              onClick={() => void detachPipeline(p.id)}
-                            >
-                              {t('projects.remove')}
-                            </button>
-                          )}
-                          <button
-                            className="btn-primary btn-inline"
-                            disabled={busy || p.steps.length === 0}
-                            title={p.steps.length === 0 ? t('projects.addStepsFirst') : t('projects.runNamedTitle', { name: p.name })}
-                            onClick={() => runPipeline(p)}
-                          >
-                            {t('projects.runPipeline')}
-                          </button>
-                        </span>
-                      </div>
-                      {open && (
-                        <div className="pipe-steps">
-                          {p.steps.length === 0 ? (
-                            <p className="muted pipe-empty">{t('projects.noStepsShort')}</p>
-                          ) : (
-                            p.steps.map((s, i) => (
-                              <div className="pipe-step" key={s.id}>
-                                <span className="pipe-step-n">{i + 1}</span>
-                                <span className="pipe-step-name">{s.name}</span>
-                                <span className="pipe-step-model">
-                                  <ProviderIcon provider={s.provider} size={14} />
-                                  {modelLabel(s.provider, s.model)}
-                                </span>
-                                <span className={`mode-tag ${s.mode === StepMode.Gate ? 'gate' : 'auto'}`}>
-                                  {s.mode === StepMode.Gate ? t('run.gate') : t('run.auto')}
-                                </span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
             )}
 
@@ -695,6 +573,74 @@ export function TaskDetail() {
                   )}
                 </span>
               </div>
+
+              <div className="td-side-sep" />
+              <div className="td-pipes-h">
+                <span>{t('projects.pipelines')}</span>
+                {assigned.length > 1 && (
+                  <button type="button" className="td-pipes-runall" disabled={busy} onClick={runAllPipelines} title={t('projects.runAllTitle')}>
+                    {t('projects.runAllPipelines')}
+                  </button>
+                )}
+              </div>
+              {assigned.length > 0 && (
+                <div className="td-pipes-list">
+                  {assigned.map((p) => {
+                    const gates = p.steps.filter((s) => s.mode === StepMode.Gate).length;
+                    return (
+                      <div className="td-pipe" key={p.id}>
+                        <span className="td-pipe-ico"><PipelinesIcon width={14} height={14} /></span>
+                        <div className="td-pipe-id">
+                          <div className="td-pipe-name">{p.name}</div>
+                          <div className="td-pipe-meta">
+                            {t('projects.stepCount', { count: p.steps.length })}
+                            {gates > 0 ? ` · ${t('tasks.gateCount', { count: gates })}` : ''}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="td-pipe-run"
+                          disabled={busy || p.steps.length === 0}
+                          title={p.steps.length === 0 ? t('projects.addStepsFirst') : t('projects.runNamedTitle', { name: p.name })}
+                          aria-label={t('projects.runNamed', { name: p.name })}
+                          onClick={() => runPipeline(p)}
+                        >
+                          <PlayIcon width={11} height={11} />
+                        </button>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            className="td-pipe-del"
+                            disabled={busy}
+                            title={t('projects.removeFromProject', { name: p.name })}
+                            aria-label={t('projects.remove')}
+                            onClick={() => void detachPipeline(p.id)}
+                          >
+                            <XIcon width={11} height={11} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {canEdit && unassigned.length > 0 && (
+                <div className="td-assign-wrap">
+                  <button type="button" className="td-assign" disabled={busy} onClick={() => setAdding((s) => !s)}>
+                    <PlusIcon width={13} height={13} /> {t('projects.addPipeline')}
+                  </button>
+                  {adding && (
+                    <div className="lin-menu td-assign-menu">
+                      {unassigned.map((p) => (
+                        <button key={p.id} className="lin-menu-item" disabled={busy} onClick={() => void attachPipeline(p.id)}>
+                          {p.name}
+                          <span className="lin-menu-count">{t('projects.stepCount', { count: p.steps.length })}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {canEdit && (
                 <>

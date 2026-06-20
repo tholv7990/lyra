@@ -16,6 +16,8 @@ export default {
   inheritsVariables: 'Kế thừa biến của dự án khi chạy.',
   pipelineCount: '{{count}} pipeline',
   pipelineCount_other: '{{count}} pipeline',
+  gateCount_one: '{{count}} cổng',
+  gateCount_other: '{{count}} cổng',
   runNone: 'Chưa chạy',
   runRunning: 'Đang chạy',
   runGate: 'Chờ duyệt',

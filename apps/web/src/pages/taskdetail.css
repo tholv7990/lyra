@@ -61,6 +61,135 @@
   background: var(--hairline);
   margin: 13px 0;
 }
+
+/* Sidebar Pipelines — compact cards (design) */
+.td-pipes-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 10px;
+}
+.td-pipes-runall {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+  padding: 0;
+}
+.td-pipes-runall:disabled {
+  color: var(--ink-tertiary);
+  cursor: default;
+}
+.td-pipes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.td-pipe {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: var(--card);
+}
+.td-pipe-ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent-pipelines) 14%, transparent);
+  color: var(--accent-pipelines);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.td-pipe-id {
+  flex: 1;
+  min-width: 0;
+}
+.td-pipe-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.td-pipe-meta {
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+}
+.td-pipe-run,
+.td-pipe-del {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+.td-pipe-run {
+  border: 0;
+  background: var(--primary);
+  color: var(--on-accent);
+}
+.td-pipe-run:hover {
+  background: var(--primary-hover);
+}
+.td-pipe-run:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.td-pipe-del {
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--ink-tertiary);
+}
+.td-pipe-del:hover {
+  color: var(--danger);
+  border-color: var(--danger-tint);
+}
+.td-assign-wrap {
+  position: relative;
+  margin-top: 7px;
+}
+.td-assign {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-tertiary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.td-assign:hover {
+  color: var(--ink);
+}
+.td-assign-menu {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  z-index: 20;
+  min-width: 240px;
+}
 .td-meta {
   font-size: 12px;
   color: var(--ink-tertiary);

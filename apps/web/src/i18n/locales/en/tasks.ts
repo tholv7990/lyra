@@ -16,6 +16,8 @@ export default {
   inheritsVariables: 'Inherits the project variables at run time.',
   pipelineCount: '{{count}} pipeline',
   pipelineCount_other: '{{count}} pipelines',
+  gateCount_one: '{{count}} gate',
+  gateCount_other: '{{count}} gates',
   runNone: 'No runs',
   runRunning: 'Running',
   runGate: 'Awaiting gate',
