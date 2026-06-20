@@ -40,9 +40,8 @@ export function WorkspaceMenu() {
 
   return (
     <div className="ws" ref={ref}>
-      <button className="ws-trigger" onClick={() => setOpen((o) => !o)}>
+      <button className="ws-trigger" onClick={() => setOpen((o) => !o)} title={current?.name ?? t('common.workspace')}>
         <span className="ws-avatar">{initial(current?.name ?? 'W', 'W')}</span>
-        <span className="ws-name">{current?.name ?? t('common.workspace')}</span>
         {current && <WsType type={current.type} />}
         <ChevronIcon />
       </button>
