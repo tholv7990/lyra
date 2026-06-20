@@ -8511,6 +8511,52 @@
 .cg-swatch > span { display: block; height: 38px; border-radius: 8px; border: 1px solid var(--hairline); }
 .cg-swatch > small { display: block; font-size: 10px; color: var(--ink-tertiary); margin-top: 4px; }
 .cg-card-sample { width: 260px; }
+
+/* ===== Command Bar (⌘K palette) — Linear-style ===== */
+.cmdbar-scrim {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 14vh 16px 16px;
+}
+.cmdbar {
+  width: 100%; max-width: 560px;
+  display: flex; flex-direction: column;
+  max-height: min(60vh, 480px);
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-popover);
+  overflow: hidden;
+}
+.cmdbar-input {
+  border: none; outline: none; background: transparent;
+  padding: 15px 16px; font-size: 15px; color: var(--ink);
+  border-bottom: 1px solid var(--hairline);
+}
+.cmdbar-input::placeholder { color: var(--placeholder); }
+.cmdbar-list { overflow-y: auto; padding: 6px; }
+.cmdbar-group + .cmdbar-group { margin-top: 2px; }
+.cmdbar-grouplabel {
+  padding: 8px 10px 4px;
+  font-size: 11px; font-weight: 600; color: var(--ink-tertiary);
+}
+.cmdbar-row {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border: none; background: transparent; cursor: pointer;
+  border-radius: 8px; text-align: left; color: var(--ink); font-size: 13px;
+}
+.cmdbar-row.active { background: var(--surface-2); }
+.cmdbar-ic { display: inline-flex; flex-shrink: 0; color: var(--ink-muted); }
+.cmdbar-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmdbar-kbd {
+  flex-shrink: 0; font-family: inherit; font-size: 11px;
+  background: var(--surface-3); color: var(--ink-muted);
+  border-radius: 4px; padding: 2px 6px; min-width: 18px; text-align: center;
+}
+.cmdbar-empty { padding: 24px; text-align: center; color: var(--ink-muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .cmdbar-scrim { backdrop-filter: none; } }
 .trow-chev {
   color: var(--ink-tertiary);
   font-size: 16px;

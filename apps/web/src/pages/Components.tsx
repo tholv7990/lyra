@@ -185,6 +185,7 @@ export function Components() {
           <button className="btn-ghost btn-inline" onClick={showToast}>Show toast</button>
         </Cell>
         <Cell cap="Dialog"><button className="btn-danger btn-inline" onClick={() => setConfirm(true)}>Delete project…</button></Cell>
+        <Cell cap="Command bar (⌘K)"><button className="btn-ghost btn-inline" onClick={() => document.dispatchEvent(new CustomEvent('lyra:command-bar'))}>Open ⌘K</button></Cell>
       </Section>
 
       <Section title="Layout">

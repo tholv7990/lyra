@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { CommandBar } from '../components/CommandBar';
 import { useTranslation } from 'react-i18next';
 import { WorkspaceType } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
@@ -267,6 +268,8 @@ export function AppLayout() {
             <span className="ai-fab-txt">{t('nav.aiButton')}</span>
           </button>
         )}
+
+        <CommandBar />
       </div>
      </AppNavContext.Provider>
     </BreadcrumbContext.Provider>
