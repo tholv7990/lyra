@@ -9,47 +9,55 @@ const s = (props: SVGProps<SVGSVGElement>) => ({
   ...props,
 });
 
+// Section/nav icons — stroked outline to match the design system.
+const stroke = {
+  fill: 'none' as const,
+  stroke: 'currentColor',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+};
+
 export const HomeIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M8.66 1.78a1 1 0 0 0-1.32 0L1.84 6.6A1.5 1.5 0 0 0 1.33 7.73V13A1.5 1.5 0 0 0 2.83 14.5H5.5a.5.5 0 0 0 .5-.5v-3.1a2 2 0 0 1 4 0V14a.5.5 0 0 0 .5.5h2.67A1.5 1.5 0 0 0 14.67 13V7.73a1.5 1.5 0 0 0-.51-1.13L8.66 1.78Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M2.5 6.5 8 2.2l5.5 4.3v6.3a.7.7 0 0 1-.7.7H3.2a.7.7 0 0 1-.7-.7V6.5Z" />
+    <path d="M6.2 13.5V9h3.6v4.5" />
   </svg>
 );
 
 export const ProjectsIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M2 4.6A1.6 1.6 0 0 1 3.6 3h2.5a1.6 1.6 0 0 1 1.13.47L8 4.25h4.4A1.6 1.6 0 0 1 14 5.85v5.55A1.6 1.6 0 0 1 12.4 13H3.6A1.6 1.6 0 0 1 2 11.4V4.6Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M2.4 5.2V4a1 1 0 0 1 1-1h2.5l1.2 1.4h4.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3.4a1 1 0 0 1-1-1Z" />
   </svg>
 );
 
 export const ComponentsIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <rect x="2" y="2" width="5" height="5" rx="1.4" />
-    <rect x="9" y="2" width="5" height="5" rx="1.4" />
-    <rect x="2" y="9" width="5" height="5" rx="1.4" />
-    <rect x="9" y="9" width="5" height="5" rx="1.4" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <rect x="2.6" y="2.6" width="4.4" height="4.4" rx="1" />
+    <rect x="9" y="2.6" width="4.4" height="4.4" rx="1" />
+    <rect x="2.6" y="9" width="4.4" height="4.4" rx="1" />
+    <rect x="9" y="9" width="4.4" height="4.4" rx="1" />
   </svg>
 );
 
 export const MembersIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <circle cx="5.6" cy="5.5" r="2.4" />
-    <circle cx="11" cy="6.1" r="1.9" />
-    <path d="M1.3 12.7c0-2.27 1.93-3.7 4.3-3.7 1.3 0 2.45.43 3.2 1.18a.6.6 0 0 1 .03.83 4.7 4.7 0 0 0-.93 1.94.6.6 0 0 1-.58.45H1.9a.6.6 0 0 1-.6-.6v-.1Z" />
-    <path d="M11 9.3c2 0 3.5 1.28 3.5 3.13a.57.57 0 0 1-.57.57h-3.1a.5.5 0 0 1-.49-.42 5.6 5.6 0 0 0-.97-2.36.5.5 0 0 1 .2-.74A4 4 0 0 1 11 9.3Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <circle cx="6" cy="6" r="2.2" />
+    <path d="M2.6 12.4a3.4 3.4 0 0 1 6.8 0M10.4 4.2a2.2 2.2 0 0 1 0 3.6M11 12.4a3.4 3.4 0 0 0-1.6-2.9" />
   </svg>
 );
 
 // Single person — the "personal workspace" type marker (vs MembersIcon = team).
 export const PersonIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <circle cx="8" cy="5" r="2.7" />
-    <path d="M2.6 13a.6.6 0 0 1-.6-.62C2.1 9.9 4.6 8.4 8 8.4s5.9 1.5 6 3.98a.6.6 0 0 1-.6.62H2.6Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <circle cx="8" cy="5.4" r="2.6" />
+    <path d="M3 13.4a5 5 0 0 1 10 0" />
   </svg>
 );
 
 export const PromptsIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M4 2.6h8A2 2 0 0 1 14 4.6v4a2 2 0 0 1-2 2H7.1l-3 2.46A.6.6 0 0 1 3.1 12.6V10.5A2 2 0 0 1 2 8.6v-4A2 2 0 0 1 4 2.6Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M2.6 4.2a1.6 1.6 0 0 1 1.6-1.6h7.6a1.6 1.6 0 0 1 1.6 1.6v5a1.6 1.6 0 0 1-1.6 1.6H6.4l-3 2.4v-2.4H4.2A1.6 1.6 0 0 1 2.6 9.2Z" />
   </svg>
 );
 
@@ -62,56 +70,31 @@ export const PromptGlyphIcon = (p: SVGProps<SVGSVGElement>) => (
 
 // Storefront — awning over a shop front — the Prompt Marketplace section.
 export const MarketplaceIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M2.6 2.6h10.8a1 1 0 0 1 .95.68l.6 1.8a2 2 0 0 1-1.9 2.64 2 2 0 0 1-1.6-.8 2 2 0 0 1-3.2 0 2 2 0 0 1-3.2 0 2 2 0 0 1-1.6.8A2 2 0 0 1 1.55 5.08l.6-1.8a1 1 0 0 1 .95-.68Z" />
-    <path d="M3 8.4a3 3 0 0 0 2.4-.6 3 3 0 0 0 1.6.74V11h2V8.54a3 3 0 0 0 1.6-.74A3 3 0 0 0 13 8.4v4.1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.4Zm6 4.1v-1.6a1 1 0 0 0-1-1H8v2.6h1Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M2.6 6.3 3.4 3a.8.8 0 0 1 .78-.6h7.64a.8.8 0 0 1 .78.6l.8 3.3M2.6 6.3a1.7 1.7 0 0 0 3.13.9 1.7 1.7 0 0 0 2.94 0 1.7 1.7 0 0 0 2.94 0 1.7 1.7 0 0 0 3.13-.9M3.4 8.1v5a.7.7 0 0 0 .7.7h7.8a.7.7 0 0 0 .7-.7v-5" />
   </svg>
 );
 
-// Chat bubble with a reply tail + dots — the Chats (conversations) section.
+// Chat bubble — the Chats (conversations) launcher.
 export const ChatsIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M3 4.4h10A1.6 1.6 0 0 1 14.6 6v4A1.6 1.6 0 0 1 13 11.6H7.3l-2.9 2.3A.55.55 0 0 1 3.5 13.5V11.6A1.6 1.6 0 0 1 1.4 10V6A1.6 1.6 0 0 1 3 4.4Z" />
-    <circle cx="5.4" cy="8" r="0.95" fill="#fff" />
-    <circle cx="8" cy="8" r="0.95" fill="#fff" />
-    <circle cx="10.6" cy="8" r="0.95" fill="#fff" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M2.6 4a1.4 1.4 0 0 1 1.4-1.4h8a1.4 1.4 0 0 1 1.4 1.4v5a1.4 1.4 0 0 1-1.4 1.4H6.6l-2.8 2.2V10.4H4A1.4 1.4 0 0 1 2.6 9Z" />
   </svg>
 );
 
 export const PipelinesIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path
-      d="M5.6 4H9a1.5 1.5 0 0 1 1.5 1.5v1M5.6 12H9a1.5 1.5 0 0 0 1.5-1.5v-1"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-    <circle cx="4" cy="4" r="2.1" />
-    <circle cx="4" cy="12" r="2.1" />
-    <circle cx="12" cy="8" r="2.1" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <circle cx="4" cy="4" r="1.7" />
+    <circle cx="4" cy="12" r="1.7" />
+    <circle cx="12" cy="8" r="1.7" />
+    <path d="M5.7 4H8a2 2 0 0 1 2 2v.3M5.7 12H8a2 2 0 0 0 2-2v-.3" />
   </svg>
 );
 
 export const SettingsIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <g>
-      <rect x="7" y="0.7" width="2" height="3" rx="0.6" />
-      <rect x="7" y="12.3" width="2" height="3" rx="0.6" />
-      <rect x="0.7" y="7" width="3" height="2" rx="0.6" />
-      <rect x="12.3" y="7" width="3" height="2" rx="0.6" />
-    </g>
-    <g transform="rotate(45 8 8)">
-      <rect x="7" y="0.7" width="2" height="3" rx="0.6" />
-      <rect x="7" y="12.3" width="2" height="3" rx="0.6" />
-      <rect x="0.7" y="7" width="3" height="2" rx="0.6" />
-      <rect x="12.3" y="7" width="3" height="2" rx="0.6" />
-    </g>
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M8 2.1a5.9 5.9 0 1 0 0 11.8 5.9 5.9 0 0 0 0-11.8Zm0 3.6a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6Z"
-    />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <circle cx="8" cy="8" r="2.1" />
+    <path d="M8 1.8v1.8M8 12.4v1.8M14.2 8h-1.8M3.6 8H1.8M12.4 3.6l-1.3 1.3M4.9 11.1l-1.3 1.3M12.4 12.4l-1.3-1.3M4.9 4.9 3.6 3.6" />
   </svg>
 );
 
@@ -252,17 +235,17 @@ export const LoginIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Paper plane — Publish (post to channels).
 export const PublishIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M13.6 2.4 1.9 7.1a.6.6 0 0 0 .05 1.12l3.4 1.1 1.1 3.4a.6.6 0 0 0 1.12.05L13.6 2.4Zm-1.5 1.5L6.9 9.1l-.02.02-2.2-.7 7.42-3.0ZM7.5 10.1l-.7-2.2 5.2-5.2-4.5 7.4Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M13.6 2.4 7.2 8.8M13.6 2.4l-4 11.2-2.4-4.8-4.8-2.4Z" />
   </svg>
 );
 
-// Down-arrow into a tray — Import media (download in).
+// Down-arrow into a tray — Crawler / import media (download in).
 export const ImportIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M8 1.6a.8.8 0 0 1 .8.8v5.07l1.43-1.43a.8.8 0 1 1 1.13 1.13L8.57 10.1a.8.8 0 0 1-1.13 0L4.64 7.17a.8.8 0 0 1 1.13-1.13L7.2 7.47V2.4A.8.8 0 0 1 8 1.6Z" />
-    <path d="M2.6 9.6a.8.8 0 0 1 .8.8v1.6h9.2v-1.6a.8.8 0 0 1 1.6 0v2a1.2 1.2 0 0 1-1.2 1.2H3a1.2 1.2 0 0 1-1.2-1.2v-2a.8.8 0 0 1 .8-.8Z" />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M8 2.4v7M5 6.6 8 9.6l3-3M2.8 10.4v1.8a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-1.8" />
   </svg>
 );
 
@@ -327,13 +310,7 @@ export const BellIcon = (p: SVGProps<SVGSVGElement>) => (
 
 // Two interlocking links — Connections.
 export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path
-      d="M6.2 9.8 9.8 6.2M6.5 4.5l1-1a2.7 2.7 0 0 1 3.8 3.8l-1 1M9.5 11.5l-1 1a2.7 2.7 0 0 1-3.8-3.8l1-1"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M6.6 9.4 9.4 6.6M7 4.6l.9-.9a2.5 2.5 0 0 1 3.5 3.5l-.9.9M9 11.4l-.9.9a2.5 2.5 0 0 1-3.5-3.5l.9-.9" />
   </svg>
 );
