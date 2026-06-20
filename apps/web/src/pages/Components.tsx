@@ -14,7 +14,35 @@ import { TaskPriorityIcon } from '../components/TaskPriorityIcon';
 import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { LabelPicker } from '../components/LabelPicker';
+import { DataTable, type Column } from '../components/DataTable';
 import { CheckIcon, XIcon, PencilIcon, PlusIcon } from '../layout/icons';
+
+const STATUS_LABEL: Record<TaskStatus, string> = {
+  [TaskStatus.New]: 'New',
+  [TaskStatus.InProgress]: 'In progress',
+  [TaskStatus.OnHold]: 'On hold',
+  [TaskStatus.Complete]: 'Complete',
+};
+type SampleRow = { id: string; name: string; status: TaskStatus; priority: TaskPriority; updated: string };
+const SAMPLE_ROWS: SampleRow[] = [
+  { id: '1', name: 'Launch landing copy', status: TaskStatus.InProgress, priority: TaskPriority.High, updated: 'Jun 20' },
+  { id: '2', name: 'Hero images', status: TaskStatus.New, priority: TaskPriority.Medium, updated: 'Jun 19' },
+  { id: '3', name: 'Brand brief', status: TaskStatus.Complete, priority: TaskPriority.Low, updated: 'Jun 18' },
+];
+const TABLE_COLUMNS: Column<SampleRow>[] = [
+  { key: 'name', header: 'Task', sortable: true, sortValue: (r) => r.name, render: (r) => r.name },
+  {
+    key: 'status', header: 'Status',
+    render: (r) => (
+      <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+        <TaskStatusIcon status={r.status} size={14} />
+        {STATUS_LABEL[r.status]}
+      </span>
+    ),
+  },
+  { key: 'priority', header: 'Priority', render: (r) => <TaskPriorityIcon priority={r.priority} size={14} /> },
+  { key: 'updated', header: 'Updated', align: 'right', sortable: true, sortValue: (r) => r.updated, render: (r) => r.updated },
+];
 
 // Dev reference: every shared component at real tokens. ponytail: strings are
 // hardcoded English on purpose — this is internal tooling, not product copy.
@@ -230,6 +258,12 @@ export function Components() {
             />
           </div>
         </Cell>
+      </Section>
+
+      <Section title="Table">
+        <div style={{ width: '100%' }}>
+          <DataTable rows={SAMPLE_ROWS} columns={TABLE_COLUMNS} rowKey={(r) => r.id} onRowClick={() => {}} />
+        </div>
       </Section>
 
       {toast && (
