@@ -648,6 +648,11 @@ export function Chats() {
                   );
                 }
                 const done = !!m.content && !m.error && !(streaming && isLast);
+                // "Saved" reflects the prompt's PERSISTED results, not just the
+                // ephemeral per-session set — so a re-opened chat shows answers
+                // already in the library as saved (and won't dup them).
+                const answerSaved =
+                  savedMsgIds.has(m.id) || results.some((r) => r.output === m.content);
                 return (
                   <div key={m.id} className="cmsg">
                     <div className="cavatar"><ProviderIcon provider={m.provider} size={28} /></div>
@@ -666,10 +671,10 @@ export function Chats() {
                             <button
                               className="cmsg-save"
                               onClick={() => void saveAnswer(m)}
-                              disabled={savedMsgIds.has(m.id)}
+                              disabled={answerSaved}
                               title={t('prompts.saveAnswerHint')}
                             >
-                              <IconBookmark /> {savedMsgIds.has(m.id) ? t('prompts.answerSaved') : t('prompts.saveAnswer')}
+                              <IconBookmark /> {answerSaved ? t('prompts.answerSaved') : t('prompts.saveAnswer')}
                             </button>
                           )}
                         </div>
