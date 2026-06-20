@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  canEditProject,
-  ProjectStatus,
-  WorkspaceType,
-  type Project,
-} from '@lyra/shared';
+import { canEditProject, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { fmtDate, initial, avatarStyle } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
 import { TaskList } from '../components/TaskList';
-import { MoveToTeamModal } from '../components/MoveToTeamModal';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
@@ -26,7 +20,7 @@ export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { current, workspaces } = useWorkspace();
+  const { current } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [descriptionDraft, setDescriptionDraft] = useState('');
@@ -101,133 +95,91 @@ export function ProjectDetail() {
     if (descriptionDraft !== (project.description ?? '')) void saveProjectMeta({ description: descriptionDraft });
   };
 
-  const [showMoveModal, setShowMoveModal] = useState(false);
-
-  // Team workspaces the user belongs to — a move target only when current is Personal.
-  const teamWorkspaces = useMemo(
-    () => workspaces.filter((w) => w.type === WorkspaceType.Team),
-    [workspaces],
-  );
-
-  const canMoveToTeam =
-    !!user &&
-    !!current &&
-    current.type === WorkspaceType.Personal &&
-    teamWorkspaces.length > 0 &&
-    !!project &&
-    project.createdBy.id === user.id;
-
   if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (!project) return <p className="empty">{error ?? t('projects.notFound')}</p>;
 
+  // Project name lives in the nav header (consistent with the other detail/editor
+  // pages), inline-editable for editors.
+  const headerTitle = canEdit ? (
+    <input
+      className="eshell-name"
+      value={nameDraft}
+      disabled={savingMeta}
+      aria-label={t('projects.namePlaceholder')}
+      placeholder={t('projects.namePlaceholder')}
+      onChange={(e) => setNameDraft(e.target.value)}
+      onBlur={commitName}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+        if (e.key === 'Escape') { setNameDraft(project.name); e.currentTarget.blur(); }
+      }}
+    />
+  ) : (
+    <h2 className="eshell-name">{project.name}</h2>
+  );
+
   return (
-    <EditorShell wide onBack={() => navigate('/projects')} title={<span className="eshell-spacer" aria-hidden />}>
+    <EditorShell wide onBack={() => navigate('/projects')} title={headerTitle}>
       <div className="proj-page">
         {error && <p className="error">{error}</p>}
-        <div className="detail-layout">
-          <div className="detail-main">
-            <header className="proj-head">
-              <div className="proj-title-row">
-                {canEdit ? (
-                  <input
-                    className="proj-title-input"
-                    value={nameDraft}
-                    disabled={savingMeta}
-                    aria-label={t('projects.namePlaceholder')}
-                    onChange={(e) => setNameDraft(e.target.value)}
-                    onBlur={commitName}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-                      if (e.key === 'Escape') { setNameDraft(project.name); e.currentTarget.blur(); }
-                    }}
-                  />
-                ) : (
-                  <h1 className="proj-title-static">{project.name}</h1>
-                )}
-              </div>
-              <div className="proj-desc-row">
-                {canEdit ? (
-                  <textarea
-                    className="proj-desc-input"
-                    value={descriptionDraft}
-                    disabled={savingMeta}
-                    rows={2}
-                    placeholder={t('projects.descriptionPlaceholder')}
-                    aria-label={t('projects.descriptionLabel')}
-                    onChange={(e) => setDescriptionDraft(e.target.value)}
-                    onBlur={commitDescription}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') { setDescriptionDraft(project.description ?? ''); e.currentTarget.blur(); }
-                    }}
-                  />
-                ) : (
-                  <p className="proj-product">{project.description || t('projects.noDescription')}</p>
-                )}
-              </div>
-            </header>
 
-            <TaskList projectId={project.id} canEdit={canEdit} />
-          </div>
+        {/* Description */}
+        {canEdit ? (
+          <textarea
+            className="proj-desc-input"
+            value={descriptionDraft}
+            disabled={savingMeta}
+            rows={2}
+            placeholder={t('projects.descriptionPlaceholder')}
+            aria-label={t('projects.descriptionLabel')}
+            onChange={(e) => setDescriptionDraft(e.target.value)}
+            onBlur={commitDescription}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') { setDescriptionDraft(project.description ?? ''); e.currentTarget.blur(); }
+            }}
+          />
+        ) : (
+          <p className="proj-product">{project.description || t('projects.noDescription')}</p>
+        )}
 
-          <aside className="detail-rail">
-            <div className="prop">
-              <span className="prop-k">{t('projects.status')}</span>
-              <span className="prop-v">
-                <span className={`badge status-${project.status}`}>{t(PROJECT_STATUS_KEY[project.status])}</span>
-              </span>
-            </div>
-            <div className="prop">
-              <span className="prop-k">{t('projects.createdBy')}</span>
-              <span className="prop-v">
-                <span className="prow-updated-icon" style={avatarStyle(project.createdBy.name)} aria-hidden="true">
-                  {initial(project.createdBy.name)}
-                </span>
-                {project.createdBy.name}
-              </span>
-            </div>
-            <div className="prop">
-              <span className="prop-k">{t('projects.createdLabel')}</span>
-              <span className="prop-v">{fmtDate(project.createdAt)}</span>
-            </div>
-            <div className="prop prop-block">
-              <span className="prop-k">{t('projects.variablesLabel')}</span>
-              {project.variables.length > 0 ? (
-                <div className="proj-vars-view">
-                  {project.variables.map((v) => (
-                    <span className="proj-var-chip" key={v.key}>
-                      <code>{`{${v.key}}`}</code>
-                      <span className="proj-var-val">{v.value || '—'}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <span className="prop-empty">{t('projects.noVariables')}</span>
-              )}
-              {canEdit && (
-                <Link className="txt-btn" to={`/projects/${project.id}/edit`}>
-                  {t('projects.editVariables')}
-                </Link>
-              )}
-            </div>
-            {canMoveToTeam && (
-              <button
-                type="button"
-                className="btn-ghost btn-inline prop-action"
-                onClick={() => setShowMoveModal(true)}
-              >
-                {t('projects.moveToTeamAction')}
-              </button>
-            )}
-          </aside>
+        {/* Info — status · creator · date */}
+        <div className="proj-meta">
+          <span className={`badge status-${project.status}`}>{t(PROJECT_STATUS_KEY[project.status])}</span>
+          <span className="proj-summary-user" title={t('projects.createdByName', { name: project.createdBy.name })}>
+            <span className="prow-updated-icon" style={avatarStyle(project.createdBy.name)} aria-hidden="true">
+              {initial(project.createdBy.name)}
+            </span>
+            {project.createdBy.name}
+          </span>
+          <span className="dot">·</span>
+          <span>{fmtDate(project.createdAt)}</span>
         </div>
+
+        {/* Variables */}
+        <div className="proj-vars">
+          <span className="proj-vars-k">{t('projects.variablesLabel')}</span>
+          {project.variables.length > 0 ? (
+            <div className="proj-vars-view">
+              {project.variables.map((v) => (
+                <span className="proj-var-chip" key={v.key}>
+                  <code>{`{${v.key}}`}</code>
+                  <span className="proj-var-val">{v.value || '—'}</span>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="proj-vars-none">{t('projects.noVariables')}</span>
+          )}
+          {canEdit && (
+            <Link className="txt-btn" to={`/projects/${project.id}/edit`}>
+              {t('projects.editVariables')}
+            </Link>
+          )}
+        </div>
+
+        {/* Tasks */}
+        <TaskList projectId={project.id} canEdit={canEdit} />
       </div>
-      {showMoveModal && canMoveToTeam && (
-        <MoveToTeamModal
-          projectId={project.id}
-          teamWorkspaces={teamWorkspaces}
-          onClose={() => setShowMoveModal(false)}
-        />
-      )}
     </EditorShell>
   );
 }
