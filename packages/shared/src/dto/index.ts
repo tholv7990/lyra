@@ -366,3 +366,23 @@ export interface UpdateRequestStatusDto {
   status: RequestStatus;
   adminNote?: string;
 }
+
+// ===== Project transfer (move personal → team) =====
+export interface TransferProjectDto {
+  targetWorkspaceId: string;
+}
+
+export interface TransferConflict {
+  kind: 'pipeline' | 'prompt';
+  name: string;
+  reason: string;
+}
+
+export interface TransferPreview {
+  taskCount: number;
+  pipelines: { id: string; name: string }[];
+  prompts: { id: string; title: string }[];
+  providers: string[];          // distinct providers the bundle's pipeline steps use
+  conflicts: TransferConflict[];
+  targetHasKeys: string[];      // of providers, which the target team already has
+}
