@@ -33,6 +33,7 @@ import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { PencilIcon } from '../layout/icons';
+import { TaskStatusPicker } from '../components/TaskStatusPicker';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 // Suppress unused import warning — fmtDate used in future task timeline
@@ -325,7 +326,6 @@ export function TaskDetail() {
     });
 
   const isPersonal = current?.type === WorkspaceType.Personal;
-  const TASK_STATUS_VALUES = Object.values(TaskStatus);
 
   if (loading) return <p className="empty">{t('common.loading')}</p>;
   if (!task || !project) return <p className="empty">{error ?? t('tasks.loadFailed')}</p>;
@@ -445,17 +445,11 @@ export function TaskDetail() {
 
             {/* Info: status + assignee */}
             <div className="task-info">
-              <select
-                className="task-status-select"
-                value={task.status}
+              <TaskStatusPicker
+                status={task.status}
                 disabled={!canEdit || savingTask}
-                aria-label={t('tasks.statusLabel')}
-                onChange={(e) => void patchTask({ status: e.target.value as TaskStatus })}
-              >
-                {TASK_STATUS_VALUES.map((s) => (
-                  <option key={s} value={s}>{t(`tasks.status.${s}`)}</option>
-                ))}
-              </select>
+                onChange={(s) => void patchTask({ status: s })}
+              />
               {/* Assignee picker — hidden for personal workspaces */}
               {!isPersonal && (
                 <div className="task-assignee-wrap">

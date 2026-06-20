@@ -986,8 +986,14 @@
   margin-top: 12px;
 }
 
-/* Task status dropdown in the task header (keeps the native arrow). */
-.task-status-select {
+/* Linear-style status control: an icon + label trigger that opens a state menu. */
+.task-status-wrap {
+  position: relative;
+}
+.task-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--surface-1);
@@ -995,21 +1001,27 @@
   font: inherit;
   font-size: 13px;
   font-weight: 600;
-  padding: 5px 8px;
+  padding: 5px 10px;
   cursor: pointer;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
-.task-status-select:hover:not(:disabled) {
+.task-status-btn:hover:not(:disabled) {
   border-color: var(--hairline-strong);
 }
-.task-status-select:focus-visible {
+.task-status-btn:focus-visible {
   outline: none;
   border-color: var(--primary);
   box-shadow: var(--focus-ring);
 }
-.task-status-select:disabled {
+.task-status-btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+/* the shared .lin-menu is right-anchored; the status menu opens left-aligned. */
+.task-status-menu {
+  right: auto;
+  left: 0;
+  min-width: 180px;
 }
 .proj-head-top {
   display: flex;
@@ -8412,12 +8424,6 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-muted);
-}
-.tgroup-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  flex-shrink: 0;
 }
 .tgroup-count {
   color: var(--ink-tertiary);

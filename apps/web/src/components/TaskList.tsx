@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { type Task } from '@lyra/shared';
 import { api } from '../lib/api';
 import { initial, avatarStyle } from '../lib/format';
-import { TASK_STATUS_ORDER, TASK_STATUS_COLOR, groupTasksByStatus } from '../lib/taskStatus';
+import { TASK_STATUS_ORDER, groupTasksByStatus } from '../lib/taskStatus';
+import { TaskStatusIcon } from './TaskStatusIcon';
 import { PlusIcon } from '../layout/icons';
 
 // The project's tasks, grouped under status section headers (Linear-style list).
@@ -131,7 +132,7 @@ export function TaskList({ projectId, canEdit }: { projectId: string; canEdit: b
           {groups.map((s) => (
             <div className="tgroup" key={s}>
               <div className="tgroup-head">
-                <span className="tgroup-dot" style={{ background: TASK_STATUS_COLOR[s] }} aria-hidden="true" />
+                <TaskStatusIcon status={s} size={14} />
                 <span className="tgroup-name">{t(`tasks.status.${s}`)}</span>
                 <span className="tgroup-count">{grouped[s].length}</span>
               </div>
@@ -143,6 +144,7 @@ export function TaskList({ projectId, canEdit }: { projectId: string; canEdit: b
                       className="trow"
                       onClick={() => navigate(`/projects/${projectId}/tasks/${task.id}`)}
                     >
+                      <TaskStatusIcon status={s} size={16} />
                       <span className="trow-name">{task.name}</span>
                       <span className="trow-meta">
                         {task.assignee && (
