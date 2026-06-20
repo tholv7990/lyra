@@ -5,6 +5,8 @@ import { initial, avatarStyle } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { useInvites } from '../hooks/useInvites';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { useAuth } from '../auth/useAuth';
+import { api } from '../lib/api';
 import { IconButton } from '../components/IconButton';
 import { BellIcon } from './icons';
 
@@ -12,8 +14,11 @@ export function NotificationBell() {
   const { t } = useTranslation();
   const { invites, loading, accept, decline } = useInvites();
   const { refresh: refreshWorkspaces } = useWorkspace();
+  const { user } = useAuth();
+  const unverified = user?.emailVerified === false;
   const [open, setOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -27,8 +32,14 @@ export function NotificationBell() {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const count = invites.length;
+  const count = invites.length + (unverified ? 1 : 0);
   const label = count > 0 ? `${t('notifications.label')}, ${t('notifications.pending', { count })}` : t('notifications.label');
+
+  function resendVerification() {
+    api<{ ok: boolean }>('/auth/resend-verification', { method: 'POST' })
+      .then(() => setResent(true))
+      .catch(() => setResent(true));
+  }
 
   async function onAccept(id: string) {
     setBusyId(id);
@@ -72,10 +83,23 @@ export function NotificationBell() {
 
       {open && (
         <div className="notif-pop" role="menu">
+          {unverified && (
+            <div className="notif-item" role="menuitem">
+              <span className="notif-avatar" style={avatarStyle('email')} aria-hidden="true">✉</span>
+              <div className="notif-body">
+                <p className="notif-text">{t('notifications.confirmEmail')}</p>
+                <div className="notif-actions">
+                  <button className="btn-primary" disabled={resent} onClick={resendVerification}>
+                    {resent ? t('notifications.resent') : t('notifications.resend')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {loading ? (
             <p className="notif-empty">{t('notifications.loading')}</p>
-          ) : count === 0 ? (
-            <p className="notif-empty">{t('notifications.empty')}</p>
+          ) : invites.length === 0 ? (
+            !unverified && <p className="notif-empty">{t('notifications.empty')}</p>
           ) : (
             invites.map((inv) => (
               <div className="notif-item" key={inv.id} role="menuitem">

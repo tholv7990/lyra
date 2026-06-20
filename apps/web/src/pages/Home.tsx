@@ -118,7 +118,9 @@ export function Home() {
 
   const steps = stats ? gettingStartedSteps(stats) : [];
   const progress = gettingStartedProgress(steps);
-  const showGetStarted = !!stats && !progress.complete;
+  // Always show the setup card (the progress bar stays as a persistent tracker);
+  // collapse it to hide the step list. It used to vanish at 100%.
+  const showGetStarted = !!stats;
 
   return (
     <div>
