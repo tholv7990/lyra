@@ -11,6 +11,19 @@ import { TaskCreateModal } from './TaskCreateModal';
 import { PlusIcon } from '../layout/icons';
 import './tasks.css';
 
+// The card's run-status indicator (design): a coloured dot + label derived from
+// the task's rolled-up run activity.
+function runInfo(
+  runs: Task['runs'],
+  t: (k: string, o?: Record<string, unknown>) => string,
+): { label: string; color: string } {
+  if (!runs || runs.total === 0) return { label: t('tasks.runNone'), color: 'var(--ink-tertiary)' };
+  if (runs.running > 0) return { label: t('tasks.runRunning'), color: 'var(--accent-projects)' };
+  if (runs.awaitingGate > 0) return { label: t('tasks.runGate'), color: 'var(--primary)' };
+  if (runs.done > 0) return { label: t('tasks.runDone', { count: runs.done }), color: 'var(--success)' };
+  return { label: t('tasks.runNone'), color: 'var(--ink-tertiary)' };
+}
+
 // The project's task board (design): a horizontal row of status columns
 // (New · In progress · On hold · Complete), each a scrollable stack of task
 // cards. A card opens the task-detail run workbench. Editors add a task via the
@@ -92,7 +105,9 @@ export function TaskList({
               )}
             </div>
             <div className="tcol-body">
-              {grouped[s].map((task) => (
+              {grouped[s].map((task) => {
+                const run = runInfo(task.runs, t);
+                return (
                 <button
                   key={task.id}
                   type="button"
@@ -119,6 +134,10 @@ export function TaskList({
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="4" cy="4" r="1.5" /><circle cx="4" cy="12" r="1.5" /><circle cx="12" cy="8" r="1.5" /><path d="M5.5 4H8a2 2 0 0 1 2 2v.3M5.5 12H8a2 2 0 0 0 2-2v-.3" /></svg>
                         {task.pipelines.length}
                       </span>
+                      <span className="tcard-run" style={{ color: run.color }}>
+                        <span className="tcard-run-dot" style={{ background: run.color }} />
+                        {run.label}
+                      </span>
                     </div>
                     <div className="tcard-foot-r">
                       {task.priority !== TaskPriority.None && <TaskPriorityIcon priority={task.priority} size={15} />}
@@ -130,7 +149,8 @@ export function TaskList({
                     </div>
                   </div>
                 </button>
-              ))}
+                );
+              })}
 
               {canEdit && (
                 <button type="button" className="tcol-addrow" onClick={() => setCreateFor(s)}>

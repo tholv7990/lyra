@@ -30,6 +30,9 @@ describe('TasksService', () => {
       findOne: jest.fn().mockReturnValue(execOf({ ...created })),
       findOneAndUpdate: jest.fn().mockReturnValue(execOf({ ...created })),
     };
+    const runs = {
+      aggregate: jest.fn().mockResolvedValue([]),
+    };
     const users = {
       refMap: jest.fn().mockResolvedValue(new Map([[actorId, { id: actorId, name: 'U' }]])),
     };
@@ -37,7 +40,7 @@ describe('TasksService', () => {
       findFor: jest.fn().mockResolvedValue(memberFound ? { role: 'member', workspaceId: wsId } : null),
     };
     return {
-      service: new TasksService(model as never, users as never, memberships as never),
+      service: new TasksService(model as never, runs as never, users as never, memberships as never),
       model,
     };
   }

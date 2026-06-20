@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Task, TaskSchema } from './task.schema';
+import { Run, RunSchema } from '../runs/run.schema';
 import { TasksService } from './tasks.service';
 import { TasksController } from './tasks.controller';
 import { ProjectsModule } from '../projects/projects.module';
@@ -15,7 +16,10 @@ import { UsersModule } from '../users/users.module';
     ProjectsModule,
     WorkspacesModule,
     UsersModule,
-    MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
+    MongooseModule.forFeature([
+      { name: Task.name, schema: TaskSchema },
+      { name: Run.name, schema: RunSchema },
+    ]),
   ],
   controllers: [TasksController],
   providers: [TasksService],

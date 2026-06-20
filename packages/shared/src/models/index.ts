@@ -131,6 +131,14 @@ export interface Project extends Audited {
   // pipelines now live on a Task (the project is a board of tasks).
 }
 
+// Run activity rolled up for a task's board card — populated in the list view.
+export interface TaskRunSummary {
+  total: number;
+  running: number;
+  awaitingGate: number;
+  done: number;
+}
+
 // A unit of work inside a project (the project board's card). Holds the
 // pipelines that produce its output; carries a manual status + a single
 // optional assignee. Runs scope to (taskId, pipelineId).
@@ -145,6 +153,7 @@ export interface Task extends Audited {
   assignee?: UserRef; // expanded; assigneeId carried in the DTO (unused in personal workspaces)
   pipelines: string[]; // workspace-library pipeline ids
   tags: string[]; // workspace label names (colour resolved via labelColor)
+  runs?: TaskRunSummary; // run activity for the card (list view only)
 }
 
 // Fan-out config on a step: map the step's prompt over a named run collection,

@@ -2,12 +2,15 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
+  RunStatus,
   TaskStatus,
   type CreateTaskDto,
+  type TaskRunSummary,
   type UpdateTaskDto,
   type Task as TaskView,
 } from '@lyra/shared';
 import { Task, TaskDocument } from './task.schema';
+import { Run } from '../runs/run.schema';
 import { UsersService } from '../users/users.service';
 import { MembershipsService } from '../workspaces/memberships.service';
 import { toTaskView } from './task.views';
@@ -19,9 +22,29 @@ const MAX_DESC = 2000;
 export class TasksService {
   constructor(
     @InjectModel(Task.name) private readonly model: Model<Task>,
+    @InjectModel(Run.name) private readonly runs: Model<Run>,
     private readonly users: UsersService,
     private readonly memberships: MembershipsService,
   ) {}
+
+  // Run activity per task id (board card indicator). One grouped query for the list.
+  private async runSummaries(taskIds: string[]): Promise<Map<string, TaskRunSummary>> {
+    const out = new Map<string, TaskRunSummary>();
+    if (taskIds.length === 0) return out;
+    const rows = await this.runs.aggregate<{ _id: { taskId: string; status: string }; n: number }>([
+      { $match: { taskId: { $in: taskIds }, active: { $ne: false } } },
+      { $group: { _id: { taskId: '$taskId', status: '$status' }, n: { $sum: 1 } } },
+    ]);
+    for (const r of rows) {
+      const s = out.get(r._id.taskId) ?? { total: 0, running: 0, awaitingGate: 0, done: 0 };
+      s.total += r.n;
+      if (r._id.status === RunStatus.Running) s.running += r.n;
+      else if (r._id.status === RunStatus.AwaitingGate) s.awaitingGate += r.n;
+      else if (r._id.status === RunStatus.Done) s.done += r.n;
+      out.set(r._id.taskId, s);
+    }
+    return out;
+  }
 
   async list(projectId: string): Promise<TaskView[]> {
     const docs = await this.model
@@ -123,6 +146,10 @@ export class TasksService {
     const refs = await this.users.refMap(
       docs.flatMap((d) => [d.createdBy, d.updatedBy, d.assigneeId]),
     );
-    return docs.map((d) => toTaskView(d, refs));
+    const runs = await this.runSummaries(docs.map((d) => d._id.toString()));
+    return docs.map((d) => ({
+      ...toTaskView(d, refs),
+      runs: runs.get(d._id.toString()) ?? { total: 0, running: 0, awaitingGate: 0, done: 0 },
+    }));
   }
 }

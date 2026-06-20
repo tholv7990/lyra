@@ -133,6 +133,19 @@
   align-items: center;
   gap: 4px;
 }
+.tcard-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.tcard-run-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
 .tcard-foot-r {
   display: flex;
   align-items: center;
