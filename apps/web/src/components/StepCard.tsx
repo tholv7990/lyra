@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next';
 import {
   StepMode,
   tagColor,
-  labelColor,
   type Provider,
   type PipelineStep,
   type Prompt,
 } from '@lyra/shared';
-import { EyeIcon } from '../layout/icons';
+import { EyeIcon, PlayIcon, XIcon } from '../layout/icons';
 import { ProviderIcon } from './ProviderIcon';
 import { useFlowCallbacks } from './flow/flowCallbacks';
 
@@ -17,7 +16,7 @@ export interface StepCardProps {
   index: number;
   canEdit: boolean;
   prompt?: Prompt;
-  labels: Parameters<typeof labelColor>[1];
+  labels: unknown;
   modelLabel: (p: Provider, m: string) => string;
   // The step's bound prompt was deleted/inactive — flag it so it can be re-picked.
   promptMissing?: boolean;
@@ -25,18 +24,24 @@ export interface StepCardProps {
   needsPrompt?: boolean;
 }
 
-// One editable step node, shared by the desktop canvas (a React Flow node) and
-// the mobile pager. Pure presentation: data comes in as props, actions go out
-// through the FlowCallbacks context (no closure over builder state). Reorder is
-// via the ← / → actions (the old pointer-drag grip is gone — on the canvas you
-// drag to reposition, and ← / → change the sequence).
-export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelLabel, promptMissing, needsPrompt }: StepCardProps) {
+// One editable step node (the design's vertical card), shared by the desktop
+// canvas (a React Flow node) and the mobile pager. Pure presentation: data comes
+// in as props, actions go out through the FlowCallbacks context. The resting card
+// matches the design (colored number · name · mode badge · 2-line prompt ·
+// provider·model pill · footer = creator + eye/Test/delete). The ← / → reorder
+// controls float top-right and reveal on hover (always shown on touch, since the
+// canvas drag repositions but doesn't change the run sequence).
+export function StepCard({ step: s, index: i, canEdit, prompt: p, modelLabel, promptMissing, needsPrompt }: StepCardProps) {
   const { t } = useTranslation();
   const cb = useFlowCallbacks();
+  const broken = !!promptMissing || !!needsPrompt;
   return (
-    <div className={`flow-node${promptMissing || needsPrompt ? ' broken' : ''}`} style={{ '--accent': tagColor(s.name || s.promptId || String(i)) } as CSSProperties}>
-      <div className="flow-node-main" onClick={() => canEdit && cb.onEdit?.(i)}>
-        <div className="flow-node-head">
+    <div
+      className={`flow-node step-edit${broken ? ' broken' : ''}`}
+      style={{ '--accent': tagColor(s.name || s.promptId || String(i)) } as CSSProperties}
+    >
+      <div className="se-body" onClick={() => canEdit && cb.onEdit?.(i)}>
+        <div className="se-head">
           <span className="flow-num">{i + 1}</span>
           <span className="flow-name">{s.name}</span>
           {canEdit ? (
@@ -80,67 +85,70 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, labels, modelL
               ⚠ {t('run.needsPrompt')}
             </span>
           )}
-          {p && (
-            <span
-              className="flow-eye"
-              role="button"
-              tabIndex={0}
-              title={t('run.viewFullPrompt')}
-              onClick={(e) => { e.stopPropagation(); cb.onViewPrompt?.(p.id); }}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); cb.onViewPrompt?.(p.id); } }}
-            >
-              <EyeIcon width={15} height={15} />
+        </div>
+
+        {p?.content?.trim() && <p className="se-snip">{p.content}</p>}
+        {promptMissing && <p className="se-snip broken-hint">{t('run.promptDeletedHint')}</p>}
+        {needsPrompt && !promptMissing && <p className="se-snip broken-hint">{t('run.needsPromptHint')}</p>}
+
+        <div className="se-pills">
+          <span className="se-model">
+            <ProviderIcon provider={s.provider} size={16} />
+            {modelLabel(s.provider, s.model)}
+          </span>
+        </div>
+      </div>
+
+      <div className="se-foot">
+        {p?.createdBy?.name ? (
+          <span className="flow-by">
+            <span className="flow-avatar">{p.createdBy.name.charAt(0).toUpperCase()}</span>
+            <span className="flow-by-name">{p.createdBy.name}</span>
+          </span>
+        ) : (
+          <span />
+        )}
+        <div className="se-actions">
+          {canEdit && (
+            <span className="se-move">
+              <button type="button" className="se-move-btn" title={t('run.moveEarlier')} aria-label={t('run.moveEarlier')} onClick={(e) => { e.stopPropagation(); cb.onMove?.(i, -1); }}>←</button>
+              <button type="button" className="se-move-btn" title={t('run.moveLater')} aria-label={t('run.moveLater')} onClick={(e) => { e.stopPropagation(); cb.onMove?.(i, 1); }}>→</button>
             </span>
+          )}
+          {p && (
+            <button
+              type="button"
+              className="se-btn"
+              title={t('run.viewFullPrompt')}
+              aria-label={t('run.viewFullPrompt')}
+              onClick={(e) => { e.stopPropagation(); cb.onViewPrompt?.(p.id); }}
+            >
+              <EyeIcon width={14} height={14} />
+            </button>
           )}
           {cb.onTestStep && (
             <button
               type="button"
-              className="flow-test-btn"
+              className="se-btn se-test"
               title={t('run.testThisStep')}
-              onClick={(e) => {
-                e.stopPropagation();
-                cb.onTestStep?.(i);
-              }}
+              onClick={(e) => { e.stopPropagation(); cb.onTestStep?.(i); }}
             >
-              {t('run.test')}
+              <PlayIcon width={11} height={11} /> {t('run.test')}
+            </button>
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              className="se-btn se-del"
+              title={t('common.remove')}
+              aria-label={t('common.remove')}
+              onClick={(e) => { e.stopPropagation(); cb.onRemove?.(i); }}
+            >
+              <XIcon width={13} height={13} />
             </button>
           )}
         </div>
-        {p?.content?.trim() && <div className="flow-node-snip">{p.content}</div>}
-        {promptMissing && (
-          <div className="flow-node-snip broken-hint">{t('run.promptDeletedHint')}</div>
-        )}
-        {needsPrompt && !promptMissing && (
-          <div className="flow-node-snip broken-hint">{t('run.needsPromptHint')}</div>
-        )}
-        <div className="flow-node-sub">
-          <ProviderIcon provider={s.provider} size={14} />
-          <span>{modelLabel(s.provider, s.model)}</span>
-        </div>
-        {p && (p.tags.length > 0 || p.createdBy?.name) && (
-          <div className="flow-node-foot">
-            {p.tags.slice(0, 4).map((t) => (
-              <span key={t} className="tag-chip ro">
-                <span className="tdot" style={{ background: labelColor(t, labels) }} />
-                {t}
-              </span>
-            ))}
-            {p.createdBy?.name && (
-              <span className="flow-by">
-                <span className="flow-avatar">{p.createdBy.name.charAt(0).toUpperCase()}</span>
-                {p.createdBy.name}
-              </span>
-            )}
-          </div>
-        )}
       </div>
-      {canEdit && (
-        <div className="flow-node-actions">
-          <button className="icon-mini" title={t('run.moveEarlier')} onClick={() => cb.onMove?.(i, -1)}>←</button>
-          <button className="icon-mini" title={t('run.moveLater')} onClick={() => cb.onMove?.(i, 1)}>→</button>
-          <button className="icon-mini danger" title={t('common.remove')} onClick={() => cb.onRemove?.(i)}>×</button>
-        </div>
-      )}
     </div>
   );
 }

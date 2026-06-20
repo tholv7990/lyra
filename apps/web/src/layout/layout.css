@@ -5380,6 +5380,164 @@
   color: var(--danger);
 }
 
+/* ===== Builder step card (the design's vertical node) =====
+   Scoped to .step-edit so the run view (.flow-node.run) is untouched. Layout:
+   colored number · name · mode badge (head) → 2-line prompt → provider·model pill
+   → footer (creator left · ←/→ + eye/Test/delete right). */
+.flow-node.step-edit {
+  flex-direction: column;
+  align-items: stretch;
+  width: 272px;
+  max-width: 272px;
+  border: 1px solid var(--hairline-strong);
+  border-left-width: 1px;
+  border-radius: 13px;
+}
+.react-flow__node .flow-node.step-edit {
+  width: 272px;
+}
+.flow-node.step-edit.broken {
+  border-color: rgba(229, 72, 77, 0.45);
+}
+
+.flow-node.step-edit .se-body {
+  padding: 11px 12px 10px;
+  cursor: pointer;
+}
+.flow-node.step-edit .se-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.flow-node.step-edit .flow-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent, var(--surface-2));
+  color: var(--on-accent);
+  font-size: 11px;
+}
+.flow-node.step-edit .flow-name {
+  font-size: 13.5px;
+  margin-right: auto;
+}
+.flow-node.step-edit .se-snip {
+  margin: 0 0 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.flow-node.step-edit .se-snip.broken-hint {
+  color: var(--danger);
+  font-style: italic;
+}
+.flow-node.step-edit .se-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.flow-node.step-edit .se-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px 3px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--surface-1);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flow-node.step-edit .se-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--hairline);
+  background: var(--surface-1);
+}
+.flow-node.step-edit .flow-by {
+  min-width: 0;
+  flex-shrink: 1;
+}
+.flow-node.step-edit .flow-by-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.flow-node.step-edit .se-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+}
+/* ←/→ reorder — ghost (the design omits them; we keep reorder since canvas drag
+   only repositions, it doesn't change the run sequence, and the mobile pager has
+   no drag at all). */
+.se-move {
+  display: inline-flex;
+  gap: 2px;
+  margin-right: 1px;
+}
+.se-move-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.se-move-btn:hover {
+  background: var(--surface-2);
+  color: var(--primary);
+}
+/* eye / Test / delete — the design's bordered footer buttons. */
+.se-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.se-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.se-test {
+  color: var(--ink);
+}
+.se-del:hover {
+  background: var(--card);
+  color: var(--danger);
+  border-color: var(--danger-tint);
+}
+
 /* ===== Unified run view (RunFlow) — the builder flow, lit up with live status.
    Reuses .flow / .flow-cap / .flow-connector / .flow-node for visual sameness. */
 .flow-node.run {
