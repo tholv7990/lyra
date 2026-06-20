@@ -33,43 +33,50 @@ export function AddKeyModal({
 
   return (
     <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog add-key" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="add-key-head">
-          <ProviderBadge entry={entry} size={30} />
-          <div className="add-key-head-text">
-            <h3>{t(replace ? 'settings.replaceKeyHeading' : 'settings.addKeyHeading', { provider: entry.label })}</h3>
-            <p className="add-key-sub">{t('settings.addKeySub')}</p>
-          </div>
+      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <div className="dialog-head-icon">
+          <ProviderBadge entry={entry} size={28} />
+          <h3>{t(replace ? 'settings.replaceKeyHeading' : 'settings.addKeyHeading', { provider: entry.label })}</h3>
         </div>
+        <p>{t('settings.addKeySub')}</p>
+        {error && <p className="error">{error}</p>}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (trimmed && !busy) onSave(trimmed);
           }}
         >
-          <input
-            className="text-input"
-            type="password"
-            autoFocus
-            autoComplete="new-password"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-form-type="other"
-            placeholder={t('settings.pasteKey')}
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-          />
-          {entry.keyUrl && (
-            <a className="key-getlink add-key-link" href={entry.keyUrl} target="_blank" rel="noreferrer">
-              {t('settings.getKey')} ↗
-            </a>
-          )}
-          {error && <p className="error add-key-error">{error}</p>}
-          <div className="add-key-actions">
+          <div className="field">
+            <span>{t('settings.apiKeyLabel')}</span>
+            <input
+              className="text-input"
+              type="password"
+              autoFocus
+              autoComplete="new-password"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-form-type="other"
+              aria-label={t('settings.apiKeyLabel')}
+              placeholder={t('settings.pasteKey')}
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+            />
+            {entry.keyUrl && (
+              <a className="add-key-link" href={entry.keyUrl} target="_blank" rel="noreferrer">
+                {t('settings.getKey')} ↗
+              </a>
+            )}
+          </div>
+          <div className="dialog-actions">
             <button type="button" className="btn-ghost" onClick={onClose}>
               {t('settings.cancel')}
             </button>
-            <button type="submit" className="btn-primary" disabled={busy || !trimmed}>
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ width: 'auto', marginTop: 0 }}
+              disabled={busy || !trimmed}
+            >
               {busy ? t('settings.savingKey') : t('settings.saveKey')}
             </button>
           </div>

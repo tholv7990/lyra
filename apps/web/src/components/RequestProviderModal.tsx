@@ -48,37 +48,46 @@ export function RequestProviderModal({
 
   return (
     <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog add-key" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="add-key-head-text">
-          <h3>{t('settings.requestProviderTitle')}</h3>
-          <p className="add-key-sub">{t('settings.requestProviderSub')}</p>
-        </div>
+      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <h3>{t('settings.requestProviderTitle')}</h3>
+        <p>{t('settings.requestProviderSub')}</p>
+        {error && <p className="error">{error}</p>}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             void submit();
           }}
         >
-          <input
-            className="text-input"
-            autoFocus
-            placeholder={t('settings.requestProviderName')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <textarea
-            className="text-input req-note"
-            rows={3}
-            placeholder={t('settings.requestProviderNote')}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-          {error && <p className="error add-key-error">{error}</p>}
-          <div className="add-key-actions">
+          <label className="field">
+            <span>{t('settings.requestProviderNameLabel')}</span>
+            <input
+              className="text-input"
+              autoFocus
+              placeholder={t('settings.requestProviderName')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>{t('settings.requestProviderNoteLabel')}</span>
+            <textarea
+              className="text-input req-note"
+              rows={3}
+              placeholder={t('settings.requestProviderNote')}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </label>
+          <div className="dialog-actions">
             <button type="button" className="btn-ghost" onClick={onClose}>
               {t('settings.cancel')}
             </button>
-            <button type="submit" className="btn-primary" disabled={busy || !trimmed}>
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ width: 'auto', marginTop: 0 }}
+              disabled={busy || !trimmed}
+            >
               {busy ? t('settings.requestSending') : t('settings.requestSend')}
             </button>
           </div>

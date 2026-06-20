@@ -2529,43 +2529,21 @@
   color: var(--ink-tertiary);
 }
 
-/* --- Add-key modal --- */
-.dialog.add-key {
-  max-width: 420px;
-  text-align: left;
-}
-.add-key-head {
+/* --- Provider modals (add-key / request) — follow the system .dialog rhythm:
+   h3 + p + .field labels + .dialog-actions. --- */
+.dialog-head-icon {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
-.add-key-head h3 {
+.dialog-head-icon h3 {
   margin: 0;
-}
-.add-key-sub {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: var(--ink-muted);
 }
 .add-key-link {
   display: inline-block;
   margin-top: 8px;
   font-size: 13px;
-}
-.add-key-error {
-  margin: 8px 0 0;
-}
-.add-key-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-}
-.add-key-actions .btn-primary,
-.add-key-actions .btn-ghost {
-  width: auto;
-  margin-top: 0;
 }
 
 @media (max-width: 560px) {
