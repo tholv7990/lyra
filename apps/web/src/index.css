@@ -85,11 +85,18 @@
   --text-normal: 15px;
   --text-large: 18px;
   --text-title3: 20px;
+  /* Linear's "issue title" size — detail-page headers (issue/task/project titles). */
+  --text-issue: 22px;
   --text-title2: 24px;
   --text-title1: 36px;
+  /* Linear's line-heights: body 15px → 22 (1.47); titles/control text tight.
+     See docs/lyra-linear-audit.md. */
   --lh-body: 1.47;
   --lh-tight: 1.1;
-  font-family: Inter, 'SF Pro Text', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Linear ships Inter (weights 400/500). One font token, referenced below and by
+     the Tailwind @theme layer (src/styles/tokens.css). */
+  --font-sans: Inter, 'SF Pro Text', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* ===== Dark mode =====
@@ -139,8 +146,67 @@
   color-scheme: dark;
 }
 
-* {
+/* Base reset — replaces Tailwind's preflight (Tailwind removed). Faithful to the
+   normalizations the app was built on: border-box + zeroed margin/padding/border
+   on everything; form controls inherit the body font; headings & links inherit;
+   lists unstyled; media is block-level. Element selectors only, so any component
+   `.class` rule overrides. */
+*,
+::before,
+::after,
+::backdrop {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+ol,
+ul,
+menu {
+  list-style: none;
+}
+button,
+input,
+optgroup,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  background: transparent;
+}
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  vertical-align: middle;
+}
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+table {
+  border-collapse: collapse;
 }
 
 /* Screen-reader-only: visually hidden but exposed to assistive tech. Used for
@@ -331,6 +397,29 @@ h4 {
 
 .text-input::placeholder {
   color: var(--placeholder);
+}
+
+/* Field anatomy (see components/Field.tsx): required mark · hint · error. */
+.field-req {
+  color: var(--danger);
+  font-style: normal;
+  margin-left: 2px;
+}
+.field-msg {
+  display: block;
+  font-size: 12px;
+  line-height: var(--lh-body);
+  color: var(--ink-tertiary);
+  margin-top: 5px;
+}
+.field-msg.err {
+  color: var(--danger);
+}
+.field-invalid .text-input {
+  border-color: var(--danger);
+}
+.field-invalid .text-input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
 }
 
 /* Password field with a reveal (eye) toggle. */

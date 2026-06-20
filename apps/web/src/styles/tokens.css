@@ -1,19 +1,9 @@
-@import "tailwindcss";
-
 /*
  * Lyra design tokens — LIGHT mode, Linear-style component language.
- * (Overrides the dark spec in docs/lyra-design-system.md per current direction.)
- * Orange remains the single brand accent; surfaces are a light ladder, borders
- * are thin hairlines, shadows are subtle/flat. No glow, no pill radii in use.
- *
- * Usage:
- *   <button class="bg-primary text-on-primary rounded-md font-sans">
- *   <h1 class="text-headline font-display text-ink">
- *
- * Naming: tokens whose Tailwind v4 namespace matches the design name are defined
- * directly in @theme (emitted to :root + generate utilities). Design-specific
- * names (line-height / tracking / weight / spacing aliases / shadows) live in
- * :root and are referenced from @theme — each value defined once.
+ * Plain CSS custom properties (Tailwind removed). Components read these via
+ * var(--…) from index.css / layout.css / the page stylesheets. Orange is the
+ * single brand accent; surfaces are a light ladder, borders are thin hairlines,
+ * shadows are subtle/flat. No glow, no pill radii in use.
  */
 
 :root {
@@ -85,9 +75,9 @@
   --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-/* `static` forces every theme variable into :root (no tree-shaking), so the
- * full palette is always available to plain CSS — not just the utilities used. */
-@theme static {
+/* The remaining tokens (brand/surface/text/semantic/fonts/type-scale/spacing/
+ * radii/shadows). Plain :root custom properties — available to all CSS. */
+:root {
   /* ===== Brand / Accent (orange retained) ===== */
   --color-primary: #ff6b1a;
   --color-primary-hover: #ff7d35;

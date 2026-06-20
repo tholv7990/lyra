@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import type { IncomingMessage } from 'node:http';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 
 // The API is proxied so the browser sees a single origin (the web app). This
 // keeps the access/refresh cookie same-site and avoids CORS — and lets a single
@@ -24,7 +23,7 @@ const api = (shared = false) => ({
 });
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react()],
   server: {
     host: true, // listen on all interfaces (LAN / tunnel previews)
     port: 5173,

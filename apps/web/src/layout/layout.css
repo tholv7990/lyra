@@ -1433,7 +1433,7 @@
   outline: none;
   background: transparent;
   font: inherit;
-  font-size: 22px;
+  font-size: var(--text-issue);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -8584,6 +8584,74 @@
 .dt-td { padding: 10px 14px; color: var(--ink); vertical-align: middle; }
 .dt-td.right { text-align: right; }
 .dt-empty { padding: 28px; text-align: center; color: var(--ink-muted); }
+
+/* Board / Kanban (components/Board.tsx): status columns of draggable cards. */
+.board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  align-items: flex-start;
+}
+.board-col {
+  flex: 0 0 272px;
+  min-width: 272px;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.board-col.over {
+  background: var(--surface-2);
+  border-color: var(--primary);
+}
+.board-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.board-col-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.board-col-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+}
+.board-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px 10px;
+  min-height: 40px;
+}
+.board-card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  padding: 10px 11px;
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+}
+.board-card:active { cursor: grabbing; }
+.board-card[draggable='true']:hover { border-color: var(--hairline-strong); }
+.board-add {
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 6px 4px;
+  font-size: 13px;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-control);
+}
+.board-add:hover { color: var(--ink); background: var(--surface-2); }
 .trow-chev {
   color: var(--ink-tertiary);
   font-size: 16px;

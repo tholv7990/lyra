@@ -15,6 +15,8 @@ import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { LabelPicker } from '../components/LabelPicker';
 import { DataTable, type Column } from '../components/DataTable';
+import { Field } from '../components/Field';
+import { Board, type BoardColumn } from '../components/Board';
 import { CheckIcon, XIcon, PencilIcon, PlusIcon } from '../layout/icons';
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -43,6 +45,16 @@ const TABLE_COLUMNS: Column<SampleRow>[] = [
   { key: 'priority', header: 'Priority', render: (r) => <TaskPriorityIcon priority={r.priority} size={14} /> },
   { key: 'updated', header: 'Updated', align: 'right', sortable: true, sortValue: (r) => r.updated, render: (r) => r.updated },
 ];
+const BOARD_COLUMNS: BoardColumn[] = [
+  TaskStatus.New, TaskStatus.InProgress, TaskStatus.OnHold, TaskStatus.Complete,
+].map((s) => ({
+  key: s,
+  header: (
+    <>
+      <TaskStatusIcon status={s} size={14} /> {STATUS_LABEL[s]}
+    </>
+  ),
+}));
 
 // Dev reference: every shared component at real tokens. ponytail: strings are
 // hardcoded English on purpose — this is internal tooling, not product copy.
@@ -77,6 +89,7 @@ export function Components() {
   const [tags, setTags] = useState<string[]>(['design']);
   const [toast, setToast] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [board, setBoard] = useState<SampleRow[]>(SAMPLE_ROWS);
 
   const labels: LabelInfo[] = [
     { id: '1', name: 'design', color: '#8b5cf6' },
@@ -263,6 +276,50 @@ export function Components() {
       <Section title="Table">
         <div style={{ width: '100%' }}>
           <DataTable rows={SAMPLE_ROWS} columns={TABLE_COLUMNS} rowKey={(r) => r.id} onRowClick={() => {}} />
+        </div>
+      </Section>
+
+      <Section title="Form fields">
+        <Cell cap="Label + control" col>
+          <Field label="Project name">
+            <input className="text-input" defaultValue="Aurora Skincare" />
+          </Field>
+        </Cell>
+        <Cell cap="Required + hint" col>
+          <Field label="Homepage URL" required hint="Used for the {homepage} placeholder.">
+            <input className="text-input" placeholder="https://…" />
+          </Field>
+        </Cell>
+        <Cell cap="Error state" col>
+          <Field label="Niche" error="Niche is required.">
+            <input className="text-input" defaultValue="" />
+          </Field>
+        </Cell>
+        <Cell cap="With a picker" col>
+          <Field label="Status" hint="Sets the task's column.">
+            <TaskStatusPicker status={status} onChange={setStatus} />
+          </Field>
+        </Cell>
+      </Section>
+
+      <Section title="Board / Kanban">
+        <div style={{ width: '100%' }}>
+          <Board
+            columns={BOARD_COLUMNS}
+            items={board}
+            columnOf={(r) => r.status}
+            itemKey={(r) => r.id}
+            onMove={(r, to) => setBoard((b) => b.map((x) => (x.id === r.id ? { ...x, status: to as TaskStatus } : x)))}
+            renderCard={(r) => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{r.name}</span>
+                <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', color: 'var(--ink-tertiary)' }}>
+                  <TaskStatusIcon status={r.status} size={13} />
+                  <TaskPriorityIcon priority={r.priority} size={13} />
+                </span>
+              </div>
+            )}
+          />
         </div>
       </Section>
 
