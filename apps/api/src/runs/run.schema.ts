@@ -76,6 +76,11 @@ export class Run extends AuditedEntity {
   @Prop({ index: true })
   projectId?: string;
 
+  // The task this run belongs to (absent for a builder test run). Runs scope to
+  // (taskId, pipelineId).
+  @Prop({ index: true })
+  taskId?: string;
+
   @Prop({ required: true, index: true })
   workspaceId!: string;
 

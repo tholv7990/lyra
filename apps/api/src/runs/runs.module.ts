@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 import { PromptsModule } from '../prompts/prompts.module';
 import { PipelinesModule } from '../pipelines/pipelines.module';
 import { AssetsModule } from '../assets/assets.module';
+import { TasksModule } from '../tasks/tasks.module';
 import { Run, RunSchema } from './run.schema';
 import { RunsService } from './runs.service';
 import { RunsController } from './runs.controller';
@@ -29,6 +30,7 @@ import { ProviderRegistry } from './providers/provider.registry';
     PromptsModule, // load prompt content for pipeline runs
     PipelinesModule, // load a pipeline to run it
     AssetsModule, // persist media a step produces
+    TasksModule, // TasksService — validate the task a run belongs to
     MongooseModule.forFeature([{ name: Run.name, schema: RunSchema }]),
   ],
   controllers: [RunsController],

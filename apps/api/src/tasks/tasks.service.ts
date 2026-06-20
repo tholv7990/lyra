@@ -58,6 +58,12 @@ export class TasksService {
     return this.toView(doc);
   }
 
+  // Raw document for internal callers (e.g. the run controller validating that a
+  // pipeline belongs to the task). Returns null when missing/soft-deleted.
+  findActiveById(id: string) {
+    return this.model.findOne({ _id: id, active: { $ne: false } }).exec();
+  }
+
   async update(id: string, actorId: string, dto: UpdateTaskDto): Promise<TaskView> {
     const set: Record<string, unknown> = { updatedBy: actorId };
     const unset: Record<string, ''> = {};

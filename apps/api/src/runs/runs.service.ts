@@ -44,6 +44,7 @@ import {
 // "test run" (no project — projectVariables is then empty).
 export interface PipelineRunInput {
   projectId?: string;
+  taskId?: string;
   workspaceId: string;
   pipelineId: string;
   pipelineName: string;
@@ -117,6 +118,7 @@ export class RunsService extends BaseRepository<Run> {
     };
     return this.create({
       projectId: input.projectId,
+      taskId: input.taskId,
       workspaceId: input.workspaceId,
       pipelineId: input.pipelineId,
       pipelineName: input.pipelineName,
@@ -131,6 +133,12 @@ export class RunsService extends BaseRepository<Run> {
     });
   }
 
+  listForTask(taskId: string) {
+    return this.find({ taskId }, { sort: { createdAt: -1 } });
+  }
+
+  // All of a project's runs (across its tasks) — used by the copilot to summarize
+  // project run history.
   listForProject(projectId: string) {
     return this.find({ projectId }, { sort: { createdAt: -1 } });
   }

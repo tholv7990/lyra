@@ -22,6 +22,8 @@ import { CurrentProject } from '../projects/decorators/project.decorators';
 import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from '../pipelines/pipelines.service';
 import type { PipelineDocument } from '../pipelines/pipeline.schema';
+import { TasksService } from '../tasks/tasks.service';
+import type { TaskDocument } from '../tasks/task.schema';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { AssetsService } from '../assets/assets.service';
@@ -52,17 +54,30 @@ export class RunsController {
     private readonly runs: RunsService,
     private readonly pipelines: PipelinesService,
     private readonly assets: AssetsService,
+    private readonly tasks: TasksService,
   ) {}
+
+  // Load the task on this project, or 404. Ensures the :taskId belongs to the
+  // project the access guard already authorized.
+  private async taskOnProject(project: ProjectDocument, taskId: string): Promise<TaskDocument> {
+    const task = await this.tasks.findActiveById(taskId);
+    if (!task || task.projectId !== project._id.toString()) {
+      throw new NotFoundException('Task not found');
+    }
+    return task;
+  }
 
   // Build the run-creation input for a pipeline in a project's context — shared by
   // the single-pipeline run and the "run all pipelines" composition endpoint.
   private projectRunInput(
     project: ProjectDocument,
+    task: TaskDocument,
     pipeline: PipelineDocument,
     body: RunPipelineBody,
   ): PipelineRunInput {
     return {
       projectId: project._id.toString(),
+      taskId: task._id.toString(),
       workspaceId: project.workspaceId,
       pipelineId: pipeline._id.toString(),
       pipelineName: pipeline.name,
@@ -84,46 +99,53 @@ export class RunsController {
     };
   }
 
-  // Create a run by executing a composable pipeline in this project's context.
-  @Post('projects/:id/pipelines/:pipelineId/runs')
+  // Create a run by executing a composable pipeline in a task's context. The
+  // pipeline must be one the task carries.
+  @Post('projects/:id/tasks/:taskId/pipelines/:pipelineId/runs')
   @UseGuards(ProjectAccessGuard)
   @RequireCreate()
   async createFromPipeline(
     @CurrentProject() project: ProjectDocument,
+    @Param('taskId') taskId: string,
     @Param('pipelineId') pipelineId: string,
     @Body() body: RunPipelineBody,
     @CurrentUser() user: User,
   ): Promise<RunModel> {
+    const task = await this.taskOnProject(project, taskId);
+    if (!task.pipelines.includes(pipelineId)) {
+      throw new NotFoundException('Pipeline is not on this task');
+    }
     const pipeline = await this.pipelines.findActiveById(pipelineId);
     if (!pipeline || pipeline.workspaceId !== project.workspaceId) {
       throw new NotFoundException('Pipeline not found');
     }
     const run = await this.runs.createForPipeline(
-      this.projectRunInput(project, pipeline, body),
+      this.projectRunInput(project, task, pipeline, body),
       user.id,
     );
     return this.runs.toView(run);
   }
 
-  // Composition: launch every pipeline assigned to this project at once — one run
-  // each, seeded with the project's context (+ optional shared variables/collections),
-  // executed through to its first gate / completion. "One product → many flows."
-  @Post('projects/:id/runs/all')
+  // Composition: launch every pipeline on this task at once — one run each, seeded
+  // with the project's context, executed through to its first gate / completion.
+  @Post('projects/:id/tasks/:taskId/runs/all')
   @UseGuards(ProjectAccessGuard)
   @RequireCreate()
   async createForAllPipelines(
     @CurrentProject() project: ProjectDocument,
+    @Param('taskId') taskId: string,
     @Body() body: RunPipelineBody,
     @CurrentUser() user: User,
   ): Promise<RunModel[]> {
+    const task = await this.taskOnProject(project, taskId);
     const out: RunModel[] = [];
-    for (const pipelineId of project.pipelines ?? []) {
+    for (const pipelineId of task.pipelines ?? []) {
       const pipeline = await this.pipelines.findActiveById(pipelineId);
       if (!pipeline || pipeline.workspaceId !== project.workspaceId || pipeline.steps.length === 0) {
         continue; // skip dangling / cross-workspace / empty pipelines
       }
       const runDoc = await this.runs.createForPipeline(
-        this.projectRunInput(project, pipeline, body),
+        this.projectRunInput(project, task, pipeline, body),
         user.id,
       );
       out.push(await this.runs.runAll(runDoc, user.id));
@@ -170,10 +192,14 @@ export class RunsController {
     return this.runs.toView(run);
   }
 
-  @Get('projects/:id/runs')
+  @Get('projects/:id/tasks/:taskId/runs')
   @UseGuards(ProjectAccessGuard)
-  async list(@CurrentProject() project: ProjectDocument): Promise<RunModel[]> {
-    return this.runs.toViews(await this.runs.listForProject(project._id.toString()));
+  async list(
+    @CurrentProject() project: ProjectDocument,
+    @Param('taskId') taskId: string,
+  ): Promise<RunModel[]> {
+    const task = await this.taskOnProject(project, taskId);
+    return this.runs.toViews(await this.runs.listForTask(task._id.toString()));
   }
 
   @Get('runs/:id')
