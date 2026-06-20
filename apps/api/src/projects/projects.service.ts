@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { ProjectStatus, ProjectShare, Role, type Project as ProjectModel } from '@lyra/shared';
 import { Project } from './project.schema';
 import type { ProjectDocument } from './project.schema';
+import { Task } from '../tasks/task.schema';
 import { BaseRepository } from '../common/database/base.repository';
 import { UsersService } from '../users/users.service';
 import { toProject, projectActorIds } from './project.views';
@@ -12,6 +13,7 @@ import { toProject, projectActorIds } from './project.views';
 export class ProjectsService extends BaseRepository<Project> {
   constructor(
     @InjectModel(Project.name) model: Model<Project>,
+    @InjectModel(Task.name) private readonly tasks: Model<Task>,
     private readonly users: UsersService,
   ) {
     super(model);
@@ -22,6 +24,16 @@ export class ProjectsService extends BaseRepository<Project> {
     return this.findById(id);
   }
 
+  // Active-task count per project id (the board size shown on the list card).
+  private async taskCounts(projectIds: string[]): Promise<Map<string, number>> {
+    if (projectIds.length === 0) return new Map();
+    const rows = await this.tasks.aggregate<{ _id: string; n: number }>([
+      { $match: { projectId: { $in: projectIds }, active: { $ne: false } } },
+      { $group: { _id: '$projectId', n: { $sum: 1 } } },
+    ]);
+    return new Map(rows.map((r) => [r._id, r.n]));
+  }
+
   async toView(p: ProjectDocument): Promise<ProjectModel> {
     const refs = await this.users.refMap(projectActorIds(p));
     return toProject(p, refs);
@@ -29,7 +41,8 @@ export class ProjectsService extends BaseRepository<Project> {
 
   async toViews(ps: ProjectDocument[]): Promise<ProjectModel[]> {
     const refs = await this.users.refMap(ps.flatMap(projectActorIds));
-    return ps.map((p) => toProject(p, refs));
+    const counts = await this.taskCounts(ps.map((p) => p._id.toString()));
+    return ps.map((p) => toProject(p, refs, counts.get(p._id.toString()) ?? 0));
   }
 
   // Projects in a workspace the member is allowed to see (owner sees all).

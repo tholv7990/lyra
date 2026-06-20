@@ -6,6 +6,7 @@ import { iso } from '../common/dates';
 export function toProject(
   p: ProjectDocument,
   refs: Map<string, UserRef>,
+  taskCount?: number,
 ): ProjectModel {
   return {
     id: p._id.toString(),
@@ -16,6 +17,7 @@ export function toProject(
     status: p.status,
     shared: p.shared,
     sharedWith: userRefs(p.sharedWith, refs),
+    ...(taskCount === undefined ? {} : { taskCount }),
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),
     updatedBy: userRef(p.updatedBy, refs),

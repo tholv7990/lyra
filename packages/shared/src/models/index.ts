@@ -127,6 +127,7 @@ export interface Project extends Audited {
   status: ProjectStatus;
   shared: ProjectShare; // who a public project reaches
   sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto (when shared='people')
+  taskCount?: number; // active tasks on the board — populated in the list view only
   // pipelines now live on a Task (the project is a board of tasks).
 }
 

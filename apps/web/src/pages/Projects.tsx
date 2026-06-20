@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { canEditProject, labelColor, ProjectStatus, type Project } from '@lyra/shared';
+import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initial, avatarStyle } from '../lib/format';
+import { fmtDate, initials } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
@@ -12,15 +12,44 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { canCreateIn } from '../lib/perms';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { ProjectsIcon, PlusIcon, XIcon } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
+import { FilterIcon, PlusIcon, ProjectsIcon, TrashIcon } from '../layout/icons';
+import './marketplace.css';
+import './projects.css';
 
 const STATUS_KEY: Record<ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'projects.statusDraft',
   [ProjectStatus.Public]: 'projects.statusPublic',
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
+
+function SearchGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+      <circle cx="7" cy="7" r="4.4" />
+      <path d="m10.4 10.4 3 3" />
+    </svg>
+  );
+}
+
+function GlobeGlyph() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="8" cy="8" r="5.4" />
+      <path d="M2.6 8h10.8M8 2.6c1.5 1.6 1.5 9.2 0 10.8M8 2.6C6.5 4.2 6.5 11.8 8 13.4" />
+    </svg>
+  );
+}
+
+function PeopleGlyph() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="6" cy="6" r="2.2" />
+      <path d="M2.6 12.4a3.4 3.4 0 0 1 6.8 0M10.4 4.2a2.2 2.2 0 0 1 0 3.6M11 12.4a3.4 3.4 0 0 0-1.6-2.9" />
+    </svg>
+  );
+}
 
 export function Projects() {
   const { t } = useTranslation();
@@ -63,22 +92,21 @@ export function Projects() {
     return () => { cancelled = true; };
   }, [wsId]);
 
-  const visible = useMemo(
-    () => {
-      const query = q.trim().toLowerCase();
-      return projects.filter((p) => {
-        if (query && !p.name.toLowerCase().includes(query)) return false;
-        if (statusFilters.length && !statusFilters.includes(p.status)) return false;
-        if (creatorFilters.length && !creatorFilters.includes(p.createdBy.id)) return false;
-        return true;
-      });
-    },
-    [projects, q, statusFilters, creatorFilters],
-  );
+  const visible = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return projects.filter((p) => {
+      if (query && !(p.name + ' ' + p.description).toLowerCase().includes(query)) return false;
+      if (statusFilters.length && !statusFilters.includes(p.status)) return false;
+      if (creatorFilters.length && !creatorFilters.includes(p.createdBy.id)) return false;
+      return true;
+    });
+  }, [projects, q, statusFilters, creatorFilters]);
 
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const filterCount = statusFilters.length + creatorFilters.length;
+  const rangeStart = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, visible.length);
   useEffect(() => { setPage(1); }, [q, statusFilters, creatorFilters]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
   useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
@@ -107,15 +135,32 @@ export function Projects() {
 
   return (
     <div>
-      <h1 className="sr-only">{t('nav.projects')}</h1>
-      <div className="lin-toolbar">
-        <input className="lin-search" placeholder={t('projects.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="lin-filter" ref={filterRef}>
+      <header className="mkt-head">
+        <h1>{t('nav.projects')}</h1>
+        <p>{t('projects.subtitle')}</p>
+      </header>
+
+      <div className="mkt-toolbar">
+        <label className="mkt-search">
+          <SearchGlyph />
+          <input
+            value={q}
+            placeholder={t('projects.searchPlaceholder')}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label={t('projects.searchPlaceholder')}
+          />
+        </label>
+        <div className="mkt-filter" ref={filterRef}>
           <button
-            className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
+            type="button"
+            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
+            aria-expanded={filterMenu}
+            aria-haspopup="true"
             onClick={() => setFilterMenu((s) => !s)}
           >
-            {t('projects.filter')}{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            <FilterIcon width={15} height={15} />
+            {t('projects.filterLabel')}
+            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
           </button>
           {filterMenu && (
             <div className="lin-menu">
@@ -124,10 +169,7 @@ export function Projects() {
                   type="button"
                   className="lin-menu-clear"
                   disabled={filterCount === 0}
-                  onClick={() => {
-                    setStatusFilters([]);
-                    setCreatorFilters([]);
-                  }}
+                  onClick={() => { setStatusFilters([]); setCreatorFilters([]); }}
                 >
                   {t('common.clear')}
                 </button>
@@ -146,11 +188,11 @@ export function Projects() {
                     <span>{t('projects.createdBy')}</span>
                     {creatorFilters.length > 0 && <span className="lin-menu-summary-count">{creatorFilters.length}</span>}
                   </summary>
-                  {creatorVocab.map((creator) => (
-                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleInList(list, creator.id))}>
-                      <span className="dot" style={{ background: labelColor(creator.name, []) }} />
-                      {creator.name} <span className="lin-menu-count">{creator.count}</span>
-                      {creatorFilters.includes(creator.id) && <span className="lin-menu-check">✓</span>}
+                  {creatorVocab.map((c) => (
+                    <button key={c.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleInList(list, c.id))}>
+                      <span className="dot" style={{ background: labelColor(c.name, []) }} />
+                      {c.name} <span className="lin-menu-count">{c.count}</span>
+                      {creatorFilters.includes(c.id) && <span className="lin-menu-check">✓</span>}
                     </button>
                   ))}
                 </details>
@@ -159,11 +201,20 @@ export function Projects() {
           )}
         </div>
         {mayCreate && (
-          <button className="lin-add" onClick={() => navigate('/projects/new')} title={t('projects.newProject')} aria-label={t('projects.newProject')}>
-            <PlusIcon />
+          <button className="btn-primary btn-inline btn-lg pr-new" onClick={() => navigate('/projects/new')}>
+            <PlusIcon width={15} height={15} />
+            {t('projects.newProject')}
           </button>
         )}
       </div>
+
+      {!loading && visible.length > 0 && (
+        <div className="mkt-meta">
+          <span className="mkt-meta-count">
+            {t('projects.showingRange', { start: rangeStart, end: rangeEnd, total: visible.length })}
+          </span>
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
 
@@ -180,64 +231,96 @@ export function Projects() {
         <p className="empty">{t('projects.noMatch')}</p>
       ) : (
         <>
-        <div className="lib-grid">
-          {pageItems.map((p) => {
-            return (
-            <article className="lib-card pcard" key={p.id}>
-              <div className="lib-card-head">
-                <button
-                  type="button"
-                  className="lib-card-title"
-                  onClick={() => navigate(`/projects/${p.id}`)}
-                  title={p.name}
-                >
-                  <span className="nm">{p.name}</span>
-                </button>
-                <span className="lib-card-badges">
+          <div className="mkt-grid pr-grid">
+            {pageItems.map((p) => (
+              <article className="mkt-card pr-card" key={p.id}>
+                <div className="pr-card-head">
+                  <button type="button" className="mkt-card-title" title={p.name} onClick={() => navigate(`/projects/${p.id}`)}>
+                    {p.name}
+                  </button>
                   <span className={`badge status-${p.status}`}>{t(STATUS_KEY[p.status])}</span>
-                </span>
-              </div>
+                </div>
 
-              <p className="lib-card-body" onClick={() => navigate(`/projects/${p.id}`)}>
-                {p.description || t('projects.noDescription')}
-              </p>
+                <p className="pr-card-desc" onClick={() => navigate(`/projects/${p.id}`)}>
+                  {p.description || t('projects.noDescription')}
+                </p>
 
-              <div className="lib-card-foot">
-                <span className="lib-card-meta" title={t('projects.createdByName', { name: p.createdBy.name })}>
-                  <span className="prow-updated-icon" style={avatarStyle(p.createdBy.name)} aria-hidden="true">
-                    {initial(p.createdBy.name)}
-                  </span>
-                  {fmtDate(p.updatedAt)}
-                </span>
-                <span className="lib-card-actions" onClick={(e) => e.stopPropagation()}>
-                  <IconButton
-                    size="sm"
-                    icon={<ProjectsIcon width={15} height={15} />}
-                    label={`${t('common.open')} ${p.name}`}
-                    onClick={() => navigate(`/projects/${p.id}`)}
-                  />
-                  {canEdit(p) && (
-                    <IconButton
-                      size="sm"
-                      variant="danger"
-                      icon={<XIcon width={14} height={14} />}
-                      label={`${t('common.delete')} ${p.name}`}
-                      onClick={() => setToDelete(p)}
-                    />
+                {p.variables.length > 0 && (
+                  <div className="pr-vars">
+                    {p.variables.slice(0, 4).map((v) => (
+                      <span className="pr-var" key={v.key}>
+                        <span className="pr-var-k">{v.key}</span>
+                        <span className="pr-var-v">{v.value}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="pr-stats">
+                  {p.taskCount !== undefined && (
+                    <span className="pr-stat">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <rect x="2.6" y="2.6" width="4.4" height="4.4" rx="1" />
+                        <rect x="9" y="2.6" width="4.4" height="4.4" rx="1" />
+                        <rect x="2.6" y="9" width="4.4" height="4.4" rx="1" />
+                        <rect x="9" y="9" width="4.4" height="4.4" rx="1" />
+                      </svg>
+                      {t('projects.tasksCount', { count: p.taskCount })}
+                    </span>
                   )}
-                </span>
-              </div>
-            </article>
-          );
-          })}
-        </div>
-        {totalPages > 1 && (
-          <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>{t('projects.prev')}</button>
-            <span className="pager-info">{t('projects.pagerInfo', { page, totalPages, total: visible.length })}</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>{t('projects.nextPage')}</button>
+                  <span className="pr-stat">
+                    {p.shared === ProjectShare.All ? <GlobeGlyph /> : <PeopleGlyph />}
+                    {p.shared === ProjectShare.All ? t('projects.sharedAll') : t('projects.sharedPeople')}
+                  </span>
+                </div>
+
+                <div className="mkt-card-foot pr-foot">
+                  <span className="mkt-by" title={t('projects.createdByName', { name: p.createdBy.name })}>
+                    <span
+                      className="mkt-by-avatar"
+                      style={{ background: labelColor(p.createdBy.name, []), color: 'var(--on-accent)' }}
+                      aria-hidden
+                    >
+                      {initials(p.createdBy.name)}
+                    </span>
+                    <span className="mkt-by-name">{p.createdBy.name} · {fmtDate(p.updatedAt)}</span>
+                  </span>
+                  <div className="mkt-card-actions">
+                    {canEdit(p) && (
+                      <IconButton
+                        boxed
+                        size="sm"
+                        variant="danger"
+                        icon={<TrashIcon width={15} height={15} />}
+                        label={`${t('common.delete')} ${p.name}`}
+                        onClick={() => setToDelete(p)}
+                      />
+                    )}
+                    <button type="button" className="pr-open" onClick={() => navigate(`/projects/${p.id}`)}>
+                      {t('projects.open')}
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 3.5 9.5 8 5 12.5" /></svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-        )}
+
+          {totalPages > 1 && (
+            <div className="mkt-pager">
+              <button type="button" className="mkt-page-btn" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
+                ‹ {t('projects.prev')}
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button key={n} type="button" className={`mkt-page-num${n === page ? ' active' : ''}`} onClick={() => setPage(n)}>
+                  {n}
+                </button>
+              ))}
+              <button type="button" className="mkt-page-btn" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
+                {t('projects.next')} ›
+              </button>
+            </div>
+          )}
         </>
       )}
 
