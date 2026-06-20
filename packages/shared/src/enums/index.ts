@@ -82,11 +82,19 @@ export enum PromptType {
   Video = 'video',
 }
 
+// Workspace kind: Personal workspaces are created automatically on sign-up;
+// team workspaces are upgraded via an admin-approved TeamUpgrade request.
+export enum WorkspaceType {
+  Personal = 'personal',
+  Team = 'team',
+}
+
 // A user submission to the platform admins. One collection, discriminated by
-// type — provider requests today; bug reports (and more) reuse the same table.
+// type — provider requests today; bug reports + team-upgrade requests reuse the same table.
 export enum RequestType {
   Provider = 'provider',
   Bug = 'bug',
+  TeamUpgrade = 'team-upgrade',
 }
 
 // Triage state of a UserRequest. Open → Resolved/Declined (no separate

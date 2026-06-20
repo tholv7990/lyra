@@ -12,6 +12,7 @@ import {
   Provider,
   RequestType,
   RequestStatus,
+  WorkspaceType,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -49,7 +50,7 @@ export interface User {
 export interface Workspace extends Audited {
   id: string;
   name: string;
-  type: 'personal' | 'team';
+  type: WorkspaceType;
 }
 
 // A workspace plus the requesting user's role in it — what GET /workspaces returns.

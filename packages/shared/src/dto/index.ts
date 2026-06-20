@@ -347,6 +347,7 @@ export interface CreateRequestDto {
   type: RequestType;
   subject: string; // provider name (or bug title)
   body?: string; // optional details
+  workspaceId?: string; // required when type === TeamUpgrade
 }
 // Admin triages a request: change status, optionally leave a note.
 export interface UpdateRequestStatusDto {
