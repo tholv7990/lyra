@@ -3,6 +3,11 @@ export default {
   statusDraft: 'Draft',
   statusPublic: 'Public',
 
+  // Prompts list — heading
+  heading: 'Prompts',
+  subtitle:
+    'Your workspace library of reusable, on-brand prompts. Open one in chat or wire it into a pipeline.',
+
   // Prompts list — toolbar / filters
   searchPlaceholder: 'Search prompts…',
   filter: 'Filter',
@@ -13,6 +18,18 @@ export default {
   filterCreatedBy: 'Created by',
   noPromptTags: 'No prompt tags',
   newPrompt: 'New prompt',
+
+  // Prompts list — type pills, sort, result meta
+  allTypes: 'All',
+  sortLabel: 'Sort',
+  sortUpdated: 'Recently updated',
+  sortAz: 'A–Z',
+  showingRange: 'Showing {{start}}–{{end}} of {{total}} prompts',
+  savedCount_one: '{{count}} saved',
+  savedCount_other: '{{count}} saved',
+  edit: 'Edit',
+  editNamed: 'Edit {{title}}',
+  next: 'Next',
 
   // Prompts list — states
   loadingPrompts: 'Loading prompts…',

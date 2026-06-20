@@ -13,10 +13,11 @@ describe('buildPromptQuery', () => {
       providers: [Provider.Anthropic, Provider.DeepSeek],
       types: [PromptType.Text, PromptType.Image],
       q: 'cozy',
+      sort: 'updated',
     });
 
     expect(query).toBe(
-      'page=2&limit=15&status=public&status=draft&tag=seo&tag=competitor&createdBy=user-1&createdBy=user-2&provider=anthropic&provider=deepseek&type=text&type=image&q=cozy',
+      'page=2&limit=15&status=public&status=draft&tag=seo&tag=competitor&createdBy=user-1&createdBy=user-2&provider=anthropic&provider=deepseek&type=text&type=image&q=cozy&sort=updated',
     );
   });
 
@@ -30,8 +31,9 @@ describe('buildPromptQuery', () => {
       providers: [],
       types: [PromptType.Image, PromptType.Video],
       q: '',
+      sort: 'az',
     });
 
-    expect(query).toBe('page=1&limit=15&type=image&type=video');
+    expect(query).toBe('page=1&limit=15&type=image&type=video&sort=az');
   });
 });

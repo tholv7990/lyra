@@ -275,6 +275,16 @@ export interface PromptAuthorCount {
   count: number;
 }
 
+// A prompt output-type in the visible vocabulary plus prompt count — drives the
+// Prompts page type-pill row.
+export interface PromptTypeCount {
+  type: PromptType;
+  count: number;
+}
+
+// Prompts list sort order.
+export type PromptSort = 'updated' | 'az';
+
 // A provider in the visible prompt vocabulary plus how many prompts use it.
 // Drives the (stable, full-library) provider filter on the Prompts page.
 export interface ProviderCount {

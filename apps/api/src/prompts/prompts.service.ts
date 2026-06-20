@@ -8,6 +8,7 @@ import {
   tagKey,
   type ProviderCount,
   type PromptAuthorCount,
+  type PromptTypeCount,
   type Prompt as PromptModel,
   type SaveResultDto,
   type TagCount,
@@ -30,6 +31,7 @@ export interface PromptListOptions {
   createdBy?: string[];
   providers?: Provider[];
   q?: string;
+  sort?: 'updated' | 'az';
   page: number;
   limit: number;
 }
@@ -183,13 +185,32 @@ export class PromptsService extends BaseRepository<Prompt> {
     opts: PromptListOptions,
   ): Promise<{ items: PromptDocument[]; total: number }> {
     const filter = buildPromptListFilter(workspaceId, userId, opts);
+    // az = title asc; default = recently-updated.
+    const sort =
+      opts.sort === 'az'
+        ? { title: 1 as const }
+        : { updatedAt: -1 as const, createdAt: -1 as const };
     const total = await this.count(filter);
     const items = await this.find(filter, {
-      sort: { updatedAt: -1, createdAt: -1 },
+      sort,
       skip: (opts.page - 1) * opts.limit,
       limit: opts.limit,
     });
     return { items, total };
+  }
+
+  // The distinct output-type vocabulary across prompts the member can see, with
+  // counts — drives the Prompts page type-pill row. Returns all four types in
+  // canonical order (a 0-count type still renders as an empty pill is the web's
+  // call; here we report every type's true count).
+  async typeVocabulary(workspaceId: string, userId: string): Promise<PromptTypeCount[]> {
+    const prompts = await this.listVisible(workspaceId, userId);
+    const counts = new Map<PromptType, number>();
+    for (const p of prompts) {
+      const type = (p.type ?? PromptType.Text) as PromptType;
+      counts.set(type, (counts.get(type) ?? 0) + 1);
+    }
+    return Object.values(PromptType).map((type) => ({ type, count: counts.get(type) ?? 0 }));
   }
 
   // The distinct tag vocabulary across prompts the member can see, with usage

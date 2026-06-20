@@ -3,6 +3,11 @@ export default {
   statusDraft: 'Bản nháp',
   statusPublic: 'Công khai',
 
+  // Prompts list — heading
+  heading: 'Câu lệnh',
+  subtitle:
+    'Thư viện prompt tái sử dụng, đúng thương hiệu của workspace. Mở trong chat hoặc gắn vào một bước pipeline.',
+
   // Prompts list — toolbar / filters
   searchPlaceholder: 'Tìm prompt…',
   filter: 'Bộ lọc',
@@ -13,6 +18,18 @@ export default {
   filterCreatedBy: 'Người tạo',
   noPromptTags: 'Chưa có thẻ prompt',
   newPrompt: 'Prompt mới',
+
+  // Prompts list — type pills, sort, result meta
+  allTypes: 'Tất cả',
+  sortLabel: 'Sắp xếp',
+  sortUpdated: 'Cập nhật gần đây',
+  sortAz: 'A–Z',
+  showingRange: 'Hiển thị {{start}}–{{end}} trong {{total}} prompt',
+  savedCount_one: '{{count}} đã lưu',
+  savedCount_other: '{{count}} đã lưu',
+  edit: 'Sửa',
+  editNamed: 'Sửa {{title}}',
+  next: 'Sau',
 
   // Prompts list — states
   loadingPrompts: 'Đang tải prompt…',

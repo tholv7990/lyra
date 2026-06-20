@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   PromptStatus,
-  PromptType,
   Provider,
   defaultModel,
   labelColor,
@@ -11,11 +10,14 @@ import {
   type Paged,
   type ProviderCount,
   type PromptAuthorCount,
+  type PromptSort,
+  type PromptType,
+  type PromptTypeCount,
   type Prompt,
   type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initial, avatarStyle } from '../lib/format';
+import { fmtDate, initials } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { PROVIDER_LABELS, STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
@@ -28,8 +30,18 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { PromptDetails } from '../components/PromptDetails';
 import { ProviderIcon } from '../components/ProviderIcon';
-import { ChatsIcon, EyeIcon, PromptsIcon, PlusIcon, XIcon } from '../layout/icons';
+import {
+  ChatsIcon,
+  FilterIcon,
+  PencilIcon,
+  PromptsIcon,
+  PlusIcon,
+  SparkleIcon,
+  TrashIcon,
+} from '../layout/icons';
 import { IconButton } from '../components/IconButton';
+import './marketplace.css';
+import './prompts.css';
 
 const PAGE_SIZE = 15;
 
@@ -42,6 +54,7 @@ interface PromptQueryOptions {
   providers: Provider[];
   types: PromptType[];
   q: string;
+  sort: PromptSort;
 }
 
 export function buildPromptQuery({
@@ -53,16 +66,27 @@ export function buildPromptQuery({
   providers,
   types,
   q,
+  sort,
 }: PromptQueryOptions) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   statuses.forEach((s) => params.append('status', s));
   tags.forEach((t) => params.append('tag', t));
   createdBy.forEach((id) => params.append('createdBy', id));
   providers.forEach((p) => params.append('provider', p));
-  // Same repeated-param encoding as status/tag/provider above (`?type=text&type=image`).
   types.forEach((ty) => params.append('type', ty));
   if (q.trim()) params.set('q', q.trim());
+  params.set('sort', sort);
   return params.toString();
+}
+
+// Inline search glyph (no shared SearchIcon yet) — matches the design's search box.
+function SearchGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+      <circle cx="7" cy="7" r="4.4" />
+      <path d="m10.4 10.4 3 3" />
+    </svg>
+  );
 }
 
 export function Prompts() {
@@ -82,16 +106,20 @@ export function Prompts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // filters (Linear-style: search always visible, status/tag added via + Filter)
+  // Type is a single-select pill row; status/tags/providers/creators live in the
+  // Filter popover; sort drives the order.
+  const [type, setType] = useState<PromptType | ''>('');
   const [statuses, setStatuses] = useState<PromptStatus[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [createdBy, setCreatedBy] = useState<string[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [types, setTypes] = useState<PromptType[]>([]);
+  const [sort, setSort] = useState<PromptSort>('updated');
   const [q, setQ] = useState('');
+
   const [vocab, setVocab] = useState<TagCount[]>([]);
   const [creators, setCreators] = useState<PromptAuthorCount[]>([]);
   const [providerVocab, setProviderVocab] = useState<[Provider, number][]>([]);
+  const [typeVocab, setTypeVocab] = useState<PromptTypeCount[]>([]);
   const [filterMenu, setFilterMenu] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -101,28 +129,31 @@ export function Prompts() {
   const [deleting, setDeleting] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filterCount =
-    statuses.length + tags.length + createdBy.length + providers.length + types.length;
-  const hasFilters =
-    statuses.length > 0 ||
-    tags.length > 0 ||
-    createdBy.length > 0 ||
-    providers.length > 0 ||
-    types.length > 0 ||
-    !!q.trim();
+  // The Filter popover holds status/tags/providers/creators (type is a pill row).
+  const filterCount = statuses.length + tags.length + createdBy.length + providers.length;
+  const hasFilters = filterCount > 0 || !!type || !!q.trim();
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  useEffect(() => setPage(1), [statuses, tags, createdBy, providers, types, q]);
+  useEffect(() => setPage(1), [statuses, tags, createdBy, providers, type, sort, q]);
 
-  // close the filter menu on outside click
   useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   const buildQuery = () =>
-    buildPromptQuery({ page, limit: PAGE_SIZE, statuses, tags, createdBy, providers, types, q });
+    buildPromptQuery({
+      page,
+      limit: PAGE_SIZE,
+      statuses,
+      tags,
+      createdBy,
+      providers,
+      types: type ? [type] : [],
+      q,
+      sort,
+    });
 
-  // Filter vocabularies (tags / creators / providers) are loaded from dedicated
-  // endpoints that span the WHOLE visible library — never derived from the
-  // current filtered/paginated page — so the filter options stay stable as you
-  // narrow other filters.
+  // Filter vocabularies span the WHOLE visible library (never the current page)
+  // so options stay stable as you narrow.
   const loadVocab = useCallback(() => {
     if (!wsId) return;
     api<TagCount[]>(`/workspaces/${wsId}/prompts/tags`).then(setVocab).catch(() => undefined);
@@ -130,6 +161,7 @@ export function Prompts() {
     api<ProviderCount[]>(`/workspaces/${wsId}/prompts/providers`)
       .then((list) => setProviderVocab(list.map((x) => [x.provider, x.count] as [Provider, number])))
       .catch(() => undefined);
+    api<PromptTypeCount[]>(`/workspaces/${wsId}/prompts/types`).then(setTypeVocab).catch(() => undefined);
   }, [wsId]);
 
   useEffect(() => {
@@ -151,7 +183,7 @@ export function Prompts() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [wsId, page, statuses, tags, createdBy, providers, types, q]);
+  }, [wsId, page, statuses, tags, createdBy, providers, type, sort, q]);
 
   useEffect(loadVocab, [loadVocab]);
 
@@ -164,27 +196,20 @@ export function Prompts() {
       .catch(() => undefined);
   }
 
-  // Open a prompt in a new chat: go to the chat page with the prompt's content +
-  // provider·model carried in nav state. The conversation is created lazily on the
-  // first send — so tapping a prompt doesn't litter history with empty chats, and
-  // Back returns cleanly to the prompt list (no double-create on a slow mobile tap).
   async function openInChat(p: Prompt) {
     const prov = p.provider ?? Provider.Anthropic;
     const from = { label: t('prompts.breadcrumb'), to: '/prompts', record: p.title };
     try {
       const existing = await api<ConversationSummary | null>(
         `/workspaces/${wsId}/conversations/prompt-history`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ promptId: p.id, content: p.content }),
-        },
+        { method: 'POST', body: JSON.stringify({ promptId: p.id, content: p.content }) },
       );
       if (existing) {
         navigate(`/chats/${existing.id}`, { state: { from } });
         return;
       }
     } catch {
-      // If lookup fails, still let the user open a draft chat.
+      // fall through to a draft chat
     }
     navigate('/chats', {
       state: {
@@ -192,14 +217,11 @@ export function Prompts() {
         provider: prov,
         model: p.model ?? defaultModel(prov),
         originPromptId: p.id,
-        // origin breadcrumb: the chat shows "Prompts / <title>" and links back here
         from,
       },
     });
   }
 
-  // Open the delete confirm, and check how many pipelines use the prompt so we
-  // can warn that those steps would be left empty (the dangling-ref bug class).
   function askDelete(p: Prompt) {
     setToDelete(p);
     setDeleteUsage(null);
@@ -225,23 +247,42 @@ export function Prompts() {
     }
   }
 
+  // Type pills: All (visible total) + each type with its count.
+  const typeTotal = typeVocab.reduce((n, x) => n + x.count, 0);
+  const typePills = [
+    { key: '' as PromptType | '', label: t('prompts.allTypes'), count: typeTotal },
+    ...typeVocab.map((x) => ({ key: x.type, label: t(`prompts.type.${x.type}`), count: x.count })),
+  ];
+
   return (
-    <div>
-      <h1 className="sr-only">{t('nav.prompts')}</h1>
-      {/* Linear-style filter toolbar */}
-      <div className="lin-toolbar">
-        <input
-          className="lin-search"
-          placeholder={t('prompts.searchPlaceholder')}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <div className="lin-filter" ref={filterRef}>
+    <div className="pl-page">
+      <header className="mkt-head">
+        <h1>{t('prompts.heading')}</h1>
+        <p>{t('prompts.subtitle')}</p>
+      </header>
+
+      {/* Toolbar — search · Filter · New prompt */}
+      <div className="mkt-toolbar">
+        <label className="mkt-search">
+          <SearchGlyph />
+          <input
+            value={q}
+            placeholder={t('prompts.searchPlaceholder')}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label={t('prompts.searchPlaceholder')}
+          />
+        </label>
+        <div className="mkt-filter" ref={filterRef}>
           <button
-            className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
+            type="button"
+            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
+            aria-expanded={filterMenu}
+            aria-haspopup="true"
             onClick={() => setFilterMenu((s) => !s)}
           >
-            + {t('prompts.filter')}{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            <FilterIcon width={15} height={15} />
+            {t('prompts.filter')}
+            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
           </button>
           {filterMenu && (
             <div className="lin-menu">
@@ -255,7 +296,6 @@ export function Prompts() {
                     setTags([]);
                     setProviders([]);
                     setCreatedBy([]);
-                    setTypes([]);
                   }}
                 >
                   {t('common.clear')}
@@ -269,25 +309,17 @@ export function Prompts() {
                   {statuses.includes(s) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
-              <div className="lin-menu-label">{t('prompts.filterType')}</div>
-              {Object.values(PromptType).map((ty) => (
-                <button key={ty} className="lin-menu-item" onClick={() => setTypes((list) => toggleInList(list, ty))}>
-                  <span className="dot" style={{ background: TYPE_COLOR[ty] }} />
-                  {t(`prompts.type.${ty}`)}
-                  {types.includes(ty) && <span className="lin-menu-check">✓</span>}
-                </button>
-              ))}
               <details className="lin-menu-section">
                 <summary className="lin-menu-summary">
                   <span>{t('prompts.filterTags')}</span>
                   {tags.length > 0 && <span className="lin-menu-summary-count">{tags.length}</span>}
                 </summary>
                 {vocab.length === 0 && <div className="lin-menu-empty">{t('prompts.noPromptTags')}</div>}
-                {vocab.map((t) => (
-                  <button key={t.value} className="lin-menu-item" onClick={() => setTags((list) => toggleInList(list, t.value))}>
-                    <span className="dot" style={{ background: labelColor(t.value, labels) }} />
-                    {t.value} <span className="lin-menu-count">{t.count}</span>
-                    {tags.includes(t.value) && <span className="lin-menu-check">✓</span>}
+                {vocab.map((tg) => (
+                  <button key={tg.value} className="lin-menu-item" onClick={() => setTags((list) => toggleInList(list, tg.value))}>
+                    <span className="dot" style={{ background: labelColor(tg.value, labels) }} />
+                    {tg.value} <span className="lin-menu-count">{tg.count}</span>
+                    {tags.includes(tg.value) && <span className="lin-menu-check">✓</span>}
                   </button>
                 ))}
               </details>
@@ -318,11 +350,49 @@ export function Prompts() {
           )}
         </div>
         {mayCreate && (
-          <button className="lin-add" onClick={() => navigate('/prompts/new')} title={t('prompts.newPrompt')} aria-label={t('prompts.newPrompt')}>
-            <PlusIcon />
+          <button className="btn-primary btn-inline btn-lg pl-new" onClick={() => navigate('/prompts/new')}>
+            <PlusIcon width={15} height={15} />
+            {t('prompts.newPrompt')}
           </button>
         )}
       </div>
+
+      {/* Type pills */}
+      {typePills.length > 1 && (
+        <div className="mkt-pills">
+          {typePills.map((p) => (
+            <button
+              key={p.key || 'all'}
+              type="button"
+              className={`mkt-pill${type === p.key ? ' active' : ''}`}
+              onClick={() => setType(p.key)}
+            >
+              {p.label}
+              <span className="mkt-pill-count">{p.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Result meta + sort */}
+      {!loading && total > 0 && (
+        <div className="mkt-meta">
+          <span className="mkt-meta-count">
+            {t('prompts.showingRange', { start: rangeStart, end: rangeEnd, total })}
+          </span>
+          <label className="mkt-sort">
+            {t('prompts.sortLabel')}
+            <select
+              className="mkt-sort-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as PromptSort)}
+            >
+              <option value="updated">{t('prompts.sortUpdated')}</option>
+              <option value="az">{t('prompts.sortAz')}</option>
+            </select>
+          </label>
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
 
@@ -341,80 +411,70 @@ export function Prompts() {
         )
       ) : (
         <>
-          <div className="lib-grid">
+          <div className="mkt-grid">
             {prompts.map((p) => {
               const editable = canEdit(p);
+              const saved = p.results?.length ?? 0;
               return (
-                <article className="lib-card prompt-card" key={p.id}>
-                  <div className="lib-card-head">
+                <article className="mkt-card" key={p.id}>
+                  <div className="pl-card-head">
                     <button
                       type="button"
-                      className="lib-card-title"
-                      title={p.title}
-                      onClick={() => openInChat(p)}
+                      className="mkt-card-title"
+                      title={t('prompts.viewFullPrompt')}
+                      onClick={() => setDetailPrompt(p)}
                     >
-                      <span className="nm">{p.title}</span>
+                      {p.title}
                     </button>
-                    <span className="lib-card-badges">
-                      <span className="badge mkt-type">{t(`prompts.type.${p.type}`)}</span>
-                      <span className={`badge status-${p.status}`}>{statusLabel(p.status)}</span>
+                    <span className={`badge status-${p.status}`}>{statusLabel(p.status)}</span>
+                  </div>
+
+                  <div className="pl-card-meta">
+                    <span className="pl-type">
+                      <span className="mkt-dot" style={{ background: TYPE_COLOR[p.type] }} />
+                      {t(`prompts.type.${p.type}`)}
                     </span>
+                    {saved > 0 && (
+                      <span className="pl-saved">
+                        <SparkleIcon width={12} height={12} />
+                        {t('prompts.savedCount', { count: saved })}
+                      </span>
+                    )}
                   </div>
 
                   {p.content && (
-                    <p
-                      className="lib-card-body prompt-card-body"
-                      onClick={() => setDetailPrompt(p)}
-                      title={t('prompts.viewFullPrompt')}
-                    >
+                    <p className="mkt-card-code" onClick={() => setDetailPrompt(p)} title={t('prompts.viewFullPrompt')}>
                       {p.content}
                     </p>
                   )}
 
                   {p.tags.length > 0 && (
-                    <div className="lib-card-tags">
-                      {p.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="tag-chip ro">
-                          <span className="tdot" style={{ background: labelColor(tag, labels) }} />
+                    <div className="mkt-card-chips">
+                      {p.tags.map((tag) => (
+                        <span key={tag} className="mkt-chip">
+                          <span className="mkt-dot" style={{ background: labelColor(tag, labels) }} />
                           {tag}
                         </span>
                       ))}
-                      {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
                     </div>
                   )}
 
-                  <div className="lib-card-foot">
-                    <span className="lib-card-meta">
+                  <div className="mkt-card-foot">
+                    <span className="mkt-by">
                       <span
-                        className="prow-updated-icon"
-                        style={avatarStyle(p.createdBy.name)}
-                        aria-hidden="true"
+                        className="mkt-by-avatar"
+                        style={{ background: labelColor(p.createdBy.name, []), color: 'var(--on-accent)' }}
+                        aria-hidden
                       >
-                        {initial(p.createdBy.name)}
+                        {initials(p.createdBy.name)}
                       </span>
-                      <span className="prompt-card-by">{p.createdBy.name}</span>
-                      <span className="prompt-card-sep" aria-hidden="true">·</span>
-                      <span className="prompt-card-date" title={t('prompts.updatedBy', { name: p.updatedBy.name })}>
-                        {fmtDate(p.updatedAt)}
+                      <span className="mkt-by-name">
+                        {p.createdBy.name} · {fmtDate(p.updatedAt)}
                       </span>
-                      {p.provider && p.model && (
-                        <>
-                          <span className="prompt-card-sep" aria-hidden="true">·</span>
-                          <span className="prow-provider">
-                            <ProviderIcon provider={p.provider} size={14} />
-                            {p.model}
-                          </span>
-                        </>
-                      )}
                     </span>
-                    <div className="lib-card-actions">
+                    <div className="mkt-card-actions">
                       <IconButton
-                        size="sm"
-                        icon={<EyeIcon width={15} height={15} />}
-                        label={t('prompts.viewFullPromptFor', { title: p.title })}
-                        onClick={() => setDetailPrompt(p)}
-                      />
-                      <IconButton
+                        boxed
                         size="sm"
                         icon={<ChatsIcon width={15} height={15} />}
                         label={t('prompts.openInChatNamed', { title: p.title })}
@@ -422,9 +482,19 @@ export function Prompts() {
                       />
                       {editable && (
                         <IconButton
+                          boxed
+                          size="sm"
+                          icon={<PencilIcon width={15} height={15} />}
+                          label={t('prompts.editNamed', { title: p.title })}
+                          onClick={() => navigate(`/prompts/${p.id}`)}
+                        />
+                      )}
+                      {editable && (
+                        <IconButton
+                          boxed
                           size="sm"
                           variant="danger"
-                          icon={<XIcon width={14} height={14} />}
+                          icon={<TrashIcon width={15} height={15} />}
                           label={t('prompts.deletePromptNamed', { title: p.title })}
                           onClick={() => askDelete(p)}
                         />
@@ -436,11 +506,26 @@ export function Prompts() {
             })}
           </div>
 
-          <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← {t('prompts.prev')}</button>
-            <span className="pager-info">{t('prompts.pagerInfo', { page, totalPages, total })}</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>{t('common.next')} →</button>
-          </div>
+          {totalPages > 1 && (
+            <div className="mkt-pager">
+              <button type="button" className="mkt-page-btn" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
+                ‹ {t('prompts.prev')}
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`mkt-page-num${n === page ? ' active' : ''}`}
+                  onClick={() => setPage(n)}
+                >
+                  {n}
+                </button>
+              ))}
+              <button type="button" className="mkt-page-btn" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
+                {t('prompts.next')} ›
+              </button>
+            </div>
+          )}
         </>
       )}
 

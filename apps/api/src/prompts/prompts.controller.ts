@@ -15,6 +15,7 @@ import type {
   Paged,
   ProviderCount,
   PromptAuthorCount,
+  PromptTypeCount,
   Prompt as PromptModel,
   TagCount,
   User,
@@ -82,6 +83,7 @@ export class PromptsController {
     @Query('provider') provider?: string | string[],
     @Query('createdBy') createdBy?: string | string[],
     @Query('q') q?: string,
+    @Query('sort') sort?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ): Promise<Paged<PromptModel>> {
@@ -103,10 +105,22 @@ export class PromptsController {
       createdBy: listQuery(createdBy),
       providers,
       q: q || undefined,
+      sort: sort === 'az' ? 'az' : 'updated',
       page: p,
       limit: l,
     });
     return { items: await this.prompts.toViews(items), total, page: p, limit: l };
+  }
+
+  // The output-type vocabulary (visible to the caller) with counts — drives the
+  // Prompts page type-pill row.
+  @Get('workspaces/:id/prompts/types')
+  @UseGuards(WorkspaceGuard)
+  promptTypes(
+    @Param('id') workspaceId: string,
+    @CurrentUser() user: User,
+  ): Promise<PromptTypeCount[]> {
+    return this.prompts.typeVocabulary(workspaceId, user.id);
   }
 
   // The workspace tag vocabulary (visible to the caller) for the picker.

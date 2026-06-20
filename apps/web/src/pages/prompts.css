@@ -1,0 +1,57 @@
+/* ===== Prompts library list =====
+   The card-gallery shell (heading · toolbar · search · pills · meta · grid ·
+   card frame · footer · pager) is shared with the Marketplace and lives in
+   marketplace.css (imported by Prompts.tsx). Only the prompt-card-specific
+   pieces — the title+status head, the type/saved meta row — live here.
+   Token-only (docs/lyra-design-system-actions.md). */
+
+.pl-new {
+  flex-shrink: 0;
+}
+
+/* Card head: title (clamped, opens detail) + status badge on one row. */
+.pl-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.pl-card-head .mkt-card-title {
+  margin: 0;
+}
+
+/* Meta row: type pill (with a type-colored dot) + "N saved" results count. */
+.pl-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 11px;
+}
+.pl-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 160px;
+  padding: 3px 9px;
+  border-radius: 980px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-muted);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.pl-saved svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
