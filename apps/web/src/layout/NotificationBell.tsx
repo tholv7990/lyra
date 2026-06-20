@@ -1,14 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import type { MyInvite } from '@lyra/shared';
 import { ROLE_LABELS } from '../lib/constants';
-import { initial, avatarStyle } from '../lib/format';
-import { useOutsideClick } from '../lib/useOutsideClick';
+import { initial, avatarStyle, fmtDate } from '../lib/format';
 import { useInvites } from '../hooks/useInvites';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useAuth } from '../auth/useAuth';
 import { api } from '../lib/api';
 import { IconButton } from '../components/IconButton';
-import { BellIcon } from './icons';
+import { BellIcon, XIcon, SettingsIcon } from './icons';
+
+const PER_PAGE = 5;
+const DISMISS_KEY = 'lyra:notif-dismissed';
+
+// One bell row. System logs (e.g. confirm-email) carry a system icon + a delete;
+// user activities (invites) carry the actor's avatar + their own actions.
+interface Activity {
+  id: string;
+  kind: 'system' | 'user';
+  title: string;
+  content?: string;
+  date?: string;
+  avatarSeed?: string;
+  invite?: MyInvite;
+}
 
 export function NotificationBell() {
   const { t } = useTranslation();
@@ -16,24 +32,82 @@ export function NotificationBell() {
   const { refresh: refreshWorkspaces } = useWorkspace();
   const { user } = useAuth();
   const unverified = user?.emailVerified === false;
+
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
+  const [dismissed, setDismissed] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(DISMISS_KEY) ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
 
-  useOutsideClick(ref, open, () => setOpen(false));
+  // The popup is portaled out of the topbar (its backdrop-filter clips absolutely
+  // positioned children), so close-on-outside-click must check BOTH the bell and
+  // the portaled popup.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+    const onDown = (e: MouseEvent) => {
+      const tgt = e.target as Node;
+      if (wrapRef.current?.contains(tgt) || popRef.current?.contains(tgt)) return;
+      setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
-  const count = invites.length + (unverified ? 1 : 0);
-  const label = count > 0 ? `${t('notifications.label')}, ${t('notifications.pending', { count })}` : t('notifications.label');
+  const activities = useMemo<Activity[]>(() => {
+    const list: Activity[] = [];
+    if (unverified && !dismissed.includes('confirm-email')) {
+      list.push({
+        id: 'confirm-email',
+        kind: 'system',
+        title: t('notifications.confirmEmailTitle'),
+        content: t('notifications.confirmEmail'),
+      });
+    }
+    for (const inv of invites) {
+      list.push({
+        id: inv.id,
+        kind: 'user',
+        title: t('notifications.inviteTitle'),
+        content: t('notifications.invitedYou', {
+          inviter: inv.invitedBy.name,
+          workspace: inv.workspaceName,
+          role: ROLE_LABELS[inv.role],
+        }),
+        date: inv.createdAt,
+        avatarSeed: inv.invitedBy.name,
+        invite: inv,
+      });
+    }
+    return list;
+  }, [unverified, dismissed, invites, t]);
+
+  const count = activities.length;
+  const shown = activities.slice(0, page * PER_PAGE);
+  const hasMore = activities.length > shown.length;
+  const label =
+    count > 0 ? `${t('notifications.label')}, ${t('notifications.pending', { count })}` : t('notifications.label');
+
+  function dismiss(id: string) {
+    setDismissed((d) => {
+      const next = [...d, id];
+      localStorage.setItem(DISMISS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
 
   function resendVerification() {
     api<{ ok: boolean }>('/auth/resend-verification', { method: 'POST' })
@@ -46,7 +120,7 @@ export function NotificationBell() {
     setError(null);
     try {
       await accept(id);
-      await refreshWorkspaces(); // the joined workspace appears in the switcher
+      await refreshWorkspaces();
     } catch {
       setError(t('notifications.acceptFailed'));
     } finally {
@@ -67,13 +141,16 @@ export function NotificationBell() {
   }
 
   return (
-    <div className="notif" ref={ref}>
+    <div className="notif" ref={wrapRef}>
       <IconButton
         icon={<BellIcon />}
         label={label}
         aria-haspopup="true"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setPage(1);
+          setOpen((o) => !o);
+        }}
       />
       {count > 0 && (
         <span className="notif-badge" aria-hidden="true">
@@ -81,54 +158,62 @@ export function NotificationBell() {
         </span>
       )}
 
-      {open && (
-        <div className="notif-pop" role="menu">
-          {unverified && (
-            <div className="notif-item" role="menuitem">
-              <span className="notif-avatar" style={avatarStyle('email')} aria-hidden="true">✉</span>
-              <div className="notif-body">
-                <p className="notif-text">{t('notifications.confirmEmail')}</p>
-                <div className="notif-actions">
-                  <button className="btn-primary" disabled={resent} onClick={resendVerification}>
-                    {resent ? t('notifications.resent') : t('notifications.resend')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {loading ? (
-            <p className="notif-empty">{t('notifications.loading')}</p>
-          ) : invites.length === 0 ? (
-            !unverified && <p className="notif-empty">{t('notifications.empty')}</p>
-          ) : (
-            invites.map((inv) => (
-              <div className="notif-item" key={inv.id} role="menuitem">
-                <span className="notif-avatar" style={avatarStyle(inv.workspaceName)} aria-hidden="true">
-                  {initial(inv.workspaceName)}
-                </span>
-                <div className="notif-body">
-                  <p className="notif-text">
-                    {t('notifications.invitedYou', {
-                      inviter: inv.invitedBy.name,
-                      workspace: inv.workspaceName,
-                      role: ROLE_LABELS[inv.role],
-                    })}
-                  </p>
-                  <div className="notif-actions">
-                    <button className="btn-primary" disabled={busyId === inv.id} onClick={() => onAccept(inv.id)}>
-                      {busyId === inv.id ? t('notifications.accepting') : t('notifications.accept')}
-                    </button>
-                    <button className="btn-ghost" disabled={busyId === inv.id} onClick={() => onDecline(inv.id)}>
-                      {t('notifications.decline')}
-                    </button>
+      {open &&
+        createPortal(
+          <div className="notif-pop" ref={popRef} role="menu">
+            <div className="notif-pop-head">{t('notifications.label')}</div>
+            {loading && count === 0 ? (
+              <p className="notif-empty">{t('notifications.loading')}</p>
+            ) : count === 0 ? (
+              <p className="notif-empty">{t('notifications.empty')}</p>
+            ) : (
+              <>
+                {shown.map((a) => (
+                  <div className="notif-card" key={a.id} role="menuitem">
+                    <span className={`notif-ic ${a.kind}`} style={a.kind === 'user' ? avatarStyle(a.avatarSeed ?? '') : undefined} aria-hidden="true">
+                      {a.kind === 'system' ? <SettingsIcon width={15} height={15} /> : initial(a.avatarSeed)}
+                    </span>
+                    <div className="notif-card-body">
+                      <div className="notif-card-head">
+                        <span className="notif-card-title">{a.title}</span>
+                        {a.date && <span className="notif-card-date">{fmtDate(a.date)}</span>}
+                      </div>
+                      {a.content && <p className="notif-card-text">{a.content}</p>}
+                      <div className="notif-card-actions">
+                        {a.invite ? (
+                          <>
+                            <button className="btn-primary" disabled={busyId === a.id} onClick={() => onAccept(a.invite!.id)}>
+                              {busyId === a.id ? t('notifications.accepting') : t('notifications.accept')}
+                            </button>
+                            <button className="btn-ghost" disabled={busyId === a.id} onClick={() => onDecline(a.invite!.id)}>
+                              {t('notifications.decline')}
+                            </button>
+                          </>
+                        ) : a.id === 'confirm-email' ? (
+                          <button className="btn-primary" disabled={resent} onClick={resendVerification}>
+                            {resent ? t('notifications.resent') : t('notifications.resend')}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                    {!a.invite && (
+                      <button className="notif-del" title={t('notifications.delete')} aria-label={t('notifications.delete')} onClick={() => dismiss(a.id)}>
+                        <XIcon width={13} height={13} />
+                      </button>
+                    )}
                   </div>
-                </div>
-              </div>
-            ))
-          )}
-          {error && <p className="notif-error">{error}</p>}
-        </div>
-      )}
+                ))}
+                {hasMore && (
+                  <button className="notif-more" onClick={() => setPage((p) => p + 1)}>
+                    {t('notifications.loadMore')}
+                  </button>
+                )}
+              </>
+            )}
+            {error && <p className="notif-error">{error}</p>}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
