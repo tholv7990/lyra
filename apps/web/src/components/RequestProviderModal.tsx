@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequestType, type UserRequest } from '@lyra/shared';
 import { api } from '../lib/api';
+import { IconButton } from './IconButton';
+import { XIcon } from '../layout/icons';
 
 // "Request a provider" — a signed-in user asks the admins to add a provider the
 // catalog doesn't list yet. Submits as a generic UserRequest (type: provider).
@@ -49,6 +51,13 @@ export function RequestProviderModal({
   return (
     <div className="dialog-scrim" onClick={onClose}>
       <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <IconButton
+          className="dialog-close"
+          icon={<XIcon width={15} height={15} />}
+          label={t('common.close')}
+          size="sm"
+          onClick={onClose}
+        />
         <h3>{t('settings.requestProviderTitle')}</h3>
         <p>{t('settings.requestProviderSub')}</p>
         {error && <p className="error">{error}</p>}

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProviderCatalogEntry } from '../lib/providerCatalog';
 import { ProviderBadge } from './ProviderBadge';
+import { IconButton } from './IconButton';
+import { XIcon } from '../layout/icons';
 
 // The single add/replace-key surface: pick a provider in the Settings dropdown,
 // click Add, paste the key here, Save. Replacing an existing key reopens this
@@ -34,6 +36,13 @@ export function AddKeyModal({
   return (
     <div className="dialog-scrim" onClick={onClose}>
       <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <IconButton
+          className="dialog-close"
+          icon={<XIcon width={15} height={15} />}
+          label={t('common.close')}
+          size="sm"
+          onClick={onClose}
+        />
         <div className="dialog-head-icon">
           <ProviderBadge entry={entry} size={28} />
           <h3>{t(replace ? 'settings.replaceKeyHeading' : 'settings.addKeyHeading', { provider: entry.label })}</h3>
