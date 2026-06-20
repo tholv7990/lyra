@@ -318,7 +318,12 @@ export function Chats() {
           cid = convo.id;
           createdNow = true;
         } catch (e) {
-          patchLast({ error: e instanceof Error ? e.message : t('chats.couldNotStart') });
+          // Couldn't even create the chat — roll back the optimistic bubbles and
+          // hand the user's text back so nothing is lost, then banner the error.
+          setMessages((m) => m.filter((x) => x.id !== userMsg.id && x.id !== aiMsg.id));
+          setInput(text);
+          setAttachments(media);
+          setError(e instanceof Error ? e.message : t('chats.couldNotStart'));
           setStreaming(false);
           return;
         }
@@ -353,16 +358,27 @@ export function Chats() {
         );
       } catch (e) {
         if ((e as Error)?.name !== 'AbortError') {
-          patchLast({ error: e instanceof Error ? e.message : t('chats.chatFailed') });
+          // Mid-stream failure: keep the partial answer + show the error inline.
+          // Pre-stream failure: the finally rolls back, so banner the error instead.
+          if (streamOpened) {
+            patchLast({ error: e instanceof Error ? e.message : t('chats.chatFailed') });
+          } else {
+            setError(e instanceof Error ? e.message : t('chats.chatFailed'));
+          }
         }
       } finally {
         setStreaming(false);
         abortRef.current = null;
-        if (createdNow && !streamOpened) {
-          // The send failed before anything was persisted (e.g. the chosen
-          // provider has no key) — discard the empty chat so it doesn't show up
-          // as a blank entry in history.
-          try { await api(`/conversations/${cid}`, { method: 'DELETE' }); } catch { /* ignore */ }
+        if (!streamOpened) {
+          // The send failed before anything streamed (e.g. the chosen provider has
+          // no key). Don't strand the user on a blank canvas: roll back the
+          // optimistic bubbles, restore their text, and discard the empty chat.
+          setMessages((m) => m.filter((x) => x.id !== userMsg.id && x.id !== aiMsg.id));
+          setInput(text);
+          setAttachments(media);
+          if (createdNow && cid) {
+            try { await api(`/conversations/${cid}`, { method: 'DELETE' }); } catch { /* ignore */ }
+          }
         } else if (createdNow && cid) {
           // Commit the new chat to its own URL now that it has content. We already
           // hold its messages, so mark it owned (no refetch). Re-pass the origin via
