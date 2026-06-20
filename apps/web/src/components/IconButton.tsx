@@ -9,6 +9,8 @@ interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 
   label: string;
   variant?: IconButtonVariant;
   size?: IconButtonSize;
+  /** Boxed treatment: a hairline border + surface fill (e.g. topbar actions). */
+  boxed?: boolean;
 }
 
 // The one icon-only button for the whole app: a single token-driven geometry
@@ -21,11 +23,14 @@ export function IconButton({
   label,
   variant = 'default',
   size = 'md',
+  boxed = false,
   className,
   type = 'button',
   ...rest
 }: IconButtonProps) {
-  const cls = ['icon-button', `ib-${variant}`, `ib-${size}`, className].filter(Boolean).join(' ');
+  const cls = ['icon-button', `ib-${variant}`, `ib-${size}`, boxed && 'ib-boxed', className]
+    .filter(Boolean)
+    .join(' ');
   return (
     <button type={type} className={cls} title={label} aria-label={label} {...rest}>
       {icon}

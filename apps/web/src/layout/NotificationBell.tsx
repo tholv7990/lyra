@@ -143,6 +143,7 @@ export function NotificationBell() {
   return (
     <div className="notif" ref={wrapRef}>
       <IconButton
+        boxed
         icon={<BellIcon />}
         label={label}
         aria-haspopup="true"

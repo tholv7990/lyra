@@ -1488,6 +1488,15 @@
   background: color-mix(in srgb, var(--success) 12%, transparent);
   color: var(--success);
 }
+/* Boxed treatment — hairline border + surface fill (topbar actions, toolbars). */
+.icon-button.ib-boxed {
+  border-color: var(--hairline);
+  background: var(--surface-1);
+}
+.icon-button.ib-boxed:hover {
+  background: var(--surface-2);
+  border-color: var(--hairline);
+}
 
 .icon-btn {
   background: var(--surface-2);
@@ -8192,6 +8201,24 @@
   display: block;
   flex: none;
   box-shadow: 0 0 0 1px var(--hairline);
+}
+
+/* App topbar: box the language + theme toggles to match the bell (design's
+   hairline + surface-fill controls). Scoped to .topbar-actions so the Landing,
+   auth, and Settings copies of these toggles keep their borderless treatment. */
+.topbar-actions .pref-theme-toggle,
+.topbar-actions .pref-lang-toggle {
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+}
+.topbar-actions .pref-theme-toggle:hover,
+.topbar-actions .pref-lang-toggle:hover {
+  background: var(--surface-2);
+}
+.topbar-actions .pref-lang-toggle {
+  height: var(--control-h);
+  padding: 0 10px;
 }
 
 /* Segmented System / Light / Dark control (Settings → Preferences). */
