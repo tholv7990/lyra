@@ -21,7 +21,7 @@ import {
   SettingsIcon,
   MembersIcon,
   CheckIcon,
-  XIcon,
+  ChevronIcon,
   PlusIcon,
 } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
@@ -56,8 +56,8 @@ const GS_LABEL: Record<string, string> = {
   project: 'Project',
 };
 
-function dismissKey(wsId: string) {
-  return `lyra:gs-dismissed:${wsId}`;
+function collapseKey(wsId: string) {
+  return `lyra:gs-collapsed:${wsId}`;
 }
 
 export function Home() {
@@ -67,7 +67,9 @@ export function Home() {
   const wsId = current?.id;
 
   const [stats, setStats] = useState<WorkspaceStats | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [resent, setResent] = useState(false);
+  const unverified = user?.emailVerified === false;
 
   // Pull the four workspace counts that drive the Get-started checklist. Each
   // call is best-effort (a failure just reads as "0 / not done yet") so the hub
@@ -77,7 +79,7 @@ export function Home() {
       setStats(null);
       return;
     }
-    setDismissed(localStorage.getItem(dismissKey(wsId)) === '1');
+    setCollapsed(localStorage.getItem(collapseKey(wsId)) === '1');
     let cancelled = false;
     Promise.all([
       api<ApiKeyInfo[]>(`/workspaces/${wsId}/keys`).catch(() => [] as ApiKeyInfo[]),
@@ -100,14 +102,23 @@ export function Home() {
     };
   }, [wsId]);
 
-  function dismiss() {
-    if (wsId) localStorage.setItem(dismissKey(wsId), '1');
-    setDismissed(true);
+  function toggleCollapse() {
+    setCollapsed((c) => {
+      const next = !c;
+      if (wsId) localStorage.setItem(collapseKey(wsId), next ? '1' : '0');
+      return next;
+    });
+  }
+
+  function resendVerification() {
+    api<{ ok: boolean }>('/auth/resend-verification', { method: 'POST' })
+      .then(() => setResent(true))
+      .catch(() => setResent(true)); // always show "sent" (never reveal account state)
   }
 
   const steps = stats ? gettingStartedSteps(stats) : [];
   const progress = gettingStartedProgress(steps);
-  const showGetStarted = !!stats && !dismissed && !progress.complete;
+  const showGetStarted = !!stats && !progress.complete;
 
   return (
     <div>
@@ -123,6 +134,18 @@ export function Home() {
             : t('home.noWorkspace')}
         </p>
       </div>
+
+      {unverified && (
+        <div className="gs-verify">
+          <div className="gs-verify-text">
+            <strong>{t('home.confirmEmailTitle')}</strong>
+            <span>{t('home.confirmEmailBody', { email: user?.email ?? '' })}</span>
+          </div>
+          <button className="gs-verify-btn" onClick={resendVerification} disabled={resent}>
+            {resent ? t('home.confirmEmailSent') : t('home.confirmEmailResend')}
+          </button>
+        </div>
+      )}
 
       {showGetStarted && (
         <section className="gs-card" aria-label={t('home.gsTitle')}>
@@ -140,13 +163,20 @@ export function Home() {
               </div>
             </div>
             <IconButton
-              icon={<XIcon width={15} height={15} />}
-              label={t('home.gsDismiss')}
+              icon={
+                <ChevronIcon
+                  width={16}
+                  height={16}
+                  style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s ease' }}
+                />
+              }
+              label={t(collapsed ? 'home.gsExpand' : 'home.gsCollapse')}
               size="sm"
-              onClick={dismiss}
+              onClick={toggleCollapse}
             />
           </div>
 
+          {!collapsed && (
           <ol className="gs-steps">
             {steps.map((step, i) => {
               const active = i === progress.activeIndex;
@@ -177,6 +207,7 @@ export function Home() {
               );
             })}
           </ol>
+          )}
         </section>
       )}
 

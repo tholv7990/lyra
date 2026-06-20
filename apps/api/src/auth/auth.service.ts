@@ -91,6 +91,17 @@ export class AuthService {
     void this.mailer.sendEmailVerification(email, url);
   }
 
+  // Re-send the verification link to a signed-in but unverified user (the Home
+  // "confirm your email" step). No-op if already verified. Always returns ok so
+  // the response never reveals account state.
+  async resendVerification(userId: string): Promise<{ ok: true }> {
+    const user = await this.users.findById(userId);
+    if (user && user.emailVerified === false) {
+      await this.sendVerificationEmail(userId, user.email);
+    }
+    return { ok: true };
+  }
+
   async signup(
     email: string,
     password: string,
@@ -142,9 +153,9 @@ export class AuthService {
     }
     const ok = await argon2.verify(user.passwordHash, password);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
-    if (user.emailVerified === false) {
-      throw new UnauthorizedException('Confirm your email to login');
-    }
+    // Unverified password users CAN sign in, but are limited (browse Home +
+    // Marketplace) until they confirm — the api blocks create/run actions and the
+    // web restricts the nav. (Was: hard block here.)
     const userId = user._id.toString();
     const refreshToken = await this.issueRefreshToken(userId);
     return {

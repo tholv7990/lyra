@@ -36,6 +36,7 @@ export default {
   openInChat: 'Mở trong chat',
   add: 'Thêm vào thư viện',
   adding: 'Đang thêm…',
+  confirmEmailToAdd: 'Xác nhận email để thêm',
   added: 'Đã thêm ✓',
 
   // Adopt confirmation

@@ -12,12 +12,14 @@ type AdoptState = 'idle' | 'busy' | 'done';
 export function MarketplaceDetails({
   prompt,
   state,
+  locked,
   onAdopt,
   onOpenInChat,
   onClose,
 }: {
   prompt: MarketplacePrompt;
   state: AdoptState;
+  locked?: boolean; // unverified email → adopt disabled
   onAdopt: () => void;
   onOpenInChat: () => void;
   onClose: () => void;
@@ -98,9 +100,15 @@ export function MarketplaceDetails({
           {done ? (
             <span className="mkt-added">{t('marketplace.added')}</span>
           ) : (
-            <button type="button" className="btn-primary mkt-details-add" onClick={onAdopt} disabled={state === 'busy'}>
+            <button
+              type="button"
+              className="btn-primary mkt-details-add"
+              onClick={onAdopt}
+              disabled={state === 'busy' || !!locked}
+              title={locked ? t('marketplace.confirmEmailToAdd') : undefined}
+            >
               <PlusIcon width={15} height={15} />
-              {state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
+              {locked ? t('marketplace.confirmEmailToAdd') : state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
             </button>
           )}
         </div>

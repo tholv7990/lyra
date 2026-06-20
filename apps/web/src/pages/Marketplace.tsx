@@ -10,6 +10,7 @@ import {
   type RankedMarketplacePrompt,
 } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { useAuth } from '../auth/useAuth';
 import { marketplaceApi } from '../lib/marketplace';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
@@ -41,8 +42,12 @@ type AdoptState = 'idle' | 'busy' | 'done';
 export function Marketplace() {
   const { t } = useTranslation();
   const { current } = useWorkspace();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const ws = current?.id;
+  // Unverified password signups can browse the marketplace but not adopt (the api
+  // blocks it too); the "Add" action is disabled until they confirm their email.
+  const unverified = user?.emailVerified === false;
 
   // Browse state
   const [items, setItems] = useState<MarketplacePrompt[]>([]);
@@ -208,6 +213,7 @@ export function Marketplace() {
       prompt={p}
       rank={rank}
       state={adopt[p.id] ?? 'idle'}
+      locked={unverified}
       copied={copied === p.id}
       onAdopt={() => setConfirmAdopt(p)}
       onView={() => setDetail(p)}
@@ -408,6 +414,7 @@ export function Marketplace() {
         <MarketplaceDetails
           prompt={detail}
           state={adopt[detail.id] ?? 'idle'}
+          locked={unverified}
           onAdopt={() => setConfirmAdopt(detail)}
           onOpenInChat={() => openInChat(detail)}
           onClose={() => setDetail(null)}
@@ -441,6 +448,7 @@ interface CardProps {
   prompt: MarketplacePrompt;
   rank?: RankedMarketplacePrompt;
   state: AdoptState;
+  locked?: boolean; // unverified email → adopt disabled
   copied: boolean;
   onAdopt: () => void;
   onView: () => void;
@@ -452,7 +460,7 @@ interface CardProps {
 // One catalog entry as a browsable card — prompts.chat-style gallery in the
 // app's own tokens. Title/body open the detail modal; copy / open-in-chat /
 // adopt are the grab-and-go actions.
-function Card({ prompt, rank, state, copied, onAdopt, onView, onCopy, onOpenInChat, t }: CardProps) {
+function Card({ prompt, rank, state, locked, copied, onAdopt, onView, onCopy, onOpenInChat, t }: CardProps) {
   const contributor = prompt.contributor?.trim();
   const done = state === 'done';
   return (
@@ -541,8 +549,8 @@ function Card({ prompt, rank, state, copied, onAdopt, onView, onCopy, onOpenInCh
               variant="primary"
               size="sm"
               icon={<PlusIcon width={14} height={14} />}
-              label={state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
-              disabled={state === 'busy'}
+              label={locked ? t('marketplace.confirmEmailToAdd') : state === 'busy' ? t('marketplace.adding') : t('marketplace.add')}
+              disabled={state === 'busy' || !!locked}
               onClick={onAdopt}
             />
           )}

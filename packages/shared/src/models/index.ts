@@ -32,6 +32,10 @@ export interface User {
   email: string;
   name: string;
   active: boolean;
+  // False = a password signup that hasn't confirmed their email yet. Such users
+  // can sign in but are limited (browse Home + Marketplace) until they verify;
+  // the api blocks create/run actions. Google sign-ins are auto-verified (true).
+  emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
   // True when this user's email is on the server's SUPER_ADMIN_EMAILS allowlist.

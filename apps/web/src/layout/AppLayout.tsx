@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -54,6 +54,9 @@ const COLLAPSE_KEY = 'lyra.nav.collapsed';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  // An unverified password signup is limited to Home + Marketplace until they
+  // confirm their email (the api enforces; this just hides the rest of the nav).
+  const limited = user?.emailVerified === false;
   const { current } = useWorkspace();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -94,6 +97,12 @@ export function AppLayout() {
   const isDetail =
     (mod.path !== '/' && location.pathname !== mod.path) || !!crumb.parent;
 
+  // Limited (unverified) users may only reach Home + Marketplace; bounce the rest
+  // back to Home (the nav already hides them, and the api blocks actions).
+  if (limited && location.pathname !== '/' && !location.pathname.startsWith('/marketplace')) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <BreadcrumbContext.Provider value={setCrumb}>
      <AppNavContext.Provider value={() => setOpen(true)}>
@@ -126,6 +135,8 @@ export function AppLayout() {
               <span className="nav-txt">{t('nav.marketplace')}</span>
             </NavLink>
 
+            {!limited && (
+            <>
             {/* Workspace group: the switcher heads its scoped resources. */}
             <div className="nav-group-label">{t('nav.workspace')}</div>
             <WorkspaceMenu />
@@ -171,6 +182,8 @@ export function AppLayout() {
                 <AdminIcon />
                 <span className="nav-txt">{t('nav.admin')}</span>
               </NavLink>
+            )}
+            </>
             )}
           </nav>
 

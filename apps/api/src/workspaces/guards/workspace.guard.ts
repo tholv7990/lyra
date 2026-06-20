@@ -10,7 +10,7 @@ import { Role, canCreate, canManageKeys } from '@lyra/shared';
 import { MembershipsService } from '../memberships.service';
 import { REQUIRE_OWNER_KEY } from '../decorators/require-owner.decorator';
 import { REQUIRE_MANAGE_KEYS_KEY } from '../decorators/require-manage-keys.decorator';
-import { REQUIRE_CREATE_KEY } from '../decorators/require-create.decorator';
+import { enforceCreateGate, userEmailVerified } from './create-gate';
 
 // Verifies the caller is a member of the targeted workspace, attaches the
 // membership to the request, and enforces @RequireOwner(). The workspace is
@@ -59,13 +59,7 @@ export class WorkspaceGuard implements CanActivate {
       throw new ForbiddenException('Key management requires Owner or canManageKeys');
     }
 
-    const requireCreate = this.reflector.getAllAndOverride<boolean>(
-      REQUIRE_CREATE_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-    if (requireCreate && !canCreate(ctx)) {
-      throw new ForbiddenException('Viewers cannot create or run — ask an owner to change your role');
-    }
+    enforceCreateGate(this.reflector, context, canCreate(ctx), userEmailVerified(user));
 
     (req as unknown as { membership: unknown }).membership = {
       ...ctx,

@@ -229,7 +229,7 @@ describe('AuthService', () => {
     expect(ok.refreshToken).toBeTruthy();
   });
 
-  it('login rejects an unverified email with a confirmation message', async () => {
+  it('login allows an unverified email (they sign in but are limited until they confirm)', async () => {
     const passwordHash = await argon2.hash('correct-password');
     users.findByEmail.mockResolvedValue({
       _id: 'u1',
@@ -239,10 +239,9 @@ describe('AuthService', () => {
       passwordHash,
     });
 
-    await expect(service.login('x@y.com', 'correct-password')).rejects.toThrow(
-      'Confirm your email to login',
-    );
-    expect(rtModel.store).toHaveLength(0);
+    const ok = await service.login('x@y.com', 'correct-password');
+    expect(ok.auth.accessToken).toBeTruthy();
+    expect(ok.refreshToken).toBeTruthy();
   });
 
   it('refresh rotates the token: the old one stops working, the new one works', async () => {

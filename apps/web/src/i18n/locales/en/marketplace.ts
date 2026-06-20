@@ -36,6 +36,7 @@ export default {
   openInChat: 'Open in chat',
   add: 'Add to my library',
   adding: 'Adding…',
+  confirmEmailToAdd: 'Confirm your email to add',
   added: 'Added ✓',
   openSource: 'Source: {{source}}',
 

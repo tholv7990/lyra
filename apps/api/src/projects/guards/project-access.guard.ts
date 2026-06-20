@@ -11,7 +11,7 @@ import { canViewProject, canEditProject, canCreate, type MemberCtx } from '@lyra
 import { ProjectsService } from '../projects.service';
 import { MembershipsService } from '../../workspaces/memberships.service';
 import { REQUIRE_PROJECT_EDIT_KEY } from '../decorators/project.decorators';
-import { REQUIRE_CREATE_KEY } from '../../workspaces/decorators/require-create.decorator';
+import { enforceCreateGate, userEmailVerified } from '../../workspaces/guards/create-gate';
 
 // Loads the project by :id, verifies the caller is a member of its workspace,
 // enforces view (always) and edit (@RequireProjectEdit) via the shared helpers,
@@ -58,13 +58,7 @@ export class ProjectAccessGuard implements CanActivate {
       throw new ForbiddenException('Cannot edit this project');
     }
 
-    const requireCreate = this.reflector.getAllAndOverride<boolean>(
-      REQUIRE_CREATE_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-    if (requireCreate && !canCreate(ctx)) {
-      throw new ForbiddenException('Viewers cannot run — ask an owner to change your role');
-    }
+    enforceCreateGate(this.reflector, context, canCreate(ctx), userEmailVerified(user));
 
     (req as unknown as { project: unknown }).project = project;
     return true;

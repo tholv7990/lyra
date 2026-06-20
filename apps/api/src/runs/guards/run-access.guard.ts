@@ -11,7 +11,7 @@ import { canViewProject, canCreate, type MemberCtx } from '@lyra/shared';
 import { RunsService } from '../runs.service';
 import { ProjectsService } from '../../projects/projects.service';
 import { MembershipsService } from '../../workspaces/memberships.service';
-import { REQUIRE_CREATE_KEY } from '../../workspaces/decorators/require-create.decorator';
+import { enforceCreateGate, userEmailVerified } from '../../workspaces/guards/create-gate';
 
 // Loads the run + its project, verifies workspace membership and project
 // visibility (shared/workspace = full access), and attaches the run. Mutating
@@ -52,13 +52,7 @@ export class RunAccessGuard implements CanActivate {
       }
     }
 
-    const requireCreate = this.reflector.getAllAndOverride<boolean>(
-      REQUIRE_CREATE_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-    if (requireCreate && !canCreate(ctx)) {
-      throw new ForbiddenException('Viewers cannot run — ask an owner to change your role');
-    }
+    enforceCreateGate(this.reflector, context, canCreate(ctx), userEmailVerified(user));
 
     (req as unknown as { run: unknown }).run = run;
     return true;

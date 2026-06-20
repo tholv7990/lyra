@@ -649,6 +649,23 @@
   margin-bottom: 24px;
 }
 
+/* "Confirm your email" banner (unverified password signups). */
+.gs-verify {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding: 14px 18px; margin-bottom: 16px;
+  border: 1px solid var(--hairline); border-radius: 12px; background: var(--surface-1);
+}
+.gs-verify-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gs-verify-text strong { font-size: var(--text-small); color: var(--warning); }
+.gs-verify-text span { font-size: var(--text-mini); color: var(--ink-muted); }
+.gs-verify-btn {
+  padding: 8px 14px; border: none; border-radius: 8px;
+  background: var(--primary); color: var(--on-accent);
+  font-size: var(--text-mini); font-weight: 600; cursor: pointer; flex-shrink: 0;
+}
+.gs-verify-btn:disabled { opacity: .6; cursor: default; }
+
 .gs-head {
   display: flex;
   align-items: flex-start;

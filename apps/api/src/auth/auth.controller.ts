@@ -96,6 +96,13 @@ export class AuthController {
     return { user };
   }
 
+  // Re-send the email-verification link to the signed-in (unverified) user.
+  @Post('resend-verification')
+  @HttpCode(200)
+  resendVerification(@CurrentUser() user: User) {
+    return this.auth.resendVerification(user.id);
+  }
+
   private webOrigin(): string {
     return this.config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
   }

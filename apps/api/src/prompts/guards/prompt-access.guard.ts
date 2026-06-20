@@ -11,7 +11,7 @@ import { PromptStatus, canCreate } from '@lyra/shared';
 import { PromptsService } from '../prompts.service';
 import { MembershipsService } from '../../workspaces/memberships.service';
 import { REQUIRE_PROMPT_OWNER_KEY } from '../decorators/prompt.decorators';
-import { REQUIRE_CREATE_KEY } from '../../workspaces/decorators/require-create.decorator';
+import { enforceCreateGate, userEmailVerified } from '../../workspaces/guards/create-gate';
 
 // Loads the prompt by :id, verifies the caller is a member of its workspace,
 // enforces visibility (public OR creator) and ownership (@RequirePromptOwner →
@@ -54,16 +54,12 @@ export class PromptAccessGuard implements CanActivate {
       throw new ForbiddenException('No access to this prompt');
     }
 
-    const requireCreate = this.reflector.getAllAndOverride<boolean>(
-      REQUIRE_CREATE_KEY,
-      [context.getHandler(), context.getClass()],
+    enforceCreateGate(
+      this.reflector,
+      context,
+      canCreate({ userId: user.id, role: membership.role, canManageKeys: membership.canManageKeys }),
+      userEmailVerified(user),
     );
-    if (
-      requireCreate &&
-      !canCreate({ userId: user.id, role: membership.role, canManageKeys: membership.canManageKeys })
-    ) {
-      throw new ForbiddenException('Viewers cannot add to this prompt — ask an owner to change your role');
-    }
 
     (req as unknown as { prompt: unknown }).prompt = prompt;
     return true;

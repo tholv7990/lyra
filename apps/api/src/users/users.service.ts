@@ -47,6 +47,9 @@ export class UsersService extends BaseRepository<User> {
       email: doc.email,
       name: doc.name,
       active: doc.active ?? true,
+      // Legacy docs (no field) are grandfathered as verified; only an explicit
+      // false (a fresh password signup) reads as unverified.
+      emailVerified: doc.emailVerified ?? true,
       isAdmin: this.admin.isSuperAdmin(doc.email),
       createdAt: iso(doc.createdAt),
       updatedAt: iso(doc.updatedAt ?? doc.createdAt),
