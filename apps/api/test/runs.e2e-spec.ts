@@ -6,6 +6,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
 import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
+import { UsersService } from '../src/users/users.service';
 
 // Run state machine + real StepProvider dispatch over a composable pipeline. The
 // Anthropic client is stubbed so steps exercise the provider path without spend.
@@ -61,15 +62,24 @@ describe('Runs (e2e)', () => {
       .expect(201);
 
   beforeAll(async () => {
+    // Signup now returns { ok: true }; login gives the access token.
+    // Email is immediately verified so @RequireCreate guards pass in tests.
+    await http()
+      .post('/auth/signup')
+      .send({ email: 'r-owner@example.com', password: 'password123', name: 'Owner' })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate(
+      { email: 'r-owner@example.com' },
+      { $set: { emailVerified: true } },
+    );
     token = (
       await http()
-        .post('/auth/signup')
-        .send({ email: 'r-owner@example.com', password: 'password123', name: 'Owner' })
-        .expect(201)
+        .post('/auth/login')
+        .send({ email: 'r-owner@example.com', password: 'password123' })
+        .expect(200)
     ).body.accessToken;
-    wsId = (
-      await http().post('/workspaces').set(auth(token)).send({ name: 'Acme' }).expect(201)
-    ).body.id;
+    // Personal workspace created at signup — use it directly.
+    wsId = (await http().get('/workspaces').set(auth(token)).expect(200)).body[0].id as string;
     projectId = (
       await http()
         .post(`/workspaces/${wsId}/projects`)
@@ -148,11 +158,19 @@ describe('Runs (e2e)', () => {
 
   it('denies access to a non-member', async () => {
     const run = (await createRun()).body;
+    await http()
+      .post('/auth/signup')
+      .send({ email: 'outsider@example.com', password: 'password123', name: 'Out' })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate(
+      { email: 'outsider@example.com' },
+      { $set: { emailVerified: true } },
+    );
     const outsider = (
       await http()
-        .post('/auth/signup')
-        .send({ email: 'outsider@example.com', password: 'password123', name: 'Out' })
-        .expect(201)
+        .post('/auth/login')
+        .send({ email: 'outsider@example.com', password: 'password123' })
+        .expect(200)
     ).body.accessToken;
     await http().get(`/runs/${run.id}`).set(auth(outsider)).expect(403);
   });

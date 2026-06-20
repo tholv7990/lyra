@@ -4,6 +4,8 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { WorkspacesService } from '../src/workspaces/workspaces.service';
+import { UsersService } from '../src/users/users.service';
 
 // Prompt library: draft (creator-only) vs public (all members), creator-only
 // edit/delete, soft delete + cascade, media attachments.
@@ -34,13 +36,18 @@ describe('Prompts (e2e)', () => {
 
   const http = () => request(app.getHttpServer());
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
-  const signup = async (email: string, name: string) =>
-    (
-      await http()
-        .post('/auth/signup')
-        .send({ email, password: 'password123', name })
-        .expect(201)
+  // Signup now returns { ok: true }; the access token comes from login.
+  // Email is immediately verified so @RequireCreate guards pass in tests.
+  const signup = async (email: string, name: string) => {
+    await http()
+      .post('/auth/signup')
+      .send({ email, password: 'password123', name })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate({ email }, { $set: { emailVerified: true } });
+    return (
+      await http().post('/auth/login').send({ email, password: 'password123' }).expect(200)
     ).body.accessToken as string;
+  };
   const newPrompt = (over: Record<string, unknown> = {}) => ({
     title: 'Hero shot',
     content: 'A clean studio render of {product}',
@@ -55,9 +62,12 @@ describe('Prompts (e2e)', () => {
 
   beforeAll(async () => {
     ownerToken = await signup('pr-owner@example.com', 'Owner');
-    teamId = (
-      await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Acme' }).expect(201)
-    ).body.id;
+    // Get the personal workspace and upgrade it to a team so invites work.
+    const workspaces = await http().get('/workspaces').set(auth(ownerToken)).expect(200);
+    teamId = workspaces.body[0].id as string;
+    const me = (await http().get('/auth/me').set(auth(ownerToken)).expect(200)).body.user;
+    await app.get(WorkspacesService).upgradeToTeam(teamId, me.id);
+
     const invite = (
       await http()
         .post(`/workspaces/${teamId}/invites`)
@@ -269,17 +279,21 @@ describe('Prompts (e2e)', () => {
   });
 
   it('cascades soft delete from a workspace to its prompts', async () => {
-    const tempWs = (
-      await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Temp' }).expect(201)
-    ).body.id;
+    // Sign up a fresh user whose personal workspace we can upgrade + cascade-delete.
+    const tempToken = await signup('pr-cascade@example.com', 'Cascade');
+    const workspaces = await http().get('/workspaces').set(auth(tempToken)).expect(200);
+    const tempWs = workspaces.body[0].id as string;
+    const tempMe = (await http().get('/auth/me').set(auth(tempToken)).expect(200)).body.user;
+    await app.get(WorkspacesService).upgradeToTeam(tempWs, tempMe.id);
+
     const prompt = (
       await http()
         .post(`/workspaces/${tempWs}/prompts`)
-        .set(auth(ownerToken))
+        .set(auth(tempToken))
         .send(newPrompt({ title: 'WS-bound', status: 'public' }))
         .expect(201)
     ).body;
-    await http().delete(`/workspaces/${tempWs}`).set(auth(ownerToken)).expect(204);
-    await http().get(`/prompts/${prompt.id}`).set(auth(ownerToken)).expect(404);
+    await http().delete(`/workspaces/${tempWs}`).set(auth(tempToken)).expect(204);
+    await http().get(`/prompts/${prompt.id}`).set(auth(tempToken)).expect(404);
   });
 });

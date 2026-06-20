@@ -4,6 +4,7 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { UsersService } from '../src/users/users.service';
 
 // File attachments (GridFS): upload + download + type gating.
 describe('Files (e2e)', () => {
@@ -31,22 +32,26 @@ describe('Files (e2e)', () => {
 
   const http = () => request(app.getHttpServer());
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
-  const signup = async (email: string) =>
-    (
-      await http()
-        .post('/auth/signup')
-        .send({ email, password: 'password123', name: 'U' })
-        .expect(201)
+  // Signup now returns { ok: true }; the access token comes from login.
+  // Email is immediately verified so @RequireCreate guards pass in tests.
+  const signup = async (email: string) => {
+    await http()
+      .post('/auth/signup')
+      .send({ email, password: 'password123', name: 'U' })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate({ email }, { $set: { emailVerified: true } });
+    return (
+      await http().post('/auth/login').send({ email, password: 'password123' }).expect(200)
     ).body.accessToken as string;
+  };
 
   let token: string;
   let wsId: string;
 
   beforeAll(async () => {
     token = await signup('files-owner@example.com');
-    wsId = (
-      await http().post('/workspaces').set(auth(token)).send({ name: 'Acme' }).expect(201)
-    ).body.id;
+    // Personal workspace created at signup — use it directly.
+    wsId = (await http().get('/workspaces').set(auth(token)).expect(200)).body[0].id as string;
   });
 
   it('uploads a file and serves it back', async () => {

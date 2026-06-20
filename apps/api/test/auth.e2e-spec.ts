@@ -6,8 +6,9 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
 // End-to-end check of the Phase 0 Definition of Done: signup persists a user
-// and returns a token + rt cookie, invalid bodies are rejected, refresh
-// rotates, /auth/me is gated, and no secret ever appears in a response.
+// and triggers email verification; login returns a token + rt cookie; invalid
+// bodies are rejected, refresh rotates, /auth/me is gated, and no secret
+// ever appears in a response.
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let mongod: MongoMemoryReplSet;
@@ -44,11 +45,28 @@ describe('Auth (e2e)', () => {
       .expect(400);
   });
 
-  it('signs up: returns accessToken + safe user, sets rt cookie, leaks no hash', async () => {
+  it('signs up: returns ok:true (email-confirm flow), leaks no hash', async () => {
     const res = await request(app.getHttpServer())
       .post('/auth/signup')
       .send(creds)
       .expect(201);
+
+    // signup now returns { ok: true } — the access token comes from /auth/login
+    expect(res.body.ok).toBe(true);
+    expect(res.body.accessToken).toBeUndefined();
+    expect(res.body.passwordHash).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toContain(creds.password);
+  });
+
+  it('rejects a duplicate signup', async () => {
+    await request(app.getHttpServer()).post('/auth/signup').send(creds).expect(409);
+  });
+
+  it('login returns accessToken + safe user, sets rt cookie, leaks no hash', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: creds.email, password: creds.password })
+      .expect(200);
 
     expect(res.body.accessToken).toBeTruthy();
     expect(res.body.user.email).toBe(creds.email);
@@ -58,10 +76,6 @@ describe('Auth (e2e)', () => {
     const cookies = res.headers['set-cookie'] as unknown as string[];
     expect(cookies.join()).toMatch(/rt=/);
     expect(cookies.join()).toMatch(/HttpOnly/i);
-  });
-
-  it('rejects a duplicate signup', async () => {
-    await request(app.getHttpServer()).post('/auth/signup').send(creds).expect(409);
   });
 
   it('blocks /auth/me without a token and allows it with a Bearer token', async () => {

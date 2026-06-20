@@ -6,6 +6,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
 import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
+import { UsersService } from '../src/users/users.service';
 
 // Running a composable pipeline in a project's context (chaining + gates).
 // The Anthropic client echoes the prompt it receives so chaining is observable.
@@ -62,15 +63,24 @@ describe('Pipeline runs (e2e)', () => {
   });
 
   beforeAll(async () => {
+    // Signup now returns { ok: true }; login gives the access token.
+    // Email is immediately verified so @RequireCreate guards pass in tests.
+    await http()
+      .post('/auth/signup')
+      .send({ email: 'pr-run@example.com', password: 'password123', name: 'O' })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate(
+      { email: 'pr-run@example.com' },
+      { $set: { emailVerified: true } },
+    );
     token = (
       await http()
-        .post('/auth/signup')
-        .send({ email: 'pr-run@example.com', password: 'password123', name: 'O' })
-        .expect(201)
+        .post('/auth/login')
+        .send({ email: 'pr-run@example.com', password: 'password123' })
+        .expect(200)
     ).body.accessToken;
-    wsId = (
-      await http().post('/workspaces').set(auth(token)).send({ name: 'Acme' }).expect(201)
-    ).body.id;
+    // Personal workspace created at signup — use it directly.
+    wsId = (await http().get('/workspaces').set(auth(token)).expect(200)).body[0].id as string;
     await http()
       .put(`/workspaces/${wsId}/keys/anthropic`)
       .set(auth(token))
@@ -93,14 +103,14 @@ describe('Pipeline runs (e2e)', () => {
       await http()
         .post(`/workspaces/${wsId}/prompts`)
         .set(auth(token))
-        .send({ title: 'Brief', content: 'Brief for {product}', type: 'brief', status: 'public' })
+        .send({ title: 'Brief', content: 'Brief for {product}', type: 'text', status: 'public' })
         .expect(201)
     ).body.id;
     prompt2 = (
       await http()
         .post(`/workspaces/${wsId}/prompts`)
         .set(auth(token))
-        .send({ title: 'Refine', content: 'Refine: {input}', type: 'insight', status: 'public' })
+        .send({ title: 'Refine', content: 'Refine: {input}', type: 'text', status: 'public' })
         .expect(201)
     ).body.id;
   });

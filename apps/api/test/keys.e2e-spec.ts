@@ -4,6 +4,8 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { WorkspacesService } from '../src/workspaces/workspaces.service';
+import { UsersService } from '../src/users/users.service';
 
 // Phase 2: encrypted workspace keys + manage-keys gating.
 describe('Keys (e2e)', () => {
@@ -33,13 +35,18 @@ describe('Keys (e2e)', () => {
 
   const http = () => request(app.getHttpServer());
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
-  const signup = async (email: string, name: string) =>
-    (
-      await http()
-        .post('/auth/signup')
-        .send({ email, password: 'password123', name })
-        .expect(201)
+  // Signup now returns { ok: true }; the access token comes from login.
+  // Email is immediately verified so @RequireCreate guards pass in tests.
+  const signup = async (email: string, name: string) => {
+    await http()
+      .post('/auth/signup')
+      .send({ email, password: 'password123', name })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate({ email }, { $set: { emailVerified: true } });
+    return (
+      await http().post('/auth/login').send({ email, password: 'password123' }).expect(200)
     ).body.accessToken as string;
+  };
 
   const PLAINTEXT = 'sk-live-abcdef0123456789';
   let ownerToken: string;
@@ -49,9 +56,12 @@ describe('Keys (e2e)', () => {
 
   beforeAll(async () => {
     ownerToken = await signup('k-owner@example.com', 'Owner');
-    teamId = (
-      await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Acme' }).expect(201)
-    ).body.id;
+    // Get the personal workspace and upgrade it to a team so invites work.
+    const workspaces = await http().get('/workspaces').set(auth(ownerToken)).expect(200);
+    teamId = workspaces.body[0].id as string;
+    const me = (await http().get('/auth/me').set(auth(ownerToken)).expect(200)).body.user;
+    await app.get(WorkspacesService).upgradeToTeam(teamId, me.id);
+
     const invite = (
       await http()
         .post(`/workspaces/${teamId}/invites`)

@@ -6,6 +6,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AnthropicClient } from '../src/runs/providers/anthropic.client';
 import { OpenAiCompatClient } from '../src/runs/providers/openai-compat.client';
+import { UsersService } from '../src/users/users.service';
 
 // Chats: create a conversation, stream a multi-turn reply (auto-persisted),
 // rename/star, ownership isolation. The provider clients are stubbed so tests
@@ -53,13 +54,18 @@ describe('Conversations (e2e)', () => {
 
   const http = () => request(app.getHttpServer());
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
-  const signup = async (email: string, name: string) =>
-    (
-      await http()
-        .post('/auth/signup')
-        .send({ email, password: 'password123', name })
-        .expect(201)
+  // Signup now returns { ok: true }; the access token comes from login.
+  // Email is immediately verified so @RequireCreate guards pass in tests.
+  const signup = async (email: string, name: string) => {
+    await http()
+      .post('/auth/signup')
+      .send({ email, password: 'password123', name })
+      .expect(201);
+    await app.get(UsersService).findOneAndUpdate({ email }, { $set: { emailVerified: true } });
+    return (
+      await http().post('/auth/login').send({ email, password: 'password123' }).expect(200)
     ).body.accessToken as string;
+  };
 
   let ownerToken: string;
   let otherToken: string;
@@ -68,9 +74,10 @@ describe('Conversations (e2e)', () => {
   beforeAll(async () => {
     ownerToken = await signup('chat-owner@example.com', 'Owner');
     otherToken = await signup('chat-other@example.com', 'Other');
+    // Personal workspace created at signup — use it directly.
     wsId = (
-      await http().post('/workspaces').set(auth(ownerToken)).send({ name: 'Acme' }).expect(201)
-    ).body.id;
+      await http().get('/workspaces').set(auth(ownerToken)).expect(200)
+    ).body[0].id as string;
     // The owner can manage keys on their own workspace — add an Anthropic key.
     await http()
       .put(`/workspaces/${wsId}/keys/anthropic`)
