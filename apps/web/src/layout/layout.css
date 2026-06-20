@@ -8412,6 +8412,35 @@
   background: var(--surface-2);
   border-color: var(--primary);
 }
+
+/* Primary-tint AI button — the design's "Build with AI" / "Edit with AI"
+   affordance (sparkle + tinted fill). Shared by the Pipelines list toolbar and
+   the builder toolbar. .btn-lg matches the 40px New-pipeline CTA. */
+.btn-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  height: var(--control-h);
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.btn-ai:hover {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.btn-ai.btn-lg {
+  height: 40px;
+  padding: 0 14px;
+}
 .dialog.bwa {
   max-width: 480px;
 }

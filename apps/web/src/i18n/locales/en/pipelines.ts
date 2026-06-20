@@ -88,6 +88,7 @@ export default {
   saveChanges: 'Save changes',
   testHint: 'Runs with no project · {note} fills from the note',
   test: 'Test',
+  testRunLabel: 'Test run',
   testing: 'Testing…',
 
   // Test run bar

@@ -255,7 +255,7 @@ export function Pipelines() {
             </div>
           )}
         </div>
-        <button type="button" className="pl-build" onClick={() => setAiOpen(true)}>
+        <button type="button" className="btn-ai btn-lg pl-build" onClick={() => setAiOpen(true)}>
           <SparkleIcon width={15} height={15} />
           {t('pipelines.buildWithAi')}
         </button>

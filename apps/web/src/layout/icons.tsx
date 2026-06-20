@@ -157,6 +157,13 @@ export const SparkleIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Filled play triangle — the run/test-run action.
+export const PlayIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M4.5 3.2 12 8l-7.5 4.8Z" />
+  </svg>
+);
+
 // Solid X (the plus glyph rotated 45°) — used for the cancel/discard action.
 export const XIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">

@@ -49,6 +49,7 @@ import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
 import { StepTestModal } from '../components/StepTestModal';
+import { PlayIcon, SparkleIcon } from '../layout/icons';
 import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
 import { buildEditGraph } from '../components/flow/buildGraph';
 import { useBreadcrumb } from '../layout/breadcrumb';
@@ -507,12 +508,11 @@ export function PipelineBuilder() {
           <>
             {canEdit && (
               <button
-                className="lin-ai-btn"
-                style={{ marginTop: 0 }}
+                className="btn-ai"
                 onClick={() => setAiEditOpen(true)}
                 title={t('pipelines.editWithAi')}
               >
-                <span aria-hidden>✨</span>
+                <SparkleIcon width={14} height={14} />
                 <span className="lin-ai-txt">{t('pipelines.editWithAi')}</span>
               </button>
             )}
@@ -523,7 +523,8 @@ export function PipelineBuilder() {
                 onClick={triggerTest}
                 title={t('pipelines.testHint')}
               >
-                {creatingRun ? t('pipelines.testing') : `${t('pipelines.test')} ▶`}
+                <PlayIcon width={13} height={13} />
+                {creatingRun ? t('pipelines.testing') : t('pipelines.testRunLabel')}
               </button>
             )}
             <EditorActions

@@ -47,7 +47,8 @@ Status: ✅ solid · 🔧 exists but consolidate · ⚠️ gap (build it)
 | Component | Today | Linear ref | Status |
 |---|---|---|---|
 | **Button** | `.btn-primary/.btn-ghost/.btn-danger` + sizes `.btn-lg/.btn-sm/.btn-xs` + `.btn-inline` | 32px / 4px radius / Inter 13 | 🔧 add a thin `<Button variant size>` so pages stop hand-writing classes + inline overrides |
-| **IconButton** | `IconButton`, `.icon-btn(-success/-danger)` | — | ✅ |
+| **AI button** | `.btn-ai` (+ `.btn-lg`) — primary-tint fill, primary border+text, `SparkleIcon`; the "Build with AI" / "Edit with AI" affordance (Pipelines list toolbar + builder toolbar) | tinted control, 32/40px | ✅ |
+| **IconButton** | `IconButton` (variants: default/primary/danger/success · sizes sm/md/lg · `boxed` = hairline border + surface fill, used by the topbar bell), `.icon-btn(-success/-danger)` | — | ✅ |
 | **Input / Textarea** | `.text-input`, `.field`, `.project-input` | radius 6, border-accent focus | ✅ |
 | **Checkbox** | — | 14px box, 3px radius, 1px border | ⚠️ gap |
 | **Toggle / Switch** | `.pw-toggle` (one-off) | 30×20 pill, 16px knob | ⚠️ gap (general one) |
@@ -84,7 +85,11 @@ Status: ✅ solid · 🔧 exists but consolidate · ⚠️ gap (build it)
 | **List + Row** | `.row/.row.clickable`, `.trow` + grouped `.tgroup`/`.tlist` | ✅ |
 | **Section header** | `.section-head` | ✅ |
 | **Toolbar** | `.lin-toolbar` | ✅ |
-| **Breadcrumb / Sidebar / Topbar / FAB** | layout shell | ✅ |
+| **Breadcrumb / Topbar / FAB** | layout shell (topbar = floating rounded bar; FAB = bottom-right AI launcher) | ✅ |
+| **Sidebar / menu** | active item = left orange pill (`.nav-item.active::before`) + bold weight; grouped labels (`.nav-group-label`); user footer (`.sidebar-user`) = tinted avatar + identity + inline logout `IconButton`; collapses to a 64px icon rail | ✅ |
+| **Home hero** | `.home-hero` — greeting + `.home-ws-meta` (avatar chip · workspace type · role pill) + actions (New project ghost / Start a chat primary) | ✅ |
+| **Hub tile** | `.panel` in `.panel-grid`; `.panel-top` = section icon + count/status `.badge`; `.panel-attn` = soft orange ring when a provider key is missing; `.panel-soon` = dashed "coming soon" | ✅ |
+| **Onboarding checklist** | `.gs-card` — leading icon, progress bar, collapsible; each `.gs-step` is active/done with a labeled CTA (`btn-primary/ghost btn-sm`) or a Done marker | ✅ |
 
 ### Domain (composed — leave as-is)
 

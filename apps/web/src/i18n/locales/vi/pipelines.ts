@@ -89,6 +89,7 @@ export default {
   saveChanges: 'Lưu thay đổi',
   testHint: 'Chạy không gắn dự án · {note} lấy từ ghi chú',
   test: 'Chạy thử',
+  testRunLabel: 'Chạy thử',
   testing: 'Đang chạy thử…',
 
   // Test run bar

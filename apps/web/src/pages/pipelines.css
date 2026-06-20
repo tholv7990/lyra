@@ -9,27 +9,10 @@
   flex-shrink: 0;
 }
 
-/* Build with AI — a primary-tint companion to the New-pipeline CTA (design). */
+/* Build with AI uses the shared primary-tint .btn-ai.btn-lg (layout.css); this is
+   only the list-toolbar layout hook so it doesn't shrink. */
 .pl-build {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
   flex-shrink: 0;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: var(--primary-tint);
-  color: var(--primary);
-  font: inherit;
-  font-size: var(--text-small);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
-}
-.pl-build:hover {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
 }
 
 /* Wider cards to fit the step flow. */
