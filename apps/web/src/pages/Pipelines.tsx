@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { labelColor, type Pipeline } from '@lyra/shared';
+import { StepMode, labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initial, avatarStyle } from '../lib/format';
+import { fmtDate, initials } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
@@ -13,14 +13,14 @@ import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
-import { PipelinesIcon, PlusIcon, XIcon } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
+import { CopyIcon, FilterIcon, PipelinesIcon, PlusIcon, SparkleIcon, TrashIcon } from '../layout/icons';
+import './marketplace.css';
+import './pipelines.css';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 
-// Tag vocabulary for the filter menu: dedupe case-insensitively (first-seen
-// display casing wins), count usages, sort by count then name. Mirrors how the
-// Prompts page folds tag case so "Research" and "research" are one filter chip.
+// Tag vocabulary for the filter menu (case-insensitive dedupe, count, sort).
 export function pipelineTagVocab(pipelines: Pipeline[]): [string, number][] {
   const byKey = new Map<string, { value: string; count: number }>();
   for (const p of pipelines) {
@@ -36,9 +36,7 @@ export function pipelineTagVocab(pipelines: Pipeline[]): [string, number][] {
     .map((x) => [x.value, x.count]);
 }
 
-// Pure filter predicate: name search (case-insensitive substring), tags
-// (OR within the group, case-insensitive), and creator (by id). Extracted so
-// the filter semantics are unit-tested.
+// Pure filter predicate: name search + tags (OR) + creator (by id).
 export function pipelineMatchesFilters(
   p: Pipeline,
   opts: { q: string; tags: string[]; creators: string[] },
@@ -53,6 +51,15 @@ export function pipelineMatchesFilters(
   return true;
 }
 
+function SearchGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+      <circle cx="7" cy="7" r="4.4" />
+      <path d="m10.4 10.4 3 3" />
+    </svg>
+  );
+}
+
 export function Pipelines() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -65,18 +72,18 @@ export function Pipelines() {
   const [q, setQ] = useState('');
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [creatorFilters, setCreatorFilters] = useState<string[]>([]);
+  const [aiOnly, setAiOnly] = useState(false);
+  const [gateOnly, setGateOnly] = useState(false);
   const [filterMenu, setFilterMenu] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Pipeline | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false); // "Build with AI" modal
+  const [aiOpen, setAiOpen] = useState(false);
 
   const wsId = current?.id;
-
   const tagVocab = useMemo(() => pipelineTagVocab(pipelines), [pipelines]);
-
   const creatorVocab = useMemo(() => {
     const byId = new Map<string, { id: string; name: string; count: number }>();
     for (const p of pipelines) {
@@ -100,16 +107,21 @@ export function Pipelines() {
 
   const visible = useMemo(
     () =>
-      pipelines.filter((p) =>
-        pipelineMatchesFilters(p, { q, tags: tagFilters, creators: creatorFilters }),
-      ),
-    [pipelines, q, tagFilters, creatorFilters],
+      pipelines.filter((p) => {
+        if (!pipelineMatchesFilters(p, { q, tags: tagFilters, creators: creatorFilters })) return false;
+        if (aiOnly && p.origin?.source !== 'ai') return false;
+        if (gateOnly && !p.steps.some((s) => s.mode === StepMode.Gate)) return false;
+        return true;
+      }),
+    [pipelines, q, tagFilters, creatorFilters, aiOnly, gateOnly],
   );
 
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const filterCount = tagFilters.length + creatorFilters.length;
-  useEffect(() => { setPage(1); }, [q, tagFilters, creatorFilters]);
+  const filterCount = tagFilters.length + creatorFilters.length + (aiOnly ? 1 : 0) + (gateOnly ? 1 : 0);
+  const rangeStart = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, visible.length);
+  useEffect(() => { setPage(1); }, [q, tagFilters, creatorFilters, aiOnly, gateOnly]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
   useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
@@ -129,17 +141,64 @@ export function Pipelines() {
     }
   }
 
+  // Duplicate = create a fresh pipeline from a copy of this one (no API endpoint;
+  // the server regenerates step ids from the bodies we send).
+  async function duplicate(p: Pipeline) {
+    if (!wsId) return;
+    try {
+      const created = await api<Pipeline>(`/workspaces/${wsId}/pipelines`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: t('pipelines.copyName', { name: p.name }),
+          description: p.description,
+          tags: p.tags,
+          steps: p.steps.map((s) => ({
+            name: s.name,
+            promptId: s.promptId,
+            provider: s.provider,
+            model: s.model,
+            mode: s.mode,
+            fanOut: s.fanOut,
+            condition: s.condition,
+          })),
+          variables: p.variables,
+        }),
+      });
+      setPipelines((list) => [created, ...list]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('pipelines.duplicateError'));
+    }
+  }
+
   return (
     <div>
-      <h1 className="sr-only">{t('nav.pipelines')}</h1>
-      <div className="lin-toolbar">
-        <input className="lin-search" placeholder={t('pipelines.searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="lin-filter" ref={filterRef}>
+      <header className="mkt-head">
+        <h1>{t('nav.pipelines')}</h1>
+        <p>{t('pipelines.subtitle')}</p>
+      </header>
+
+      {/* Toolbar — search · Filter · Build with AI · New pipeline */}
+      <div className="mkt-toolbar">
+        <label className="mkt-search">
+          <SearchGlyph />
+          <input
+            value={q}
+            placeholder={t('pipelines.searchPlaceholder')}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label={t('pipelines.searchPlaceholder')}
+          />
+        </label>
+        <div className="mkt-filter" ref={filterRef}>
           <button
-            className={`lin-filter-btn ${filterCount > 0 || filterMenu ? 'active' : ''}`}
+            type="button"
+            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
+            aria-expanded={filterMenu}
+            aria-haspopup="true"
             onClick={() => setFilterMenu((s) => !s)}
           >
-            {t('pipelines.filter')}{filterCount > 0 && <> <span className="lin-filter-count">{filterCount}</span></>}
+            <FilterIcon width={15} height={15} />
+            {t('pipelines.filterLabel')}
+            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
           </button>
           {filterMenu && (
             <div className="lin-menu">
@@ -148,39 +207,47 @@ export function Pipelines() {
                   type="button"
                   className="lin-menu-clear"
                   disabled={filterCount === 0}
-                  onClick={() => {
-                    setTagFilters([]);
-                    setCreatorFilters([]);
-                  }}
+                  onClick={() => { setTagFilters([]); setCreatorFilters([]); setAiOnly(false); setGateOnly(false); }}
                 >
                   {t('common.clear')}
                 </button>
               </div>
-              <details className="lin-menu-section">
-                <summary className="lin-menu-summary">
-                  <span>{t('pipelines.tags')}</span>
-                  {tagFilters.length > 0 && <span className="lin-menu-summary-count">{tagFilters.length}</span>}
-                </summary>
-                {tagVocab.length === 0 && <div className="lin-menu-empty">{t('pipelines.noTags')}</div>}
-                {tagVocab.map(([tag, count]) => (
-                  <button key={tag} className="lin-menu-item" onClick={() => setTagFilters((list) => toggleInList(list, tag))}>
-                    <span className="dot" style={{ background: labelColor(tag, labels) }} />
-                    {tag} <span className="lin-menu-count">{count}</span>
-                    {tagFilters.includes(tag) && <span className="lin-menu-check">✓</span>}
-                  </button>
-                ))}
-              </details>
+              <button className="lin-menu-item" onClick={() => setAiOnly((v) => !v)}>
+                <SparkleIcon width={14} height={14} />
+                {t('pipelines.filterAiOnly')}
+                {aiOnly && <span className="lin-menu-check">✓</span>}
+              </button>
+              <button className="lin-menu-item" onClick={() => setGateOnly((v) => !v)}>
+                <span className="dot" style={{ background: 'var(--warning)' }} />
+                {t('pipelines.filterGate')}
+                {gateOnly && <span className="lin-menu-check">✓</span>}
+              </button>
+              {tagVocab.length > 0 && (
+                <details className="lin-menu-section">
+                  <summary className="lin-menu-summary">
+                    <span>{t('pipelines.tags')}</span>
+                    {tagFilters.length > 0 && <span className="lin-menu-summary-count">{tagFilters.length}</span>}
+                  </summary>
+                  {tagVocab.map(([tag, count]) => (
+                    <button key={tag} className="lin-menu-item" onClick={() => setTagFilters((list) => toggleInList(list, tag))}>
+                      <span className="dot" style={{ background: labelColor(tag, labels) }} />
+                      {tag} <span className="lin-menu-count">{count}</span>
+                      {tagFilters.includes(tag) && <span className="lin-menu-check">✓</span>}
+                    </button>
+                  ))}
+                </details>
+              )}
               {creatorVocab.length > 0 && (
                 <details className="lin-menu-section">
                   <summary className="lin-menu-summary">
                     <span>{t('pipelines.createdBy')}</span>
                     {creatorFilters.length > 0 && <span className="lin-menu-summary-count">{creatorFilters.length}</span>}
                   </summary>
-                  {creatorVocab.map((creator) => (
-                    <button key={creator.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleInList(list, creator.id))}>
-                      <span className="dot" style={{ background: labelColor(creator.name, []) }} />
-                      {creator.name} <span className="lin-menu-count">{creator.count}</span>
-                      {creatorFilters.includes(creator.id) && <span className="lin-menu-check">✓</span>}
+                  {creatorVocab.map((c) => (
+                    <button key={c.id} className="lin-menu-item" onClick={() => setCreatorFilters((list) => toggleInList(list, c.id))}>
+                      <span className="dot" style={{ background: labelColor(c.name, []) }} />
+                      {c.name} <span className="lin-menu-count">{c.count}</span>
+                      {creatorFilters.includes(c.id) && <span className="lin-menu-check">✓</span>}
                     </button>
                   ))}
                 </details>
@@ -188,18 +255,27 @@ export function Pipelines() {
             </div>
           )}
         </div>
-        <button className="lin-ai-btn" onClick={() => setAiOpen(true)} title={t('pipelines.buildWithAi')}>
-          <span aria-hidden>✨</span>
-          <span className="lin-ai-txt">{t('pipelines.buildWithAi')}</span>
+        <button type="button" className="pl-build" onClick={() => setAiOpen(true)}>
+          <SparkleIcon width={15} height={15} />
+          {t('pipelines.buildWithAi')}
         </button>
         {mayCreate && (
-          <button className="lin-add" onClick={() => navigate('/pipelines/new')} title={t('pipelines.newPipeline')} aria-label={t('pipelines.newPipeline')}>
-            <PlusIcon />
+          <button className="btn-primary btn-inline btn-lg pl-new" onClick={() => navigate('/pipelines/new')}>
+            <PlusIcon width={15} height={15} />
+            {t('pipelines.newPipeline')}
           </button>
         )}
       </div>
 
       {aiOpen && wsId && <BuildWithAiModal wsId={wsId} onClose={() => setAiOpen(false)} />}
+
+      {!loading && visible.length > 0 && (
+        <div className="mkt-meta">
+          <span className="mkt-meta-count">
+            {t('pipelines.showingRange', { start: rangeStart, end: rangeEnd, total: visible.length })}
+          </span>
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
 
@@ -216,80 +292,107 @@ export function Pipelines() {
         <p className="empty">{t('pipelines.noMatch')}</p>
       ) : (
         <>
-        <div className="lib-grid">
-          {pageItems.map((p) => {
-            const flow = p.steps.map((s) => s.name?.trim()).filter(Boolean).join(' › ');
-            return (
-            <article className="lib-card pip-card" key={p.id}>
-              <div className="lib-card-head">
-                <button
-                  type="button"
-                  className="lib-card-title"
-                  title={p.name}
-                  onClick={() => navigate(`/pipelines/${p.id}`)}
-                >
-                  <span className="nm">{p.name}</span>
-                </button>
-                <span className="lib-card-badges">
-                  <span className="badge step-count">{t('pipelines.steps', { count: p.steps.length })}</span>
-                  {p.origin?.source === 'ai' && (
-                    <span className="badge ai-built" title={p.origin.goal || t('pipelines.aiBuilt')}>
-                      ✨ {t('pipelines.aiBuilt')}
-                    </span>
-                  )}
-                </span>
-              </div>
-
-              {flow && <p className="lib-card-body pip-flow">{flow}</p>}
-
-              {p.tags.length > 0 && (
-                <div className="lib-card-tags">
-                  {p.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="tag-chip ro">
-                      <span className="tdot" style={{ background: labelColor(tag, labels) }} />
-                      {tag}
-                    </span>
-                  ))}
-                  {p.tags.length > 3 && <span className="more">+{p.tags.length - 3}</span>}
+          <div className="mkt-grid pl-grid">
+            {pageItems.map((p) => (
+              <article className="mkt-card pl-card" key={p.id}>
+                <div className="pl-card-head">
+                  <button type="button" className="mkt-card-title" title={p.name} onClick={() => navigate(`/pipelines/${p.id}`)}>
+                    {p.name}
+                  </button>
+                  <div className="pl-card-badges">
+                    <span className="badge step-count">{t('pipelines.steps', { count: p.steps.length })}</span>
+                    {p.origin?.source === 'ai' && (
+                      <span className="pl-ai" title={p.origin.goal || t('pipelines.aiBuilt')}>
+                        <SparkleIcon width={11} height={11} />
+                        {t('pipelines.aiBuilt')}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              <div className="lib-card-foot">
-                <span className="lib-card-meta" title={t('pipelines.createdByName', { name: p.createdBy.name })}>
-                  <span className="prow-updated-icon" style={avatarStyle(p.createdBy.name)} aria-hidden="true">
-                    {initial(p.createdBy.name)}
+                {/* Step-flow strip */}
+                {p.steps.length > 0 && (
+                  <div className="pl-flow">
+                    {p.steps.map((s, i) => (
+                      <span className="pl-flow-item" key={s.id}>
+                        <span className="pl-step">
+                          <span className="pl-step-n" style={{ background: labelColor(s.provider || s.name, []) }}>{i + 1}</span>
+                          <span className="pl-step-name">{s.name}</span>
+                          {s.mode === StepMode.Gate && <span className="pl-gate" title={t('pipelines.gateHint')} />}
+                        </span>
+                        {i < p.steps.length - 1 && <span className="pl-arrow" aria-hidden>›</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {p.tags.length > 0 && (
+                  <div className="mkt-card-chips">
+                    {p.tags.map((tag) => (
+                      <span key={tag} className="mkt-chip">
+                        <span className="mkt-dot" style={{ background: labelColor(tag, labels) }} />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mkt-card-foot">
+                  <span className="mkt-by" title={t('pipelines.createdByName', { name: p.createdBy.name })}>
+                    <span
+                      className="mkt-by-avatar"
+                      style={{ background: labelColor(p.createdBy.name, []), color: 'var(--on-accent)' }}
+                      aria-hidden
+                    >
+                      {initials(p.createdBy.name)}
+                    </span>
+                    <span className="mkt-by-name">{p.createdBy.name} · {fmtDate(p.updatedAt)}</span>
                   </span>
-                  {fmtDate(p.updatedAt)}
-                </span>
-                <div className="lib-card-actions">
-                  <IconButton
-                    size="sm"
-                    icon={<PipelinesIcon width={15} height={15} />}
-                    label={t('pipelines.openNamed', { name: p.name })}
-                    onClick={() => navigate(`/pipelines/${p.id}`)}
-                  />
-                  {canEdit(p) && (
-                    <IconButton
-                      size="sm"
-                      variant="danger"
-                      icon={<XIcon width={14} height={14} />}
-                      label={t('pipelines.deleteNamed', { name: p.name })}
-                      onClick={() => setToDelete(p)}
-                    />
-                  )}
+                  <div className="mkt-card-actions">
+                    {canEdit(p) && (
+                      <IconButton
+                        boxed
+                        size="sm"
+                        icon={<CopyIcon width={15} height={15} />}
+                        label={t('pipelines.duplicateNamed', { name: p.name })}
+                        onClick={() => void duplicate(p)}
+                      />
+                    )}
+                    {canEdit(p) && (
+                      <IconButton
+                        boxed
+                        size="sm"
+                        variant="danger"
+                        icon={<TrashIcon width={15} height={15} />}
+                        label={t('pipelines.deleteNamed', { name: p.name })}
+                        onClick={() => setToDelete(p)}
+                      />
+                    )}
+                    <button type="button" className="pl-open" onClick={() => navigate(`/pipelines/${p.id}`)}>
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>
+                      {t('pipelines.open')}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </article>
-            );
-          })}
-        </div>
-        {totalPages > 1 && (
-          <div className="pager">
-            <button className="btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← {t('pipelines.prev')}</button>
-            <span className="pager-info">{t('pipelines.pageInfo', { page, totalPages, total: visible.length })}</span>
-            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>{t('common.next')} →</button>
+              </article>
+            ))}
           </div>
-        )}
+
+          {totalPages > 1 && (
+            <div className="mkt-pager">
+              <button type="button" className="mkt-page-btn" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
+                ‹ {t('pipelines.prev')}
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button key={n} type="button" className={`mkt-page-num${n === page ? ' active' : ''}`} onClick={() => setPage(n)}>
+                  {n}
+                </button>
+              ))}
+              <button type="button" className="mkt-page-btn" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
+                {t('pipelines.next')} ›
+              </button>
+            </div>
+          )}
         </>
       )}
 

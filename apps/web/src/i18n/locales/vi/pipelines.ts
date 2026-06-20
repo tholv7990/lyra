@@ -1,11 +1,25 @@
 export default {
+  // Heading
+  subtitle:
+    'Nối các prompt thành luồng lặp lại — mỗi bước gắn một prompt với một model và chạy tự động hoặc dừng ở cổng.',
+  showingRange: 'Hiển thị {{start}}–{{end}} trong {{total}} pipeline',
+
   // Toolbar / filters
   searchPlaceholder: 'Tìm pipeline…',
   filter: '+ Bộ lọc',
+  filterLabel: 'Bộ lọc',
+  filterAiOnly: 'Chỉ AI tạo',
+  filterGate: 'Có cổng',
+  gateHint: 'Cổng — dừng chờ phê duyệt',
   tags: 'Thẻ',
   noTags: 'Chưa có thẻ pipeline',
   createdBy: 'Người tạo',
   newPipeline: 'Pipeline mới',
+  open: 'Mở',
+  next: 'Sau',
+  duplicateNamed: 'Nhân bản {{name}}',
+  duplicateError: 'Không thể nhân bản pipeline',
+  copyName: '{{name}} (bản sao)',
 
   // AI builder
   buildWithAi: 'Tạo bằng AI',

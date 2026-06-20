@@ -1,11 +1,25 @@
 export default {
+  // Heading
+  subtitle:
+    'Chain prompts into a repeatable flow — each step binds a prompt to a model and runs automatically or pauses at a gate.',
+  showingRange: 'Showing {{start}}–{{end}} of {{total}} pipelines',
+
   // Toolbar / filters
   searchPlaceholder: 'Search pipelines…',
   filter: '+ Filter',
+  filterLabel: 'Filter',
+  filterAiOnly: 'AI-built only',
+  filterGate: 'Has a gate',
+  gateHint: 'Gate — pauses for approval',
   tags: 'Tags',
   noTags: 'No pipeline tags',
   createdBy: 'Created by',
   newPipeline: 'New pipeline',
+  open: 'Open',
+  next: 'Next',
+  duplicateNamed: 'Duplicate {{name}}',
+  duplicateError: 'Could not duplicate pipeline',
+  copyName: '{{name}} (copy)',
 
   // AI builder
   buildWithAi: 'Build with AI',

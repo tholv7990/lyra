@@ -1,0 +1,157 @@
+/* ===== Pipelines list =====
+   The gallery shell (heading · toolbar · search · meta · grid · card frame ·
+   footer · pager) is shared with the Marketplace (marketplace.css, imported by
+   Pipelines.tsx). Only the pipeline-specific pieces — the Build-with-AI button,
+   the step-flow strip, the AI-built badge, the Open button — live here.
+   Token-only (docs/lyra-design-system-actions.md). */
+
+.pl-new {
+  flex-shrink: 0;
+}
+
+/* Build with AI — a primary-tint companion to the New-pipeline CTA (design). */
+.pl-build {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.pl-build:hover {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+/* Wider cards to fit the step flow. */
+.mkt-grid.pl-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+}
+
+.pl-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pl-card-head .mkt-card-title {
+  margin: 0;
+}
+.pl-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.pl-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 980px;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Step-flow strip — horizontal step chips with arrows. */
+.pl-flow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 13px;
+  scrollbar-width: none;
+}
+.pl-flow::-webkit-scrollbar {
+  height: 0;
+}
+.pl-flow-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.pl-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 5px 9px 5px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+.pl-step-n {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--on-accent);
+  font-size: 9px;
+  font-weight: 700;
+}
+.pl-step-name {
+  max-width: 140px;
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pl-gate {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+  flex: none;
+}
+.pl-arrow {
+  color: var(--ink-tertiary);
+  font-size: 14px;
+  flex: none;
+}
+
+/* Open — a primary mini button (design). */
+.pl-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--primary);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: var(--text-mini);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.pl-open:hover {
+  background: var(--primary-hover);
+}
+
+@media (max-width: 560px) {
+  .pl-build,
+  .pl-new {
+    flex: 1;
+  }
+}
