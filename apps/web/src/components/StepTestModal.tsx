@@ -15,6 +15,7 @@ import type { ModelCatalog } from '../lib/useModels';
 import { Composer } from './Composer';
 import { Markdown } from './Markdown';
 import { ProviderIcon } from './ProviderIcon';
+import { PlayIcon } from '../layout/icons';
 
 function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
   return catalog[provider]?.find((m) => m.id === model)?.label ?? model;
@@ -217,6 +218,7 @@ export function StepTestModal({
           <div className="step-test-thread">
             {messages.length === 0 ? (
               <div className="chat-empty step-test-empty">
+                <span className="step-test-empty-ico" aria-hidden><PlayIcon width={22} height={22} /></span>
                 <h3>{t('run.testThisNode')}</h3>
                 <p>{t('run.testNodeHint')}</p>
               </div>

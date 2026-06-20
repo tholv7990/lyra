@@ -7590,6 +7590,16 @@
 .step-test-empty {
   min-height: 42vh;
 }
+.step-test-empty-ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: var(--primary-tint);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+}
 
 .step-test-composer {
   flex-shrink: 0;

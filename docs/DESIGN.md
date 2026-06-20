@@ -93,8 +93,17 @@ Status: ✅ solid · 🔧 exists but consolidate · ⚠️ gap (build it)
 
 ### Domain (composed — leave as-is)
 
-`TaskList` (grouped) · TaskRow · Project/Prompt/Pipeline cards · `RunFlow`/`RunStepCard`/`RunSummary` ·
-`FlowCanvas`/`FlowPager` · `Composer` · `Markdown` · `PromptCodeBlock` · `SavedResults`.
+`TaskList` (kanban board) · Project/Prompt/Pipeline cards · `RunFlow`/`RunStepCard`/`RunSummary` ·
+`FlowCanvas`/`FlowPager` · `StepCard` (builder node) · `Composer` · `Markdown` · `PromptCodeBlock` · `SavedResults`.
+
+### Gallery + page patterns (reuse, don't re-roll)
+
+- **Card gallery** (`marketplace.css` `.mkt-head/.mkt-toolbar/.mkt-search/.mkt-filter/.mkt-meta/.mkt-grid/.mkt-card/.mkt-card-foot/.mkt-by/.mkt-card-actions/.mkt-pager`) — shared by Marketplace, Prompts, **Pipelines** (`.pl-*`), **Projects** (`.pr-*`). Page-specific bits only in the page's own css.
+- **Projects list** (`projects.css` `.pr-card/.pr-vars/.pr-var/.pr-stats/.pr-open`) — `{key} value` variable chips, a tasks·shared stat row, primary `.pr-open`. `Project.taskCount` (shared model; active-task aggregate in `ProjectsService.toViews`) feeds the count.
+- **Project detail** (`projects.css` `.pd/.pd-context/.pd-meta/.pd-vars`) — context strip over a **task board** (`tasks.css` `.tboard/.tcol/.tcard`): status columns (New/In progress/On hold/Complete), per-column add (create + move).
+- **Project editor** (`projecteditor.css` `.pe-*`) — title helper, `{key}=value` rows + quick-add chips, **Status toggle switch** (`.pe-toggle`), **Visibility cards + member picker** (`.pe-vis-card/.pe-member`, wired to `shared`/`sharedWith`).
+- **Publish** (`publish.css` `.pub-*`) — 2-col composer: channel selector cards, caption card with `#`/`{product}` insert + count, media thumbs, review-gate footer, live preview panel.
+- **Editor shell**: `EditorShell` (back · title · actions · scrolling body) for every editor/detail/workbench.
 
 ## The fix list (priority order)
 
