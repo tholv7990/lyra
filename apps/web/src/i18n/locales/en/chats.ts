@@ -6,6 +6,7 @@ export default {
   messageCount: '{{count}} msg',
   menu: 'Menu',
   openMenu: 'Open menu',
+  openHistory: 'Conversations',
   startAChat: 'Start a chat',
   startAChatHint:
     'Pick a model, write a prompt, and iterate. Like a prompt? Save it to your library.',

@@ -34,7 +34,7 @@ import { Markdown } from '../components/Markdown';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { SaveAsPromptModal } from '../components/SaveAsPromptModal';
 import { CopilotPanel } from '../components/CopilotPanel';
-import { PlusIcon, TrashIcon, XIcon } from '../layout/icons';
+import { ListIcon, PlusIcon, TrashIcon, XIcon } from '../layout/icons';
 import { useAppNav, useBreadcrumb } from '../layout/breadcrumb';
 
 function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
@@ -537,6 +537,16 @@ export function Chats() {
         <header className="chat-top">
           <button className="chat-back chat-menu" onClick={openNav} aria-label={t('chats.openMenu')} title={t('chats.menu')}>
             <img src="/lyra-mark-squircle.svg" alt={t('chats.menu')} width={24} height={24} />
+          </button>
+          {/* Mobile-only: open the conversation-list drawer (desktop shows it as a
+              permanent pane, so the CSS hides this there). */}
+          <button
+            className="cicon chat-history-btn"
+            onClick={() => setShowHistory(true)}
+            aria-label={t('chats.openHistory')}
+            title={t('chats.openHistory')}
+          >
+            <ListIcon />
           </button>
           <div className="pg-headinfo">
             <div className="pg-headtitle">

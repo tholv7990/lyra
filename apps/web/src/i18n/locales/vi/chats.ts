@@ -6,6 +6,7 @@ export default {
   messageCount: '{{count}} tin nhắn',
   menu: 'Menu',
   openMenu: 'Mở menu',
+  openHistory: 'Cuộc trò chuyện',
   startAChat: 'Bắt đầu trò chuyện',
   startAChatHint:
     'Chọn một mô hình, viết prompt và thử nghiệm. Thấy prompt hay? Hãy lưu vào thư viện của bạn.',
