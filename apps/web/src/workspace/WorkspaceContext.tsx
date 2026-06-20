@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { WorkspaceView, CreateWorkspaceDto } from '@lyra/shared';
+import type { WorkspaceView } from '@lyra/shared';
 import { api, setWorkspaceId } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 
@@ -18,7 +18,6 @@ interface WorkspaceContextValue {
   loading: boolean;
   setCurrent: (id: string) => void;
   refresh: () => Promise<void>;
-  createWorkspace: (dto: CreateWorkspaceDto) => Promise<WorkspaceView>;
 }
 
 export const WorkspaceContext = createContext<WorkspaceContextValue | null>(
@@ -68,19 +67,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(LS_KEY, id);
   }, []);
 
-  const createWorkspace = useCallback(
-    async (dto: CreateWorkspaceDto) => {
-      const ws = await api<WorkspaceView>('/workspaces', {
-        method: 'POST',
-        body: JSON.stringify(dto),
-      });
-      await refresh();
-      setCurrent(ws.id);
-      return ws;
-    },
-    [refresh, setCurrent],
-  );
-
   const current = useMemo(
     () => workspaces.find((w) => w.id === currentId) ?? null,
     [workspaces, currentId],
@@ -93,9 +79,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       loading,
       setCurrent,
       refresh,
-      createWorkspace,
     }),
-    [workspaces, current, loading, setCurrent, refresh, createWorkspace],
+    [workspaces, current, loading, setCurrent, refresh],
   );
 
   return (
