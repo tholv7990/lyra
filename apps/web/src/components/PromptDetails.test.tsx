@@ -29,23 +29,24 @@ const prompt: Prompt = {
 };
 
 describe('PromptDetails', () => {
-  test('renders the read view: code-block, type + status badges, creator, variables', () => {
+  test('renders the read view: prompt block, type + status badges, creator, variables', () => {
     const html = renderToStaticMarkup(
       <MemoryRouter>
         <PromptDetails prompt={prompt} labels={[]} onClose={() => undefined} />
       </MemoryRouter>,
     );
 
-    // Read view shows the prompt in a code-block, not an editable textarea.
-    expect(html).toContain('class="pcb"');
+    // Read view shows the prompt in a highlighted code block, not an editable textarea.
+    expect(html).toContain('mkd-code');
     expect(html).not.toContain('<textarea');
-    expect(html).toContain('Full prompt body for {product} in {niche}');
-    // Meta: creator name, type badge, status badge (public).
-    expect(html).toContain('Putiin');
-    expect(html).toContain('badge mkt-type');
-    expect(html).toContain('pd-status st-public');
-    // Variables parsed from the body.
+    // The body is segmented: plain runs + highlighted {variable} spans.
+    expect(html).toContain('Full prompt body for');
+    expect(html).toContain('mkd-var-hl');
     expect(html).toContain('{product}');
     expect(html).toContain('{niche}');
+    // Meta: creator name, type pill, status badge (public).
+    expect(html).toContain('Putiin');
+    expect(html).toContain('mkt-type-pill');
+    expect(html).toContain('badge status-public');
   });
 });

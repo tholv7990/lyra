@@ -824,6 +824,58 @@
   }
 }
 
+/* ── Prompt detail modal (PromptDetails, reuses the .mkd-* shell) ──────────── */
+/* Header is title + edit/delete/close actions (no badges row). */
+.pd-head2 {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.pd-head2 .mkd-title {
+  font-size: 18px;
+}
+.pd-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.pd-meta2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.pd-meta-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+}
+.pd-meta-by {
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+}
+.pd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+.pd-vars {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+.pd-code {
+  margin-bottom: 24px;
+}
+
 /* ── Toast (the only one in the app) ──────────────────────────────────────── */
 .mkt-toast {
   position: fixed;

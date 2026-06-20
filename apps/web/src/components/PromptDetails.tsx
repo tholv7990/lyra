@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
-import { fmtDate, initial } from '../lib/format';
+import { fmtDate, initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { deleteResult } from '../lib/promptResults';
-import { PromptCodeBlock } from './PromptCodeBlock';
+import { promptSegments } from '../lib/promptSegments';
 import { SavedResults } from './SavedResults';
-import { ProviderIcon } from './ProviderIcon';
-import { XIcon } from '../layout/icons';
+import { IconButton } from './IconButton';
+import { CheckIcon, ChatsIcon, CopyIcon, PencilIcon, TrashIcon, XIcon } from '../layout/icons';
+import '../pages/marketplace.css';
 
 // {word} placeholders in the body, de-duped (skips {step:Name} refs).
 function promptVars(content: string): string[] {
@@ -17,19 +18,23 @@ function promptVars(content: string): string[] {
   return [...seen];
 }
 
-// Read-only full view of a library prompt (opened by the eye icon on a row/step
-// or a picker card), laid out like the marketplace detail: title · creator/date/
-// status/type meta · colored labels · variable chips · the prompt in a code-block
-// (copy + open-in-chat) · the run history below. Editing happens in the editor.
+// Read-only full view of a library prompt (modal): title + edit/delete/close ·
+// creator/date/status/type meta · labels · variable chips · the prompt with
+// highlighted variables (copy + open-in-chat) · the saved-results history.
+// Editing happens in the editor (onEdit); edit/delete are shown only when passed.
 export function PromptDetails({
   prompt,
   labels,
   onOpenInChat,
+  onEdit,
+  onDelete,
   onClose,
 }: {
   prompt: Prompt;
   labels: LabelInfo[];
   onOpenInChat?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -41,7 +46,7 @@ export function PromptDetails({
   // Local copy so deleting a result updates the list without a re-fetch.
   const [results, setResults] = useState<SavedResult[]>(prompt.results);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  // Re-sync the local copy when a different prompt is shown.
+  const [copied, setCopied] = useState(false);
   useEffect(() => { setResults(prompt.results); }, [prompt.id]);
 
   const canDelete = (r: SavedResult) =>
@@ -59,6 +64,12 @@ export function PromptDetails({
     }
   }
 
+  function copy() {
+    void navigator.clipboard?.writeText(prompt.content);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -67,86 +78,96 @@ export function PromptDetails({
 
   return (
     <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog prompt-details pd-with-history" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="pd-head">
-          <h3>{prompt.title}</h3>
-          <button className="pd-close" onClick={onClose} aria-label={t('common.close')} title={t('common.close')}>
-            <XIcon />
-          </button>
+      <div className="mkd-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <div className="mkd-head pd-head2">
+          <h2 className="mkd-title">{prompt.title}</h2>
+          <div className="pd-head-actions">
+            {onEdit && (
+              <IconButton boxed icon={<PencilIcon width={16} height={16} />} label={t('prompts.edit')} onClick={onEdit} />
+            )}
+            {onDelete && (
+              <IconButton
+                boxed
+                variant="danger"
+                icon={<TrashIcon width={16} height={16} />}
+                label={t('common.delete')}
+                onClick={onDelete}
+              />
+            )}
+            <button className="mkd-close" onClick={onClose} aria-label={t('common.close')} title={t('common.close')}>
+              <XIcon />
+            </button>
+          </div>
         </div>
 
-        <div className="pd-meta">
-          <span
-            className="pd-avatar"
-            style={{
-              color: labelColor(prompt.createdBy.name, []),
-              background: `${labelColor(prompt.createdBy.name, [])}16`,
-            }}
-            title={t('prompts.createdBy', { name: prompt.createdBy.name })}
-          >
-            {initial(prompt.createdBy.name)}
-          </span>
-          <span>{prompt.createdBy.name}</span>
-          <span className="pd-dot">·</span>
-          <span>{fmtDate(prompt.createdAt)}</span>
-          {prompt.provider && prompt.model && (
-            <>
-              <span className="pd-dot">·</span>
-              <span className="pd-provider">
-                <ProviderIcon provider={prompt.provider} size={14} />
-                {prompt.model}
-              </span>
-            </>
-          )}
-          <span className={`badge pd-status ${isPublic ? 'st-public' : 'st-draft'}`}>
-            {isPublic ? t('prompts.statusPublic') : t('prompts.statusDraft')}
-          </span>
-          <span className="badge mkt-type">{t(`prompts.type.${prompt.type ?? 'text'}`)}</span>
-        </div>
+        <div className="mkd-body">
+          <div className="pd-meta2">
+            <span
+              className="pd-meta-avatar"
+              style={{ background: labelColor(prompt.createdBy.name, []), color: 'var(--on-accent)' }}
+              aria-hidden
+            >
+              {initials(prompt.createdBy.name)}
+            </span>
+            <span className="pd-meta-by">
+              {prompt.createdBy.name} · {fmtDate(prompt.createdAt)}
+            </span>
+            <span className={`badge status-${prompt.status}`}>
+              {isPublic ? t('prompts.statusPublic') : t('prompts.statusDraft')}
+            </span>
+            <span className="mkt-type-pill">{t(`prompts.type.${prompt.type ?? 'text'}`)}</span>
+          </div>
 
-        <div className="pd-scroll">
-        {prompt.tags.length > 0 && (
-          <div className="mkt-details-tags">
-            {prompt.tags.map((tag) => {
-              const c = labelColor(tag, labels);
-              return (
-                <span key={tag} className="mkt-tag" style={{ background: `${c}1f`, borderColor: `${c}3a` }}>
-                  <span className="mkt-tag-dot" style={{ background: c }} />
+          {prompt.tags.length > 0 && (
+            <div className="pd-chips">
+              {prompt.tags.map((tag) => (
+                <span key={tag} className="mkt-chip">
+                  <span className="mkt-dot" style={{ background: labelColor(tag, labels) }} />
                   {tag}
                 </span>
-              );
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
 
-        {vars.length > 0 && (
-          <div className="pd-tags">
-            {vars.map((v) => (
-              <span key={v} className="tag-chip ro mkt-var">{`{${v}}`}</span>
-            ))}
-          </div>
-        )}
+          {vars.length > 0 && (
+            <div className="mkd-vars pd-vars">
+              {vars.map((v) => (
+                <span key={v} className="mkd-var">{`{${v}}`}</span>
+              ))}
+            </div>
+          )}
 
-        {prompt.content.trim() ? (
-          <PromptCodeBlock
-            content={prompt.content}
-            label={t('common.prompt')}
-            onRun={onOpenInChat}
-            runLabel={t('prompts.openInChat')}
-          />
-        ) : (
-          <div className="pd-body">
+          {prompt.content.trim() ? (
+            <>
+              <div className="mkd-prompt-head">
+                <span className="mkd-label">{t('common.prompt')}</span>
+                <div className="mkd-prompt-actions">
+                  <button type="button" className="mkd-btn" onClick={copy}>
+                    {copied ? <CheckIcon width={14} height={14} /> : <CopyIcon width={14} height={14} />}
+                    {copied ? t('common.copied') : t('common.copy')}
+                  </button>
+                  {onOpenInChat && (
+                    <button type="button" className="mkd-btn" onClick={onOpenInChat}>
+                      <ChatsIcon width={14} height={14} />
+                      {t('prompts.openInChat')}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="mkd-code pd-code">{promptSegments(prompt.content)}</div>
+            </>
+          ) : (
             <p className="muted">{t('prompts.noContent')}</p>
-          </div>
-        )}
+          )}
 
-        <SavedResults
-          results={results}
-          onOpenChat={(cid) => { onClose(); navigate(`/chats/${cid}`); }}
-          onDelete={onDeleteResult}
-          canDelete={canDelete}
-          deletingId={deletingId}
-        />
+          {/* Saved-results history (per the design's "Saved results · N" section). */}
+          <SavedResults
+            results={results}
+            onOpenChat={(cid) => { onClose(); navigate(`/chats/${cid}`); }}
+            onDelete={onDeleteResult}
+            canDelete={canDelete}
+            deletingId={deletingId}
+          />
         </div>
       </div>
     </div>

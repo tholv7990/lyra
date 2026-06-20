@@ -553,6 +553,16 @@ export function Prompts() {
           prompt={detailPrompt}
           labels={labels}
           onOpenInChat={() => void openInChat(detailPrompt)}
+          onEdit={
+            canEdit(detailPrompt)
+              ? () => { const p = detailPrompt; setDetailPrompt(null); navigate(`/prompts/${p.id}`); }
+              : undefined
+          }
+          onDelete={
+            canEdit(detailPrompt)
+              ? () => { const p = detailPrompt; setDetailPrompt(null); askDelete(p); }
+              : undefined
+          }
           onClose={() => setDetailPrompt(null)}
         />
       )}
