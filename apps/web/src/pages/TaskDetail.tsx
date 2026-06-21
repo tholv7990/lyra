@@ -32,7 +32,7 @@ import { RunRating } from '../components/RunRating';
 import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
-import { PencilIcon, PipelinesIcon, PlayIcon } from '../layout/icons';
+import { CheckIcon, PipelinesIcon, PlayIcon } from '../layout/icons';
 import { TaskStatusIcon } from '../components/TaskStatusIcon';
 import { TaskStatusPicker } from '../components/TaskStatusPicker';
 import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
@@ -78,6 +78,9 @@ export function TaskDetail() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Inline title/description editing (saved with the ✓ when changed).
+  const [titleDraft, setTitleDraft] = useState('');
+  const [descDraft, setDescDraft] = useState('');
 
   useBreadcrumb(task?.name ?? '…', { label: project?.name ?? '…', to: `/projects/${projectId}` });
 
@@ -91,6 +94,8 @@ export function TaskDetail() {
       ]);
       setProject(proj);
       setTask(tsk);
+      setTitleDraft(tsk.name);
+      setDescDraft(tsk.description ?? '');
       const effectiveWsId = tsk.workspaceId;
       const [lib, rs, keys, mems] = await Promise.all([
         api<Pipeline[]>(`/workspaces/${effectiveWsId}/pipelines`),
@@ -347,19 +352,6 @@ export function TaskDetail() {
       title={
         <h2 className="eshell-name">{task.name}</h2>
       }
-      actions={
-        canEdit ? (
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={t('common.edit')}
-            title={t('common.edit')}
-            onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}
-          >
-            <PencilIcon width={16} height={16} />
-          </button>
-        ) : undefined
-      }
     >
       {askVarsFor && (
         <RunVariablesModal
@@ -377,12 +369,42 @@ export function TaskDetail() {
           <div className="tw-single">
             {error && <p className="error">{error}</p>}
 
-            {/* Task title + status */}
+            {/* Task title + description — editable inline; ✓ saves when changed. */}
             <div className="tw-title">
-              <TaskStatusIcon status={task.status} size={20} />
-              <h1>{task.name}</h1>
+              {canEdit ? (
+                <input
+                  className="tw-title-input"
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  placeholder={t('tasks.namePlaceholder')}
+                />
+              ) : (
+                <h1>{task.name}</h1>
+              )}
+              {canEdit && (titleDraft !== task.name || descDraft !== (task.description ?? '')) && (
+                <button
+                  type="button"
+                  className="icon-btn-success tw-save"
+                  disabled={savingTask || !titleDraft.trim()}
+                  onClick={() => void patchTask({ name: titleDraft.trim(), description: descDraft })}
+                  title={t('common.save')}
+                  aria-label={t('common.save')}
+                >
+                  <CheckIcon width={16} height={16} />
+                </button>
+              )}
             </div>
-            <p className="tw-desc">{task.description || t('tasks.descriptionPlaceholder')}</p>
+            {canEdit ? (
+              <textarea
+                className="tw-desc-input"
+                value={descDraft}
+                onChange={(e) => setDescDraft(e.target.value)}
+                placeholder={t('tasks.descriptionPlaceholder')}
+                rows={2}
+              />
+            ) : (
+              <p className="tw-desc">{task.description || t('tasks.descriptionPlaceholder')}</p>
+            )}
 
             {/* Properties — compact inline row (single-column, no sidebar) */}
             <div className="tw-props">
@@ -420,11 +442,6 @@ export function TaskDetail() {
                   ))}
                 </div>
               ) : null}
-              {canEdit && (
-                <button type="button" className="tw-edit btn-ghost btn-inline" onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}>
-                  <PencilIcon width={14} height={14} /> {t('common.edit')}
-                </button>
-              )}
             </div>
 
             {assigned.length === 0 ? (
