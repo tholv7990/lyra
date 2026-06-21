@@ -13,7 +13,6 @@ import { canCreateIn } from '../lib/perms';
 import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
 import { Pager } from '../components/Pager';
@@ -74,7 +73,6 @@ export function Pipelines() {
   const [deleting, setDeleting] = useState(false);
   const [toDuplicate, setToDuplicate] = useState<Pipeline | null>(null);
   const [duplicating, setDuplicating] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
 
   const wsId = current?.id;
   const tagVocab = useMemo(() => pipelineTagVocab(pipelines), [pipelines]);
@@ -233,10 +231,6 @@ export function Pipelines() {
                 </details>
               )}
         </FilterPopover>
-        <button type="button" className="btn-ai btn-lg pl-build" onClick={() => setAiOpen(true)}>
-          <SparkleIcon width={15} height={15} />
-          {t('pipelines.buildWithAi')}
-        </button>
         {mayCreate && (
           <button className="btn-primary btn-inline btn-lg pl-new" onClick={() => navigate('/pipelines/new')}>
             <PlusIcon width={15} height={15} />
@@ -244,8 +238,6 @@ export function Pipelines() {
           </button>
         )}
       </div>
-
-      {aiOpen && wsId && <BuildWithAiModal wsId={wsId} onClose={() => setAiOpen(false)} />}
 
       {!loading && visible.length > 0 && (
         <div className="mkt-meta">
