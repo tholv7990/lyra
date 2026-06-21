@@ -19,6 +19,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
 import { Composer } from '../components/Composer';
+import { EditorShell } from '../components/EditorShell';
 import { CheckIcon } from '../layout/icons';
 import { TypeSelect } from '../components/TypeSelect';
 import { Toggle } from '../components/Toggle';
@@ -186,28 +187,34 @@ export function PromptEditor() {
   const isPublic = form.status === PromptStatus.Public;
 
   return (
-    <form className="pe2" onSubmit={(e) => { e.preventDefault(); void save(); }}>
-      {/* Header: title (left) · Cancel + Save prompt (right). The "Prompts / …"
-          breadcrumb is in the app top bar (useBreadcrumb). */}
-      <div className="pe2-head">
-        <input
-          className="pe2-title"
-          placeholder={t('prompts.promptTitlePlaceholder')}
-          autoFocus={!isEdit}
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-        />
-        <div className="pe2-actions">
-          <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => navigate('/prompts')}>
-            {t('common.cancel')}
+    <>
+      <EditorShell
+        crumb={{ label: t('nav.prompts'), to: '/prompts' }}
+        title={
+          <input
+            className="eshell-name"
+            placeholder={t('prompts.promptTitlePlaceholder')}
+            autoFocus={!isEdit}
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void save(); } }}
+          />
+        }
+        onClose={() => navigate('/prompts')}
+        actions={
+          <button
+            type="button"
+            className="icon-btn-success"
+            title={busy ? t('common.saving') : t('prompts.savePrompt')}
+            aria-label={t('prompts.savePrompt')}
+            disabled={busy || !form.title.trim()}
+            onClick={() => void save()}
+          >
+            <CheckIcon width={16} height={16} />
           </button>
-          <button type="submit" className="btn-primary btn-inline btn-sm" disabled={busy || !form.title.trim()}>
-            <CheckIcon width={14} height={14} />
-            {busy ? t('common.saving') : t('prompts.savePrompt')}
-          </button>
-        </div>
-      </div>
-
+        }
+      >
+        <div className="pe2">
       {error && <p className="error pe-error">{error}</p>}
 
       {/* Type (metadata) + Public/Draft visibility toggle */}
@@ -279,6 +286,8 @@ export function PromptEditor() {
           ))}
         </div>
       )}
+        </div>
+      </EditorShell>
 
       {blocker.state === 'blocked' && (
         <div className="dialog-scrim" onClick={() => blocker.reset?.()}>
@@ -309,6 +318,6 @@ export function PromptEditor() {
           </div>
         </div>
       )}
-    </form>
+    </>
   );
 }

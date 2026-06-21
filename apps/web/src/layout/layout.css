@@ -1571,8 +1571,10 @@
   background: color-mix(in srgb, var(--card) 68%, transparent);
   backdrop-filter: blur(14px);
 }
-.eshell-back {
-  display: none; /* desktop relies on the app breadcrumb back; shown on mobile */
+/* Lyra mark on the left — opens the nav drawer. Mobile-only: on desktop the
+   sidebar shows the logo and the app top bar shows the breadcrumb. */
+.eshell-logo {
+  display: none;
   align-items: center;
   justify-content: center;
   width: 32px;
@@ -1581,13 +1583,35 @@
   margin-left: -4px;
   border: none;
   background: transparent;
-  color: var(--ink-muted);
-  font-size: 22px;
-  line-height: 1;
   cursor: pointer;
   border-radius: var(--radius-md);
 }
-.eshell-back:hover { background: var(--surface-2); color: var(--ink); }
+.eshell-logo:hover { background: var(--surface-2); }
+.eshell-logo img { display: block; border-radius: 6px; }
+/* title slot + its module crumb prefix */
+.eshell-headinfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* "Prompts /" crumb before the title — mobile-only, like the chat crumb (the
+   desktop app top bar already shows the breadcrumb). */
+.eshell-crumb,
+.eshell-crumb-sep {
+  display: none;
+  flex-shrink: 0;
+}
+.eshell-crumb {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.eshell-crumb-sep { color: var(--ink-faint); }
+.eshell-close { flex-shrink: 0; }
 /* the title slot — pass a borderless input or an <h2> with this class */
 .eshell-name {
   flex: 1;
@@ -1947,7 +1971,9 @@
   .content:has(.eshell) { padding: 0; max-width: none; }
   .eshell,
   .eshell.wide { max-width: none; height: 100dvh; padding: 0; }
-  .eshell-back { display: inline-flex; }
+  .eshell-logo { display: inline-flex; }
+  .eshell-crumb { display: inline; }
+  .eshell-crumb-sep { display: inline; }
   .eshell-head {
     height: 52px;
     gap: 8px;

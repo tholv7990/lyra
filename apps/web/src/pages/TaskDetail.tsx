@@ -342,7 +342,8 @@ export function TaskDetail() {
   return (
     <EditorShell
       wide
-      onBack={() => navigate(`/projects/${projectId}`)}
+      crumb={{ label: project?.name ?? '…', to: `/projects/${projectId}` }}
+      onClose={() => navigate(`/projects/${projectId}`)}
       title={
         <h2 className="eshell-name">{task.name}</h2>
       }

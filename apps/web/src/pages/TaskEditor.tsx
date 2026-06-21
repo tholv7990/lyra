@@ -6,7 +6,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
-import { CheckIcon, XIcon } from '../layout/icons';
+import { CheckIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 // Small editor for a task's name + description — mirrors the project editor's
@@ -74,7 +74,8 @@ export function TaskEditor() {
 
   return (
     <EditorShell
-      onBack={() => navigate(cancelTo)}
+      crumb={{ label: projectName, to: `/projects/${projectId}` }}
+      onClose={() => navigate(cancelTo)}
       title={
         <input
           className="eshell-name"
@@ -86,21 +87,16 @@ export function TaskEditor() {
         />
       }
       actions={
-        <>
-          <button type="button" className="icon-btn-danger" title={t('common.cancel')} aria-label={t('common.cancel')} onClick={() => navigate(cancelTo)}>
-            <XIcon />
-          </button>
-          <button
-            type="button"
-            className="icon-btn-success"
-            title={t('common.save')}
-            aria-label={t('common.save')}
-            disabled={busy || !name.trim()}
-            onClick={() => void save()}
-          >
-            <CheckIcon width={16} height={16} />
-          </button>
-        </>
+        <button
+          type="button"
+          className="icon-btn-success"
+          title={t('common.save')}
+          aria-label={t('common.save')}
+          disabled={busy || !name.trim()}
+          onClick={() => void save()}
+        >
+          <CheckIcon width={16} height={16} />
+        </button>
       }
     >
       {error && <p className="error">{error}</p>}

@@ -169,7 +169,8 @@ export function ProjectEditor() {
 
   return (
     <EditorShell
-      onBack={() => navigate(cancelTo)}
+      crumb={{ label: t('nav.projects'), to: '/projects' }}
+      onClose={() => navigate(cancelTo)}
       title={
         <input
           className="eshell-name"
@@ -181,20 +182,16 @@ export function ProjectEditor() {
         />
       }
       actions={
-        <>
-          <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => navigate(cancelTo)}>
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn-primary btn-inline btn-sm"
-            disabled={busy || !form.name.trim()}
-            onClick={() => void save()}
-          >
-            <CheckIcon width={14} height={14} />
-            {isEdit ? t('projects.saveChanges') : t('projects.saveProject')}
-          </button>
-        </>
+        <button
+          type="button"
+          className="icon-btn-success"
+          title={busy ? t('common.saving') : isEdit ? t('projects.saveChanges') : t('projects.saveProject')}
+          aria-label={isEdit ? t('projects.saveChanges') : t('projects.saveProject')}
+          disabled={busy || !form.name.trim()}
+          onClick={() => void save()}
+        >
+          <CheckIcon width={16} height={16} />
+        </button>
       }
     >
       <div className="pe-edit">

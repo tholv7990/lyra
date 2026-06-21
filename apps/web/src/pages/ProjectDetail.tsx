@@ -87,7 +87,8 @@ export function ProjectDetail() {
   return (
     <EditorShell
       wide
-      onBack={() => navigate('/projects')}
+      crumb={{ label: t('nav.projects'), to: '/projects' }}
+      onClose={() => navigate('/projects')}
       title={<h2 className="eshell-name">{project.name}</h2>}
       actions={
         canEdit ? (

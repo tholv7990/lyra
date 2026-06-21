@@ -51,7 +51,7 @@ import { PromptDetails } from '../components/PromptDetails';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
-import { PlayIcon, SparkleIcon } from '../layout/icons';
+import { CheckIcon, PlayIcon, SparkleIcon } from '../layout/icons';
 import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
 import { buildEditGraph } from '../components/flow/buildGraph';
 import { useBreadcrumb } from '../layout/breadcrumb';
@@ -480,7 +480,8 @@ export function PipelineBuilder() {
   return (
     <EditorShell
       wide
-      onBack={() => navigate('/pipelines')}
+      crumb={{ label: t('nav.pipelines'), to: '/pipelines' }}
+      onClose={() => navigate('/pipelines')}
       title={
         !compactHead ? (
           <input
@@ -533,12 +534,16 @@ export function PipelineBuilder() {
                 {creatingRun ? t('pipelines.testing') : t('pipelines.testRunLabel')}
               </button>
             )}
-            <EditorActions
-              onConfirm={() => void save()}
-              onCancel={() => navigate('/pipelines')}
-              confirmDisabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
-              confirmTitle={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
-            />
+            <button
+              type="button"
+              className="icon-btn-success"
+              disabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
+              title={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
+              aria-label={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
+              onClick={() => void save()}
+            >
+              <CheckIcon width={16} height={16} />
+            </button>
           </>
         )
       }
