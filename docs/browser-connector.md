@@ -13,7 +13,7 @@ A second, **off-by-default** publisher inside `apps/connectors-service`, on its 
 `/browser/*` routes (it does **not** touch the Postiz `publish` flow). It:
 
 1. launches a **GoLogin** profile that's already logged into the target account,
-2. attaches **Playwright** to that profile over CDP,
+2. attaches **Puppeteer** (`puppeteer-core`) to that profile over CDP,
 3. runs a per-platform upload script (`scripts/tiktok.upload.ts`, `youtube.upload.ts`).
 
 The upload scripts are **best-effort skeletons** — the platforms' web UIs drift, so
@@ -23,10 +23,10 @@ sets file + caption, does **not** submit).
 
 ## Arm it
 
-1. Install the optional deps (kept out of the default install on purpose):
+1. Install the optional deps (kept out of the default install on purpose).
+   `puppeteer-core` pulls **no** bundled Chromium — we attach to GoLogin's Orbita:
    ```bash
-   pnpm --filter @lyra/connectors-service add gologin playwright
-   npx playwright install chromium
+   pnpm --filter @lyra/connectors-service add gologin puppeteer-core
    ```
 2. Set env on the `lyra-connectors` process (ecosystem.config.js):
    ```

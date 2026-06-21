@@ -1,7 +1,7 @@
 // Thin wrapper over the GoLogin SDK. `gologin` is NOT a declared dependency — it is
 // imported dynamically (the specifier is typed `string` so TS/build don't resolve it)
 // so the connectors-service builds and runs without it. Installing it is part of
-// arming the connector:  pnpm --filter @lyra/connectors-service add gologin playwright
+// arming the connector:  pnpm --filter @lyra/connectors-service add gologin puppeteer-core
 export interface GologinSession {
   /** CDP websocket endpoint to attach Playwright to. */
   wsUrl: string;
@@ -25,7 +25,7 @@ export async function startProfile(token: string, profileId: string): Promise<Go
     GoLogin = ctor;
   } catch {
     throw new Error(
-      'browser connector: `gologin` not installed — run `pnpm --filter @lyra/connectors-service add gologin playwright`',
+      'browser connector: `gologin` not installed — run `pnpm --filter @lyra/connectors-service add gologin puppeteer-core`',
     );
   }
   const gl = new GoLogin({ token, profile_id: profileId });

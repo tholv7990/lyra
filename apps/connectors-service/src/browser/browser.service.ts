@@ -8,7 +8,7 @@ import { safeFetch } from '../common/safe-fetch';
 import { JobStore } from '../publish/job-store';
 import { browserConfig, type BrowserConfig } from './browser.config';
 import { startProfile } from './gologin.client';
-import { runUpload } from './playwright.runner';
+import { runUpload } from './puppeteer.runner';
 import { BROWSER_PLATFORMS, type BrowserPublishBody } from './dto';
 
 // Browser-automation publisher (GoLogin profile + Playwright). FENCED:
