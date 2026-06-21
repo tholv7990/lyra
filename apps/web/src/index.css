@@ -2,10 +2,10 @@
   /* Lyra — LIGHT mode, Linear-style components (subset; see src/styles/tokens.css) */
   --canvas: #ffffff;
   /* App backdrop — a soft gray so white cards lift off it (depth). */
-  --app-bg: #f4f4f6;
-  --surface-1: #f7f7f9;
-  --surface-2: #eeeef1;
-  --surface-3: #e6e6ea;
+  --app-bg: #f5f4f0;
+  --surface-1: #f6f4ef;
+  --surface-2: #edece6;
+  --surface-3: #e5e3db;
   --field: #ffffff;
   /* Card/dialog/panel surface — the lifted white in light, a raised dark in dark. */
   --card: #ffffff;
@@ -14,10 +14,10 @@
   --disabled-ink: rgba(60, 60, 67, 0.4);
   --hairline: rgba(0, 0, 0, 0.07);
   --hairline-strong: rgba(0, 0, 0, 0.12);
-  --ink: #1d1d1f;
-  /* High-contrast secondary text (Claude-like readability): muted ≈6.4:1, tertiary ≈4.8:1 on white. */
-  --ink-muted: rgba(60, 60, 67, 0.82);
-  --ink-tertiary: rgba(60, 60, 67, 0.72);
+  --ink: #26231e;
+  /* Warm, high-contrast secondary text: muted ≈6.4:1, tertiary ≈4.8:1 on the warm white. */
+  --ink-muted: rgba(55, 50, 42, 0.82);
+  --ink-tertiary: rgba(55, 50, 42, 0.72);
   /* Form placeholder text — high enough contrast to read clearly (≈4:1 on the
      white field, vs ~1.9:1 for the old --ink-tertiary 0.3) while staying lighter
      than entered text. One token so every input matches. */
@@ -109,20 +109,20 @@
  * (set pre-paint by the inline script in index.html, managed at runtime by
  * src/lib/prefs.ts). */
 [data-theme='dark'] {
-  --canvas: #141418;
-  --app-bg: #0c0c0f;
-  --card: #1a1a20;
-  --surface-1: #17171c;
-  --surface-2: #202027;
-  --surface-3: #2a2a32;
-  --surface-4: #34343d;
-  --field: #17171c;
+  --canvas: #1a1714;
+  --app-bg: #100e0b;
+  --card: #211e19;
+  --surface-1: #1b1813;
+  --surface-2: #29251f;
+  --surface-3: #332f27;
+  --surface-4: #3d3930;
+  --field: #1b1813;
   --hairline: rgba(255, 255, 255, 0.09);
   --hairline-strong: rgba(255, 255, 255, 0.16);
-  --ink: #f3f3f6;
-  /* High-contrast secondary text (Claude-like readability): muted ≈9:1, tertiary ≈8:1 on dark card. */
-  --ink-muted: rgba(235, 235, 245, 0.82);
-  --ink-tertiary: rgba(235, 235, 245, 0.72);
+  --ink: #f2efe7;
+  /* Warm, high-contrast secondary text: muted ≈9:1, tertiary ≈8:1 on the warm dark card. */
+  --ink-muted: rgba(240, 236, 227, 0.82);
+  --ink-tertiary: rgba(240, 236, 227, 0.72);
   --placeholder: rgba(235, 235, 245, 0.6);
   --primary: #ff6b1a;
   --primary-hover: #ff7d35;
