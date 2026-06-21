@@ -98,6 +98,9 @@
   cursor: pointer;
   transition: background 0.14s ease, transform 0.12s ease;
 }
+/* On the prompt editor the composer hugs the bottom, so the floating launcher
+   would overlap its send button — hide it there. */
+.app:has(.pe2) .ai-fab { display: none; }
 .ai-fab:hover {
   background: var(--primary-hover);
 }
@@ -2154,7 +2157,7 @@
 .pe2 {
   max-width: 760px;
   margin: 0 auto;
-  padding-bottom: 32px;
+  padding-bottom: 4px;
   /* Fill the editor body and push the write block (heading + composer) to the
      bottom, chat-style — the meta/labels sit at the top, the prompt box hugs the
      bottom of the viewport. */
@@ -2239,7 +2242,7 @@
    Scoped under .pe2 so it beats the base .composer-box rule regardless of order. */
 .pe2 .pe2-composer {
   max-width: none;
-  margin: 0 0 18px;
+  margin: 0;
 }
 .pe2-vars {
   display: flex;
