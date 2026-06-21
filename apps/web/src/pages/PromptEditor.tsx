@@ -193,7 +193,6 @@ export function PromptEditor() {
     return <p className="empty">{t('prompts.onlyEditOwn')}</p>;
   }
 
-  const detectedVars = [...new Set(form.content.match(/\{[^{}]+\}/g) ?? [])];
   const isPublic = form.status === PromptStatus.Public;
 
   return (
@@ -279,16 +278,6 @@ export function PromptEditor() {
           </span>
         }
       />
-
-      {/* Detected variables */}
-      {detectedVars.length > 0 && (
-        <div className="pe2-vars">
-          <span className="pe2-mini-label">{t('prompts.variablesDetected')}</span>
-          {detectedVars.map((v) => (
-            <span key={v} className="pe2-var">{v}</span>
-          ))}
-        </div>
-      )}
         </div>
       </EditorShell>
 

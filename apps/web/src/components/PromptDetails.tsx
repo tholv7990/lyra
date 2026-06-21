@@ -19,13 +19,6 @@ import { IconButton } from './IconButton';
 import { CheckIcon, ChatsIcon, CopyIcon, PencilIcon, TrashIcon, XIcon } from '../layout/icons';
 import '../pages/marketplace.css';
 
-// {word} placeholders in the body, de-duped (skips {step:Name} refs).
-function promptVars(content: string): string[] {
-  const seen = new Set<string>();
-  for (const m of content.matchAll(/\{([a-zA-Z0-9_]+)\}/g)) seen.add(m[1]);
-  return [...seen];
-}
-
 // Read-only full view of a library prompt (modal): title + edit/delete/close ·
 // creator/date/status/type meta · labels · variable chips · the prompt with
 // highlighted variables (copy + open-in-chat) · the saved-results history.
@@ -52,7 +45,6 @@ export function PromptDetails({
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const vars = promptVars(prompt.content);
 
   // Local copy so deleting a result updates the list without a re-fetch.
   const [results, setResults] = useState<SavedResult[]>(prompt.results);
@@ -125,14 +117,6 @@ export function PromptDetails({
             <div className="pd-chips">
               {prompt.tags.map((tag) => (
                 <TagChip key={tag} label={tag} labels={labels} />
-              ))}
-            </div>
-          )}
-
-          {vars.length > 0 && (
-            <div className="mkd-vars pd-vars">
-              {vars.map((v) => (
-                <span key={v} className="mkd-var">{`{${v}}`}</span>
               ))}
             </div>
           )}
