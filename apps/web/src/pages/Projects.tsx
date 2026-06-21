@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Project } from '@lyra/shared';
+import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Channel, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
+import { connectorsApi } from '../lib/connectors';
+import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
 import { STATUS_COLOR, STATUS_LABEL_KEY } from '../lib/constants';
@@ -40,6 +42,18 @@ function PeopleGlyph() {
   );
 }
 
+// The project's outlets at a glance — one square per distinct platform it posts to.
+function ChannelDots({ platforms }: { platforms: string[] }) {
+  if (!platforms.length) return null;
+  return (
+    <div className="pr-channels" title={platforms.join(' · ')}>
+      {platforms.map((p) => (
+        <span key={p} className="pr-channel-ico" style={{ background: platformColor(p) }}>{platformGlyph(p)}</span>
+      ))}
+    </div>
+  );
+}
+
 export function Projects() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -47,6 +61,7 @@ export function Projects() {
   const mayCreate = canCreateIn(current);
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [pool, setPool] = useState<Channel[]>([]); // connected-channel pool → resolve project.channels to platforms
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [statusFilters, setStatusFilters] = useState<ProjectStatus[]>([]);
@@ -78,6 +93,13 @@ export function Projects() {
       .finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
   }, [wsId]);
+
+  // Channel pool → map id→platform so each card can show its outlets.
+  useEffect(() => {
+    if (!wsId) return;
+    connectorsApi.channels(wsId).then((r) => setPool(r.channels)).catch(() => setPool([]));
+  }, [wsId]);
+  const platformById = useMemo(() => new Map(pool.map((c) => [c.id, c.platform])), [pool]);
 
   const visible = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -237,6 +259,9 @@ export function Projects() {
                     {p.shared === ProjectShare.All ? <GlobeGlyph /> : <PeopleGlyph />}
                     {p.shared === ProjectShare.All ? t('projects.sharedAll') : t('projects.sharedPeople')}
                   </span>
+                  <ChannelDots
+                    platforms={[...new Set((p.channels ?? []).map((id) => platformById.get(id)).filter((x): x is string => !!x))]}
+                  />
                 </div>
 
                 <div className="mkt-card-foot pr-foot">

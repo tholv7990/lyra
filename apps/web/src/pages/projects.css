@@ -87,6 +87,24 @@
   align-items: center;
   gap: 5px;
 }
+/* Outlet dots on a project card — one square per platform it posts to. */
+.pr-channels {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.pr-channel-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
 
 /* Footer sits flush at the card bottom with a top hairline (design). */
 .pr-card {

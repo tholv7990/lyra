@@ -160,18 +160,21 @@ export function AppLayout() {
               <span className="nav-txt">{t('nav.projects')}</span>
             </NavLink>
 
-            <div className="nav-group-label">{t('nav.builtins')}</div>
+            {/* Publishing group: the core outbound flow — connect channels, then post. */}
+            <div className="nav-group-label">{t('nav.publishing')}</div>
             <NavLink to="/publish" title={t('nav.publish')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PublishIcon />
               <span className="nav-txt">{t('nav.publish')}</span>
             </NavLink>
-            <NavLink to="/import" title={t('nav.import')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
-              <ImportIcon />
-              <span className="nav-txt">{t('nav.import')}</span>
-            </NavLink>
             <NavLink to="/connections" title={t('nav.connections')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ConnectionsIcon />
               <span className="nav-txt">{t('nav.connections')}</span>
+            </NavLink>
+
+            <div className="nav-group-label">{t('nav.builtins')}</div>
+            <NavLink to="/import" title={t('nav.import')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ImportIcon />
+              <span className="nav-txt">{t('nav.import')}</span>
             </NavLink>
             <NavLink to="/components" title={t('nav.components')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ComponentsIcon />

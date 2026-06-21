@@ -11,6 +11,7 @@ export default {
   workspace: 'Không gian làm việc',
   aiButton: 'AI',
   builtins: 'Tích hợp sẵn',
+  publishing: 'Đăng bài',
   components: 'Thành phần',
   publish: 'Đăng bài',
   import: 'Trình thu thập',

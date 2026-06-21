@@ -11,6 +11,7 @@ export default {
   workspace: 'Workspace',
   aiButton: 'AI',
   builtins: 'Built-ins',
+  publishing: 'Publishing',
   components: 'Components',
   publish: 'Publish',
   import: 'Crawler',
