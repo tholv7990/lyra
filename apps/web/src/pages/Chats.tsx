@@ -3,35 +3,25 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   defaultModel,
-  isAllowedMedia,
-  MEDIA_MAX_BYTES,
-  MediaType,
   Provider,
-  tagColor,
-  type Conversation,
   type ConversationMessage,
   type ConversationSummary,
   type Prompt,
-  type PromptMedia,
   type SavedResult,
 } from '@lyra/shared';
-import { api, streamSSE } from '../lib/api';
+import { api } from '../lib/api';
 import { saveResult, deleteResult } from '../lib/promptResults';
 import { SavedResults } from '../components/SavedResults';
-import { initials } from '../lib/format';
-import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useModels, type ModelCatalog } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
-import { Composer } from '../components/Composer';
-import { Markdown } from '../components/Markdown';
+import { ChatPane } from '../components/ChatPane';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { SaveAsPromptModal } from '../components/SaveAsPromptModal';
 import { CopilotPanel } from '../components/CopilotPanel';
@@ -67,22 +57,6 @@ export function seedChatDraft(st: ChatSeedState, fallbackProvider: Provider) {
   return draft;
 }
 
-const IconCopy = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" />
-  </svg>
-);
-const IconEdit = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-  </svg>
-);
-const IconBookmark = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
-  </svg>
-);
-
 export function Chats() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -96,35 +70,25 @@ export function Chats() {
   const openNav = useAppNav();
 
   const [list, setList] = useState<ConversationSummary[]>([]);
-  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [title, setTitle] = useState(t('chats.newChat'));
   const [origin, setOrigin] = useState<ChatOrigin | null>(null);
-  // Mirror origin in a ref so `send` can carry it through its post-stream navigate
-  // without needing the latest value baked into its closure.
+  // Mirror origin in a ref so the page can carry it through ChatPane's onCreated
+  // navigate without needing the latest value baked into a closure.
   const originRef = useRef<ChatOrigin | null>(null);
   useBreadcrumb(
     origin ? origin.record : id ? title : t('chats.title'),
     origin ? { label: origin.label, to: origin.to } : null,
   );
 
-  const [provider, setProvider] = useState<Provider>(Provider.Anthropic);
-  const [model, setModel] = useState<string>(defaultModel(Provider.Anthropic));
-  const [input, setInput] = useState('');
-  const [attachments, setAttachments] = useState<PromptMedia[]>([]);
-  const [uploading, setUploading] = useState(0);
-  const [streaming, setStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const { copied, copy } = useCopyToClipboard();
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [saveFor, setSaveFor] = useState<ConversationMessage | null>(null);
-  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState('');
+  // The answer paired with the message being saved-as-prompt, so the new prompt is
+  // born with that answer as its first saved result (ChatPane hands it to us).
+  const pendingAnswerRef = useRef<ConversationMessage | null>(null);
+  // Page-level errors for the save/results actions (ChatPane owns the chat-core banner).
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const abortRef = useRef<AbortController | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const atBottomRef = useRef(true);
-  const idRef = useRef(0);
   const originPromptIdRef = useRef<string | null>(null);
   // The library prompt this chat is about (its parent). When set, answers can be
   // saved to it; a chat opened from a prompt is always linked to it on creation.
@@ -140,10 +104,6 @@ export function Chats() {
   const [promptOwnerId, setPromptOwnerId] = useState<string | null>(null);
   const [savedMsgIds, setSavedMsgIds] = useState<Set<string>>(new Set());
   const [deletingResultId, setDeletingResultId] = useState<string | null>(null);
-  // The conversation whose messages we already hold locally (we just created it),
-  // so the load effect won't refetch it — idempotent, so StrictMode's double effect
-  // invocation can't issue a stray GET the way a one-shot "skip" flag would.
-  const ownIdRef = useRef<string | null>(null);
   const seedUsedRef = useRef(false);
   const loadList = useCallback(() => {
     if (!wsId) return;
@@ -154,46 +114,19 @@ export function Chats() {
 
   useEffect(() => loadList(), [loadList]);
 
-  // Load the selected conversation (skip the one we just created locally).
+  // Fresh canvas (no :id): reset the page title/source. ChatPane loads an existing
+  // conversation's messages/title/provider/model/source itself when `id` is set.
   useEffect(() => {
-    if (!id) {
-      ownIdRef.current = null;
-      setMessages([]);
-      setTitle(t('chats.newChat'));
-      return;
-    }
-    // Already holding this chat's messages locally (we just created it) — don't refetch.
-    if (ownIdRef.current === id) return;
-    ownIdRef.current = null;
-    let cancelled = false;
-    api<Conversation>(`/conversations/${id}`)
-      .then((c) => {
-        if (cancelled) return;
-        setMessages(c.messages);
-        setTitle(c.title);
-        setProvider(c.provider);
-        setModel(c.model);
-        // The parent prompt this chat belongs to (if any) gates answer-saving.
-        setSource(c.originPromptId ?? null);
-      })
-      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : t('chats.couldNotLoad')));
-    return () => {
-      cancelled = true;
-    };
+    if (!id) { setTitle(t('chats.newChat')); setSource(null); seedUsedRef.current = false; }
   }, [id]);
 
-  // "Open in chat" passes the prompt body + provider model as navigation state.
-  // Prefill the composer and picker; the user still chooses when to send.
+  // "Open in chat" passes the prompt body + provider·model as navigation state.
+  // ChatPane seeds the composer/provider/model via props; here we only carry the
+  // page-level `source` (the parent prompt) so the results rail and answer-saving work.
   useEffect(() => {
-    const draft = seedChatDraft(location.state as ChatSeedState, provider);
-    if (draft && !seedUsedRef.current) {
-      seedUsedRef.current = true;
-      setInput(draft.input);
-      setProvider(draft.provider);
-      setModel(draft.model);
-      setSource(draft.originPromptId ?? null);
-    }
-  }, [location.state, provider]);
+    const d = seedChatDraft(location.state as ChatSeedState, Provider.Anthropic);
+    if (d && !seedUsedRef.current) { seedUsedRef.current = true; setSource(d.originPromptId ?? null); }
+  }, [location.state]);
 
   // Load the parent prompt's saved results (the rail) whenever the chat's parent
   // prompt changes. Cleared when the chat has no parent.
@@ -231,202 +164,39 @@ export function Chats() {
     setOrigin(from);
   }, [location.state, id]);
 
-  function onThreadScroll() {
-    const el = scrollRef.current;
-    if (!el) return;
-    atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-  }
-  useEffect(() => {
-    if (streaming && atBottomRef.current && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, streaming]);
-
-  async function uploadFiles(files: FileList | null) {
-    if (!files || !wsId) return;
-    setError(null);
-    for (const file of Array.from(files)) {
-      if (!isAllowedMedia(file.type, file.name)) { setError(`${file.name}: ${t('chats.fileTypeNotAllowed')}`); continue; }
-      if (file.size > MEDIA_MAX_BYTES) { setError(`${file.name}: ${t('chats.fileTooLarge')}`); continue; }
-      setUploading((u) => u + 1);
-      try {
-        const fd = new FormData();
-        fd.append('file', file);
-        const media = await api<PromptMedia>(`/workspaces/${wsId}/files`, { method: 'POST', body: fd });
-        setAttachments((a) => [...a, media]);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t('chats.couldNotUpload', { name: file.name }));
-      } finally {
-        setUploading((u) => u - 1);
-      }
-    }
-  }
-
   function newChat() {
     setShowHistory(false);
     if (!id) {
       // already on a fresh canvas
-      setMessages([]);
       setTitle(t('chats.newChat'));
-      setInput('');
-      setAttachments([]);
       setSource(null);
       return;
     }
     navigate('/chats');
   }
 
-  const send = useCallback(
-    async (text: string, media: PromptMedia[], opts?: { provider?: Provider; model?: string }) => {
-      if ((!text.trim() && media.length === 0) || streaming || !wsId) return;
-      // Allow an explicit provider·model (used by "Open in chat" so the run uses the
-      // prompt's stored model regardless of whether the picker state has settled yet).
-      const sendProvider = opts?.provider ?? provider;
-      const sendModel = opts?.model ?? model;
-      setError(null);
-      atBottomRef.current = true;
-      const now = new Date().toISOString();
-      const userMsg: ConversationMessage = {
-        id: `tmp-u-${++idRef.current}`, role: 'user', content: text, media, provider: sendProvider, model: sendModel, createdAt: now,
-      };
-      const aiMsg: ConversationMessage = {
-        id: `tmp-a-${++idRef.current}`, role: 'assistant', content: '', provider: sendProvider, model: sendModel, createdAt: now,
-      };
-      setMessages((m) => [...m, userMsg, aiMsg]);
-      setInput('');
-      setAttachments([]);
-      setStreaming(true);
-
-      const patchLast = (patch: Partial<ConversationMessage>) =>
-        setMessages((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, ...patch } : x)));
-
-      // Lazy-create the conversation on first send. We stream the reply while
-      // still on /chats, then commit to /chats/:id AFTER it finishes — so the
-      // navigation can't race the load effect and blank the thread.
-      let cid = id;
-      let createdNow = false;
-      if (!cid) {
-        try {
-          // A chat opened from a prompt is linked to it on creation (its parent).
-          const convo = await api<Conversation>(`/workspaces/${wsId}/conversations`, {
-            method: 'POST',
-            body: JSON.stringify({
-              provider: sendProvider,
-              model: sendModel,
-              originPromptId: originPromptIdRef.current ?? undefined,
-            }),
-          });
-          cid = convo.id;
-          createdNow = true;
-        } catch (e) {
-          // Couldn't even create the chat — roll back the optimistic bubbles and
-          // hand the user's text back so nothing is lost, then banner the error.
-          setMessages((m) => m.filter((x) => x.id !== userMsg.id && x.id !== aiMsg.id));
-          setInput(text);
-          setAttachments(media);
-          setError(e instanceof Error ? e.message : t('chats.couldNotStart'));
-          setStreaming(false);
-          return;
-        }
-      }
-
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
-      let streamOpened = false;
-      try {
-        await streamSSE(
-          `/conversations/${cid}/messages`,
-          { provider: sendProvider, model: sendModel, content: text, media },
-          (evt) => {
-            streamOpened = true;
-            if (evt.type === 'delta') {
-              setMessages((m) =>
-                m.map((x, i) => (i === m.length - 1 ? { ...x, content: x.content + String(evt.text ?? '') } : x)),
-              );
-            } else if (evt.type === 'done') {
-              const msg = evt.message as ConversationMessage | null;
-              if (msg) patchLast(msg);
-              if (evt.title) setTitle(String(evt.title));
-              setStreaming(false);
-              abortRef.current?.abort();
-            } else if (evt.type === 'error') {
-              patchLast({ error: String(evt.message ?? t('chats.chatFailed')) });
-              setStreaming(false);
-              abortRef.current?.abort();
-            }
-          },
-          ctrl.signal,
-        );
-      } catch (e) {
-        if ((e as Error)?.name !== 'AbortError') {
-          // Mid-stream failure: keep the partial answer + show the error inline.
-          // Pre-stream failure: the finally rolls back, so banner the error instead.
-          if (streamOpened) {
-            patchLast({ error: e instanceof Error ? e.message : t('chats.chatFailed') });
-          } else {
-            setError(e instanceof Error ? e.message : t('chats.chatFailed'));
-          }
-        }
-      } finally {
-        setStreaming(false);
-        abortRef.current = null;
-        if (!streamOpened) {
-          // The send failed before anything streamed (e.g. the chosen provider has
-          // no key). Don't strand the user on a blank canvas: roll back the
-          // optimistic bubbles, restore their text, and discard the empty chat.
-          setMessages((m) => m.filter((x) => x.id !== userMsg.id && x.id !== aiMsg.id));
-          setInput(text);
-          setAttachments(media);
-          if (createdNow && cid) {
-            try { await api(`/conversations/${cid}`, { method: 'DELETE' }); } catch { /* ignore */ }
-          }
-        } else if (createdNow && cid) {
-          // Commit the new chat to its own URL now that it has content. We already
-          // hold its messages, so mark it owned (no refetch). Re-pass the origin via
-          // nav state, and stash it by id so reopening from history recovers the
-          // "Prompts / <title>" breadcrumb too.
-          ownIdRef.current = cid;
-          if (originRef.current) {
-            try {
-              sessionStorage.setItem(`lyra.chat.origin.${cid}`, JSON.stringify(originRef.current));
-            } catch { /* ignore */ }
-          }
-          navigate(`/chats/${cid}`, {
-            replace: true,
-            state: originRef.current ? { from: originRef.current } : undefined,
-          });
-        }
-        loadList();
-      }
-    },
-    [wsId, id, provider, model, streaming, navigate, loadList],
-  );
-
-  function stop() { abortRef.current?.abort(); }
-
   // Save an assistant answer as a child of the parent prompt. Gated on having a
   // parent (the button is disabled otherwise — Save as prompt is the gateway).
+  // The message carries its own provider·model (stamped at send time).
   async function saveAnswer(m: ConversationMessage) {
     if (!sourcePromptId || !m.content) return;
     try {
       const updated = await saveResult(sourcePromptId, {
         output: m.content,
-        // A missing provider would fail the strict SaveResultBody validation;
-        // fall back to the chat's selected provider·model.
-        provider: m.provider ?? provider,
-        model: m.model ?? model,
+        provider: m.provider,
+        model: m.model,
         sourceConversationId: id,
       });
       setResults(updated.results);
       setSavedMsgIds((s) => new Set(s).add(m.id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('prompts.errSave'));
+      setSaveError(e instanceof Error ? e.message : t('prompts.errSave'));
     }
   }
 
-  // After "Save as prompt" creates the parent: link this chat to it, attach the
-  // triggering answer as the first saved result, and surface the rail.
-  async function afterSaveAsPrompt(prompt: Prompt, fromMsg: ConversationMessage) {
+  // After "Save as prompt" creates the parent: link this chat to it, surface the rail,
+  // and attach the triggering answer (handed to us by ChatPane) as its first result.
+  async function afterSaveAsPrompt(prompt: Prompt) {
     setSaveFor(null);
     setSource(prompt.id);
     setPromptOwnerId(prompt.createdBy.id);
@@ -439,23 +209,20 @@ export function Chats() {
         });
       } catch { /* ignore */ }
     }
-    const idx = messages.findIndex((x) => x.id === fromMsg.id);
-    const answer = idx >= 0 ? messages[idx + 1] : undefined;
+    const answer = pendingAnswerRef.current;
+    pendingAnswerRef.current = null;
     if (answer && answer.role === 'assistant' && answer.content) {
       try {
         const updated = await saveResult(prompt.id, {
           output: answer.content,
-          // Fall back to the chat's selected provider·model if the message
-          // somehow lacks them (a missing provider would 400 the save).
-          provider: answer.provider ?? provider,
-          model: answer.model ?? model,
+          provider: answer.provider,
+          model: answer.model,
           sourceConversationId: id,
         });
         setResults(updated.results);
         setSavedMsgIds((s) => new Set(s).add(answer.id));
       } catch (e) {
-        // Don't swallow — surface why the answer couldn't be attached.
-        setError(e instanceof Error ? e.message : t('prompts.errSave'));
+        setSaveError(e instanceof Error ? e.message : t('prompts.errSave'));
       }
     }
     loadList();
@@ -474,27 +241,6 @@ export function Chats() {
     }
   }
 
-  function beginEdit(message: ConversationMessage) {
-    setEditingMsgId(message.id);
-    setEditingText(message.content);
-  }
-
-  function saveEdit() {
-    if (!editingMsgId || !editingText.trim()) return;
-    const nextText = editingText;
-    setMessages((m) => updateMessageContent(m, editingMsgId, nextText));
-    setSaveFor((current) =>
-      current?.id === editingMsgId ? { ...current, content: nextText } : current,
-    );
-    setEditingMsgId(null);
-    setEditingText('');
-  }
-
-  function cancelEdit() {
-    setEditingMsgId(null);
-    setEditingText('');
-  }
-
   async function removeChat(c: ConversationSummary) {
     try {
       await api(`/conversations/${c.id}`, { method: 'DELETE' });
@@ -502,6 +248,9 @@ export function Chats() {
       if (c.id === id) navigate('/chats', { replace: true });
     } catch { /* ignore */ }
   }
+
+  // "Open in chat" seeds the composer + provider·model once via ChatPane's props.
+  const draft = seedChatDraft(location.state as ChatSeedState, Provider.Anthropic);
 
   return (
     <div className={`chat ${showHistory ? 'history-open' : ''} ${sourcePromptId ? 'has-results' : ''}`}>
@@ -580,153 +329,30 @@ export function Chats() {
           </button>
         </header>
 
-        {error && <p className="error" style={{ margin: '0 16px' }}>{error}</p>}
+        {saveError && <p className="error" style={{ margin: '0 16px' }}>{saveError}</p>}
 
-        <div className="chat-scroll" ref={scrollRef} onScroll={onThreadScroll}>
-          <div className="chat-thread">
-            {messages.length === 0 ? (
-              <div className="chat-empty">
-                <h3>{t('chats.startAChat')}</h3>
-                <p>{t('chats.startAChatHint')}</p>
-              </div>
-            ) : (
-              messages.map((m, i) => {
-                const isLast = i === messages.length - 1;
-                if (m.role === 'user') {
-                  const editingThis = editingMsgId === m.id;
-                  return (
-                    <div key={m.id} className="cmsg user">
-                      <div className="cavatar user">{initials(user?.name)}</div>
-                      <div className="cbody">
-                        <div className="cmsg-meta">
-                          <ProviderIcon provider={m.provider} size={14} />
-                          {modelLabel(catalog, m.provider, m.model)}
-                        </div>
-                        {m.media && m.media.length > 0 && (
-                          <div className="cmedia">
-                            {m.media.map((md, j) => <Attachment key={`${md.url}-${j}`} m={md} />)}
-                          </div>
-                        )}
-                        {editingThis ? (
-                          <div className="cmsg-editor">
-                            <textarea
-                              className="text-input cmsg-editarea"
-                              value={editingText}
-                              rows={Math.min(10, Math.max(3, editingText.split('\n').length + 1))}
-                              onChange={(e) => setEditingText(e.target.value)}
-                              onKeyDown={(e) => {
-                                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                                  e.preventDefault();
-                                  saveEdit();
-                                } else if (e.key === 'Escape') {
-                                  e.preventDefault();
-                                  cancelEdit();
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <div className="cmsg-edit-actions">
-                              <button type="button" className="btn-ghost mini" onClick={cancelEdit}>
-                                {t('common.cancel')}
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-primary mini"
-                                disabled={!editingText.trim()}
-                                onClick={saveEdit}
-                              >
-                                {t('common.save')}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="cbubble">{m.content}</div>
-                        )}
-                        <div className="cactions">
-                          <button
-                            className="cicon"
-                            onClick={() => copy(m.content)}
-                            title={copied ? t('common.copied') : t('chats.copyPrompt')}
-                            aria-label={t('chats.copyPrompt')}
-                          >
-                            <IconCopy />
-                          </button>
-                          <button
-                            className="cicon"
-                            onClick={() => beginEdit(m)}
-                            title={t('chats.editPrompt')}
-                            aria-label={t('chats.editPrompt')}
-                            disabled={streaming}
-                          >
-                            <IconEdit />
-                          </button>
-                          <button className="cmsg-save" onClick={() => setSaveFor(m)} title={t('chats.saveToLibrary')}>
-                            <IconBookmark /> {t('chats.saveAsPrompt')}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-                const done = !!m.content && !m.error && !(streaming && isLast);
-                // "Saved" reflects the prompt's PERSISTED results, not just the
-                // ephemeral per-session set — so a re-opened chat shows answers
-                // already in the library as saved (and won't dup them).
-                const answerSaved =
-                  savedMsgIds.has(m.id) || results.some((r) => r.output === m.content);
-                return (
-                  <div key={m.id} className="cmsg">
-                    <div className="cavatar"><ProviderIcon provider={m.provider} size={28} /></div>
-                    <div className="cbody">
-                      <div className="cmsg-meta">{modelLabel(catalog, m.provider, m.model)}</div>
-                      <div className={`ctext ${m.error ? 'err' : ''}`}>
-                        {m.error ? m.error : m.content ? <Markdown>{m.content}</Markdown> : streaming && isLast ? '' : '—'}
-                        {streaming && isLast && <span className="pg-caret" />}
-                      </div>
-                      {done && (
-                        <div className="cactions">
-                          <button className="cicon" onClick={() => copy(m.content)} title={copied ? t('common.copied') : t('common.copy')}><IconCopy /></button>
-                          {/* Save only when the chat has a parent prompt. Otherwise the
-                              gateway is "Save as prompt" on the instruction above. */}
-                          {sourcePromptId && (
-                            <button
-                              className="cmsg-save"
-                              onClick={() => void saveAnswer(m)}
-                              disabled={answerSaved}
-                              title={t('prompts.saveAnswerHint')}
-                            >
-                              <IconBookmark /> {answerSaved ? t('prompts.answerSaved') : t('prompts.saveAnswer')}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <div className="chat-composer">
-          <Composer
-            value={input}
-            onChange={setInput}
-            onSubmit={() => { if (!streaming) void send(input, attachments); }}
-            placeholder={t('chats.composerPlaceholder')}
-            media={attachments}
-            onRemoveMedia={(idx) => setAttachments((a) => a.filter((_, i) => i !== idx))}
-            uploading={uploading}
-            onFiles={(files) => void uploadFiles(files)}
-            catalog={catalog}
-            provider={provider}
-            model={model}
-            onModelChange={(p, mdl) => { setProvider(p); setModel(mdl); }}
-            busy={streaming}
-            onStop={stop}
-            canSubmit={!!input.trim() || attachments.length > 0}
-          />
-        </div>
+        <ChatPane
+          wsId={wsId ?? ''}
+          catalog={catalog}
+          initialProvider={draft?.provider ?? Provider.Anthropic}
+          initialModel={draft?.model ?? defaultModel(Provider.Anthropic)}
+          seedInput={draft?.input}
+          conversationId={id}
+          createBody={{ originPromptId: sourcePromptId ?? undefined }}
+          onCreated={(cid) => {
+            if (originRef.current) { try { sessionStorage.setItem(`lyra.chat.origin.${cid}`, JSON.stringify(originRef.current)); } catch { /* ignore */ } }
+            navigate(`/chats/${cid}`, { replace: true, state: originRef.current ? { from: originRef.current } : undefined });
+          }}
+          onTitle={setTitle}
+          onSource={setSource}
+          onActivity={loadList}
+          userName={user?.name}
+          allowEdit
+          onSaveAsPrompt={(m, answer) => { pendingAnswerRef.current = answer ?? null; setSaveError(null); setSaveFor(m); }}
+          onSaveAnswer={(m) => void saveAnswer(m)}
+          isAnswerSaved={(m) => savedMsgIds.has(m.id) || results.some((r) => r.output === m.content)}
+          emptyState={<div className="chat-empty"><h3>{t('chats.startAChat')}</h3><p>{t('chats.startAChatHint')}</p></div>}
+        />
       </main>
 
       {sourcePromptId && (
@@ -750,28 +376,11 @@ export function Chats() {
           labels={labels}
           onCreateLabel={createLabel}
           onClose={() => setSaveFor(null)}
-          onSaved={(prompt) => void afterSaveAsPrompt(prompt, saveFor)}
+          onSaved={(prompt) => void afterSaveAsPrompt(prompt)}
         />
       )}
 
       {copilotOpen && wsId && <CopilotPanel wsId={wsId} onClose={() => setCopilotOpen(false)} />}
     </div>
-  );
-}
-
-function Attachment({ m }: { m: PromptMedia }) {
-  const { t } = useTranslation();
-  if (m.type === MediaType.Image) {
-    return (
-      <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-thumb">
-        <img src={m.url} alt={m.name ?? t('chats.imageFallback')} />
-      </a>
-    );
-  }
-  const c = tagColor(m.name ?? m.url);
-  return (
-    <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-file" style={{ color: c, background: `${c}14`, borderColor: `${c}40` } as CSSProperties}>
-      {m.name ?? t('chats.fileFallback')}
-    </a>
   );
 }
