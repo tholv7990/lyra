@@ -25,7 +25,7 @@ describe('StepTestModal', () => {
       />,
     );
 
-    expect(html).toContain('Test Find stores');
+    expect(html).toContain('Try Find stores');
     expect(html).toContain('Find 10 stores that sell pet toys');
   });
 });
