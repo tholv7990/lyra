@@ -38,19 +38,26 @@
   line-height: 1.6;
   max-width: 760px;
 }
-/* inline-editable title + description (borderless, look like the read view) */
+/* inline-editable title + description — clearly look like fields you can type in
+   (subtle resting border + a focus ring), so it's obvious they're editable. */
 .tw-title-input {
   flex: 1;
   min-width: 0;
-  border: none;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
   outline: none;
-  background: transparent;
+  background: var(--surface-1);
   font: inherit;
   font-size: 22px;
   font-weight: 650;
   letter-spacing: -0.4px;
   color: var(--ink);
-  padding: 0;
+  padding: 5px 10px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.tw-title-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
 }
 .tw-title-input::placeholder { color: var(--placeholder); }
 .tw-save { flex-shrink: 0; }
@@ -58,18 +65,24 @@
   display: block;
   width: 100%;
   max-width: 760px;
-  margin: 0 0 14px;
-  border: none;
+  margin: 6px 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
   outline: none;
-  resize: none;
-  background: transparent;
+  resize: vertical;
+  background: var(--surface-1);
   font: inherit;
   font-size: 13.5px;
-  color: var(--ink-muted);
+  color: var(--ink);
   line-height: 1.6;
-  padding: 0;
+  padding: 8px 10px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.tw-desc-input::placeholder { color: var(--placeholder); }
+.tw-desc-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+.tw-desc-input::placeholder { color: var(--ink-faint); }
 
 /* pipeline tabs */
 .tw-tabs {
