@@ -92,6 +92,7 @@ export default {
   editName: 'Edit name',
   untitled: 'Untitled prompt',
   promptTitlePlaceholder: 'Prompt title',
+  titleRequired: 'Add a title to save your prompt.',
   saveChanges: 'Save changes',
   createPrompt: 'Create prompt',
   savePrompt: 'Save prompt',

@@ -137,6 +137,7 @@ export function PromptEditor() {
     }
   }
 
+  const titleRef = useRef<HTMLInputElement>(null);
   const saveAbortRef = useRef<AbortController | null>(null);
   // Write to the server and mark the form clean. Returns whether it succeeded;
   // does NOT navigate (callers decide).
@@ -166,8 +167,14 @@ export function PromptEditor() {
       saveAbortRef.current = null;
     }
   }
-  // ✓ / ⌘+Enter: save, then leave for the list.
+  // ✓ / ⌘+Enter: save, then leave for the list. A prompt needs a title — if it's
+  // empty, point the user at the title field rather than silently doing nothing.
   async function save() {
+    if (!form.title.trim()) {
+      setError(t('prompts.titleRequired'));
+      titleRef.current?.focus();
+      return;
+    }
     const ok = await persist();
     if (ok) {
       leavingRef.current = true;
@@ -192,6 +199,7 @@ export function PromptEditor() {
         crumb={{ label: t('nav.prompts'), to: '/prompts' }}
         title={
           <input
+            ref={titleRef}
             className="eshell-name"
             placeholder={t('prompts.promptTitlePlaceholder')}
             autoFocus={!isEdit}
@@ -207,7 +215,7 @@ export function PromptEditor() {
             className="icon-btn-success"
             title={busy ? t('common.saving') : t('prompts.savePrompt')}
             aria-label={t('prompts.savePrompt')}
-            disabled={busy || !form.title.trim()}
+            disabled={busy || (!form.title.trim() && !form.content.trim() && form.media.length === 0)}
             onClick={() => void save()}
           >
             <CheckIcon width={16} height={16} />

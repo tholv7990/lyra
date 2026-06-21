@@ -92,6 +92,7 @@ export default {
   editName: 'Sửa tên',
   untitled: 'Prompt chưa đặt tên',
   promptTitlePlaceholder: 'Tiêu đề prompt',
+  titleRequired: 'Thêm tiêu đề để lưu prompt.',
   saveChanges: 'Lưu thay đổi',
   createPrompt: 'Tạo prompt',
   savePrompt: 'Lưu prompt',
