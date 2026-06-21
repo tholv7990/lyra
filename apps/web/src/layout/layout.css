@@ -3135,14 +3135,14 @@
 .mv-body video {
   display: block;
   max-width: min(90vw, 1096px);
-  max-height: 76vh;
+  max-height: 76dvh;
   border-radius: 8px;
   object-fit: contain;
 }
 .mv-body audio { width: min(82vw, 540px); }
 .mv-frame {
   width: min(90vw, 1096px);
-  height: 76vh;
+  height: 76dvh;
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--surface-1);
@@ -3439,7 +3439,7 @@
   .modal {
     max-width: 100%;
     border-radius: 16px 16px 0 0;
-    max-height: 94vh;
+    max-height: 94dvh;
     overflow-y: auto;
   }
 }
@@ -6791,7 +6791,7 @@
   .drawer {
     max-width: 100%;
     height: auto;
-    max-height: 88vh;
+    max-height: 88dvh;
     border-left: none;
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
@@ -8322,7 +8322,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  max-height: 86vh;
+  max-height: 86dvh;
 }
 .srm-head {
   display: flex;
@@ -8555,7 +8555,7 @@
 @media (max-width: 640px) {
   .dialog.srm {
     max-width: 100%;
-    max-height: 92vh;
+    max-height: 92dvh;
   }
   .srm-media-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -8944,7 +8944,7 @@
 .notif-pop {
   position: fixed; top: 72px; right: 16px;
   width: 360px; max-width: calc(100vw - 24px);
-  max-height: 72vh; overflow-y: auto;
+  max-height: 72dvh; overflow-y: auto;
   background: var(--surface-1); border: 1px solid var(--hairline);
   border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
   padding: 6px; z-index: var(--z-dropdown, 60);
@@ -9175,7 +9175,7 @@
 .cmdbar {
   width: 100%; max-width: 560px;
   display: flex; flex-direction: column;
-  max-height: min(60vh, 480px);
+  max-height: min(60dvh, 480px);
   background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-lg);
