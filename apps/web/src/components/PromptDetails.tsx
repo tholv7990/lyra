@@ -11,6 +11,7 @@ import { useScrollLock } from '../lib/useScrollLock';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { deleteResult } from '../lib/promptResults';
+import type { ChatOrigin } from '../lib/openPromptInChat';
 import { promptSegments } from '../lib/promptSegments';
 import { SavedResults } from './SavedResults';
 import { StatusPill } from './StatusPill';
@@ -36,6 +37,7 @@ export function PromptDetails({
   onEdit,
   onDelete,
   onClose,
+  chatOrigin,
 }: {
   prompt: Prompt;
   labels: LabelInfo[];
@@ -43,6 +45,9 @@ export function PromptDetails({
   onEdit?: () => void;
   onDelete?: () => void;
   onClose: () => void;
+  // Where this popup was opened from — so a saved-result chat's "close" (×)
+  // returns here instead of falling back to Home.
+  chatOrigin?: ChatOrigin;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -158,7 +163,10 @@ export function PromptDetails({
           {/* Saved-results history (per the design's "Saved results · N" section). */}
           <SavedResults
             results={results}
-            onOpenChat={(cid) => { onClose(); navigate(`/chats/${cid}`); }}
+            onOpenChat={(cid) => {
+              onClose();
+              navigate(`/chats/${cid}`, chatOrigin ? { state: { from: chatOrigin } } : undefined);
+            }}
             onDelete={onDeleteResult}
             canDelete={canDelete}
             deletingId={deletingId}

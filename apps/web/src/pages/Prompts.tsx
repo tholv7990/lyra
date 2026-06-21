@@ -472,6 +472,7 @@ export function Prompts() {
         <PromptDetails
           prompt={detailPrompt}
           labels={labels}
+          chatOrigin={{ label: t('prompts.breadcrumb'), to: '/prompts', record: detailPrompt.title }}
           onOpenInChat={() => void openInChat(detailPrompt)}
           onEdit={
             canEdit(detailPrompt)

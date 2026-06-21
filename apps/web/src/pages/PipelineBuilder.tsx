@@ -781,7 +781,12 @@ export function PipelineBuilder() {
       {runActions.error && <p className="error">{runActions.error}</p>}
 
       {detailPrompt && (
-        <PromptDetails prompt={detailPrompt} labels={labels} onClose={() => setDetailPrompt(null)} />
+        <PromptDetails
+          prompt={detailPrompt}
+          labels={labels}
+          onClose={() => setDetailPrompt(null)}
+          chatOrigin={{ label: t('nav.pipelines'), to: id ? `/pipelines/${id}` : '/pipelines', record: detailPrompt.title }}
+        />
       )}
 
       {aiEditOpen && wsId && (
