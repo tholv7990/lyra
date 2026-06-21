@@ -589,7 +589,7 @@
 }
 .home-greeting {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: var(--lh-tight);
   letter-spacing: -0.02em;
   margin: 0 0 8px;
@@ -982,7 +982,7 @@
 
 .section-head h2 {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -1526,7 +1526,7 @@
 
 .editor-title {
   font-size: 21px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   margin: 12px 0 18px;
 }
@@ -3198,7 +3198,7 @@
 
 .prompts-head .titles h2 {
   font-size: 21px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0;
 }
