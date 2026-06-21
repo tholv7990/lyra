@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Channel, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
-import { connectorsApi } from '../lib/connectors';
+import { channelsApi } from '../lib/channels';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
@@ -97,7 +97,7 @@ export function Projects() {
   // Channel pool → map id→platform so each card can show its outlets.
   useEffect(() => {
     if (!wsId) return;
-    connectorsApi.channels(wsId).then((r) => setPool(r.channels)).catch(() => setPool([]));
+    channelsApi.list(wsId).then(setPool).catch(() => setPool([]));
   }, [wsId]);
   const platformById = useMemo(() => new Map(pool.map((c) => [c.id, c.platform])), [pool]);
 

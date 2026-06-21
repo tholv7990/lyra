@@ -1,4 +1,4 @@
-import type { Channel, Receipt } from '@lyra/shared';
+import { ChannelType, type Channel, type Receipt } from '@lyra/shared';
 
 // Postiz public API client. base = POSTIZ_API_URL (self-hosted instance root);
 // auth = the workspace's Postiz API key, sent verbatim in Authorization.
@@ -25,6 +25,7 @@ export function mapIntegrations(json: unknown): Channel[] {
     : ((json as { integrations?: unknown[] } | null)?.integrations ?? []);
   return (arr as RawIntegration[]).map((i) => ({
     id: i.id,
+    type: ChannelType.Postiz,
     platform: (i.identifier ?? i.provider ?? 'unknown').toLowerCase(),
     displayName: i.name ?? i.id,
   }));

@@ -12,7 +12,7 @@ import {
   type ProjectVariable,
 } from '@lyra/shared';
 import { api } from '../lib/api';
-import { connectorsApi } from '../lib/connectors';
+import { channelsApi } from '../lib/channels';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
@@ -102,7 +102,7 @@ export function ProjectEditor() {
   // The connected-channel pool (workspace Connections) to select this project's channels from.
   useEffect(() => {
     if (!wsId) return;
-    connectorsApi.channels(wsId).then((r) => setPool(r.channels)).catch(() => setPool([]));
+    channelsApi.list(wsId).then(setPool).catch(() => setPool([]));
   }, [wsId]);
 
   const toggleChannel = (cid: string) =>

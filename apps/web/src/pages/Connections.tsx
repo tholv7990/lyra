@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Channel, ConnectorCredentialInfo } from '@lyra/shared';
+import { ChannelType, type Channel, type ConnectorCredentialInfo } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
+import { channelsApi } from '../lib/channels';
 import './connectors.css';
 
 const GLYPH: Record<string, string> = {
@@ -10,10 +11,11 @@ const GLYPH: Record<string, string> = {
 };
 const cls = (platform: string) => (GLYPH[platform] ? platform : 'generic');
 const glyph = (platform: string) => GLYPH[platform] ?? '◆';
+const PLATFORMS = ['tiktok', 'youtube', 'instagram', 'facebook', 'x'];
+const emptyForm = { platform: 'tiktok', displayName: '', profileId: '', proxy: '' };
 
-// Built-ins → Connections. Manage the Postiz API key (stored encrypted, per
-// workspace) and view the channels connected in Postiz. Connecting/removing
-// channels happens in the Postiz UI (its public API can't), so we link out.
+// Built-ins → Connections. The workspace's unified channel list: Postiz accounts
+// (auto-imported from the pool) + GoLogin channels (added here). Plus the Postiz API key.
 export function Connections() {
   const { t } = useTranslation();
   const { current } = useWorkspace();
@@ -22,6 +24,8 @@ export function Connections() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [cred, setCred] = useState<ConnectorCredentialInfo | null>(null);
   const [keyInput, setKeyInput] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +33,7 @@ export function Connections() {
     if (!ws) return;
     try {
       setCred(await connectorsApi.credentialStatus(ws));
-      setChannels((await connectorsApi.channels(ws)).channels ?? []);
+      setChannels(await channelsApi.list(ws));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('connectors.error'));
     }
@@ -62,6 +66,23 @@ export function Connections() {
       const { url } = await connectorsApi.connectLink(ws!, 'postiz');
       window.open(url, '_blank', 'noopener');
     });
+
+  const addChannel = () =>
+    void act(async () => {
+      await channelsApi.create(ws!, {
+        platform: form.platform,
+        displayName: form.displayName.trim(),
+        profileId: form.profileId.trim(),
+        ...(form.proxy.trim() ? { proxy: form.proxy.trim() } : {}),
+      });
+      setForm(emptyForm);
+      setAddOpen(false);
+      await load();
+    });
+
+  const removeChannel = (c: Channel) => void act(async () => { await channelsApi.remove(ws!, c.id); await load(); });
+
+  const canAdd = !!form.displayName.trim() && !!form.profileId.trim();
 
   return (
     <div className="cx-page">
@@ -100,16 +121,51 @@ export function Connections() {
           {channels.map((c) => (
             <div className="cx-card" key={c.id}>
               <span className={`cx-ic ${cls(c.platform)}`}>{glyph(c.platform)}</span>
-              <div>
+              <div className="cx-card-id">
                 <div className="cx-name">{c.displayName}</div>
-                <div className="cx-plat">{c.platform}</div>
+                <div className="cx-plat">
+                  {c.platform}
+                  <span className={`cx-type cx-type-${c.type}`}>
+                    {c.type === ChannelType.GoLogin ? t('connectors.viaGoLogin') : t('connectors.viaPostiz')}
+                  </span>
+                </div>
               </div>
+              {c.type === ChannelType.GoLogin && (
+                <button className="cx-del" title={t('connectors.removeChannel')} aria-label={t('connectors.removeChannel')} disabled={busy} onClick={() => removeChannel(c)}>×</button>
+              )}
             </div>
           ))}
           <button className="cx-add" disabled={busy} onClick={openPostiz}>
             ＋ {t('connectors.manageInPostiz')} ↗
           </button>
+          <button className="cx-add" disabled={busy} onClick={() => setAddOpen((o) => !o)}>
+            ＋ {t('connectors.addGoLoginChannel')}
+          </button>
         </div>
+
+        {addOpen && (
+          <div className="cx-addform">
+            <label className="cx-field">
+              <span>{t('connectors.channelPlatform')}</span>
+              <select className="cx-input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })}>
+                {PLATFORMS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </label>
+            <label className="cx-field">
+              <span>{t('connectors.channelDisplayName')}</span>
+              <input className="cx-input" value={form.displayName} placeholder="@handle" onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
+            </label>
+            <label className="cx-field">
+              <span>{t('connectors.gologinProfileId')}</span>
+              <input className="cx-input" value={form.profileId} placeholder="6a33…" onChange={(e) => setForm({ ...form, profileId: e.target.value })} />
+            </label>
+            <label className="cx-field">
+              <span>{t('connectors.gologinProxy')}</span>
+              <input className="cx-input" value={form.proxy} placeholder="optional" onChange={(e) => setForm({ ...form, proxy: e.target.value })} />
+            </label>
+            <button className="cx-btn" disabled={busy || !canAdd} onClick={addChannel}>{t('connectors.addChannelBtn')}</button>
+          </div>
+        )}
       </div>
 
       <div className="cx-section">

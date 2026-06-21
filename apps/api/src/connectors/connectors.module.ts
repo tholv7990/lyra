@@ -18,5 +18,6 @@ import { EncryptionService } from '../keys/encryption.service';
   ],
   controllers: [ConnectorsController],
   providers: [ConnectorsProxy, ConnectorCredentialsService, CrawlerCookiesService, EncryptionService],
+  exports: [ConnectorsProxy, ConnectorCredentialsService], // for the channels module (Postiz pool)
 })
 export class ConnectorsModule {}

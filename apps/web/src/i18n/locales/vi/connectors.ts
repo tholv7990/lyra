@@ -16,6 +16,15 @@ export default {
   remove: 'Xóa',
   notConnected: 'chưa kết nối',
   manageInPostiz: 'Quản lý kênh trong Postiz',
+  viaPostiz: 'Postiz',
+  viaGoLogin: 'GoLogin',
+  addGoLoginChannel: 'Thêm kênh GoLogin',
+  channelPlatform: 'Nền tảng',
+  channelDisplayName: 'Tên hiển thị',
+  gologinProfileId: 'ID hồ sơ GoLogin',
+  gologinProxy: 'Proxy (tùy chọn)',
+  addChannelBtn: 'Thêm kênh',
+  removeChannel: 'Xóa kênh',
   postizKeyHint:
     'Tạo khóa này trong Postiz của bạn (Settings → Public API). Kênh được kết nối bên trong Postiz, sau đó hiển thị ở đây.',
 

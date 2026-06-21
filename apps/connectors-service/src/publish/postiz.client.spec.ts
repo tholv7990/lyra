@@ -1,20 +1,21 @@
+import { ChannelType } from '@lyra/shared';
 import { mapIntegrations, okReceipt, failReceipt, createPost } from './postiz.client';
 
 describe('mapIntegrations', () => {
   it('maps integrations to channels (identifier → platform, lowercased)', () => {
     const out = mapIntegrations([{ id: 'i1', name: '@me.bsky', identifier: 'Bluesky' }]);
-    expect(out).toEqual([{ id: 'i1', platform: 'bluesky', displayName: '@me.bsky' }]);
+    expect(out).toEqual([{ id: 'i1', type: ChannelType.Postiz, platform: 'bluesky', displayName: '@me.bsky' }]);
   });
   it('tolerates a wrapped { integrations: [] }, missing fields, and null', () => {
     expect(mapIntegrations({ integrations: [{ id: 'x' }] })).toEqual([
-      { id: 'x', platform: 'unknown', displayName: 'x' },
+      { id: 'x', type: ChannelType.Postiz, platform: 'unknown', displayName: 'x' },
     ]);
     expect(mapIntegrations(null)).toEqual([]);
   });
 });
 
 describe('receipts', () => {
-  const ch = { id: 'i1', platform: 'bluesky', displayName: '@me' };
+  const ch = { id: 'i1', type: ChannelType.Postiz, platform: 'bluesky', displayName: '@me' };
   it('okReceipt pulls postId/url defensively (flat or nested posts[])', () => {
     expect(okReceipt(ch, { id: 'p1', url: 'https://bsky.app/p/1' })).toEqual({
       platform: 'bluesky', accountId: 'i1', status: 'ok', postId: 'p1', url: 'https://bsky.app/p/1',

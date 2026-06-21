@@ -23,6 +23,7 @@ import { AdminModule } from './admin/admin.module';
 import { RequestsModule } from './requests/requests.module';
 import { TasksModule } from './tasks/tasks.module';
 import { PostsModule } from './posts/posts.module';
+import { ChannelsModule } from './channels/channels.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -59,6 +60,7 @@ import { HealthController } from './health.controller';
     RequestsModule,
     TasksModule,
     PostsModule,
+    ChannelsModule,
     AuthModule,
   ],
   controllers: [HealthController],

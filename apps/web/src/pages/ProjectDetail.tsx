@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { canEditProject, type Channel, type Project, type PublishedPost } from '@lyra/shared';
 import { api } from '../lib/api';
-import { connectorsApi } from '../lib/connectors';
+import { channelsApi } from '../lib/channels';
 import { postsApi } from '../lib/posts';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
@@ -54,7 +54,7 @@ export function ProjectDetail() {
   useEffect(() => {
     const ws = current?.id;
     if (!ws) return;
-    connectorsApi.channels(ws).then((r) => setPool(r.channels)).catch(() => setPool([]));
+    channelsApi.list(ws).then(setPool).catch(() => setPool([]));
   }, [current?.id]);
 
   // This project's published-post history.

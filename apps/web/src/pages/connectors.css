@@ -24,7 +24,18 @@
 .cx-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .cx-card { display: flex; align-items: center; gap: 10px; border: 1px solid var(--hairline); border-radius: 10px; padding: 10px 12px; background: var(--card); }
 .cx-name { font-size: var(--text-small); font-weight: 600; color: var(--ink); }
-.cx-plat { font-size: var(--text-micro); color: var(--ink-tertiary); }
+.cx-card-id { min-width: 0; }
+.cx-plat { display: flex; align-items: center; gap: 6px; font-size: var(--text-micro); color: var(--ink-tertiary); }
+/* connection-type pill on a channel card */
+.cx-type { padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.cx-type-postiz { background: var(--surface-2); color: var(--ink-muted); }
+.cx-type-gologin { background: var(--primary-tint); color: var(--primary); }
+.cx-del { margin-left: auto; color: var(--ink-tertiary); cursor: pointer; font-size: 18px; background: none; border: none; line-height: 1; padding: 0 2px; }
+.cx-del:hover { color: var(--danger); }
+/* add-GoLogin-channel inline form */
+.cx-addform { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 12px; padding: 12px; border: 1px solid var(--hairline); border-radius: 10px; background: var(--surface-1); }
+.cx-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; }
+.cx-field > span { font-size: var(--text-micro); font-weight: 600; color: var(--ink-muted); }
 .cx-x { margin-left: auto; color: var(--ink-tertiary); cursor: pointer; font-size: 16px; background: none; border: none; line-height: 1; }
 .cx-add { display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed var(--hairline-strong); border-radius: 10px; padding: 11px; color: var(--primary); font-size: var(--text-small); font-weight: 600; cursor: pointer; background: none; }
 .cx-note { font-size: var(--text-small); color: var(--ink-muted); line-height: 1.55; margin: 0; }

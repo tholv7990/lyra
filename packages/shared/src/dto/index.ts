@@ -347,6 +347,14 @@ export interface PublishDto {
   caption: string;
   mediaUrls: string[];
 }
+// Create a GoLogin-type channel (Postiz channels auto-import from the pool, so they
+// aren't created here). The server stamps type='gologin'.
+export interface CreateChannelDto {
+  platform: string;
+  displayName: string;
+  profileId: string;
+  proxy?: string;
+}
 // Record a finished publish as a project post. projectId comes from the route; the
 // server rolls `targets` up into the post status.
 export interface CreatePublishedPostDto {

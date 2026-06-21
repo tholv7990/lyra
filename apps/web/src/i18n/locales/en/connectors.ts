@@ -16,6 +16,15 @@ export default {
   remove: 'Remove',
   notConnected: 'not connected',
   manageInPostiz: 'Manage channels in Postiz',
+  viaPostiz: 'Postiz',
+  viaGoLogin: 'GoLogin',
+  addGoLoginChannel: 'Add GoLogin channel',
+  channelPlatform: 'Platform',
+  channelDisplayName: 'Display name',
+  gologinProfileId: 'GoLogin profile ID',
+  gologinProxy: 'Proxy (optional)',
+  addChannelBtn: 'Add channel',
+  removeChannel: 'Remove channel',
   postizKeyHint:
     'Generate this in your Postiz instance (Settings → Public API). Channels are connected inside Postiz, then appear here.',
 

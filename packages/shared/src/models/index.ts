@@ -15,6 +15,7 @@ import {
   WorkspaceType,
   TaskStatus,
   TaskPriority,
+  ChannelType,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -436,8 +437,13 @@ export interface ConnectorInfo {
 
 export interface Channel {
   id: string;
+  type: ChannelType; // how it publishes — Postiz pool vs GoLogin browser
   platform: string; // 'tiktok' | 'instagram' | 'youtube' | 'facebook' | ...
   displayName: string;
+  // GoLogin-only config (present when type === 'gologin'): the logged-in profile to
+  // drive, and an optional proxy label for reference. Postiz channels carry neither.
+  profileId?: string;
+  proxy?: string;
 }
 
 // One published-post outcome per target channel (partial failure tolerated).

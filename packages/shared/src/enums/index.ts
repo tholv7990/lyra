@@ -122,3 +122,11 @@ export enum TaskPriority {
   Medium = 'medium',
   Low = 'low',
 }
+
+// How a Channel publishes — the "connection type". `postiz` posts through the
+// Postiz pool (its accounts auto-appear as channels); `gologin` drives a logged-in
+// GoLogin browser profile via the browser connector (needs a profileId).
+export enum ChannelType {
+  Postiz = 'postiz',
+  GoLogin = 'gologin',
+}
