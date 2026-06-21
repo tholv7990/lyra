@@ -1,12 +1,16 @@
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Provider,
   StepMode,
   tagColor,
-  type Provider,
   type PipelineStep,
   type Prompt,
 } from '@lyra/shared';
+
+// "Try" runs the step's prompt in a chat — only meaningful for chat-completion
+// providers (Image/Video/Crawl aren't chat models, so they get no Try action).
+const CHAT_TEST_PROVIDERS: Provider[] = [Provider.Anthropic, Provider.OpenAI, Provider.DeepSeek];
 import { initial } from '../lib/format';
 import { EyeIcon, PlayIcon, XIcon } from '../layout/icons';
 import { ProviderIcon } from './ProviderIcon';
@@ -127,7 +131,7 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, modelLabel, pr
               <EyeIcon width={14} height={14} />
             </button>
           )}
-          {cb.onTestStep && (
+          {cb.onTestStep && CHAT_TEST_PROVIDERS.includes(s.provider) && (
             <button
               type="button"
               className="se-btn se-test"

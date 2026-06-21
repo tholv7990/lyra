@@ -8610,15 +8610,20 @@
 
 /* Modals tagged `full-mobile` (e.g. the step tester) go edge-to-edge on phones — a
    centered card is too cramped for tall chat content + the on-screen keyboard.
-   Placed after the size rules above so it wins; 100dvh keeps the composer pinned
-   above the keyboard. */
+   Placed after the size rules above so it wins. The scrim tracks the *visual*
+   viewport (--vv-*, set by useViewportFit) so it shrinks above the keyboard instead
+   of staying 100dvh and pushing the header off-screen; falls back to 100dvh. */
 @media (max-width: 560px) {
   .dialog-scrim:has(.dialog.full-mobile) {
     padding: 0;
+    top: var(--vv-top, 0px);
+    bottom: auto;
+    height: var(--vv-height, 100dvh);
+    align-items: stretch;
   }
   .dialog.full-mobile {
     max-width: none;
-    height: 100dvh;
+    height: 100%;
     max-height: none;
     border-radius: 0;
   }

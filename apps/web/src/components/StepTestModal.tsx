@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import type { Prompt, PromptMedia, Provider } from '@lyra/shared';
 import { api } from '../lib/api';
 import type { ModelCatalog } from '../lib/useModels';
+import { useViewportFit } from '../lib/useViewportFit';
 import { ChatPane } from './ChatPane';
 import { Modal } from './Modal';
-import { PlayIcon } from '../layout/icons';
 
 export interface StepTestModalProps {
   wsId: string;
@@ -36,6 +36,8 @@ export function StepTestModal({
   onClose,
 }: StepTestModalProps) {
   const { t } = useTranslation();
+  // Keep the full-screen modal within the keyboard-free area on mobile.
+  useViewportFit();
   const [seedInput, setSeedInput] = useState(initialPrompt);
   const [seedMedia, setSeedMedia] = useState(initialMedia);
 
@@ -76,7 +78,6 @@ export function StepTestModal({
         composerPlaceholder={t('run.testPromptPlaceholder')}
         emptyState={
           <div className="chat-empty">
-            <span className="step-test-empty-ico" aria-hidden><PlayIcon width={22} height={22} /></span>
             <h3>{t('run.testThisNode')}</h3>
             <p>{t('run.testNodeHint')}</p>
           </div>
