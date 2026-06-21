@@ -33,6 +33,7 @@ const COND_OPS: { op: ConditionOp; labelKey: string }[] = [
 ];
 const COND_NEEDS_VALUE = (op: ConditionOp) => op !== 'exists' && op !== 'empty';
 import { api } from '../lib/api';
+import { RUN_STATUS_LABEL_KEY } from '../lib/constants';
 import { useModels } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
 import { useRunActions } from '../lib/useRunActions';
@@ -55,17 +56,6 @@ import { buildEditGraph } from '../components/flow/buildGraph';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 const FlowCanvas = lazy(() => import('../components/FlowCanvas'));
-
-const RUN_STATUS_LABEL_KEY: Record<string, string> = {
-  idle: 'run.status_idle',
-  queued: 'run.status_queued',
-  running: 'run.status_running',
-  waiting: 'run.status_waiting',
-  awaiting_gate: 'run.status_waiting',
-  skipped: 'run.status_skipped',
-  done: 'run.status_done',
-  error: 'run.status_error',
-};
 
 function uuid() {
   return crypto.randomUUID();

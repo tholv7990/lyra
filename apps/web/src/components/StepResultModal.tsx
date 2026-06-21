@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
+import { fmtDuration } from '../lib/format';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { XIcon } from '../layout/icons';
 import { IconButton } from './IconButton';
@@ -30,14 +31,6 @@ interface StepResultModalProps {
   onClose: () => void;
 }
 
-// "1.4s" / "850ms" between two ISO timestamps, or null if not both present.
-function duration(startedAt?: string, finishedAt?: string): string | null {
-  if (!startedAt || !finishedAt) return null;
-  const ms = new Date(finishedAt).getTime() - new Date(startedAt).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return null;
-  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
-}
-
 interface Version {
   key: string;
   runId: string;
@@ -55,7 +48,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
   const title = step.name?.trim() || t('run.step', { n: step.index + 1 });
   const provider = step.provider ?? '';
   const promptSent = (step.sentPrompt || step.prompt || '').trim();
-  const dur = duration(step.startedAt, step.finishedAt);
+  const dur = fmtDuration(step.startedAt, step.finishedAt);
   const tokens = step.usage?.tokens;
 
   const versions = useMemo<Version[]>(

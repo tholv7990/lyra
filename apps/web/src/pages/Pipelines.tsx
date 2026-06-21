@@ -17,7 +17,7 @@ import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
 import { Pager } from '../components/Pager';
-import { CopyIcon, PipelinesIcon, PlusIcon, SparkleIcon, TrashIcon } from '../layout/icons';
+import { CopyIcon, PipelinesIcon, PlusIcon, SearchGlyph, SparkleIcon, TrashIcon } from '../layout/icons';
 import './marketplace.css';
 import './pipelines.css';
 
@@ -52,15 +52,6 @@ export function pipelineMatchesFilters(
   }
   if (opts.creators.length && !opts.creators.includes(p.createdBy.id)) return false;
   return true;
-}
-
-function SearchGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
-      <circle cx="7" cy="7" r="4.4" />
-      <path d="m10.4 10.4 3 3" />
-    </svg>
-  );
 }
 
 export function Pipelines() {

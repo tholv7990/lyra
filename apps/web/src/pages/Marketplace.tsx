@@ -31,6 +31,7 @@ import {
   FilterIcon,
   MarketplaceIcon,
   PlusIcon,
+  SearchGlyph,
   SparkleIcon,
 } from '../layout/icons';
 import './marketplace.css';
@@ -40,16 +41,6 @@ const TYPE_VALUES = ['text', 'structured'] as const;
 
 // Tracks the adopt state of a single row so the action can flip to "Added".
 type AdoptState = 'idle' | 'busy' | 'done';
-
-// Inline search glyph (no shared SearchIcon yet) — matches the design's search box.
-function SearchGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
-      <circle cx="7" cy="7" r="4.4" />
-      <path d="m10.4 10.4 3 3" />
-    </svg>
-  );
-}
 
 export function Marketplace() {
   const { t } = useTranslation();

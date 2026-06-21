@@ -1,14 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { StepStatus, type Run } from '@lyra/shared';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
+import { fmtDuration } from '../lib/format';
 import { Markdown } from './Markdown';
 
-function fmtDuration(a?: string, b?: string) {
-  if (!a || !b) return null;
-  const ms = new Date(b).getTime() - new Date(a).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return null;
-  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
-}
 function fmtCost(c?: number) {
   if (c == null) return null;
   return `$${c.toFixed(c < 0.01 ? 4 : 2)}`;

@@ -34,3 +34,11 @@ export function avatarStyle(name?: string): CSSProperties {
   const c = labelColor(name || 'User', []);
   return { color: c, background: `${c}16` };
 }
+
+/** ISO-delta as "1.4s" / "850ms", or null unless both timestamps are present and valid. */
+export function fmtDuration(a?: string, b?: string): string | null {
+  if (!a || !b) return null;
+  const ms = new Date(b).getTime() - new Date(a).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+}

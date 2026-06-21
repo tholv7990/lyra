@@ -33,3 +33,16 @@ export const STATUS_LABEL_KEY: Record<PromptStatus | ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'common.statusDraft',
   [ProjectStatus.Public]: 'common.statusPublic',
 };
+
+// i18n key for a run/step status — one map for the run views (PipelineBuilder run
+// badge, TaskDetail step labels). awaiting_gate shares the 'waiting' label.
+export const RUN_STATUS_LABEL_KEY: Record<string, string> = {
+  idle: 'run.status_idle',
+  queued: 'run.status_queued',
+  running: 'run.status_running',
+  waiting: 'run.status_waiting',
+  awaiting_gate: 'run.status_waiting',
+  skipped: 'run.status_skipped',
+  done: 'run.status_done',
+  error: 'run.status_error',
+};

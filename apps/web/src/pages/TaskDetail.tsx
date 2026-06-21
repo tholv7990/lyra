@@ -20,6 +20,7 @@ import {
   type Task,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { RUN_STATUS_LABEL_KEY } from '../lib/constants';
 import { fmtDate, initial, avatarStyle } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -43,17 +44,6 @@ import './taskdetail.css';
 // Suppress unused import — ProjectStatus used for type-narrowing imports only
 void ProjectStatus;
 
-const STATUS_KEY: Record<string, string> = {
-  idle: 'run.status_idle',
-  queued: 'run.status_queued',
-  running: 'run.status_running',
-  waiting: 'run.status_waiting',
-  awaiting_gate: 'run.status_waiting',
-  skipped: 'run.status_skipped',
-  done: 'run.status_done',
-  error: 'run.status_error',
-};
-
 // Distinct collection names the pipeline's fan-out steps map over.
 function fanOutNames(p: Pipeline): string[] {
   return [...new Set(p.steps.filter((s) => s.fanOut?.over).map((s) => s.fanOut!.over))];
@@ -64,7 +54,7 @@ export function TaskDetail() {
   const { id: projectId, taskId } = useParams<{ id: string; taskId: string }>();
   const navigate = useNavigate();
   const statusLabel = (status: string): string =>
-    STATUS_KEY[status] ? t(STATUS_KEY[status]) : status;
+    RUN_STATUS_LABEL_KEY[status] ? t(RUN_STATUS_LABEL_KEY[status]) : status;
   const { user } = useAuth();
   const { current } = useWorkspace();
   const wsId = current?.id;

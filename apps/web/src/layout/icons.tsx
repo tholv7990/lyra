@@ -321,3 +321,11 @@ export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M6.6 9.4 9.4 6.6M7 4.6l.9-.9a2.5 2.5 0 0 1 3.5 3.5l-.9.9M9 11.4l-.9.9a2.5 2.5 0 0 1-3.5-3.5l.9-.9" />
   </svg>
 );
+
+// Magnifier — the search-box glyph for the library list toolbars.
+export const SearchGlyph = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+    <circle cx="7" cy="7" r="4.4" />
+    <path d="m10.4 10.4 3 3" />
+  </svg>
+);
