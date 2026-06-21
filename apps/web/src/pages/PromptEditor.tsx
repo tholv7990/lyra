@@ -66,6 +66,8 @@ export function PromptEditor() {
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
+  // Set when the user tries to save without a title — flashes the title field.
+  const [titleMissing, setTitleMissing] = useState(false);
 
   // Unsaved-changes guard: the form is dirty when it differs from the last-saved
   // snapshot. Block in-app navigation (back/breadcrumb/sidebar) with a "Save
@@ -172,6 +174,7 @@ export function PromptEditor() {
   async function save() {
     if (!form.title.trim()) {
       setError(t('prompts.titleRequired'));
+      setTitleMissing(true);
       titleRef.current?.focus();
       return;
     }
@@ -200,11 +203,11 @@ export function PromptEditor() {
         title={
           <input
             ref={titleRef}
-            className="eshell-name"
+            className={`eshell-name${titleMissing ? ' needs-title' : ''}`}
             placeholder={t('prompts.promptTitlePlaceholder')}
             autoFocus={!isEdit}
             value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            onChange={(e) => { setForm({ ...form, title: e.target.value }); if (titleMissing) setTitleMissing(false); }}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void save(); } }}
           />
         }

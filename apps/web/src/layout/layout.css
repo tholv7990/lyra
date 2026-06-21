@@ -1634,6 +1634,14 @@
   text-overflow: ellipsis;
 }
 .eshell-name::placeholder { color: var(--placeholder); }
+/* The title is an editable input, not a label — hint it: a faint underline while
+   empty (invites a name), an accent underline while focused, and a danger
+   underline when a save was attempted without a title. */
+.eshell-name:placeholder-shown { box-shadow: inset 0 -1px 0 var(--hairline-strong); }
+.eshell-name:focus { box-shadow: inset 0 -1.5px 0 var(--primary); }
+.eshell-name.needs-title,
+.eshell-name.needs-title:focus { box-shadow: inset 0 -2px 0 var(--danger); }
+.eshell-name.needs-title::placeholder { color: var(--danger); }
 .eshell-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .eshell-body {
   flex: 1;
