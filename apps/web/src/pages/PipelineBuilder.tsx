@@ -85,6 +85,7 @@ export function PipelineBuilder() {
   const [name, setName] = useState('');
   useBreadcrumb(isNew ? name.trim() || t('pipelines.breadcrumbNew') : pipeline?.name ?? '…');
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [promptsLoaded, setPromptsLoaded] = useState(false);
   const [missingPromptIds, setMissingPromptIds] = useState<Set<string>>(new Set());
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -171,7 +172,8 @@ export function PipelineBuilder() {
     }
     api<Paged<Prompt>>(`/workspaces/${wsId}/prompts?limit=200`)
       .then((r) => setPrompts(r.items))
-      .catch(() => setPrompts([]));
+      .catch(() => setPrompts([]))
+      .finally(() => setPromptsLoaded(true));
     api<ApiKeyInfo[]>(`/workspaces/${wsId}/keys`)
       .then((ks) => setKeysSet(new Set(ks.map((k) => k.provider))))
       .catch(() => setKeysSet(new Set()));
@@ -611,7 +613,7 @@ export function PipelineBuilder() {
         )}
 
         {error && <p className="error">{error}</p>}
-        {prompts.length === 0 && (
+        {promptsLoaded && prompts.length === 0 && (
           <p className="empty">
             {t('pipelines.noPromptsBefore')}<Link to="/prompts" style={{ color: 'var(--primary)' }}>{t('pipelines.noPromptsLink')}</Link>{t('pipelines.noPromptsAfter')}
           </p>
