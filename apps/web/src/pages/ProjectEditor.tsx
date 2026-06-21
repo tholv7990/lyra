@@ -13,6 +13,7 @@ import {
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { connectorsApi } from '../lib/connectors';
+import { platformColor, platformGlyph } from '../lib/platform';
 import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -42,10 +43,6 @@ const empty: Form = {
 };
 
 const QUICK_KEYS = ['product', 'niche', 'homepage'];
-
-// Small platform indicator (mirrors PublishComposer); avoids a shared dep for two maps.
-const CH_GLYPH: Record<string, string> = { tiktok: '♪', instagram: '◎', youtube: '▶', facebook: 'f', x: '𝕏' };
-const CH_COLOR: Record<string, string> = { tiktok: '#111827', instagram: '#e1306c', youtube: '#ff0000', facebook: '#1877f2', x: '#111827' };
 
 export function ProjectEditor() {
   const { t } = useTranslation();
@@ -290,7 +287,7 @@ export function ProjectEditor() {
                     className={`pe-member${selected ? ' selected' : ''}`}
                     onClick={() => toggleChannel(c.id)}
                   >
-                    <span className="pe-member-av" style={{ background: CH_COLOR[c.platform] ?? 'var(--ink-tertiary)' }}>{CH_GLYPH[c.platform] ?? '◆'}</span>
+                    <span className="pe-member-av" style={{ background: platformColor(c.platform) }}>{platformGlyph(c.platform)}</span>
                     <span className="pe-member-id">
                       <span className="pe-member-name">{c.displayName}</span>
                       <span className="pe-member-role">{c.platform}</span>

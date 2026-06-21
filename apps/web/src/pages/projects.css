@@ -191,6 +191,72 @@
 .pd-var-eq { color: var(--ink-tertiary); }
 .pd-var-v { color: var(--ink-muted); }
 
+/* Channels & publishing strip on the project hub. */
+.pd-channels {
+  margin: 18px 0 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--surface-1);
+}
+.pd-channels-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.pd-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.pd-channels-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.pd-setlink {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+.pd-setlink:hover { text-decoration: underline; }
+.pd-channel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pd-channel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.pd-channel-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pd-channel-name { font-weight: 500; }
+
 /* Mobile: the board stacks vertically, so the page grows with content and the
    shell body scrolls (no fixed-height flex column). Header actions collapse to
    icons (the design's compact mobile header). */

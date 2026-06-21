@@ -1,23 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Channel, Project, PublishJob } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { connectorsApi } from '../lib/connectors';
+import { platformColor as color, platformGlyph as glyph } from '../lib/platform';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 import './connectors.css';
 import './publish.css';
-
-const GLYPH: Record<string, string> = {
-  tiktok: '♪', instagram: '◎', youtube: '▶', facebook: 'f', x: '𝕏',
-};
-// External brand colours for the channel icon squares (like provider icons).
-const PLATFORM_COLOR: Record<string, string> = {
-  tiktok: '#111827', instagram: '#e1306c', youtube: '#ff0000', facebook: '#1877f2', x: '#111827',
-};
-const glyph = (platform: string) => GLYPH[platform] ?? '◆';
-const color = (platform: string) => PLATFORM_COLOR[platform] ?? 'var(--ink-tertiary)';
 
 // Pure: toggle a channel id in/out of the selected list (exported for tests).
 export function togglePick(ids: string[], id: string): string[] {
@@ -32,6 +23,7 @@ export function PublishComposer() {
   const { t } = useTranslation();
   const { current } = useWorkspace();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const ws = current?.id;
 
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -71,6 +63,18 @@ export function PublishComposer() {
     const proj = projects.find((p) => p.id === pid);
     if (proj) setPicked(proj.channels.filter((c) => channels.some((ch) => ch.id === c)));
   };
+
+  // Opened from a project (/publish?project=:id) → preselect it + its channels once
+  // both lists are loaded. Runs once (presetRef guards re-entry).
+  const presetRef = useRef(false);
+  const wantProject = params.get('project');
+  useEffect(() => {
+    if (presetRef.current || !wantProject || !projects.length || !channels.length) return;
+    if (projects.some((p) => p.id === wantProject)) {
+      presetRef.current = true;
+      pickProject(wantProject);
+    }
+  }, [wantProject, projects, channels]); // pickProject intentionally omitted (runs once)
 
   const addMedia = () => {
     const u = mediaInput.trim();

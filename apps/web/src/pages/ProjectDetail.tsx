@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { canEditProject, type Project } from '@lyra/shared';
+import { canEditProject, type Channel, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
+import { connectorsApi } from '../lib/connectors';
+import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/useAuth';
@@ -11,7 +13,7 @@ import { EditorShell } from '../components/EditorShell';
 import { TaskList } from '../components/TaskList';
 import { StatusPill } from '../components/StatusPill';
 import { useLabels } from '../lib/useLabels';
-import { PencilIcon, PlusIcon } from '../layout/icons';
+import { PencilIcon, PlusIcon, PublishIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import './projects.css';
 
@@ -25,6 +27,7 @@ export function ProjectDetail() {
   const { user } = useAuth();
   const { current } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
+  const [pool, setPool] = useState<Channel[]>([]); // connected-channel pool (to resolve project.channels)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addTick, setAddTick] = useState(0); // header "New task" → open New column composer
@@ -45,6 +48,13 @@ export function ProjectDetail() {
 
   useEffect(() => { void load(); }, [load]);
 
+  // The connected-channel pool, to render the project's selected channels by name/icon.
+  useEffect(() => {
+    const ws = current?.id;
+    if (!ws) return;
+    connectorsApi.channels(ws).then((r) => setPool(r.channels)).catch(() => setPool([]));
+  }, [current?.id]);
+
   const canEdit = useMemo(
     () =>
       !!user && !!current && !!project &&
@@ -62,6 +72,9 @@ export function ProjectDetail() {
   if (!project) return <p className="empty">{error ?? t('projects.notFound')}</p>;
 
   const editUrl = `/projects/${project.id}/edit`;
+  // The project's selected channels, resolved to live pool entries (drops any that
+  // were disconnected since they were picked).
+  const channels = project.channels?.length ? pool.filter((c) => project.channels.includes(c.id)) : [];
 
   return (
     <EditorShell
@@ -108,6 +121,40 @@ export function ProjectDetail() {
             </div>
           )}
         </div>
+
+        {/* Channels & publishing — the project posts to its own connected channels. */}
+        <section className="pd-channels">
+          <div className="pd-channels-head">
+            <span className="pd-section-label">{t('projects.channelsLabel')}</span>
+            <button
+              type="button"
+              className="btn-primary btn-inline btn-sm pd-act"
+              onClick={() => navigate(`/publish?project=${project.id}`)}
+              title={t('projects.publish')}
+            >
+              <PublishIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.publish')}</span>
+            </button>
+          </div>
+          {channels.length === 0 ? (
+            <p className="pd-channels-empty">
+              {t('projects.noChannelsSet')}{' '}
+              {canEdit && (
+                <button type="button" className="pd-setlink" onClick={() => navigate(editUrl)}>
+                  {t('projects.setChannels')}
+                </button>
+              )}
+            </p>
+          ) : (
+            <div className="pd-channel-chips">
+              {channels.map((c) => (
+                <span className="pd-channel-chip" key={c.id}>
+                  <span className="pd-channel-ico" style={{ background: platformColor(c.platform) }}>{platformGlyph(c.platform)}</span>
+                  <span className="pd-channel-name">{c.displayName}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
 
         <TaskList projectId={project.id} projectName={project.name} canEdit={canEdit} labels={labels} openAddTick={addTick} />
       </div>
