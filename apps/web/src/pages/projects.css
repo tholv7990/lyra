@@ -161,9 +161,16 @@
 .pd-meta {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 10px;
+}
+/* status + edit-project pencil, pinned to the right of the meta row */
+.pd-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .pd-by {
   display: inline-flex;

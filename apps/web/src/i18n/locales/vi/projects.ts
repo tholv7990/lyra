@@ -99,6 +99,7 @@ export default {
   noChannelsSet: 'Dự án này chưa chọn kênh nào.',
   setChannels: 'Chọn kênh',
   postsLabel: 'Bài đăng',
+  tasksLabel: 'Nhiệm vụ',
   noPosts: 'Chưa có bài đăng nào.',
   noCaption: '(không có chú thích)',
   variablesLabel: 'Biến',

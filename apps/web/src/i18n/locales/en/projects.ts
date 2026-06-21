@@ -99,6 +99,7 @@ export default {
   noChannelsSet: 'No channels selected for this project.',
   setChannels: 'Set channels',
   postsLabel: 'Posts',
+  tasksLabel: 'Tasks',
   noPosts: 'No posts published yet.',
   noCaption: '(no caption)',
   variablesLabel: 'Variables',

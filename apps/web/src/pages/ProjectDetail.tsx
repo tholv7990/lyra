@@ -90,28 +90,29 @@ export function ProjectDetail() {
       crumb={{ label: t('nav.projects'), to: '/projects' }}
       onClose={() => navigate('/projects')}
       title={<h2 className="eshell-name">{project.name}</h2>}
-      actions={
-        canEdit ? (
-          <>
-            <button type="button" className="btn-ghost btn-inline btn-sm pd-act" onClick={() => navigate(editUrl)} title={t('projects.editProject')}>
-              <PencilIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.editProject')}</span>
-            </button>
-            <button type="button" className="btn-primary btn-inline btn-sm pd-act" onClick={() => setAddTick((n) => n + 1)} title={t('projects.newTask')}>
-              <PlusIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.newTask')}</span>
-            </button>
-          </>
-        ) : undefined
-      }
     >
       <div className="pd">
         {error && <p className="error">{error}</p>}
 
         <div className="pd-context">
           <div className="pd-meta">
-            <StatusPill status={project.status} />
             <span className="pd-by" title={t('projects.createdByName', { name: project.createdBy.name })}>
               <Avatar name={project.createdBy.name} size={20} />
               {project.createdBy.name} · {fmtDate(project.createdAt)}
+            </span>
+            <span className="pd-meta-right">
+              <StatusPill status={project.status} />
+              {canEdit && (
+                <button
+                  type="button"
+                  className="icon-btn pd-edit"
+                  onClick={() => navigate(editUrl)}
+                  title={t('projects.editProject')}
+                  aria-label={t('projects.editProject')}
+                >
+                  <PencilIcon width={15} height={15} />
+                </button>
+              )}
             </span>
           </div>
 
@@ -198,7 +199,22 @@ export function ProjectDetail() {
           )}
         </section>
 
-        <TaskList projectId={project.id} projectName={project.name} canEdit={canEdit} labels={labels} openAddTick={addTick} />
+        <section className="pd-tasks">
+          <div className="pd-channels-head">
+            <span className="pd-section-label">{t('projects.tasksLabel')}</span>
+            {canEdit && (
+              <button
+                type="button"
+                className="btn-primary btn-inline btn-sm pd-act"
+                onClick={() => setAddTick((n) => n + 1)}
+                title={t('projects.newTask')}
+              >
+                <PlusIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.newTask')}</span>
+              </button>
+            )}
+          </div>
+          <TaskList projectId={project.id} projectName={project.name} canEdit={canEdit} labels={labels} openAddTick={addTick} />
+        </section>
       </div>
     </EditorShell>
   );
