@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { canEditProject, labelColor, ProjectStatus, type Project } from '@lyra/shared';
+import { canEditProject, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initials } from '../lib/format';
+import { fmtDate } from '../lib/format';
+import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
@@ -91,9 +92,7 @@ export function ProjectDetail() {
           <div className="pd-meta">
             <span className={`badge status-${project.status}`}>{t(PROJECT_STATUS_KEY[project.status])}</span>
             <span className="pd-by" title={t('projects.createdByName', { name: project.createdBy.name })}>
-              <span className="pd-by-av" style={{ background: labelColor(project.createdBy.name, []) }} aria-hidden>
-                {initials(project.createdBy.name)}
-              </span>
+              <Avatar name={project.createdBy.name} size={20} />
               {project.createdBy.name} · {fmtDate(project.createdAt)}
             </span>
           </div>

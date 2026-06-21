@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { StepMode, labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initials } from '../lib/format';
+import { fmtDate } from '../lib/format';
+import { Avatar } from '../components/Avatar';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -315,13 +316,7 @@ export function Pipelines() {
 
                 <div className="mkt-card-foot">
                   <span className="mkt-by" title={t('pipelines.createdByName', { name: p.createdBy.name })}>
-                    <span
-                      className="mkt-by-avatar"
-                      style={{ background: labelColor(p.createdBy.name, []), color: 'var(--on-accent)' }}
-                      aria-hidden
-                    >
-                      {initials(p.createdBy.name)}
-                    </span>
+                    <Avatar name={p.createdBy.name} size={20} />
                     <span className="mkt-by-name">{p.createdBy.name} · {fmtDate(p.updatedAt)}</span>
                   </span>
                   <div className="mkt-card-actions">

@@ -12,7 +12,7 @@ import {
 } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useAuth } from '../auth/useAuth';
-import { initials } from '../lib/format';
+import { Avatar } from '../components/Avatar';
 import { marketplaceApi } from '../lib/marketplace';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { useEscapeKey } from '../lib/useEscapeKey';
@@ -532,13 +532,7 @@ function Card({ prompt, rank, state, locked, copied, onAdopt, onView, onCopy, t 
 
       <div className="mkt-card-foot">
         <span className="mkt-by" title={t('marketplace.openSource', { source: prompt.source })}>
-          <span
-            className="mkt-by-avatar"
-            style={{ background: labelColor(contributor || prompt.source, []), color: 'var(--on-accent)' }}
-            aria-hidden
-          >
-            {initials(contributor || prompt.source)}
-          </span>
+          <Avatar name={contributor || prompt.source} size={20} />
           <span className="mkt-by-name">
             {contributor || t('marketplace.byUnknown')}
           </span>

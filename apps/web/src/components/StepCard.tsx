@@ -7,6 +7,7 @@ import {
   type PipelineStep,
   type Prompt,
 } from '@lyra/shared';
+import { initial } from '../lib/format';
 import { EyeIcon, PlayIcon, XIcon } from '../layout/icons';
 import { ProviderIcon } from './ProviderIcon';
 import { useFlowCallbacks } from './flow/flowCallbacks';
@@ -102,7 +103,7 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, modelLabel, pr
       <div className="se-foot">
         {p?.createdBy?.name ? (
           <span className="flow-by">
-            <span className="flow-avatar">{p.createdBy.name.charAt(0).toUpperCase()}</span>
+            <span className="flow-avatar">{initial(p.createdBy.name)}</span>
             <span className="flow-by-name">{p.createdBy.name}</span>
           </span>
         ) : (

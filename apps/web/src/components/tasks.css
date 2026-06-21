@@ -152,17 +152,6 @@
   gap: 8px;
   flex: none;
 }
-.tcard-avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--on-accent);
-}
-
 /* Bottom add-task affordance + inline composer */
 .tcol-addrow {
   display: flex;

@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initials } from '../lib/format';
+import { fmtDate } from '../lib/format';
+import { Avatar } from '../components/Avatar';
 import { STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
@@ -252,13 +253,7 @@ export function Projects() {
 
                 <div className="mkt-card-foot pr-foot">
                   <span className="mkt-by" title={t('projects.createdByName', { name: p.createdBy.name })}>
-                    <span
-                      className="mkt-by-avatar"
-                      style={{ background: labelColor(p.createdBy.name, []), color: 'var(--on-accent)' }}
-                      aria-hidden
-                    >
-                      {initials(p.createdBy.name)}
-                    </span>
+                    <Avatar name={p.createdBy.name} size={20} />
                     <span className="mkt-by-name">{p.createdBy.name} · {fmtDate(p.updatedAt)}</span>
                   </span>
                   <div className="mkt-card-actions">

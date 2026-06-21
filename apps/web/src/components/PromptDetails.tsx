@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
-import { fmtDate, initials } from '../lib/format';
+import { fmtDate } from '../lib/format';
+import { Avatar } from './Avatar';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { api } from '../lib/api';
@@ -104,13 +105,7 @@ export function PromptDetails({
 
         <div className="mkd-body">
           <div className="pd-meta2">
-            <span
-              className="pd-meta-avatar"
-              style={{ background: labelColor(prompt.createdBy.name, []), color: 'var(--on-accent)' }}
-              aria-hidden
-            >
-              {initials(prompt.createdBy.name)}
-            </span>
+            <Avatar name={prompt.createdBy.name} size={22} />
             <span className="pd-meta-by">
               {prompt.createdBy.name} · {fmtDate(prompt.createdAt)}
             </span>

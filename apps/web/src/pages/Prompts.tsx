@@ -17,7 +17,8 @@ import {
   type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
-import { fmtDate, initials } from '../lib/format';
+import { fmtDate } from '../lib/format';
+import { Avatar } from '../components/Avatar';
 import { PROVIDER_LABELS, STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { TYPE_COLOR } from '../lib/promptType';
@@ -448,13 +449,7 @@ export function Prompts() {
 
                   <div className="mkt-card-foot">
                     <span className="mkt-by">
-                      <span
-                        className="mkt-by-avatar"
-                        style={{ background: labelColor(p.createdBy.name, []), color: 'var(--on-accent)' }}
-                        aria-hidden
-                      >
-                        {initials(p.createdBy.name)}
-                      </span>
+                      <Avatar name={p.createdBy.name} size={20} />
                       <span className="mkt-by-name">
                         {p.createdBy.name} · {fmtDate(p.updatedAt)}
                       </span>

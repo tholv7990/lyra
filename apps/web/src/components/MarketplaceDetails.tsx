@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { labelColor, type MarketplacePrompt } from '@lyra/shared';
-import { initials } from '../lib/format';
+import { Avatar } from './Avatar';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { promptSegments } from '../lib/promptSegments';
@@ -62,13 +62,7 @@ export function MarketplaceDetails({
 
           <div className="mkd-meta">
             <span className="mkd-by">
-              <span
-                className="mkd-by-avatar"
-                style={{ background: labelColor(contributor || prompt.source, []), color: 'var(--on-accent)' }}
-                aria-hidden
-              >
-                {initials(contributor || prompt.source)}
-              </span>
+              <Avatar name={contributor || prompt.source} size={24} />
               <span>{contributor ? t('marketplace.by', { name: contributor }) : t('marketplace.byUnknown')}</span>
             </span>
             <span className="mkd-source">

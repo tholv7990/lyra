@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TaskPriority, TaskStatus, labelColor, type Task, type LabelInfo } from '@lyra/shared';
 import { api } from '../lib/api';
-import { initials } from '../lib/format';
+import { Avatar } from './Avatar';
 import { TASK_STATUS_ORDER, groupTasksByStatus } from '../lib/taskStatus';
 import { TaskStatusIcon } from './TaskStatusIcon';
 import { TaskPriorityIcon } from './TaskPriorityIcon';
@@ -142,9 +142,7 @@ export function TaskList({
                     <div className="tcard-foot-r">
                       {task.priority !== TaskPriority.None && <TaskPriorityIcon priority={task.priority} size={15} />}
                       {task.assignee && (
-                        <span className="tcard-avatar" style={{ background: labelColor(task.assignee.name, []) }} title={task.assignee.name}>
-                          {initials(task.assignee.name)}
-                        </span>
+                        <Avatar name={task.assignee.name} size={22} title={task.assignee.name} />
                       )}
                     </div>
                   </div>

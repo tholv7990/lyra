@@ -631,6 +631,18 @@ select.text-input {
 .tgl input:disabled + .tgl-track { opacity: 0.5; }
 @media (prefers-reduced-motion: reduce) { .tgl-track, .tgl-knob, .cbx-box { transition: none; } }
 
+/* ===== Avatar (Avatar.tsx) — round initial chip; size + colour set inline ===== */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  color: var(--on-accent);
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 /* ===== Tooltip ===== */
 .tip-wrap { position: relative; display: inline-flex; }
 .tip {
