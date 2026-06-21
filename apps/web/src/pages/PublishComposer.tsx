@@ -74,7 +74,9 @@ export function PublishComposer() {
   useEffect(() => {
     if (!projectId) return;
     const proj = projects.find((p) => p.id === projectId);
-    if (proj) setPicked(proj.channels.filter((c) => channels.some((ch) => ch.id === c)));
+    // `channels` may be absent on projects served before the field shipped — default
+    // to [] so this never throws on API skew.
+    if (proj) setPicked((proj.channels ?? []).filter((c) => channels.some((ch) => ch.id === c)));
   }, [projectId, channels, projects]);
 
   const addMedia = () => {
