@@ -88,6 +88,7 @@ export default {
   needsPrompt: 'NEEDS PROMPT',
   needsPromptHint: 'AI couldn’t match a prompt — pick one for this step.',
   viewFullPrompt: 'View full prompt',
+  savedAnswers: 'Saved answers: {{count}}',
   testThisStep: 'Try this step',
   test: 'Try',
   closeTest: 'Close test',

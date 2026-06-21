@@ -12,7 +12,7 @@ import {
 // providers (Image/Video/Crawl aren't chat models, so they get no Try action).
 const CHAT_TEST_PROVIDERS: Provider[] = [Provider.Anthropic, Provider.OpenAI, Provider.DeepSeek];
 import { initial } from '../lib/format';
-import { EyeIcon, PlayIcon, XIcon } from '../layout/icons';
+import { ChatsIcon, EyeIcon, PlayIcon, XIcon } from '../layout/icons';
 import { ProviderIcon } from './ProviderIcon';
 import { useFlowCallbacks } from './flow/flowCallbacks';
 
@@ -101,6 +101,12 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, modelLabel, pr
             <ProviderIcon provider={s.provider} size={16} />
             {modelLabel(s.provider, s.model)}
           </span>
+          {!!p?.results?.length && (
+            <span className="se-hist" title={t('run.savedAnswers', { count: p.results.length })}>
+              <ChatsIcon width={13} height={13} />
+              {p.results.length}
+            </span>
+          )}
         </div>
       </div>
 

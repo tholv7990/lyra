@@ -5360,14 +5360,14 @@
 .flow-node.step-edit {
   flex-direction: column;
   align-items: stretch;
-  width: 272px;
-  max-width: 272px;
+  width: 320px;
+  max-width: 320px;
   border: 1px solid var(--hairline-strong);
   border-left-width: 1px;
   border-radius: 13px;
 }
 .react-flow__node .flow-node.step-edit {
-  width: 272px;
+  width: 320px;
 }
 .flow-node.step-edit.broken {
   border-color: rgba(229, 72, 77, 0.45);
@@ -5401,8 +5401,8 @@
   line-height: 1.5;
   color: var(--ink-muted);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -5431,6 +5431,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* "has saved answers" indicator — a count chip next to the model pill. */
+.flow-node.step-edit .se-hist {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--surface-1);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.flow-node.step-edit .se-hist svg { color: var(--primary); }
 
 .flow-node.step-edit .se-foot {
   display: flex;

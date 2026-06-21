@@ -87,6 +87,7 @@ export default {
   needsPrompt: 'CẦN PROMPT',
   needsPromptHint: 'AI không khớp được prompt — chọn một prompt cho bước này.',
   viewFullPrompt: 'Xem toàn bộ prompt',
+  savedAnswers: 'Câu trả lời đã lưu: {{count}}',
   testThisStep: 'Thử bước này',
   test: 'Thử',
   closeTest: 'Đóng kiểm thử',
