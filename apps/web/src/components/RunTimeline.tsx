@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { StepMode, StepStatus, type Asset, type Run, type Step } from '@lyra/shared';
+import { MediaType, StepMode, StepStatus, type Asset, type Run, type Step } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
+import { useMediaViewer } from './MediaViewer';
 import './runtimeline.css';
 
 interface RunTimelineProps {
@@ -76,6 +77,7 @@ export function RunTimeline({
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const [resultFor, setResultFor] = useState<number | null>(null);
+  const { open: openMedia, viewer } = useMediaViewer();
 
   const toggle = (i: number) =>
     setOpen((prev) => {
@@ -137,9 +139,9 @@ export function RunTimeline({
                     <div className="rt-assets">
                       {stepAssets.map((a) =>
                         a.type === 'image' ? (
-                          <a key={a.id} className="rt-asset" href={a.url} target="_blank" rel="noreferrer"><img src={a.thumbUrl || a.url} alt="" loading="lazy" /></a>
+                          <a key={a.id} className="rt-asset" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><img src={a.thumbUrl || a.url} alt="" loading="lazy" /></a>
                         ) : (
-                          <a key={a.id} className="rt-asset glyph" href={a.url} target="_blank" rel="noreferrer"><span aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span></a>
+                          <a key={a.id} className="rt-asset glyph" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><span aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span></a>
                         ),
                       )}
                     </div>
@@ -230,6 +232,7 @@ export function RunTimeline({
           onClose={() => setResultFor(null)}
         />
       )}
+      {viewer}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  MediaType,
   STEP_DEFS,
   STEP_PROVIDERS,
   StepMode,
@@ -13,6 +14,7 @@ import {
   type Step,
 } from '@lyra/shared';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
+import { useMediaViewer } from './MediaViewer';
 
 export const STATUS_LABEL: Record<string, string> = {
   idle: 'Idle',
@@ -72,6 +74,7 @@ export function RunStepCard(props: RunStepCardProps) {
     isCurrent || step.status === StepStatus.Waiting || step.status === StepStatus.Error;
   const [expanded, setExpanded] = useState(wantsAttention);
   const [draft, setDraft] = useState(step.prompt);
+  const { open: openMedia, viewer } = useMediaViewer();
   useEffect(() => setDraft(step.prompt), [step.prompt]);
   const dirty = draft !== step.prompt;
 
@@ -148,11 +151,11 @@ export function RunStepCard(props: RunStepCardProps) {
         <div className="rn-assets" aria-label={t('run.generatedAssets', { count: assets.length })}>
           {assets.map((a) =>
             a.type === 'image' ? (
-              <a key={a.id} className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')}>
+              <a key={a.id} className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')} onClick={openMedia({ url: a.url, type: a.type as MediaType })}>
                 <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
               </a>
             ) : (
-              <a key={a.id} className={`rn-asset rn-asset-${a.type}`} href={a.url} target="_blank" rel="noreferrer" title={t('run.openAsset', { type: a.type })}>
+              <a key={a.id} className={`rn-asset rn-asset-${a.type}`} href={a.url} target="_blank" rel="noreferrer" title={t('run.openAsset', { type: a.type })} onClick={openMedia({ url: a.url, type: a.type as MediaType })}>
                 <span className="rn-asset-glyph" aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span>
               </a>
             ),
@@ -223,6 +226,7 @@ export function RunStepCard(props: RunStepCardProps) {
           onClose={() => setShowResult(false)}
         />
       )}
+      {viewer}
     </div>
   );
 }

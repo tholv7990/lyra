@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StepMode, type Asset, type Step } from '@lyra/shared';
+import { MediaType, StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
 import { fmtDuration } from '../lib/format';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { XIcon } from '../layout/icons';
 import { IconButton } from './IconButton';
 import { Modal } from './Modal';
+import { useMediaViewer } from './MediaViewer';
 
 // One past execution of this step (per-run history). Assets are fetched lazily
 // when a version is selected; only the text/status travel in the list.
@@ -73,6 +74,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
 
   const [sel, setSel] = useState(0);
   const current = versions[Math.min(sel, versions.length - 1)];
+  const { open: openMedia, viewer } = useMediaViewer();
 
   // Assets per version: the current run's are already in hand; older runs are
   // fetched on demand and cached. `undefined` = not yet loaded.
@@ -171,7 +173,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
                 {shownAssets.map((a) => (
                   <div className="srm-asset" key={a.id}>
                     {a.type === 'image' ? (
-                      <a href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')}>
+                      <a href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')} onClick={openMedia({ url: a.url, type: a.type as MediaType })}>
                         <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
                       </a>
                     ) : a.type === 'video' ? (
@@ -227,6 +229,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
             </details>
           )}
         </div>
+      {viewer}
     </Modal>
   );
 }
