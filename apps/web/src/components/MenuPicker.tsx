@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
 
 export interface MenuPickerOption<T extends string> {
   value: T;
@@ -26,6 +27,7 @@ export function MenuPicker<T extends string>({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOutsideClick(ref, open, () => setOpen(false));
+  useEscapeKey(() => setOpen(false), open);
   const current = options.find((o) => o.value === value);
 
   return (

@@ -13,6 +13,7 @@ import {
   type LabelInfo,
 } from '@lyra/shared';
 import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 
 interface LabelPickerProps {
@@ -57,6 +58,7 @@ export function LabelPicker({ value, labels, onChange, onCreate }: LabelPickerPr
   }
 
   useOutsideClick(wrapRef, open, close);
+  useEscapeKey(close, open);
 
   function toggle(name: string) {
     if (selected.has(tagKey(name))) {
