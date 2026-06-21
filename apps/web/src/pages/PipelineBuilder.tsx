@@ -514,29 +514,16 @@ export function PipelineBuilder() {
       }
       actions={
         runMode ? undefined : (
-          <>
-            {!isNew && (
-              <button
-                className="btn-primary btn-inline"
-                disabled={steps.length === 0 || creatingRun || saving}
-                onClick={triggerTest}
-                title={t('pipelines.testHint')}
-              >
-                <PlayIcon width={13} height={13} />
-                {creatingRun ? t('pipelines.testing') : t('pipelines.testRunLabel')}
-              </button>
-            )}
-            <button
-              type="button"
-              className="icon-btn-success"
-              disabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
-              title={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
-              aria-label={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
-              onClick={() => void save()}
-            >
-              <CheckIcon width={16} height={16} />
-            </button>
-          </>
+          <button
+            type="button"
+            className="icon-btn-success"
+            disabled={!canEdit || saving || (isNew ? !name.trim() : !dirty)}
+            title={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
+            aria-label={isNew ? t('pipelines.createTitle') : t('pipelines.saveChanges')}
+            onClick={() => void save()}
+          >
+            <CheckIcon width={16} height={16} />
+          </button>
         )
       }
     >
@@ -600,15 +587,29 @@ export function PipelineBuilder() {
         {canEdit && (
           <div className="pb-builder-row">
             <span className="pb-builder-label">{t('pipelines.builderLabel')}</span>
-            <button
-              type="button"
-              className="btn-ai"
-              onClick={() => setAiEditOpen(true)}
-              title={t('pipelines.aiBuilder')}
-            >
-              <SparkleIcon width={14} height={14} />
-              <span className="lin-ai-txt">{t('pipelines.aiBuilder')}</span>
-            </button>
+            <div className="pb-builder-actions">
+              {!isNew && (
+                <button
+                  type="button"
+                  className="btn-primary btn-inline"
+                  disabled={steps.length === 0 || creatingRun || saving}
+                  onClick={triggerTest}
+                  title={t('pipelines.testHint')}
+                >
+                  <PlayIcon width={13} height={13} />
+                  {creatingRun ? t('pipelines.running') : t('pipelines.runLabel')}
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-ai"
+                onClick={() => setAiEditOpen(true)}
+                title={t('pipelines.aiBuilder')}
+              >
+                <SparkleIcon width={14} height={14} />
+                <span className="lin-ai-txt">{t('pipelines.aiBuilder')}</span>
+              </button>
+            </div>
           </div>
         )}
 

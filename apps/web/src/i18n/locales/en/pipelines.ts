@@ -97,6 +97,8 @@ export default {
   test: 'Test',
   testRunLabel: 'Test run',
   testing: 'Testing…',
+  runLabel: 'Run',
+  running: 'Running…',
 
   // Test run bar
   backToEditing: 'Back to editing',

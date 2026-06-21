@@ -98,6 +98,8 @@ export default {
   test: 'Chạy thử',
   testRunLabel: 'Chạy thử',
   testing: 'Đang chạy thử…',
+  runLabel: 'Chạy',
+  running: 'Đang chạy…',
 
   // Test run bar
   backToEditing: 'Quay lại chỉnh sửa',

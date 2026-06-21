@@ -5310,6 +5310,11 @@
   font-weight: 600;
   color: var(--ink);
 }
+.pb-builder-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* Desktop: note + tags merged into the header row (the title slot). The note is a
    borderless inline field; the breadcrumb already carries the pipeline name. */
