@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { useEscapeKey } from '../lib/useEscapeKey';
+import { useScrollLock } from '../lib/useScrollLock';
 
 /**
  * Centered modal shell: the `dialog-scrim` backdrop (click to close) + the
@@ -19,6 +20,7 @@ export function Modal({
   children: ReactNode;
 }) {
   useEscapeKey(onClose);
+  useScrollLock();
   return (
     <div className="dialog-scrim" onClick={onClose}>
       <div
