@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
 import { initial } from '../lib/format';
 import { EyeIcon, FilterIcon } from '../layout/icons';
+import { ProviderIcon } from './ProviderIcon';
 import { PromptDetails } from './PromptDetails';
 
 // Add-step prompt picker (Linear-style). Search by name + a Filter button that
@@ -117,7 +118,12 @@ export function PromptPicker({
                     <span className="ppick-avatar">{initial(p.createdBy.name)}</span>
                     {p.createdBy.name}
                   </span>
-                  {ml && <span className="ppick-model">{ml}</span>}
+                  {ml && (
+                    <span className="ppick-model">
+                      {p.provider && <ProviderIcon provider={p.provider} size={14} />}
+                      {ml}
+                    </span>
+                  )}
                 </div>
                 {p.tags.length > 0 && (
                   <div className="ppick-cardtags">

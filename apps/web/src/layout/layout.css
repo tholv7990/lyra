@@ -6079,7 +6079,7 @@
   overflow: hidden;
 }
 .ppick-byrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ppick-model { font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.ppick-model { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .ppick-cardtags { display: flex; flex-wrap: wrap; gap: 5px; }
 .ppick-by { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .ppick-avatar {
