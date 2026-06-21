@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { XIcon } from '../layout/icons';
 import { IconButton } from './IconButton';
@@ -104,16 +105,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
 
   useEscapeKey(onClose);
 
-  const [copied, setCopied] = useState(false);
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(current.result ?? '');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard blocked — no-op
-    }
-  }
+  const { copied, copy } = useCopyToClipboard();
 
   const dlOne = (assetId: string, name: string) =>
     void downloadFile(`/runs/${current.runId}/assets/${assetId}/download`, name);
@@ -221,7 +213,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
             <>
               <div className="srm-result-bar">
                 <span>{t('run.output')}</span>
-                <button type="button" className="btn-ghost srm-copy" onClick={copy}>
+                <button type="button" className="btn-ghost srm-copy" onClick={() => copy(current.result ?? '')}>
                   {copied ? t('common.copied') : t('common.copy')}
                 </button>
               </div>

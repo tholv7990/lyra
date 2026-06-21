@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StepStatus, type Run } from '@lyra/shared';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { Markdown } from './Markdown';
 
 function fmtDuration(a?: string, b?: string) {
@@ -33,7 +33,7 @@ export function RunSummary({
   onRetry: (index: number) => void;
 }) {
   const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const errored = run.steps.find((s) => s.status === StepStatus.Error || !!s.error);
   const last = run.steps[run.steps.length - 1];
@@ -42,11 +42,6 @@ export function RunSummary({
   const hasActivity = run.steps.some((s) => s.status !== StepStatus.Idle || s.result || s.error);
   if (!hasActivity) return null;
 
-  const copy = (text: string) => {
-    void navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1400);
-  };
   const download = (text: string, name: string) => {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }));
     const a = document.createElement('a');

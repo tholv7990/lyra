@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type MarketplacePrompt } from '@lyra/shared';
 import { initials } from '../lib/format';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { promptSegments } from '../lib/promptSegments';
 import { CheckIcon, ChatsIcon, ConnectionsIcon, CopyIcon, PlusIcon, XIcon } from '../layout/icons';
@@ -31,15 +31,9 @@ export function MarketplaceDetails({
   const { t } = useTranslation();
   const contributor = prompt.contributor?.trim();
   const done = state === 'done';
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   useEscapeKey(onClose);
-
-  function copy() {
-    void navigator.clipboard?.writeText(prompt.content);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-  }
 
   return (
     <div className="dialog-scrim" onClick={onClose}>
@@ -102,7 +96,7 @@ export function MarketplaceDetails({
           <div className="mkd-prompt-head">
             <span className="mkd-label">{t('common.prompt')}</span>
             <div className="mkd-prompt-actions">
-              <button type="button" className="mkd-btn" onClick={copy}>
+              <button type="button" className="mkd-btn" onClick={() => copy(prompt.content)}>
                 {copied ? <CheckIcon width={14} height={14} /> : <CopyIcon width={14} height={14} />}
                 {copied ? t('marketplace.copied') : t('marketplace.copy')}
               </button>

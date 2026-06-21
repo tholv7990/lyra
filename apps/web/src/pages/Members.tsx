@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { initial, avatarStyle, fmtDate } from '../lib/format';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { toggleInList } from '../lib/array';
 import { ROLE_LABELS } from '../lib/constants';
 import { EmptyState } from '../components/EmptyState';
@@ -328,7 +329,7 @@ function InviteForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -346,7 +347,6 @@ function InviteForm({
       setLink(res.acceptUrl);
       setEmail('');
       setRole(Role.Member);
-      setCopied(false);
       await onInvited();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('members.error'));
@@ -395,10 +395,7 @@ function InviteForm({
           <button
             type="button"
             className="btn-ghost"
-            onClick={() => {
-              void navigator.clipboard?.writeText(link);
-              setCopied(true);
-            }}
+            onClick={() => copy(link)}
           >
             {copied ? t('members.copied') : t('members.copyLink')}
           </button>

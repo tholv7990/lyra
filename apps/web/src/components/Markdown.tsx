@@ -1,20 +1,15 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 
 // A fenced code block with a hover "Copy" button (Claude-style).
 function CodeBlock({ children }: { children?: ReactNode }) {
   const ref = useRef<HTMLPreElement>(null);
-  const [copied, setCopied] = useState(false);
-  function copy() {
-    const text = ref.current?.innerText ?? '';
-    void navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1400);
-  }
+  const { copied, copy } = useCopyToClipboard();
   return (
     <div className="md-code">
-      <button type="button" className="md-copy" onClick={copy}>
+      <button type="button" className="md-copy" onClick={() => copy(ref.current?.innerText ?? '')}>
         {copied ? 'Copied' : 'Copy'}
       </button>
       <pre ref={ref}>{children}</pre>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
 import { fmtDate, initials } from '../lib/format';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
@@ -48,7 +49,7 @@ export function PromptDetails({
   // Local copy so deleting a result updates the list without a re-fetch.
   const [results, setResults] = useState<SavedResult[]>(prompt.results);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   // Seed from the list snapshot, then refetch the prompt so answers saved in chat
   // (which append to results[] elsewhere) show up even if the list item is stale.
   useEffect(() => {
@@ -73,12 +74,6 @@ export function PromptDetails({
     } finally {
       setDeletingId(null);
     }
-  }
-
-  function copy() {
-    void navigator.clipboard?.writeText(prompt.content);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
   }
 
   useEscapeKey(onClose);
@@ -149,7 +144,7 @@ export function PromptDetails({
               <div className="mkd-prompt-head">
                 <span className="mkd-label">{t('common.prompt')}</span>
                 <div className="mkd-prompt-actions">
-                  <button type="button" className="mkd-btn" onClick={copy}>
+                  <button type="button" className="mkd-btn" onClick={() => copy(prompt.content)}>
                     {copied ? <CheckIcon width={14} height={14} /> : <CopyIcon width={14} height={14} />}
                     {copied ? t('common.copied') : t('common.copy')}
                   </button>

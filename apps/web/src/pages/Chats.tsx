@@ -25,6 +25,7 @@ import { api, streamSSE } from '../lib/api';
 import { saveResult, deleteResult } from '../lib/promptResults';
 import { SavedResults } from '../components/SavedResults';
 import { initials } from '../lib/format';
+import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useModels, type ModelCatalog } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
 import { useAuth } from '../auth/useAuth';
@@ -114,7 +115,7 @@ export function Chats() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [saveFor, setSaveFor] = useState<ConversationMessage | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
@@ -471,12 +472,6 @@ export function Chats() {
     } finally {
       setDeletingResultId(null);
     }
-  }
-
-  function copy(text: string) {
-    void navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1400);
   }
 
   function beginEdit(message: ConversationMessage) {
