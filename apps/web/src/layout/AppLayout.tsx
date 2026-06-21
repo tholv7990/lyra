@@ -10,13 +10,11 @@ import { useScrollLock } from '../lib/useScrollLock';
 import { BrandLogo } from '../components/BrandLogo';
 import { IconButton } from '../components/IconButton';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
-import { WorkspaceMenu } from './WorkspaceMenu';
 import { NotificationBell } from './NotificationBell';
 import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadcrumb';
 import {
   HomeIcon,
   ProjectsIcon,
-  ComponentsIcon,
   PromptsIcon,
   MarketplaceIcon,
   ChatsIcon,
@@ -144,9 +142,8 @@ export function AppLayout() {
 
             {!limited && (
             <>
-            {/* Workspace group: the switcher heads its scoped resources. */}
+            {/* Workspace group: scoped resources. */}
             <div className="nav-group-label">{t('nav.workspace')}</div>
-            <WorkspaceMenu />
             <NavLink to="/prompts" title={t('nav.prompts')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <PromptsIcon />
               <span className="nav-txt">{t('nav.prompts')}</span>
@@ -175,10 +172,6 @@ export function AppLayout() {
             <NavLink to="/import" title={t('nav.import')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ImportIcon />
               <span className="nav-txt">{t('nav.import')}</span>
-            </NavLink>
-            <NavLink to="/components" title={t('nav.components')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
-              <ComponentsIcon />
-              <span className="nav-txt">{t('nav.components')}</span>
             </NavLink>
 
             {current?.type === WorkspaceType.Team && (
