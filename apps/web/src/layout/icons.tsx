@@ -322,6 +322,19 @@ export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Generic fingerprint (nested arcs) — denotes a browser-automation (GoLogin)
+// connection. A neutral placeholder, not any brand's logo.
+export const FingerprintIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M8 7.4v4.2" />
+    <path d="M5.5 6.1a3.3 3.3 0 0 1 5 .4" />
+    <path d="M3.9 8.3A5.1 5.1 0 0 1 12 4.7" />
+    <path d="M6 9.7a2.2 2.2 0 0 1 4-.1v2.1" />
+    <path d="M5.1 12.2q.4.9.9 1.5" />
+    <path d="M11.5 10.1v1.3q0 1.4-.6 2.5" />
+  </svg>
+);
+
 // Magnifier — the search-box glyph for the library list toolbars.
 export const SearchGlyph = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>

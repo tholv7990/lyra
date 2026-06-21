@@ -27,7 +27,8 @@
 .cx-card-id { min-width: 0; }
 .cx-plat { display: flex; align-items: center; gap: 6px; font-size: var(--text-micro); color: var(--ink-tertiary); }
 /* connection-type pill on a channel card */
-.cx-type { padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.cx-type { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px 1px 5px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.cx-type svg { flex-shrink: 0; }
 .cx-type-postiz { background: var(--surface-2); color: var(--ink-muted); }
 .cx-type-gologin { background: var(--primary-tint); color: var(--primary); }
 .cx-del { margin-left: auto; color: var(--ink-tertiary); cursor: pointer; font-size: 18px; background: none; border: none; line-height: 1; padding: 0 2px; }

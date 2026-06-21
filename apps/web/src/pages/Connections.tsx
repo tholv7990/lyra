@@ -5,6 +5,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import { channelsApi } from '../lib/channels';
 import { PlatformSelect } from '../components/PlatformSelect';
+import { FingerprintIcon, PublishIcon } from '../layout/icons';
 import './connectors.css';
 
 const GLYPH: Record<string, string> = {
@@ -126,6 +127,7 @@ export function Connections() {
                 <div className="cx-plat">
                   {c.platform}
                   <span className={`cx-type cx-type-${c.type}`}>
+                    {c.type === ChannelType.GoLogin ? <FingerprintIcon width={11} height={11} /> : <PublishIcon width={11} height={11} />}
                     {c.type === ChannelType.GoLogin ? t('connectors.viaGoLogin') : t('connectors.viaPostiz')}
                   </span>
                 </div>
