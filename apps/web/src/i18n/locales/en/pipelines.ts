@@ -35,6 +35,8 @@ export default {
 
   // AI edit (revise an existing pipeline)
   editWithAi: 'Edit with AI',
+  builderLabel: 'Builder',
+  aiBuilder: 'AI builder',
   editWithAiTitle: 'Edit this pipeline with AI',
   editWithAiHint:
     'Describe the change — AI revises the whole pipeline from your prompt library. Review it before saving.',

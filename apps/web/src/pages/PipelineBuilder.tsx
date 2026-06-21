@@ -513,16 +513,6 @@ export function PipelineBuilder() {
       actions={
         runMode ? undefined : (
           <>
-            {canEdit && (
-              <button
-                className="btn-ai"
-                onClick={() => setAiEditOpen(true)}
-                title={t('pipelines.editWithAi')}
-              >
-                <SparkleIcon width={14} height={14} />
-                <span className="lin-ai-txt">{t('pipelines.editWithAi')}</span>
-              </button>
-            )}
             {!isNew && (
               <button
                 className="btn-primary btn-inline"
@@ -602,6 +592,21 @@ export function PipelineBuilder() {
                 onCreate={createLabel}
               />
             </div>
+          </div>
+        )}
+
+        {canEdit && (
+          <div className="pb-builder-row">
+            <span className="pb-builder-label">{t('pipelines.builderLabel')}</span>
+            <button
+              type="button"
+              className="btn-ai"
+              onClick={() => setAiEditOpen(true)}
+              title={t('pipelines.aiBuilder')}
+            >
+              <SparkleIcon width={14} height={14} />
+              <span className="lin-ai-txt">{t('pipelines.aiBuilder')}</span>
+            </button>
           </div>
         )}
 

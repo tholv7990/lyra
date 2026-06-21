@@ -98,9 +98,11 @@
   cursor: pointer;
   transition: background 0.14s ease, transform 0.12s ease;
 }
-/* On the prompt editor the composer hugs the bottom, so the floating launcher
-   would overlap its send button — hide it there. */
-.app:has(.pe2) .ai-fab { display: none; }
+/* Hide the floating chat launcher on the full-screen authoring surfaces: on the
+   prompt editor it would overlap the bottom composer, and the pipeline builder
+   has its own "AI builder" action — two AI buttons is confusing. */
+.app:has(.pe2) .ai-fab,
+.app:has(.pb-meta) .ai-fab { display: none; }
 .ai-fab:hover {
   background: var(--primary-hover);
 }
@@ -5293,6 +5295,20 @@
 
 .pb-tags {
   max-width: 520px;
+}
+
+/* "Builder" section row above the flow — label left, the AI-builder action right. */
+.pb-builder-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pb-builder-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 /* Desktop: note + tags merged into the header row (the title slot). The note is a

@@ -35,6 +35,8 @@ export default {
 
   // AI edit (revise an existing pipeline)
   editWithAi: 'Sửa bằng AI',
+  builderLabel: 'Trình dựng',
+  aiBuilder: 'AI builder',
   editWithAiTitle: 'Sửa pipeline này bằng AI',
   editWithAiHint:
     'Mô tả thay đổi — AI sẽ chỉnh sửa toàn bộ pipeline từ thư viện prompt của bạn. Xem lại trước khi lưu.',
