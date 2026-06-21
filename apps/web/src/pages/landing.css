@@ -162,13 +162,11 @@
 .l-btn-primary {
   background: var(--l-primary);
   color: #fff;
-  box-shadow: 0 1px 1px rgba(8, 70, 130,0.4),
-    0 8px 22px rgba(0, 117, 222,0.32);
+  box-shadow: none;
 }
 .l-btn-primary:hover {
   background: var(--l-primary-hover);
-  box-shadow: 0 1px 1px rgba(8, 70, 130,0.4),
-    0 12px 30px rgba(0, 117, 222,0.42);
+  box-shadow: none;
 }
 .l-btn-primary:active { background: var(--l-primary-pressed); }
 
@@ -193,9 +191,9 @@
   background: #fff;
   color: var(--l-primary-deep);
   border-color: #fff;
-  box-shadow: 0 8px 24px rgba(13, 16, 35,0.22);
+  box-shadow: none;
 }
-.l-btn-onwarm-solid:hover { background: #f4f5f8; box-shadow: 0 12px 30px rgba(13, 16, 35,0.28); }
+.l-btn-onwarm-solid:hover { background: #f4f5f8; box-shadow: none; }
 
 .l-btn-sm { padding: 9px 18px; font-size: 14px; }
 .l-btn-block { width: 100%; }
@@ -1125,7 +1123,7 @@
   border-radius: var(--l-radius-pill);
   background: var(--l-primary);
   color: #fff;
-  box-shadow: 0 8px 22px rgba(8, 70, 130,0.4);
+  box-shadow: none;
   cursor: pointer;
   opacity: 0;
   transform: translateY(10px) scale(0.94);

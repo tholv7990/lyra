@@ -502,7 +502,7 @@ select.text-input {
 .btn-sm {
   min-height: 28px;
   padding: 0 11px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .btn-xs {
   min-height: 24px;
@@ -718,7 +718,7 @@ select.text-input {
   border-radius: var(--radius-button);
   background: var(--field);
   color: var(--ink);
-  font-size: var(--text-small);
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
@@ -726,7 +726,6 @@ select.text-input {
 
 .google-btn:hover {
   background: var(--surface-hover);
-  box-shadow: var(--shadow-button);
 }
 
 .google-btn:focus-visible {

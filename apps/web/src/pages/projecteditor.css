@@ -114,8 +114,8 @@
   height: 34px;
   flex: none;
   border-radius: 8px;
-  border: 1px solid var(--hairline);
-  background: var(--surface-1);
+  border: none;
+  background: transparent;
   color: var(--ink-tertiary);
   display: grid;
   place-items: center;

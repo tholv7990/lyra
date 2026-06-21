@@ -180,8 +180,8 @@
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  border: 1px solid var(--hairline);
-  background: var(--card);
+  border: none;
+  background: transparent;
   color: var(--ink-tertiary);
   display: grid;
   place-items: center;

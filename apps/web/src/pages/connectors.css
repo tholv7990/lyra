@@ -51,7 +51,7 @@
 .cx-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .cx-seg { display: inline-flex; gap: 4px; padding: 3px; background: var(--surface-1); border: 1px solid var(--hairline); border-radius: 9px; align-self: flex-start; }
 .cx-seg button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: none; background: none; border-radius: 6px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink-muted); cursor: pointer; }
-.cx-seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+.cx-seg button.on { background: var(--card); color: var(--ink); }
 .cx-postiz-note { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
 .cx-postiz-note p { margin: 0; }
 
@@ -63,7 +63,7 @@
 .cx-note { font-size: var(--text-small); color: var(--ink-muted); line-height: 1.55; margin: 0; }
 
 .cx-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.cx-chip { display: flex; align-items: center; gap: 7px; border: 1px solid var(--hairline); border-radius: 999px; padding: 6px 12px; font-size: var(--text-small); cursor: pointer; color: var(--ink-muted); background: var(--card); }
+.cx-chip { display: flex; align-items: center; gap: 7px; border: 1px solid var(--hairline); border-radius: var(--radius-control); padding: 6px 12px; font-size: var(--text-small); cursor: pointer; color: var(--ink-muted); background: var(--card); }
 .cx-chip.on { border-color: var(--primary); background: var(--primary-tint); color: var(--primary); font-weight: 600; }
 .cx-dot { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: var(--on-accent); font-size: 10px; flex: none; }
 
