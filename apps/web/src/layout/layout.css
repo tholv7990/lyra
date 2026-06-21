@@ -5360,14 +5360,14 @@
 .flow-node.step-edit {
   flex-direction: column;
   align-items: stretch;
-  width: 320px;
-  max-width: 320px;
+  width: 380px;
+  max-width: 380px;
   border: 1px solid var(--hairline-strong);
   border-left-width: 1px;
   border-radius: 13px;
 }
 .react-flow__node .flow-node.step-edit {
-  width: 320px;
+  width: 380px;
 }
 .flow-node.step-edit.broken {
   border-color: rgba(229, 72, 77, 0.45);
@@ -5401,8 +5401,8 @@
   line-height: 1.5;
   color: var(--ink-muted);
   display: -webkit-box;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
