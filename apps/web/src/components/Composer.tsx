@@ -29,6 +29,9 @@ interface ComposerProps {
   onStop?: () => void;
   /** Enables the send button; defaults to "has text or attachments". */
   canSubmit?: boolean;
+  /** Hide the ↑ send button (e.g. the prompt editor, which saves via its header
+   *  ✓ — ⌘/Ctrl+Enter still fires onSubmit). */
+  hideSend?: boolean;
   // extra control left of the send button: a char counter (Create/Edit)
   trailing?: ReactNode;
   /** Extra class on the box (e.g. `pe-composer`). */
@@ -55,6 +58,7 @@ export function Composer({
   busy = false,
   onStop,
   canSubmit,
+  hideSend = false,
   trailing,
   className,
 }: ComposerProps) {
@@ -105,7 +109,7 @@ export function Composer({
         />
         <ModelPicker catalog={catalog} provider={provider} model={model} onChange={onModelChange} />
         {trailing}
-        {(onSubmit || onStop) &&
+        {!hideSend && (onSubmit || onStop) &&
           (busy ? (
             <button type="button" className="send-btn stop" onClick={onStop} title={t('common.stop')}>
               ■

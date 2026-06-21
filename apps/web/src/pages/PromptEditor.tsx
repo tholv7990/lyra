@@ -249,6 +249,7 @@ export function PromptEditor() {
         value={form.content}
         onChange={(v) => setForm((f) => ({ ...f, content: v }))}
         onSubmit={() => void save()}
+        hideSend
         placeholder={t('prompts.addPrompt')}
         media={form.media}
         onRemoveMedia={(idx) => setForm((f) => ({ ...f, media: f.media.filter((_, i) => i !== idx) }))}
