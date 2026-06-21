@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Channel, Project, PublishJob } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
-import { connectorsApi } from '../lib/connectors';
+import { channelsApi } from '../lib/channels';
 import { postsApi } from '../lib/posts';
 import { platformColor as color, platformGlyph as glyph } from '../lib/platform';
 import { CheckIcon, PlusIcon } from '../layout/icons';
@@ -47,7 +47,7 @@ export function PublishComposer() {
   const load = useCallback(async () => {
     if (!ws) return;
     try {
-      setChannels((await connectorsApi.channels(ws)).channels);
+      setChannels(await channelsApi.list(ws));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('connectors.error'));
     }
@@ -94,7 +94,7 @@ export function PublishComposer() {
     async (jobId: string) => {
       if (!ws || !alive.current) return;
       try {
-        const j = await connectorsApi.job(ws, jobId);
+        const j = await channelsApi.job(ws, jobId);
         if (!alive.current) return;
         setJob(j);
         if (j.status === 'done' || j.status === 'failed') {
@@ -123,7 +123,7 @@ export function PublishComposer() {
     setError(null);
     setJob(null);
     pendingPostRef.current = projectId ? { projectId, caption, mediaUrls } : null;
-    connectorsApi
+    channelsApi
       .publish(ws, picked, caption, mediaUrls)
       .then((j) => { if (alive.current) { setJob(j); void poll(j.jobId); } })
       .catch((err) => {
