@@ -58,23 +58,24 @@ export function PublishComposer() {
 
   // Choosing a project preselects its channels (kept to those still connected).
   // The selection stays editable — a project is a default, not a hard limit.
-  const pickProject = (pid: string) => {
-    setProjectId(pid);
-    const proj = projects.find((p) => p.id === pid);
-    if (proj) setPicked(proj.channels.filter((c) => channels.some((ch) => ch.id === c)));
-  };
+  const pickProject = (pid: string) => setProjectId(pid);
 
-  // Opened from a project (/publish?project=:id) → preselect it + its channels once
-  // both lists are loaded. Runs once (presetRef guards re-entry).
-  const presetRef = useRef(false);
+  // Preselect the project from /publish?project=:id once the project list loads
+  // (independent of whether any channels are connected yet).
   const wantProject = params.get('project');
   useEffect(() => {
-    if (presetRef.current || !wantProject || !projects.length || !channels.length) return;
-    if (projects.some((p) => p.id === wantProject)) {
-      presetRef.current = true;
-      pickProject(wantProject);
-    }
-  }, [wantProject, projects, channels]); // pickProject intentionally omitted (runs once)
+    if (!wantProject || projectId || !projects.length) return;
+    if (projects.some((p) => p.id === wantProject)) setProjectId(wantProject);
+  }, [wantProject, projects, projectId]);
+
+  // Keep `picked` synced to the selected project's channels (intersected with the
+  // live pool). Runs when the project or pool changes — both stable after load — so
+  // manual channel toggles made afterwards persist.
+  useEffect(() => {
+    if (!projectId) return;
+    const proj = projects.find((p) => p.id === projectId);
+    if (proj) setPicked(proj.channels.filter((c) => channels.some((ch) => ch.id === c)));
+  }, [projectId, channels, projects]);
 
   const addMedia = () => {
     const u = mediaInput.trim();
