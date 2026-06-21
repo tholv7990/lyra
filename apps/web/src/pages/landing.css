@@ -9,13 +9,13 @@
 .lyra-landing {
   /* --- Surfaces (warm-white ladder, tinted toward the brand hue) --- */
   --l-canvas: #ffffff;
-  --l-surface-1: #f6f7f9;       /* cool paper, tinted toward indigo */
-  --l-surface-2: #eef0f4;
-  --l-surface-3: #e4e7ee;
+  --l-surface-1: #f6f5f4;       /* Notion paper — matches the app --surface-1 */
+  --l-surface-2: #efedea;
+  --l-surface-3: #e6e3df;
   --l-field: #ffffff;
-  --l-hairline: rgba(13, 16, 35,0.09);
-  --l-hairline-strong: rgba(13, 16, 35,0.14);
-  --l-hairline-faint: rgba(13, 16, 35,0.05);
+  --l-hairline: rgba(55, 53, 47, 0.09);
+  --l-hairline-strong: rgba(55, 53, 47, 0.16);
+  --l-hairline-faint: rgba(55, 53, 47, 0.05);
   /* Frosted-glass surfaces (cards/pills over imagery). These MUST flip in dark
      so light text never lands on a light card — the old hardcoded white glass
      was the white-on-white bug. */
@@ -75,17 +75,17 @@
 }
 
 [data-theme='dark'] .lyra-landing {
-  --l-canvas: #181921;
-  --l-surface-1: #1d1e2b;
-  --l-surface-2: #21232e;
-  --l-surface-3: #2c2d42;
-  --l-field: #151621;
-  --l-hairline: rgba(220, 224, 255,0.1);
-  --l-hairline-strong: rgba(220, 224, 255,0.16);
-  --l-hairline-faint: rgba(220, 224, 255,0.06);
-  --l-glass: rgba(28, 29, 42,0.62);
-  --l-glass-strong: rgba(21, 22, 33,0.86);
-  --l-glass-line: rgba(220, 224, 255,0.12);
+  --l-canvas: #191919;
+  --l-surface-1: #202020;
+  --l-surface-2: #2c2c2c;
+  --l-surface-3: #373737;
+  --l-field: #1c1c1c;
+  --l-hairline: rgba(255, 255, 255, 0.094);
+  --l-hairline-strong: rgba(255, 255, 255, 0.16);
+  --l-hairline-faint: rgba(255, 255, 255, 0.06);
+  --l-glass: rgba(32, 32, 32, 0.62);
+  --l-glass-strong: rgba(25, 25, 25, 0.86);
+  --l-glass-line: rgba(255, 255, 255, 0.12);
   --l-ink: #eeeffc;
   --l-ink-muted: #d2d3e0;
   /* Lifted from #9f8b7d so small caption text clears AA (4.5:1) on the warmer

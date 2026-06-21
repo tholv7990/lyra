@@ -7757,9 +7757,12 @@
   .chat-top {
     height: 52px;
     gap: 8px;
-    padding: 0 8px 0 6px;
-    border-bottom: 1px solid var(--hairline);
-    background: var(--app-bg);
+    margin: 12px 14px 0;
+    padding: 0 14px;
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card) 68%, transparent);
+    backdrop-filter: blur(14px);
   }
   .pg-headtags { display: none; }
   /* mobile has no app top bar — surface the origin crumb here so there's a
