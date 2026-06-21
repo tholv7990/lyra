@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { useEscapeKey } from '../lib/useEscapeKey';
+import { Modal } from './Modal';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -24,28 +24,24 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  useEscapeKey(onCancel, open);
-
   if (!open) return null;
 
   return (
-    <div className="dialog-scrim" onClick={onCancel}>
-      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <h3>{title}</h3>
-        <p>{message}</p>
-        <div className="dialog-actions">
-          <button className="btn-ghost" onClick={onCancel} disabled={busy}>
-            {cancelLabel}
-          </button>
-          <button
-            className={`${danger ? 'btn-danger' : 'btn-primary'} btn-inline`}
-            onClick={onConfirm}
-            disabled={busy}
-          >
-            {busy ? 'Working…' : confirmLabel}
-          </button>
-        </div>
+    <Modal onClose={onCancel}>
+      <h3>{title}</h3>
+      <p>{message}</p>
+      <div className="dialog-actions">
+        <button className="btn-ghost" onClick={onCancel} disabled={busy}>
+          {cancelLabel}
+        </button>
+        <button
+          className={`${danger ? 'btn-danger' : 'btn-primary'} btn-inline`}
+          onClick={onConfirm}
+          disabled={busy}
+        >
+          {busy ? 'Working…' : confirmLabel}
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 }

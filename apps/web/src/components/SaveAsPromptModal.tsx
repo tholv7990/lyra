@@ -9,6 +9,7 @@ import {
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { LabelPicker } from './LabelPicker';
+import { Modal } from './Modal';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -71,9 +72,8 @@ export function SaveAsPromptModal({
   }
 
   return (
-    <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog sap" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <h3>{t('prompts.saveAsPrompt')}</h3>
+    <Modal onClose={onClose} className="sap">
+      <h3>{t('prompts.saveAsPrompt')}</h3>
         {error && <p className="error">{error}</p>}
 
         <label className="field">
@@ -123,7 +123,6 @@ export function SaveAsPromptModal({
             {busy ? t('common.saving') : t('prompts.saveToLibrary')}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

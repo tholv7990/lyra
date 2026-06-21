@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
-import { useEscapeKey } from '../lib/useEscapeKey';
 import { XIcon } from '../layout/icons';
 import { IconButton } from './IconButton';
+import { Modal } from './Modal';
 
 // One past execution of this step (per-run history). Assets are fetched lazily
 // when a version is selected; only the text/status travel in the list.
@@ -103,8 +103,6 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
     };
   }, [current.runId, step.index, assetCache]);
 
-  useEscapeKey(onClose);
-
   const { copied, copy } = useCopyToClipboard();
 
   const dlOne = (assetId: string, name: string) =>
@@ -116,9 +114,8 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
     );
 
   return (
-    <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog srm" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="srm-head">
+    <Modal onClose={onClose} className="srm">
+      <div className="srm-head">
           <div className="srm-title">
             <span className="srm-num">{step.index + 1}</span>
             <h3>{title}</h3>
@@ -237,8 +234,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
             </details>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

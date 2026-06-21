@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequestType, type UserRequest } from '@lyra/shared';
 import { api } from '../lib/api';
-import { useEscapeKey } from '../lib/useEscapeKey';
+import { Modal } from './Modal';
 import { IconButton } from './IconButton';
 import { XIcon } from '../layout/icons';
 
@@ -21,8 +21,6 @@ export function RequestProviderModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const trimmed = name.trim();
-
-  useEscapeKey(onClose);
 
   async function submit() {
     if (!trimmed || busy) return;
@@ -46,9 +44,8 @@ export function RequestProviderModal({
   }
 
   return (
-    <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <IconButton
+    <Modal onClose={onClose}>
+      <IconButton
           className="dialog-close"
           icon={<XIcon width={15} height={15} />}
           label={t('common.close')}
@@ -97,7 +94,6 @@ export function RequestProviderModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

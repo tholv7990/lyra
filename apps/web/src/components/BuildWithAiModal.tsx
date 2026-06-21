@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { AiChatResponse, AiChatTurn, GeneratedPipeline, PipelineStepInput } from '@lyra/shared';
 import { api } from '../lib/api';
+import { Modal } from './Modal';
 
 interface Props {
   wsId: string;
@@ -75,9 +76,8 @@ export function BuildWithAiModal({ wsId, onClose, current, onApply }: Props) {
   }
 
   return (
-    <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog bwa bwa-chat" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="bwa-head">
+    <Modal onClose={onClose} className="bwa bwa-chat">
+      <div className="bwa-head">
           <h3>✨ {t(editMode ? 'pipelines.editWithAiTitle' : 'pipelines.buildWithAiTitle')}</h3>
           <button type="button" className="srm-x" onClick={onClose} aria-label={t('common.close')}>
             ×
@@ -134,7 +134,6 @@ export function BuildWithAiModal({ wsId, onClose, current, onApply }: Props) {
             {t('pipelines.send')}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

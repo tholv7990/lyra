@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProviderCatalogEntry } from '../lib/providerCatalog';
-import { useEscapeKey } from '../lib/useEscapeKey';
+import { Modal } from './Modal';
 import { ProviderBadge } from './ProviderBadge';
 import { IconButton } from './IconButton';
 import { XIcon } from '../layout/icons';
@@ -28,12 +28,9 @@ export function AddKeyModal({
   const [key, setKey] = useState('');
   const trimmed = key.trim();
 
-  useEscapeKey(onClose);
-
   return (
-    <div className="dialog-scrim" onClick={onClose}>
-      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <IconButton
+    <Modal onClose={onClose}>
+      <IconButton
           className="dialog-close"
           icon={<XIcon width={15} height={15} />}
           label={t('common.close')}
@@ -86,7 +83,6 @@ export function AddKeyModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
