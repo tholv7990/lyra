@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,7 @@ import {
   type Provider,
 } from '@lyra/shared';
 import { api, streamSSE } from '../lib/api';
+import { MediaViewer } from './MediaViewer';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { initials } from '../lib/format';
 import type { ModelCatalog } from '../lib/useModels';
@@ -429,17 +431,33 @@ export function ChatPane({
 
 function Attachment({ m }: { m: PromptMedia }) {
   const { t } = useTranslation();
-  if (m.type === MediaType.Image) {
-    return (
-      <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-thumb">
-        <img src={m.url} alt={m.name ?? t('chats.imageFallback')} />
-      </a>
-    );
-  }
-  const c = tagColor(m.name ?? m.url);
+  const [view, setView] = useState(false);
+  // Click opens the in-app lightbox; cmd/ctrl/middle-click still opens the raw
+  // URL in a new tab (the href is kept).
+  const open = (e: MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+    e.preventDefault();
+    setView(true);
+  };
   return (
-    <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-file" style={{ color: c, background: `${c}14`, borderColor: `${c}40` } as CSSProperties}>
-      {m.name ?? t('chats.fileFallback')}
-    </a>
+    <>
+      {m.type === MediaType.Image ? (
+        <a href={m.url} target="_blank" rel="noreferrer" className="cmedia-thumb" onClick={open}>
+          <img src={m.url} alt={m.name ?? t('chats.imageFallback')} />
+        </a>
+      ) : (
+        <a
+          href={m.url}
+          target="_blank"
+          rel="noreferrer"
+          className="cmedia-file"
+          style={{ color: tagColor(m.name ?? m.url), background: `${tagColor(m.name ?? m.url)}14`, borderColor: `${tagColor(m.name ?? m.url)}40` } as CSSProperties}
+          onClick={open}
+        >
+          {m.name ?? t('chats.fileFallback')}
+        </a>
+      )}
+      {view && <MediaViewer media={m} onClose={() => setView(false)} />}
+    </>
   );
 }

@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { MediaType, type PromptMedia } from '@lyra/shared';
 import { useTranslation } from 'react-i18next';
+import { MediaViewer } from './MediaViewer';
 
 function extLabel(name?: string) {
   if (!name) return 'FILE';
@@ -9,7 +11,8 @@ function extLabel(name?: string) {
 
 // Shared attachment row used by the prompt-testing composer and the create-prompt
 // form. Images render as real thumbnails (like ChatGPT/Claude); other files show
-// as a typed chip. Pass onRemove to make them removable.
+// as a typed chip. Tapping either opens the media lightbox; pass onRemove to make
+// them removable.
 export function AttachmentPreviews({
   media,
   uploading = 0,
@@ -20,13 +23,14 @@ export function AttachmentPreviews({
   onRemove?: (index: number) => void;
 }) {
   const { t } = useTranslation();
+  const [viewing, setViewing] = useState<PromptMedia | null>(null);
   if (media.length === 0 && uploading === 0) return null;
   return (
     <div className="composer-attachments">
       {media.map((m, i) =>
         m.type === MediaType.Image ? (
           <span className="att-thumb" key={`${m.url}-${i}`}>
-            <img src={m.url} alt={m.name ?? 'image'} />
+            <img src={m.url} alt={m.name ?? 'image'} onClick={() => setViewing(m)} />
             {onRemove && (
               <button
                 type="button"
@@ -40,8 +44,10 @@ export function AttachmentPreviews({
           </span>
         ) : (
           <span className="att-chip" key={`${m.url}-${i}`}>
-            <span className="att-kind">{extLabel(m.name)}</span>
-            <span className="att-name">{m.name}</span>
+            <span className="att-open" onClick={() => setViewing(m)}>
+              <span className="att-kind">{extLabel(m.name)}</span>
+              <span className="att-name">{m.name}</span>
+            </span>
             {onRemove && (
               <button
                 type="button"
@@ -60,6 +66,7 @@ export function AttachmentPreviews({
           <span className="spinner" /> {t('common.uploading')}
         </span>
       )}
+      {viewing && <MediaViewer media={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 }

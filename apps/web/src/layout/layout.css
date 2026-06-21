@@ -3087,6 +3087,68 @@
   right: 12px;
 }
 
+/* Media lightbox — a wider dialog that sizes to the media inside. */
+.dialog.media-viewer {
+  width: auto;
+  max-width: min(94vw, 1120px);
+  padding: 12px;
+}
+.mv-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 40px 10px 2px;
+}
+.mv-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mv-open {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: none;
+}
+.mv-open:hover { text-decoration: underline; }
+.mv-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mv-body img,
+.mv-body video {
+  display: block;
+  max-width: min(90vw, 1096px);
+  max-height: 76vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.mv-body audio { width: min(82vw, 540px); }
+.mv-frame {
+  width: min(90vw, 1096px);
+  height: 76vh;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+/* media thumbnails open the lightbox on click */
+.cmedia-thumb,
+.cmedia-file,
+.att-thumb img,
+.att-chip .att-open { cursor: pointer; }
+.att-chip .att-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
 .dialog h3 {
   margin: 0 0 6px;
   font-size: 17px;
