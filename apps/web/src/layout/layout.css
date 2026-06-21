@@ -13,7 +13,7 @@
 .sidebar {
   width: 248px;
   flex-shrink: 0;
-  background: var(--card);
+  background: var(--surface-1);
   border-right: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;

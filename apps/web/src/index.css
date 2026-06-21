@@ -1,11 +1,12 @@
 :root {
   /* Lyra — LIGHT mode, Notion-style components (subset; see src/styles/tokens.css) */
   --canvas: #ffffff;
-  /* App backdrop — Notion's warm off-white paper so white cards lift off it. */
-  --app-bg: #f6f5f4;
-  --surface-1: #f1efec;
-  --surface-2: #eae7e2;
-  --surface-3: #e3dfd9;
+  /* Main canvas — Notion white. The warm paper tone moves to --surface-1
+     (Notion's canvas-soft), used behind the sidebar + nested/hover surfaces. */
+  --app-bg: #ffffff;
+  --surface-1: #f6f5f4;
+  --surface-2: #efedea;
+  --surface-3: #e6e3df;
   --field: #ffffff;
   /* Card/dialog/panel surface — the lifted white in light, a raised dark in dark. */
   --card: #ffffff;
