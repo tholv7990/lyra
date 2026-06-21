@@ -26,3 +26,10 @@ export const STATUS_COLOR: Record<PromptStatus | ProjectStatus, string> = {
   [ProjectStatus.Draft]: 'var(--warning)',
   [ProjectStatus.Public]: 'var(--success)',
 };
+
+// i18n key for the Draft/Public label — one map for both PromptStatus and
+// ProjectStatus (same label text), replacing the per-page STATUS_KEY copies.
+export const STATUS_LABEL_KEY: Record<PromptStatus | ProjectStatus, string> = {
+  [ProjectStatus.Draft]: 'common.statusDraft',
+  [ProjectStatus.Public]: 'common.statusPublic',
+};

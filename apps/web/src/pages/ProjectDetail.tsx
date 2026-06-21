@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { canEditProject, ProjectStatus, type Project } from '@lyra/shared';
+import { canEditProject, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
@@ -9,15 +9,11 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
 import { TaskList } from '../components/TaskList';
+import { StatusPill } from '../components/StatusPill';
 import { useLabels } from '../lib/useLabels';
 import { PencilIcon, PlusIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import './projects.css';
-
-const PROJECT_STATUS_KEY: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'projects.statusDraft',
-  [ProjectStatus.Public]: 'projects.statusPublic',
-};
 
 // The project detail (design): a context strip (status · creator · description ·
 // variables) over a horizontal task board. The name lives in the shell header;
@@ -90,7 +86,7 @@ export function ProjectDetail() {
 
         <div className="pd-context">
           <div className="pd-meta">
-            <span className={`badge status-${project.status}`}>{t(PROJECT_STATUS_KEY[project.status])}</span>
+            <StatusPill status={project.status} />
             <span className="pd-by" title={t('projects.createdByName', { name: project.createdBy.name })}>
               <Avatar name={project.createdBy.name} size={20} />
               {project.createdBy.name} · {fmtDate(project.createdAt)}

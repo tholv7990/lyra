@@ -20,7 +20,7 @@ import { api } from '../lib/api';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
 import { TagChip } from '../components/TagChip';
-import { PROVIDER_LABELS, STATUS_COLOR } from '../lib/constants';
+import { PROVIDER_LABELS, STATUS_COLOR, STATUS_LABEL_KEY } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { TYPE_COLOR } from '../lib/promptType';
 import { useAuth } from '../auth/useAuth';
@@ -30,6 +30,7 @@ import { useLabels } from '../lib/useLabels';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { PromptDetails } from '../components/PromptDetails';
+import { StatusPill } from '../components/StatusPill';
 import { ProviderIcon } from '../components/ProviderIcon';
 import {
   ChatsIcon,
@@ -99,8 +100,6 @@ export function Prompts() {
   const wsId = current?.id;
   const mayCreate = canCreateIn(current);
   const { labels } = useLabels(wsId);
-  const statusLabel = (s: PromptStatus) =>
-    s === PromptStatus.Public ? t('prompts.statusPublic') : t('prompts.statusDraft');
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [total, setTotal] = useState(0);
@@ -297,7 +296,7 @@ export function Prompts() {
               {[PromptStatus.Draft, PromptStatus.Public].map((s) => (
                 <button key={s} className="lin-menu-item" onClick={() => setStatuses((list) => toggleInList(list, s))}>
                   <span className="dot" style={{ background: STATUS_COLOR[s] }} />
-                  {statusLabel(s)}
+                  {t(STATUS_LABEL_KEY[s])}
                   {statuses.includes(s) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
@@ -416,7 +415,7 @@ export function Prompts() {
                     >
                       {p.title}
                     </button>
-                    <span className={`badge status-${p.status}`}>{statusLabel(p.status)}</span>
+                    <StatusPill status={p.status} />
                   </div>
 
                   <div className="pl-card-meta">

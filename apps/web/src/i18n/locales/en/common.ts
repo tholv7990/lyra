@@ -14,6 +14,8 @@ export default {
   back: 'Back',
   next: 'Next',
   prev: 'Prev',
+  statusDraft: 'Draft',
+  statusPublic: 'Public',
   search: 'Search',
   copy: 'Copy',
   copied: 'Copied',

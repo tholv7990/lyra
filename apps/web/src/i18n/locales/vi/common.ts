@@ -14,6 +14,8 @@ export default {
   back: 'Quay lại',
   next: 'Tiếp',
   prev: 'Trước',
+  statusDraft: 'Bản nháp',
+  statusPublic: 'Công khai',
   search: 'Tìm kiếm',
   copy: 'Sao chép',
   copied: 'Đã sao chép',

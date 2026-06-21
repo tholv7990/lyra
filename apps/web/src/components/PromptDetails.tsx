@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { PromptStatus, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
+import type { LabelInfo, Prompt, SavedResult } from '@lyra/shared';
 import { fmtDate } from '../lib/format';
 import { Avatar } from './Avatar';
 import { TagChip } from './TagChip';
@@ -12,6 +12,7 @@ import { useAuth } from '../auth/useAuth';
 import { deleteResult } from '../lib/promptResults';
 import { promptSegments } from '../lib/promptSegments';
 import { SavedResults } from './SavedResults';
+import { StatusPill } from './StatusPill';
 import { IconButton } from './IconButton';
 import { CheckIcon, ChatsIcon, CopyIcon, PencilIcon, TrashIcon, XIcon } from '../layout/icons';
 import '../pages/marketplace.css';
@@ -45,7 +46,6 @@ export function PromptDetails({
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isPublic = prompt.status === PromptStatus.Public;
   const vars = promptVars(prompt.content);
 
   // Local copy so deleting a result updates the list without a re-fetch.
@@ -110,9 +110,7 @@ export function PromptDetails({
             <span className="pd-meta-by">
               {prompt.createdBy.name} · {fmtDate(prompt.createdAt)}
             </span>
-            <span className={`badge status-${prompt.status}`}>
-              {isPublic ? t('prompts.statusPublic') : t('prompts.statusDraft')}
-            </span>
+            <StatusPill status={prompt.status} />
             <span className="mkt-type-pill">{t(`prompts.type.${prompt.type ?? 'text'}`)}</span>
           </div>
 

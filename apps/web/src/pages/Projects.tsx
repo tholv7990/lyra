@@ -5,7 +5,7 @@ import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Project }
 import { api } from '../lib/api';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
-import { STATUS_COLOR } from '../lib/constants';
+import { STATUS_COLOR, STATUS_LABEL_KEY } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -13,16 +13,12 @@ import { canCreateIn } from '../lib/perms';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
+import { StatusPill } from '../components/StatusPill';
 import { FilterPopover } from '../components/FilterPopover';
 import { Pager } from '../components/Pager';
 import { PlusIcon, ProjectsIcon, TrashIcon } from '../layout/icons';
 import './marketplace.css';
 import './projects.css';
-
-const STATUS_KEY: Record<ProjectStatus, string> = {
-  [ProjectStatus.Draft]: 'projects.statusDraft',
-  [ProjectStatus.Public]: 'projects.statusPublic',
-};
 
 const PAGE_SIZE = 9;
 
@@ -158,7 +154,7 @@ export function Projects() {
               {Object.values(ProjectStatus).map((status) => (
                 <button key={status} className="lin-menu-item" onClick={() => setStatusFilters((list) => toggleInList(list, status))}>
                   <span className="dot" style={{ background: STATUS_COLOR[status] }} />
-                  {t(STATUS_KEY[status])}
+                  {t(STATUS_LABEL_KEY[status])}
                   {statusFilters.includes(status) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
@@ -216,7 +212,7 @@ export function Projects() {
                   <button type="button" className="mkt-card-title" title={p.name} onClick={() => navigate(`/projects/${p.id}`)}>
                     {p.name}
                   </button>
-                  <span className={`badge status-${p.status}`}>{t(STATUS_KEY[p.status])}</span>
+                  <StatusPill status={p.status} />
                 </div>
 
                 <p className="pr-card-desc" onClick={() => navigate(`/projects/${p.id}`)}>
