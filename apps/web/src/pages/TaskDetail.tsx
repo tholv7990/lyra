@@ -9,7 +9,6 @@ import {
   StepStatus,
   TaskStatus,
   TaskPriority,
-  labelColor,
   WorkspaceType,
   type ApiKeyInfo,
   type Asset,
@@ -26,6 +25,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
+import { TagChip } from '../components/TagChip';
 import { RunTimeline } from '../components/RunTimeline';
 import { RunRating } from '../components/RunRating';
 import type { StepHistoryEntry } from '../components/StepResultModal';
@@ -425,7 +425,7 @@ export function TaskDetail() {
               ) : task.tags.length > 0 ? (
                 <div className="task-tags-read">
                   {task.tags.map((name) => (
-                    <span className="tag-chip" key={name}><span className="tdot" style={{ background: labelColor(name, labels) }} />{name}</span>
+                    <TagChip key={name} label={name} labels={labels} />
                   ))}
                 </div>
               ) : null}

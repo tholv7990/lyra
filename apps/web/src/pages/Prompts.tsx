@@ -19,6 +19,7 @@ import {
 import { api } from '../lib/api';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
+import { TagChip } from '../components/TagChip';
 import { PROVIDER_LABELS, STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { TYPE_COLOR } from '../lib/promptType';
@@ -439,10 +440,7 @@ export function Prompts() {
                   {p.tags.length > 0 && (
                     <div className="mkt-card-chips">
                       {p.tags.map((tag) => (
-                        <span key={tag} className="mkt-chip">
-                          <span className="mkt-dot" style={{ background: labelColor(tag, labels) }} />
-                          {tag}
-                        </span>
+                        <TagChip key={tag} label={tag} labels={labels} />
                       ))}
                     </div>
                   )}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
+import { PromptStatus, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
 import { fmtDate } from '../lib/format';
 import { Avatar } from './Avatar';
+import { TagChip } from './TagChip';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { api } from '../lib/api';
@@ -118,10 +119,7 @@ export function PromptDetails({
           {prompt.tags.length > 0 && (
             <div className="pd-chips">
               {prompt.tags.map((tag) => (
-                <span key={tag} className="mkt-chip">
-                  <span className="mkt-dot" style={{ background: labelColor(tag, labels) }} />
-                  {tag}
-                </span>
+                <TagChip key={tag} label={tag} labels={labels} />
               ))}
             </div>
           )}

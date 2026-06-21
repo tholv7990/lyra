@@ -5,6 +5,7 @@ import { StepMode, labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
+import { TagChip } from '../components/TagChip';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -306,10 +307,7 @@ export function Pipelines() {
                 {p.tags.length > 0 && (
                   <div className="mkt-card-chips">
                     {p.tags.map((tag) => (
-                      <span key={tag} className="mkt-chip">
-                        <span className="mkt-dot" style={{ background: labelColor(tag, labels) }} />
-                        {tag}
-                      </span>
+                      <TagChip key={tag} label={tag} labels={labels} />
                     ))}
                   </div>
                 )}

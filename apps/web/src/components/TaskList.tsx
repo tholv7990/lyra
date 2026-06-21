@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TaskPriority, TaskStatus, labelColor, type Task, type LabelInfo } from '@lyra/shared';
+import { TaskPriority, TaskStatus, type Task, type LabelInfo } from '@lyra/shared';
 import { api } from '../lib/api';
 import { Avatar } from './Avatar';
+import { TagChip } from './TagChip';
 import { TASK_STATUS_ORDER, groupTasksByStatus } from '../lib/taskStatus';
 import { TaskStatusIcon } from './TaskStatusIcon';
 import { TaskPriorityIcon } from './TaskPriorityIcon';
@@ -121,10 +122,7 @@ export function TaskList({
                   {task.tags.length > 0 && (
                     <div className="tcard-tags">
                       {task.tags.map((name) => (
-                        <span className="tag-chip" key={name}>
-                          <span className="tdot" style={{ background: labelColor(name, labels) }} />
-                          {name}
-                        </span>
+                        <TagChip key={name} label={name} labels={labels} />
                       ))}
                     </div>
                   )}

@@ -13,6 +13,7 @@ import {
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useAuth } from '../auth/useAuth';
 import { Avatar } from '../components/Avatar';
+import { TagChip } from '../components/TagChip';
 import { marketplaceApi } from '../lib/marketplace';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { useEscapeKey } from '../lib/useEscapeKey';
@@ -515,15 +516,9 @@ function Card({ prompt, rank, state, locked, copied, onAdopt, onView, onCopy, t 
 
       {(prompt.tags.length > 0 || prompt.variables.length > 0) && (
         <div className="mkt-card-chips">
-          {prompt.tags.map((tag) => {
-            const c = labelColor(tag, []);
-            return (
-              <span key={tag} className="mkt-chip">
-                <span className="mkt-dot" style={{ background: c }} />
-                {tag}
-              </span>
-            );
-          })}
+          {prompt.tags.map((tag) => (
+            <TagChip key={tag} label={tag} />
+          ))}
           {prompt.variables.slice(0, 4).map((v) => (
             <span key={v} className="mkt-var-chip">{`{${v}}`}</span>
           ))}
