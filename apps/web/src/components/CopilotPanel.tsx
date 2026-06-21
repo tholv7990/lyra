@@ -137,7 +137,6 @@ export function CopilotPanel({ wsId, onClose }: Props) {
           <textarea
             className="text-input bwa-input"
             rows={2}
-            autoFocus
             placeholder={t('copilot.placeholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}

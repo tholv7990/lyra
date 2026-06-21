@@ -117,7 +117,6 @@ export function BuildWithAiModal({ wsId, onClose, current, onApply }: Props) {
           <textarea
             className="text-input bwa-input"
             rows={2}
-            autoFocus
             placeholder={t('pipelines.askPlaceholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
