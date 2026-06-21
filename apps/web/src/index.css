@@ -60,8 +60,8 @@
   /* Linear control system: a single 6px radius + 32px height for buttons,
      inputs, selects — the dense, consistent control language Linear uses. */
   --radius-control: 6px;
-  /* Text buttons use Linear's tighter 4px edge; fields/icon buttons stay 6px. */
-  --radius-button: 4px;
+  /* Buttons + fields share a softly-rounded 6px edge (Notion's controls). */
+  --radius-button: 6px;
   --control-h: 32px;
   /* Subtle hover wash for rows, menu items, soft (secondary) buttons. */
   --surface-hover: rgba(0, 0, 0, 0.04);
@@ -82,25 +82,24 @@
   /* Focus ring — one orange-tinted ring reused by every focusable control. */
   --focus-ring: 0 0 0 3px var(--primary-tint);
   --focus-ring-danger: 0 0 0 3px rgba(229, 72, 77, 0.16);
-  /* Type scale — Linear's Inter ramp (weights 400/500 only). Body/controls map
-     to --text-normal / --text-small; headings use the tighter line-heights. */
+  /* Type scale — Notion's ramp. Body 16px/1.5; controls/secondary use
+     --text-small; headings are bold (700) with tight line-heights. */
   --text-micro: 11px;
   --text-mini: 12px;
   --text-small: 13px;
-  --text-normal: 15px;
+  --text-normal: 16px;
   --text-large: 18px;
   --text-title3: 20px;
   /* Linear's "issue title" size — detail-page headers (issue/task/project titles). */
   --text-issue: 22px;
   --text-title2: 24px;
   --text-title1: 36px;
-  /* Linear's line-heights: body 15px → 22 (1.47); titles/control text tight.
-     See docs/lyra-linear-audit.md. */
-  --lh-body: 1.47;
+  /* Notion line-heights: body 16px → 24 (1.5); headings tight. */
+  --lh-body: 1.5;
   --lh-tight: 1.1;
-  /* Linear ships Inter (weights 400/500). One font token, referenced below and by
-     the Tailwind @theme layer (src/styles/tokens.css). */
-  --font-sans: Inter, 'SF Pro Text', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Notion uses the platform UI font (SF on macOS, Segoe UI on Windows), not a
+     bundled webfont. One token, referenced below + by src/styles/tokens.css. */
+  --font-sans: -apple-system, BlinkMacSystemFont, ui-sans-serif, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif;
   font-family: var(--font-sans);
 }
 
@@ -292,14 +291,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Linear headings: tight line-height + modest negative tracking app-wide.
+/* Notion headings: bold (700), tight line-height + negative tracking app-wide.
    Component rules with explicit values (and .md headings) still override. */
 h1,
 h2,
 h3,
 h4 {
+  font-weight: 700;
   line-height: var(--lh-tight);
-  letter-spacing: -0.014em;
+  letter-spacing: -0.02em;
 }
 
 /* Flex centering so the card shrinks to fit narrow viewports (no h-scroll). */
