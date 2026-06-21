@@ -290,32 +290,7 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ---- What you can make (colorful centerpiece gallery) ---- */}
-        <section className="l-gallery-sec">
-          <div className="l-container">
-            <div className="l-section-head l-section-head-centered">
-              <h2 className="l-h2">{t('landing.galleryTitle')}</h2>
-              <p className="l-lead">{t('landing.galleryLead')}</p>
-            </div>
-            <div className="l-gallery">
-              {MAKE.map((m) => (
-                <figure className={`l-make ${m.cls} l-reveal`} key={m.key}>
-                  <img
-                    src={`/landing/${m.seed}.webp`}
-                    width={m.w}
-                    height={m.h}
-                    loading="lazy"
-                    alt={t(`landing.make.${m.key}.alt`)}
-                  />
-                  {/* TODO: swap for real brand asset */}
-                  <figcaption className="l-make-chip">{t(`landing.make.${m.key}.label`)}</figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ---- The flow: 5 connected funnel stages (centerpiece) ---- */}
+        {/* ---- The flow: 5 connected funnel stages ---- */}
         <section className="l-flow" id="how">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
@@ -538,6 +513,30 @@ export function Landing() {
             </div>
           </section>
         </div>
+
+        {/* ---- What you can make (colorful gallery — design: after Publish) ---- */}
+        <section className="l-gallery-sec">
+          <div className="l-container">
+            <div className="l-section-head l-section-head-centered">
+              <h2 className="l-h2">{t('landing.galleryTitle')}</h2>
+              <p className="l-lead">{t('landing.galleryLead')}</p>
+            </div>
+            <div className="l-gallery">
+              {MAKE.map((m) => (
+                <figure className={`l-make ${m.cls} l-reveal`} key={m.key}>
+                  <img
+                    src={`/landing/${m.seed}.webp`}
+                    width={m.w}
+                    height={m.h}
+                    loading="lazy"
+                    alt={t(`landing.make.${m.key}.alt`)}
+                  />
+                  <figcaption className="l-make-chip">{t(`landing.make.${m.key}.label`)}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ---- Security ---- */}
         <section className="l-security" id="security">
