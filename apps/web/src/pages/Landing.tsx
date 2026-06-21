@@ -48,8 +48,8 @@ const Key = () => (
 // Task-board status glyphs (Projects feature mockup).
 const ProgGlyph = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <circle cx="8" cy="8" r="6" stroke="#ff6b1a" strokeWidth="1.6" />
-    <path d="M8 8V2.6A5.4 5.4 0 0 1 8 13.4Z" fill="#ff6b1a" />
+    <circle cx="8" cy="8" r="6" stroke="#5e6ad2" strokeWidth="1.6" />
+    <path d="M8 8V2.6A5.4 5.4 0 0 1 8 13.4Z" fill="#5e6ad2" />
   </svg>
 );
 const DoneGlyph = () => (
