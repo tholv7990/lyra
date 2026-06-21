@@ -9,13 +9,16 @@ import {
   type Receipt,
 } from '@lyra/shared';
 import { Channel, ChannelDocument } from './channel.schema';
+import { PublishedPost } from '../posts/post.schema';
 import { ConnectorsProxy } from '../connectors/connectors.proxy';
 import { ConnectorCredentialsService } from '../connectors/connector-credentials.service';
 import { DispatchStore, type DispatchTarget } from './dispatch-store';
+import { iso } from '../common/dates';
 
 const POSTIZ = 'postiz';
 
 interface PublishInput { channelIds: string[]; caption: string; mediaUrls: string[] }
+interface ChannelStats { postCount: number; lastPostAt?: string }
 
 @Injectable()
 export class ChannelsService {
@@ -23,6 +26,7 @@ export class ChannelsService {
 
   constructor(
     @InjectModel(Channel.name) private readonly model: Model<Channel>,
+    @InjectModel(PublishedPost.name) private readonly posts: Model<PublishedPost>,
     private readonly proxy: ConnectorsProxy,
     private readonly credentials: ConnectorCredentialsService,
   ) {
@@ -30,13 +34,30 @@ export class ChannelsService {
   }
 
   // The unified channel list: live Postiz pool (auto-imported, type=postiz) + the
-  // workspace's stored channels (GoLogin, type=gologin).
+  // workspace's stored channels (GoLogin, type=gologin), each with its post stats.
   async list(workspaceId: string, userId: string): Promise<ChannelView[]> {
-    const [postiz, docs] = await Promise.all([
+    const [postiz, docs, stats] = await Promise.all([
       this.postizChannels(workspaceId, userId),
       this.model.find({ workspaceId, active: { $ne: false } }).sort({ createdAt: -1 }).exec(),
+      this.postStats(workspaceId),
     ]);
-    return [...postiz, ...docs.map(toChannelView)];
+    const channels = [...postiz, ...docs.map(toChannelView)];
+    return channels.map((c) => ({ ...c, postCount: 0, ...stats.get(c.id) }));
+  }
+
+  // Per-channel post activity: count + most-recent date, from project posts that
+  // targeted the channel. One grouped query over the workspace's posts.
+  private async postStats(workspaceId: string): Promise<Map<string, ChannelStats>> {
+    const rows = await this.posts.aggregate<{ _id: string; count: number; last: Date }>([
+      { $match: { workspaceId, active: { $ne: false } } },
+      { $unwind: '$channelIds' },
+      { $group: { _id: '$channelIds', count: { $sum: 1 }, last: { $max: '$createdAt' } } },
+    ]);
+    const map = new Map<string, ChannelStats>();
+    for (const r of rows) {
+      map.set(r._id, { postCount: r.count, lastPostAt: r.last ? iso(r.last) : undefined });
+    }
+    return map;
   }
 
   async create(workspaceId: string, actorId: string, dto: CreateChannelDto): Promise<ChannelView> {
@@ -164,5 +185,6 @@ function toChannelView(d: ChannelDocument): ChannelView {
     displayName: d.displayName,
     profileId: d.profileId,
     proxy: d.proxy,
+    createdAt: iso(d.createdAt),
   };
 }

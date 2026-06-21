@@ -444,6 +444,11 @@ export interface Channel {
   // drive, and an optional proxy label for reference. Postiz channels carry neither.
   profileId?: string;
   proxy?: string;
+  // When the channel was added (GoLogin channels only; Postiz pool channels have none).
+  createdAt?: string;
+  // Activity rolled up from project posts targeting this channel.
+  postCount?: number;
+  lastPostAt?: string;
 }
 
 // One published-post outcome per target channel (partial failure tolerated).
@@ -472,6 +477,7 @@ export interface PublishedPost {
   projectId: string;
   caption: string;
   mediaUrls: string[];
+  channelIds: string[]; // channels this post was published to (for per-channel stats)
   targets: Receipt[];
   status: 'ok' | 'partial' | 'failed';
   createdBy: UserRef;

@@ -25,6 +25,14 @@ export default {
   gologinProxy: 'Proxy (optional)',
   addChannelBtn: 'Add channel',
   removeChannel: 'Remove channel',
+  addChannel: 'Add channel',
+  addChannelTitle: 'Add a channel',
+  connectionType: 'Connection type',
+  postizAutoNote: 'Postiz channels connect inside Postiz and appear here automatically — no fields to fill.',
+  noChannelsYet: 'No channels yet — add one to start publishing.',
+  statCreated: 'Added',
+  statPosts: 'Posts',
+  statLastPost: 'Last post',
   postizKeyHint:
     'Generate this in your Postiz instance (Settings → Public API). Channels are connected inside Postiz, then appear here.',
 

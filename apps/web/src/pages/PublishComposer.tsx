@@ -42,7 +42,7 @@ export function PublishComposer() {
   useEffect(() => () => { alive.current = false; }, []);
   // What to record as a project post once the job finishes (captured at publish time
   // to dodge the poll closure's stale state). Null = workspace-level publish, not recorded.
-  const pendingPostRef = useRef<{ projectId: string; caption: string; mediaUrls: string[] } | null>(null);
+  const pendingPostRef = useRef<{ projectId: string; caption: string; mediaUrls: string[]; channelIds: string[] } | null>(null);
 
   const load = useCallback(async () => {
     if (!ws) return;
@@ -104,7 +104,7 @@ export function PublishComposer() {
           if (pend && j.receipts?.length) {
             pendingPostRef.current = null;
             void postsApi
-              .create(pend.projectId, { caption: pend.caption, mediaUrls: pend.mediaUrls, targets: j.receipts })
+              .create(pend.projectId, { caption: pend.caption, mediaUrls: pend.mediaUrls, channelIds: pend.channelIds, targets: j.receipts })
               .catch(() => undefined);
           }
           return;
@@ -122,7 +122,7 @@ export function PublishComposer() {
     setPublishing(true);
     setError(null);
     setJob(null);
-    pendingPostRef.current = projectId ? { projectId, caption, mediaUrls } : null;
+    pendingPostRef.current = projectId ? { projectId, caption, mediaUrls, channelIds: picked } : null;
     channelsApi
       .publish(ws, picked, caption, mediaUrls)
       .then((j) => { if (alive.current) { setJob(j); void poll(j.jobId); } })

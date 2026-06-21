@@ -30,6 +30,43 @@
 .cx-type { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px 1px 5px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
 .cx-type svg { flex-shrink: 0; }
 .gologin-mark { flex-shrink: 0; object-fit: contain; display: block; }
+
+/* ===== Connections v2: page header + channel grid ===== */
+.cx-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+
+.ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.ch-card { border: 1px solid var(--hairline); border-radius: 12px; background: var(--card); padding: 14px; }
+.ch-card-head { display: flex; align-items: center; gap: 10px; }
+.ch-ic { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; color: #fff; font-size: 16px; font-weight: 700; }
+.ch-id { min-width: 0; flex: 1; }
+.ch-name { font-size: 14px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch-meta { display: flex; align-items: center; gap: 7px; margin-top: 2px; font-size: 12px; color: var(--ink-tertiary); }
+.ch-del { flex-shrink: 0; background: none; border: none; color: var(--ink-tertiary); cursor: pointer; padding: 4px; border-radius: 6px; display: inline-flex; }
+.ch-del:hover { color: var(--danger); background: var(--surface-2); }
+.ch-stats { display: flex; gap: 6px; margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+.ch-stat { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ch-stat span { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-tertiary); }
+.ch-stat b { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+.cx-media { margin-top: 22px; }
+
+/* add-channel modal */
+.cx-add-modal { width: min(460px, 92vw); text-align: left; }
+.cx-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cx-modal-head h3 { margin: 0; }
+.cx-modal-x { background: none; border: none; color: var(--ink-tertiary); cursor: pointer; padding: 4px; border-radius: 6px; display: inline-flex; }
+.cx-modal-x:hover { background: var(--surface-2); color: var(--ink); }
+.cx-modal-body { display: flex; flex-direction: column; gap: 13px; }
+.cx-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.cx-seg { display: inline-flex; gap: 4px; padding: 3px; background: var(--surface-1); border: 1px solid var(--hairline); border-radius: 9px; align-self: flex-start; }
+.cx-seg button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: none; background: none; border-radius: 6px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink-muted); cursor: pointer; }
+.cx-seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+.cx-postiz-note { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+.cx-postiz-note p { margin: 0; }
+
+/* Postiz key row in Settings (PostizKeySection) */
+.set-keyrow { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.set-keyrow .text-input { flex: 1; }
 .cx-type-postiz { background: var(--surface-2); color: var(--ink-muted); }
 .cx-type-gologin { background: var(--primary-tint); color: var(--primary); }
 .cx-del { margin-left: auto; color: var(--ink-tertiary); cursor: pointer; font-size: 18px; background: none; border: none; line-height: 1; padding: 0 2px; }

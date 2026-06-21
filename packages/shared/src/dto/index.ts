@@ -360,6 +360,7 @@ export interface CreateChannelDto {
 export interface CreatePublishedPostDto {
   caption: string;
   mediaUrls: string[];
+  channelIds: string[];
   targets: Receipt[];
 }
 export interface ResolveDto {

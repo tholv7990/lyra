@@ -10,6 +10,7 @@ export function toPostView(d: PublishedPostDocument, refs: Map<string, UserRef>)
     projectId: d.projectId,
     caption: d.caption ?? '',
     mediaUrls: d.mediaUrls ?? [],
+    channelIds: d.channelIds ?? [],
     targets: (d.targets ?? []).map(
       (tg): Receipt => ({
         platform: tg.platform,

@@ -25,6 +25,14 @@ export default {
   gologinProxy: 'Proxy (tùy chọn)',
   addChannelBtn: 'Thêm kênh',
   removeChannel: 'Xóa kênh',
+  addChannel: 'Thêm kênh',
+  addChannelTitle: 'Thêm kênh',
+  connectionType: 'Loại kết nối',
+  postizAutoNote: 'Kênh Postiz được kết nối bên trong Postiz và tự động hiển thị ở đây — không cần nhập gì.',
+  noChannelsYet: 'Chưa có kênh nào — thêm một kênh để bắt đầu đăng.',
+  statCreated: 'Đã thêm',
+  statPosts: 'Bài đăng',
+  statLastPost: 'Đăng gần nhất',
   postizKeyHint:
     'Tạo khóa này trong Postiz của bạn (Settings → Public API). Kênh được kết nối bên trong Postiz, sau đó hiển thị ở đây.',
 

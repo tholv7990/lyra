@@ -16,6 +16,8 @@ export class CreatePublishedPostBody implements CreatePublishedPostDto {
 
   @IsArray() @IsString({ each: true }) @ArrayMaxSize(20) mediaUrls!: string[];
 
+  @IsArray() @IsString({ each: true }) @ArrayMaxSize(100) channelIds!: string[];
+
   @IsArray()
   @ArrayMaxSize(50)
   @ValidateNested({ each: true })

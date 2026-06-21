@@ -17,6 +17,7 @@ import {
   type ProviderCatalogEntry,
 } from '../lib/providerCatalog';
 import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
+import { PostizKeySection } from '../components/PostizKeySection';
 import { PlusIcon } from '../layout/icons';
 
 export function Settings() {
@@ -277,6 +278,9 @@ export function Settings() {
           )}
         </div>
       </section>
+
+      {/* ===== Publishing (Postiz API key) ===== */}
+      <PostizKeySection />
 
       {/* ===== Password ===== */}
       <section className="set-section">

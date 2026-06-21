@@ -37,6 +37,7 @@ export class PostsService {
       projectId,
       caption: (dto.caption ?? '').slice(0, 5000),
       mediaUrls: dto.mediaUrls ?? [],
+      channelIds: dto.channelIds ?? [],
       targets,
       status,
       createdBy: actorId,

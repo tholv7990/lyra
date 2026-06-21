@@ -23,6 +23,7 @@ export class PublishedPost extends AuditedEntity {
   @Prop({ required: true, index: true }) projectId!: string;
   @Prop({ default: '' }) caption!: string;
   @Prop({ type: [String], default: [] }) mediaUrls!: string[];
+  @Prop({ type: [String], default: [], index: true }) channelIds!: string[];
   @Prop({ type: [PostTargetSchema], default: [] }) targets!: PostTarget[];
   @Prop({ required: true }) status!: string; // 'ok' | 'partial' | 'failed'
 }
