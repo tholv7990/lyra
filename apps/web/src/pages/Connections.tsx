@@ -4,6 +4,7 @@ import { ChannelType, type Channel, type ConnectorCredentialInfo } from '@lyra/s
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import { channelsApi } from '../lib/channels';
+import { PlatformSelect } from '../components/PlatformSelect';
 import './connectors.css';
 
 const GLYPH: Record<string, string> = {
@@ -11,7 +12,6 @@ const GLYPH: Record<string, string> = {
 };
 const cls = (platform: string) => (GLYPH[platform] ? platform : 'generic');
 const glyph = (platform: string) => GLYPH[platform] ?? '◆';
-const PLATFORMS = ['tiktok', 'youtube', 'instagram', 'facebook', 'x'];
 const emptyForm = { platform: 'tiktok', displayName: '', profileId: '', proxy: '' };
 
 // Built-ins → Connections. The workspace's unified channel list: Postiz accounts
@@ -145,12 +145,10 @@ export function Connections() {
 
         {addOpen && (
           <div className="cx-addform">
-            <label className="cx-field">
-              <span>{t('connectors.channelPlatform')}</span>
-              <select className="cx-input" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })}>
-                {PLATFORMS.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </label>
+            <div className="cx-field">
+              <span id="cx-plat-label">{t('connectors.channelPlatform')}</span>
+              <PlatformSelect value={form.platform} onChange={(platform) => setForm({ ...form, platform })} labelledBy="cx-plat-label" />
+            </div>
             <label className="cx-field">
               <span>{t('connectors.channelDisplayName')}</span>
               <input className="cx-input" value={form.displayName} placeholder="@handle" onChange={(e) => setForm({ ...form, displayName: e.target.value })} />

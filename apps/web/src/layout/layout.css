@@ -2411,6 +2411,67 @@
 /* The dropdown menu opens left-aligned under the trigger (not right). */
 .type-select-menu { left: 0; right: auto; min-width: 100%; width: max-content; }
 
+/* Platform picker (TikTok/YouTube/Instagram/Facebook/X) — icon chip + name dropdown,
+   same trigger+menu pattern as type-select. */
+.plat-select { position: relative; flex-shrink: 0; }
+.plat-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--field);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.plat-select-btn:hover { border-color: var(--hairline-strong); }
+.plat-select-btn.active,
+.plat-select-btn:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+.plat-select-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.plat-select-chevron {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  opacity: 0.6;
+}
+.plat-select-btn.active .plat-select-chevron { transform: rotate(225deg) translateY(-1px); }
+.plat-select-menu { left: 0; right: auto; min-width: 100%; width: max-content; }
+.plat-select-opt { gap: 9px; }
+/* brand-coloured icon chip (shared by the trigger + options) */
+.plat-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .pe-status {
   margin-left: auto;
   justify-content: flex-end;
