@@ -2155,7 +2155,14 @@
   max-width: 760px;
   margin: 0 auto;
   padding-bottom: 32px;
+  /* Fill the editor body and push the write block (heading + composer) to the
+     bottom, chat-style — the meta/labels sit at the top, the prompt box hugs the
+     bottom of the viewport. */
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
+.pe2 .pe2-write { margin-top: auto; }
 .pe2-head {
   display: flex;
   align-items: flex-start;
@@ -2987,8 +2994,8 @@
 }
 
 .icon-btn-success:disabled {
-  background: var(--disabled-bg);
-  color: rgba(60, 60, 67, 0.4);
+  background: transparent;
+  color: var(--ink-tertiary);
   cursor: not-allowed;
 }
 
