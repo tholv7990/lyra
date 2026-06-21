@@ -8,6 +8,7 @@ import { useInvites } from '../hooks/useInvites';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useAuth } from '../auth/useAuth';
 import { api } from '../lib/api';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { IconButton } from '../components/IconButton';
 import { BellIcon, XIcon, SettingsIcon } from './icons';
 
@@ -58,14 +59,12 @@ export function NotificationBell() {
       if (wrapRef.current?.contains(tgt) || popRef.current?.contains(tgt)) return;
       setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
     document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+  useEscapeKey(() => setOpen(false), open);
 
   const activities = useMemo<Activity[]>(() => {
     const list: Activity[] = [];

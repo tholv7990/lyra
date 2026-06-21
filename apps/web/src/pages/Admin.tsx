@@ -9,7 +9,7 @@ import type {
   UserRequest,
 } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
-import { initial, avatarStyle } from '../lib/format';
+import { initial, avatarStyle, fmtDate } from '../lib/format';
 import { adminApi, type CatalogStats } from '../lib/admin';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
@@ -27,15 +27,6 @@ function formatSynced(iso: string): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(iso));
-}
-
-// Short date for list rows (joined-on column).
-function fmtDate(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
   }).format(new Date(iso));
 }
 

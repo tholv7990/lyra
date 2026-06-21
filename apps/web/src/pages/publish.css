@@ -214,7 +214,7 @@
   border-radius: 50%;
   border: none;
   background: #000000a6;
-  color: #fff;
+  color: var(--on-accent);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -348,7 +348,7 @@
   display: grid;
   place-items: center;
   flex: none;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 14px;
   font-weight: 700;
 }

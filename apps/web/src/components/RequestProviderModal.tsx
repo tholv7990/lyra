@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RequestType, type UserRequest } from '@lyra/shared';
 import { api } from '../lib/api';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { IconButton } from './IconButton';
 import { XIcon } from '../layout/icons';
 
@@ -21,11 +22,7 @@ export function RequestProviderModal({
   const [error, setError] = useState<string | null>(null);
   const trimmed = name.trim();
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   async function submit() {
     if (!trimmed || busy) return;

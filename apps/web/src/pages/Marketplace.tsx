@@ -15,6 +15,7 @@ import { useAuth } from '../auth/useAuth';
 import { initials } from '../lib/format';
 import { marketplaceApi } from '../lib/marketplace';
 import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { toggleInList } from '../lib/array';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
@@ -150,12 +151,7 @@ export function Marketplace() {
   }, [ws]);
 
   useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
-  useEffect(() => {
-    if (!filterMenu) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFilterMenu(false);
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [filterMenu]);
+  useEscapeKey(() => setFilterMenu(false), filterMenu);
 
   const runRank = useCallback(async () => {
     const query = q.trim();

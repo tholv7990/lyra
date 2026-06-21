@@ -13,6 +13,7 @@ import { avatarStyle, initial } from '../lib/format';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { TaskStatusPicker } from './TaskStatusPicker';
 import { TaskPriorityPicker } from './TaskPriorityPicker';
 import { LabelPicker } from './LabelPicker';
@@ -66,11 +67,7 @@ export function TaskCreateModal({
     api<Pipeline[]>(`/workspaces/${wsId}/pipelines`).then(setLibrary).catch(() => setLibrary([]));
   }, [wsId, isPersonal]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const assignee = members.find((m) => m.userId === assigneeId);
   const assigned = pipelines.map((id) => library.find((p) => p.id === id)).filter((p): p is Pipeline => !!p);

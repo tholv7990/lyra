@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PromptType } from '@lyra/shared';
 import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { TYPE_COLOR, TYPE_ICON } from '../lib/promptType';
 
 // Compact icon+text dropdown for the prompt output type. Reuses the app's
@@ -27,16 +28,7 @@ export function TypeSelect({
 
   // Close on outside click + Escape, mirroring the Prompts filter popover.
   useOutsideClick(ref, open, () => setOpen(false));
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useEscapeKey(() => setOpen(false), open);
 
   const SelectedIcon = TYPE_ICON[value];
 

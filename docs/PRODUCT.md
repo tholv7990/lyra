@@ -65,7 +65,10 @@ Not indigo, not glassy, not pill-heavy.
 
 ## Key screens (to mock up)
 
-- **Home** — hub of section tiles + a get-started checklist.
+- **Home** — a hub: a hero (greeting · workspace identity + role pill · *New
+  project* / *Start a chat*), a collapsible **get-started** checklist (keys →
+  prompt → pipeline → project, with a progress bar), and an **Explore Lyra** tile
+  grid (live counts + a "set up keys" attention state). Chat is the AI FAB, not a tile.
 - **Marketplace** — card gallery (search · AI rank · filter); adopt to library.
 - **Prompts** — library card gallery; **Prompt detail** (read view + saved results);
   **Prompt editor**.

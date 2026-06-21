@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PromptStatus, labelColor, type LabelInfo, type Prompt, type SavedResult } from '@lyra/shared';
 import { fmtDate, initials } from '../lib/format';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { deleteResult } from '../lib/promptResults';
@@ -80,11 +81,7 @@ export function PromptDetails({
     window.setTimeout(() => setCopied(false), 1600);
   }
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   return (
     <div className="dialog-scrim" onClick={onClose}>

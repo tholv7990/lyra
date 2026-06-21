@@ -209,7 +209,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--on-accent);
   box-shadow: 0 1px 2px #0000003d;
   transition: transform 0.16s ease;
 }

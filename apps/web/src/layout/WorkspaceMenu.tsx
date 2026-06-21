@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkspaceType } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initial } from '../lib/format';
 import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { ChevronIcon, CheckIcon, MembersIcon, PersonIcon } from './icons';
 
 // Workspace type marker: a team (group) or personal (single person) icon,
@@ -27,16 +28,7 @@ export function WorkspaceMenu() {
 
   // Close on outside click / Escape.
   useOutsideClick(ref, open, () => setOpen(false));
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useEscapeKey(() => setOpen(false), open);
 
   // Single workspace → no switcher dropdown; just a static identity marker.
   if (workspaces.length < 2) {

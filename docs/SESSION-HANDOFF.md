@@ -1,3 +1,32 @@
+# Session handoff — June 20, 2026 (late PM) — Design-system polish (Linear tokens · Table/Form/Board · **Tailwind removed**) · Claude Design sync (components + context docs) · workspace name hidden · GainsSteel deleted
+
+> **Read this first.** Work in worktree **`.claude/worktrees/notification-bell`** (branch `feat/members-page`), pushed to **`origin/dev` through `b013a638`**; main tree `codex-dev` ff-merged + **DEPLOYED** (pm2 `lyra-web` restarted, vite ready, HTTP 200 — **web-only** this session: no api/shared/connectors change). **Commit/push only when the user asks.** Stage explicit files only — **never `git add -A`** (a Codex agent shares the main tree; this session `apps/web/.impeccable/` + `docs/superpowers/plans/.task-*.md` are NOT mine — left unstaged). Web gate green: `pnpm --filter @lyra/web type-check|lint|build`.
+
+## ✅ Shipped this session (live on dev)
+1. **Three missing Linear/Plane components built** (`apps/web/src/components`): **`DataTable`** (`03f1d14d` — generic sortable table) + **`Field`** (form-field anatomy: label/required/hint/error) + **`Board`** (Kanban, status columns, **native HTML5 drag-to-move**, no dnd lib). All demoed in the **`/components`** gallery (new Table / Form fields / Board sections).
+2. **Linear token pass** (`d1598e5c`): tokenized the font as **`--font-sans`** in `index.css` (was a raw property); added Linear's **`--text-issue: 22px`** → used on `.eshell-name`. A live Figma pull (Linear Design System file `qugADpBlOjqBl4FpOgM0xZ`, authed `tholv.7990@gmail.com`) **confirmed our `--text-*`/radii/elevation/decoration palette already match Linear exactly**; orange + light are the deliberate brand override.
+3. **Tailwind fully removed** (`d1598e5c`, web-only, verified live): **no component used a single Tailwind utility class.** `tokens.css` `@import "tailwindcss"` + `@theme static` → plain `:root` (keeps all 34 `var(--…)` refs); **vendored a preflight-equivalent reset** into `index.css` (border-box + zeroed margin/padding/border, `font:inherit` on form controls, heading/link/list resets, block media); dropped the `@tailwindcss/vite` plugin from `vite.config.ts`. CSS bundle 216→207 KB. **`tailwindcss` + `@tailwindcss/vite` still listed (unused) in `apps/web/package.json`** — pruning needs `pnpm install` (not done).
+4. **Workspace switcher simplified** (`WorkspaceMenu.tsx`): name **hidden** from the trigger (`d0474dbb` — avatar + type icon + `title` tooltip), then the **dropdown dropped entirely for single-workspace accounts** (`b013a638` — when `workspaces.length < 2` the trigger is a static `<div className="ws-trigger ws-static">`, no chevron/popover, `cursor:default`; the switcher still appears for users in 2+ workspaces). Names still show in the popover (multi-workspace case).
+5. **GainsSteel team workspace soft-deleted** for `tholv.7990@gmail.com` (DB op, **reversible** `active:false` replicating `CascadeService.deleteWorkspace`; it was empty). User now has only **Putiin's Workspace** (personal, undeletable). **User explicitly authorized** (first attempt was correctly blocked as an inference).
+6. **Synced to Claude Design** (claude.ai/design project **"Lyra Design System"**, projectId `356d704f-ef83-4836-bce0-32e2461c6a7a`, via the **`DesignSync` tool**): **13 component files** (`styles.css` = compiled CSS + 11 `@dsCard` HTML cards built from the real gallery HTML + index) + **3 context docs** `context/{PRODUCT,DATA-MODEL,FEATURES}.md`.
+7. **Design-context docs** (`docs/`): **PRODUCT.md** + **DATA-MODEL.md** (`d1598e5c`) and **FEATURES.md** (**uncommitted**) — the last is a full feature/behavior/function/permissions map built from a **5-agent parallel codebase sweep**.
+
+## ⚠️ Deploy / state specifics
+- **Deploy (web-only) = edit (worktree) → `git push origin feat/members-page:dev` → `git -C <main> fetch origin dev && merge --ff-only origin/dev` → vite HMRs** (restart `lyra-web` only if `vite.config.ts` changed — it did this session). No api/shared/connectors change → untouched.
+- **No Tailwind anywhere now** — verified live (`/components`: 0 tailwind stylesheet; buttons + body render in Inter via the reset's `font:inherit`).
+- **Figma**: remote MCP works (authed `tholv.7990@gmail.com`); Linear Design System (Community) file `qugADpBlOjqBl4FpOgM0xZ`, dark-mode page `8:2`. **`/design-sync` is the `DesignSync` tool → claude.ai/design**, NOT Linear (no Linear MCP exists).
+
+## 🔜 Pending / open (don't start unless asked)
+- **Commit the session docs** — `docs/FEATURES.md` + this `docs/SESSION-HANDOFF.md` entry are uncommitted (PRODUCT/DATA-MODEL already in `d1598e5c`).
+- **Prune Tailwind deps** — remove `tailwindcss` + `@tailwindcss/vite` from `apps/web/package.json` + `pnpm install`. Left dormant to avoid lockfile drift / asking-before-install.
+- **Tighten the workspace switcher** — sparse gap between icon and the far-right chevron after the name removal (1-line CSS, offered).
+- **Flagged, not changed**: detail-title weight **700 → ≤600** (Linear never bolds past 600); **`tokens.css` semantic-color drift** vs Linear (`--color-danger:#e5484d` there vs `#eb5757` in `index.css`) — offered to reconcile.
+- **`.figma-assets/`** untracked scratch (`buttons.png` + a hashed png) — offered to remove.
+- No in-app **delete-workspace** UI (the `DELETE /workspaces/:id` cascade endpoint exists but isn't wired to the web).
+- Prior entries' pending items still stand.
+
+---
+
 # Session handoff — June 20, 2026 (PM) — Workspace personal/team + admin team-upgrade · Task layer (project→tasks→pipelines, migrated) · move project to team
 
 > **Read this first.** Work in worktree **`.claude/worktrees/notification-bell`** (branch `feat/members-page`), pushed to **`origin/dev` through `73e88ec6`**; main tree merged + **DEPLOYED** (pm2 `lyra-api`/`lyra-web` restarted, health 200, task + transfer routes mapped). **Three big features shipped + LIVE on dev**, each subagent-built + reviewed, **smoke-verified end-to-end (12/12)**. Gate green every commit: `pnpm turbo run lint type-check test build` (**16/16**) + **e2e 84/84**. **Commit/push only when the user asks.** Stage explicit files only — **never `git add -A`** (concurrent Codex agent in the main tree). Specs: `docs/superpowers/specs/2026-06-20-*`; plans: `docs/superpowers/plans/2026-06-20-*`.

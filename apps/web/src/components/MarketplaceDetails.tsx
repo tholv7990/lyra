@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type MarketplacePrompt } from '@lyra/shared';
 import { initials } from '../lib/format';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { promptSegments } from '../lib/promptSegments';
 import { CheckIcon, ChatsIcon, ConnectionsIcon, CopyIcon, PlusIcon, XIcon } from '../layout/icons';
 
@@ -32,13 +33,7 @@ export function MarketplaceDetails({
   const done = state === 'done';
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   function copy() {
     void navigator.clipboard?.writeText(prompt.content);

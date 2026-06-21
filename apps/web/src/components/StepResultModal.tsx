@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StepMode, type Asset, type Step } from '@lyra/shared';
 import { api, downloadFile } from '../lib/api';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { XIcon } from '../layout/icons';
 import { IconButton } from './IconButton';
 
@@ -101,13 +102,7 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
     };
   }, [current.runId, step.index, assetCache]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const [copied, setCopied] = useState(false);
   async function copy() {

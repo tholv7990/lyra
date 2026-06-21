@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProviderCatalogEntry } from '../lib/providerCatalog';
+import { useEscapeKey } from '../lib/useEscapeKey';
 import { ProviderBadge } from './ProviderBadge';
 import { IconButton } from './IconButton';
 import { XIcon } from '../layout/icons';
@@ -27,11 +28,7 @@ export function AddKeyModal({
   const [key, setKey] = useState('');
   const trimmed = key.trim();
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   return (
     <div className="dialog-scrim" onClick={onClose}>
