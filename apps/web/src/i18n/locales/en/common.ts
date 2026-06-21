@@ -19,6 +19,7 @@ export default {
   search: 'Search',
   copy: 'Copy',
   copied: 'Copied',
+  duplicate: 'Duplicate',
   prompt: 'Prompt',
   download: 'Download',
   retry: 'Retry',

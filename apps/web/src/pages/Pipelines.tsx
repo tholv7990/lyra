@@ -72,6 +72,8 @@ export function Pipelines() {
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Pipeline | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [toDuplicate, setToDuplicate] = useState<Pipeline | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
 
   const wsId = current?.id;
@@ -133,9 +135,12 @@ export function Pipelines() {
   }
 
   // Duplicate = create a fresh pipeline from a copy of this one (no API endpoint;
-  // the server regenerates step ids from the bodies we send).
-  async function duplicate(p: Pipeline) {
-    if (!wsId) return;
+  // the server regenerates step ids from the bodies we send). Confirmed first via
+  // the duplicate dialog so a stray click can't silently clone a pipeline.
+  async function confirmDuplicate() {
+    const p = toDuplicate;
+    if (!wsId || !p) return;
+    setDuplicating(true);
     try {
       const created = await api<Pipeline>(`/workspaces/${wsId}/pipelines`, {
         method: 'POST',
@@ -156,8 +161,11 @@ export function Pipelines() {
         }),
       });
       setPipelines((list) => [created, ...list]);
+      setToDuplicate(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('pipelines.duplicateError'));
+    } finally {
+      setDuplicating(false);
     }
   }
 
@@ -316,7 +324,7 @@ export function Pipelines() {
                         size="sm"
                         icon={<CopyIcon width={15} height={15} />}
                         label={t('pipelines.duplicateNamed', { name: p.name })}
-                        onClick={() => void duplicate(p)}
+                        onClick={() => setToDuplicate(p)}
                       />
                     )}
                     {canEdit(p) && (
@@ -352,6 +360,16 @@ export function Pipelines() {
         busy={deleting}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setToDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={!!toDuplicate}
+        title={t('pipelines.duplicateConfirmTitle')}
+        message={<>{t('pipelines.duplicateConfirmBefore')}<strong>{toDuplicate?.name}</strong>{t('pipelines.duplicateConfirmAfter')}</>}
+        confirmLabel={t('common.duplicate')}
+        busy={duplicating}
+        onConfirm={() => void confirmDuplicate()}
+        onCancel={() => setToDuplicate(null)}
       />
     </div>
   );

@@ -19,6 +19,7 @@ export default {
   search: 'Tìm kiếm',
   copy: 'Sao chép',
   copied: 'Đã sao chép',
+  duplicate: 'Nhân bản',
   prompt: 'Prompt',
   download: 'Tải xuống',
   retry: 'Thử lại',

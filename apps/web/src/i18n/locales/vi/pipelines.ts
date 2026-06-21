@@ -71,6 +71,11 @@ export default {
   deleteConfirmAfter:
     ' sẽ bị xóa. Các dự án đang dùng nó sẽ mất quyền truy cập. Hành động này không thể hoàn tác.',
 
+  // Duplicate confirm
+  duplicateConfirmTitle: 'Nhân bản pipeline?',
+  duplicateConfirmBefore: 'Một bản sao của ',
+  duplicateConfirmAfter: ' sẽ được tạo thành một pipeline mới mà bạn có thể chỉnh sửa.',
+
   // Errors
   updateError: 'Không thể cập nhật pipeline',
   deleteError: 'Không thể xóa pipeline',

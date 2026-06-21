@@ -70,6 +70,11 @@ export default {
   deleteConfirmBefore: '',
   deleteConfirmAfter: ' will be removed. Projects using it lose access. This can’t be undone.',
 
+  // Duplicate confirm
+  duplicateConfirmTitle: 'Duplicate pipeline?',
+  duplicateConfirmBefore: 'A copy of ',
+  duplicateConfirmAfter: ' will be created as a new pipeline you can edit.',
+
   // Errors
   updateError: 'Could not update pipeline',
   deleteError: 'Could not delete pipeline',
