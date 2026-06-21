@@ -37,6 +37,7 @@ import { RUN_STATUS_LABEL_KEY } from '../lib/constants';
 import { useModels } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
 import { useRunActions } from '../lib/useRunActions';
+import { useScrollLock } from '../lib/useScrollLock';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
@@ -418,6 +419,10 @@ export function PipelineBuilder() {
       setCreatingRun(false);
     }
   }
+
+  // Lock page scroll while the add/edit-step drawer is open. Called above the
+  // early return below so the hook order stays stable (Rules of Hooks).
+  useScrollLock(!!editing?.step);
 
   if (!isNew && !pipeline) {
     return <p className="empty">{error ?? t('common.loading')}</p>;

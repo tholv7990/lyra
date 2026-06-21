@@ -14,6 +14,7 @@ import {
 import { api } from '../lib/api';
 import { useModels } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
+import { useScrollLock } from '../lib/useScrollLock';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { LabelPicker } from '../components/LabelPicker';
@@ -77,6 +78,7 @@ export function PromptEditor() {
   const blocker = useBlocker(
     useCallback(() => dirtyRef.current && !leavingRef.current, []),
   );
+  useScrollLock(blocker.state === 'blocked');
   useEffect(() => {
     if (!dirty) return;
     const handler = (e: BeforeUnloadEvent) => {

@@ -14,6 +14,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useLabels } from '../lib/useLabels';
 import { useOutsideClick } from '../lib/useOutsideClick';
 import { useEscapeKey } from '../lib/useEscapeKey';
+import { useScrollLock } from '../lib/useScrollLock';
 import { TaskStatusPicker } from './TaskStatusPicker';
 import { TaskPriorityPicker } from './TaskPriorityPicker';
 import { LabelPicker } from './LabelPicker';
@@ -68,6 +69,7 @@ export function TaskCreateModal({
   }, [wsId, isPersonal]);
 
   useEscapeKey(onClose);
+  useScrollLock();
 
   const assignee = members.find((m) => m.userId === assigneeId);
   const assigned = pipelines.map((id) => library.find((p) => p.id === id)).filter((p): p is Pipeline => !!p);

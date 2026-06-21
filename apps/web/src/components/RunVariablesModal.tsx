@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PipelineVariable } from '@lyra/shared';
+import { useScrollLock } from '../lib/useScrollLock';
 
 // One item per non-empty line.
 function splitItems(text: string): string[] {
@@ -38,6 +39,7 @@ export function RunVariablesModal({
   const [lists, setLists] = useState<Record<string, string>>(() =>
     Object.fromEntries(collections.map((c) => [c, ''])),
   );
+  useScrollLock();
   const submit = () =>
     onRun(
       values,

@@ -6,8 +6,9 @@ import { useEffect } from 'react';
  * order, so each restores the one beneath it). Compensates for the vanished
  * scrollbar width to avoid a horizontal layout jump on desktop.
  */
-export function useScrollLock() {
+export function useScrollLock(active = true) {
   useEffect(() => {
+    if (!active) return;
     const body = document.body;
     const prevOverflow = body.style.overflow;
     const prevPad = body.style.paddingRight;
@@ -18,5 +19,5 @@ export function useScrollLock() {
       body.style.overflow = prevOverflow;
       body.style.paddingRight = prevPad;
     };
-  }, []);
+  }, [active]);
 }

@@ -11,6 +11,7 @@ import {
   SettingsIcon,
   PlusIcon,
 } from '../layout/icons';
+import { useScrollLock } from '../lib/useScrollLock';
 
 interface CommandAction {
   id: string;
@@ -55,6 +56,8 @@ export function CommandBar() {
     const id = setTimeout(() => inputRef.current?.focus(), 0);
     return () => clearTimeout(id);
   }, [open]);
+
+  useScrollLock(open);
 
   const goTo = (name: string) => t('common.goToNamed', { name });
   const actions: CommandAction[] = useMemo(

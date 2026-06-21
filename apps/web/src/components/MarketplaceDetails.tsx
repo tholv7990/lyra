@@ -3,6 +3,7 @@ import { labelColor, type MarketplacePrompt } from '@lyra/shared';
 import { Avatar } from './Avatar';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
+import { useScrollLock } from '../lib/useScrollLock';
 import { promptSegments } from '../lib/promptSegments';
 import { CheckIcon, ChatsIcon, ConnectionsIcon, CopyIcon, PlusIcon, XIcon } from '../layout/icons';
 
@@ -34,6 +35,7 @@ export function MarketplaceDetails({
   const { copied, copy } = useCopyToClipboard();
 
   useEscapeKey(onClose);
+  useScrollLock();
 
   return (
     <div className="dialog-scrim" onClick={onClose}>

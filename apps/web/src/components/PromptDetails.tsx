@@ -7,6 +7,7 @@ import { Avatar } from './Avatar';
 import { TagChip } from './TagChip';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { useEscapeKey } from '../lib/useEscapeKey';
+import { useScrollLock } from '../lib/useScrollLock';
 import { api } from '../lib/api';
 import { useAuth } from '../auth/useAuth';
 import { deleteResult } from '../lib/promptResults';
@@ -79,6 +80,7 @@ export function PromptDetails({
   }
 
   useEscapeKey(onClose);
+  useScrollLock();
 
   return (
     <div className="dialog-scrim" onClick={onClose}>

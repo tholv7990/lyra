@@ -6,6 +6,7 @@ import { WorkspaceType } from '@lyra/shared';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { initials } from '../lib/format';
+import { useScrollLock } from '../lib/useScrollLock';
 import { BrandLogo } from '../components/BrandLogo';
 import { IconButton } from '../components/IconButton';
 import { ThemeToggleButton, LanguageToggleButton } from '../components/PrefControls';
@@ -66,6 +67,7 @@ export function AppLayout() {
   const { t } = useTranslation();
   const location = useLocation();
   const [open, setOpen] = useState(false); // mobile drawer
+  useScrollLock(open);
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_KEY) === '1',
   );
