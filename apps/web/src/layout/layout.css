@@ -3437,6 +3437,19 @@
   padding: 5px;
 }
 
+/* On phones the toolbar wraps and the Filter trigger drops to the left gutter, so
+   the default right-anchored popover would hang off the LEFT edge of the screen
+   (260px pushed past x:0). Anchor it to the trigger's left instead — the trigger
+   sits at the page gutter once wrapped, and the width is already viewport-capped,
+   so it stays fully on-screen. Above this width the toolbar is one row (trigger on
+   the right) where right:0 is correct. */
+@media (max-width: 560px) {
+  .lin-menu {
+    left: 0;
+    right: auto;
+  }
+}
+
 .lin-menu-actions {
   display: flex;
   justify-content: flex-end;
