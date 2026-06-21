@@ -1,36 +1,36 @@
 :root {
-  /* Lyra — LIGHT mode, Linear-style components (subset; see src/styles/tokens.css) */
+  /* Lyra — LIGHT mode, Notion-style components (subset; see src/styles/tokens.css) */
   --canvas: #ffffff;
-  /* App backdrop — a cool light gray so white cards lift off it (Linear depth). */
-  --app-bg: #f6f7f9;
-  --surface-1: #f4f5f8;
-  --surface-2: #ebedf1;
-  --surface-3: #e2e4ea;
+  /* App backdrop — Notion's warm off-white paper so white cards lift off it. */
+  --app-bg: #f6f5f4;
+  --surface-1: #f1efec;
+  --surface-2: #eae7e2;
+  --surface-3: #e3dfd9;
   --field: #ffffff;
   /* Card/dialog/panel surface — the lifted white in light, a raised dark in dark. */
   --card: #ffffff;
   /* Disabled control fill + ink (overridden in dark). */
   --disabled-bg: #e8e8ea;
   --disabled-ink: rgba(60, 60, 67, 0.4);
-  --hairline: rgba(0, 0, 0, 0.07);
-  --hairline-strong: rgba(0, 0, 0, 0.12);
-  --ink: #1c1d2a;
-  /* Cool, high-contrast secondary text (Linear greys): muted #4D4F69 ≈7.4:1,
-     tertiary #6B6F76 ≈4.9:1 on white. */
-  --ink-muted: #4d4f69;
-  --ink-tertiary: #6b6f76;
-  /* Form placeholder text — Linear's muted grey; lighter than entered text but
-     still legible. One token so every input matches. */
-  --placeholder: #858699;
-  /* Brand accent — Linear indigo. */
-  --primary: #5e6ad2;
-  --primary-hover: #666be2;
-  --primary-pressed: #5c67c7;
-  --primary-tint: rgba(94, 106, 210, 0.12);
-  --danger: #eb5757;
-  --success: #4cb782;
-  --warning: #d4a72c;
-  --info: #4ea7fc;
+  --hairline: rgba(55, 53, 47, 0.09);
+  --hairline-strong: rgba(55, 53, 47, 0.16);
+  --ink: #31302e;
+  /* Notion's warm secondary text: muted #615D59 ≈6.6:1, tertiary #75726B ≈4.8:1
+     on the warm paper. */
+  --ink-muted: #615d59;
+  --ink-tertiary: #75726b;
+  /* Form placeholder text — Notion's warm faint grey; lighter than entered text
+     but still legible. One token so every input matches. */
+  --placeholder: #918d86;
+  /* Brand accent — Notion blue. */
+  --primary: #0075de;
+  --primary-hover: #2383e2;
+  --primary-pressed: #005bab;
+  --primary-tint: rgba(0, 117, 222, 0.12);
+  --danger: #e03e3e;
+  --success: #0f9d58;
+  --warning: #dd5b00;
+  --info: #0075de;
   /* Text/icons on a filled accent (primary/success/danger) — white in both
      themes since the fill stays colored. One token for every on-color label. */
   --on-accent: #ffffff;
@@ -46,7 +46,7 @@
      hues that read on both themes (used as the icon ink + a low-alpha tint). */
   --accent-chats: #f59e0b;
   --accent-prompts: #14b8a6;
-  --accent-pipelines: #5e6ad2;
+  --accent-pipelines: #0075de;
   --accent-projects: #0ea5e9;
   --accent-keys: #7c5cff;
   --accent-members: #ec4899;
@@ -105,35 +105,35 @@
 
 /* ===== Dark mode =====
  * Same token names, dark values — every component flips automatically because it
- * reads these vars. Indigo accent; surfaces invert into a cool navy-dark ladder,
+ * reads these vars. Blue accent; surfaces invert into a warm charcoal ladder,
  * hairlines become light-on-dark, shadows deepen. Applied via <html data-theme>
  * (set pre-paint by the inline script in index.html, managed at runtime by
  * src/lib/prefs.ts). */
 [data-theme='dark'] {
-  --canvas: #1c1d2a;
-  --app-bg: #181921;
-  --card: #1d1e2b;
-  --surface-1: #21232e;
-  --surface-2: #26273b;
-  --surface-3: #2c2d42;
-  --surface-4: #393a4b;
-  --field: #151621;
-  --hairline: rgba(255, 255, 255, 0.09);
+  --canvas: #1f1f1f;
+  --app-bg: #191919;
+  --card: #252525;
+  --surface-1: #202020;
+  --surface-2: #2c2c2c;
+  --surface-3: #373737;
+  --surface-4: #434343;
+  --field: #1c1c1c;
+  --hairline: rgba(255, 255, 255, 0.094);
   --hairline-strong: rgba(255, 255, 255, 0.16);
-  --ink: #eeeffc;
-  /* Cool, high-contrast secondary text (Linear greys) on the dark navy card. */
-  --ink-muted: #d2d3e0;
-  --ink-tertiary: #9a9cb0;
-  --placeholder: #858699;
-  /* Brand accent — Linear indigo (brighter on dark). */
-  --primary: #6c79ff;
-  --primary-hover: #7d88ff;
-  --primary-pressed: #5e6ad2;
-  --primary-tint: rgba(108, 121, 255, 0.22);
-  --danger: #eb5757;
-  --success: #4cb782;
-  --warning: #f2c94c;
-  --info: #4ea7fc;
+  --ink: #ededeb;
+  /* Warm, high-contrast secondary text on the Notion charcoal card. */
+  --ink-muted: #9b9894;
+  --ink-tertiary: #7a7670;
+  --placeholder: #6f6c66;
+  /* Brand accent — Notion blue (brighter on dark). */
+  --primary: #2383e2;
+  --primary-hover: #3b91e8;
+  --primary-pressed: #0075de;
+  --primary-tint: rgba(35, 131, 226, 0.22);
+  --danger: #ff6369;
+  --success: #2eb872;
+  --warning: #e9a23b;
+  --info: #529cca;
   /* Error surface, dark variants — a desaturated red border + near-black red
      wash that read as "error" on the dark canvas (light pinks would glare). */
   --danger-tint: #5a2a2c;

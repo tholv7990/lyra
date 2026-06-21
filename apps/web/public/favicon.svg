@@ -5,8 +5,8 @@
       <stop offset="1" stop-color="#070707"/>
     </linearGradient>
     <linearGradient id="ink" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#828FFF"/>
-      <stop offset="1" stop-color="#5E6AD2"/>
+      <stop offset="0" stop-color="#62AEF0"/>
+      <stop offset="1" stop-color="#0075DE"/>
     </linearGradient>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="20"/>
@@ -15,7 +15,7 @@
   <rect x="0" y="0" width="512" height="512" rx="116" fill="url(#bg)"/>
   <rect x="1" y="1" width="510" height="510" rx="115" fill="none" stroke="#FFFFFF" stroke-opacity="0.06" stroke-width="2"/>
   <g filter="url(#glow)" opacity="0.55">
-    <path transform="translate(256 256) scale(0.26205 -0.26205) translate(-545.00 -218.00)" d="M189.0 92H424.0V0H75.0V695H189.0Z M1015.0 551 677.0 -259H559.0L671.0 9L454.0 551H581.0L736.0 131L897.0 551Z" fill="#5E6AD2"/>
+    <path transform="translate(256 256) scale(0.26205 -0.26205) translate(-545.00 -218.00)" d="M189.0 92H424.0V0H75.0V695H189.0Z M1015.0 551 677.0 -259H559.0L671.0 9L454.0 551H581.0L736.0 131L897.0 551Z" fill="#0075DE"/>
   </g>
   <path transform="translate(256 256) scale(0.26205 -0.26205) translate(-545.00 -218.00)" d="M189.0 92H424.0V0H75.0V695H189.0Z M1015.0 551 677.0 -259H559.0L671.0 9L454.0 551H581.0L736.0 131L897.0 551Z" fill="url(#ink)"/>
 </svg>
