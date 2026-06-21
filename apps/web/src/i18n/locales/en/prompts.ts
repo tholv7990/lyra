@@ -85,6 +85,7 @@ export default {
     image: 'Image',
     audio: 'Audio',
     video: 'Video',
+    file: 'File',
   },
 
   // PromptEditor

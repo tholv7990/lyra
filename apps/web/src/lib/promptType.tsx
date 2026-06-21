@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { PromptType } from '@lyra/shared';
 import {
   AudioTypeIcon,
+  FileTypeIcon,
   ImageTypeIcon,
   TextTypeIcon,
   VideoTypeIcon,
@@ -15,6 +16,7 @@ export const TYPE_COLOR: Record<PromptType, string> = {
   [PromptType.Image]: 'var(--accent-projects)',
   [PromptType.Audio]: 'var(--accent-keys)',
   [PromptType.Video]: 'var(--accent-chats)',
+  [PromptType.File]: 'var(--accent-marketplace)',
 };
 
 // Glyph per output type (hand-authored, currentColor — tint with TYPE_COLOR).
@@ -23,6 +25,7 @@ export const TYPE_ICON: Record<PromptType, ComponentType<SVGProps<SVGSVGElement>
   [PromptType.Image]: ImageTypeIcon,
   [PromptType.Audio]: AudioTypeIcon,
   [PromptType.Video]: VideoTypeIcon,
+  [PromptType.File]: FileTypeIcon,
 };
 
 // A single modality glyph, tinted by its type — the content-true marker used on

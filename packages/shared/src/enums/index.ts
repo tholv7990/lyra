@@ -80,6 +80,7 @@ export enum PromptType {
   Image = 'image',
   Audio = 'audio',
   Video = 'video',
+  File = 'file',
 }
 
 // Workspace kind: Personal workspaces are created automatically on sign-up;

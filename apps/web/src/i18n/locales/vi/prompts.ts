@@ -85,6 +85,7 @@ export default {
     image: 'Hình ảnh',
     audio: 'Âm thanh',
     video: 'Video',
+    file: 'Tệp',
   },
 
   // PromptEditor

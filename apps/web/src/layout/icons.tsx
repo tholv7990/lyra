@@ -308,6 +308,16 @@ export const VideoTypeIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Document with a folded corner — the File output type (pdf/doc/csv/xlsx…).
+export const FileTypeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon">
+    <path d="M4 1.8h4.5L12.2 5.5V13a1.2 1.2 0 0 1-1.2 1.2H4A1.2 1.2 0 0 1 2.8 13V3A1.2 1.2 0 0 1 4 1.8Z" />
+    <path d="M8.5 2v2.7a.8.8 0 0 0 .8.8h2.6" fill="none" stroke="#fff" strokeWidth="1" />
+    <rect x="4.6" y="8.4" width="5" height="1.1" rx="0.55" fill="#fff" />
+    <rect x="4.6" y="10.6" width="3.4" height="1.1" rx="0.55" fill="#fff" />
+  </svg>
+);
+
 export const BellIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">
     <path d="M8 1.4a3.9 3.9 0 0 0-3.9 3.9v2.05c0 .5-.2.98-.55 1.33l-.62.62A1.05 1.05 0 0 0 3.68 11.1h8.64a1.05 1.05 0 0 0 .74-1.79l-.62-.62a1.88 1.88 0 0 1-.55-1.33V5.3A3.9 3.9 0 0 0 8 1.4Z" />
