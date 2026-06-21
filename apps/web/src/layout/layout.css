@@ -8748,18 +8748,21 @@
   max-height: calc(100dvh - 48px);
 }
 @media (max-width: 760px) {
+  /* Top sheet: anchor to the top and take ~half the screen so the composer (at
+     the sheet's bottom) stays ABOVE the on-screen keyboard. A full-height modal
+     puts the composer behind the keyboard, so iOS scrolls and shoves the header
+     off — this keeps everything in the keyboard-free top half. */
   .dialog-scrim:has(.bwa-chat) {
-    align-items: stretch;
+    align-items: flex-start;
     justify-content: stretch;
     padding: 0;
   }
   .dialog.bwa-chat {
-    width: 100vw;
+    width: 100%;
     max-width: none;
-    height: 100dvh;
-    max-height: none;
-    border-radius: 0;
-    box-shadow: none;
+    height: 50dvh;
+    max-height: 50dvh;
+    border-radius: 0 0 16px 16px;
   }
 }
 
