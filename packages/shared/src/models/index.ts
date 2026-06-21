@@ -127,6 +127,10 @@ export interface Project extends Audited {
   status: ProjectStatus;
   shared: ProjectShare; // who a public project reaches
   sharedWith: UserRef[]; // expanded; ids are sent in UpdateProjectDto (when shared='people')
+  // Connected-channel ids (from the workspace Connections pool) this project posts
+  // to. Any number, any platform mix (a project may hold several YouTube channels).
+  // A selection/default for Publish, not an enforced limit.
+  channels: string[];
   taskCount?: number; // active tasks on the board — populated in the list view only
   // pipelines now live on a Task (the project is a board of tasks).
 }

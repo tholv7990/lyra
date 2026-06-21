@@ -17,6 +17,7 @@ export function toProject(
     status: p.status,
     shared: p.shared,
     sharedWith: userRefs(p.sharedWith, refs),
+    channels: p.channels ?? [],
     ...(taskCount === undefined ? {} : { taskCount }),
     active: p.active ?? true,
     createdBy: userRef(p.createdBy, refs),

@@ -47,6 +47,10 @@ export class Project extends AuditedEntity {
   // User ids (when shared = 'people'); expanded to UserRef[] in responses.
   @Prop({ type: [String], default: [] })
   sharedWith!: string[];
+
+  // Connected-channel ids (workspace Connections pool) this project posts to.
+  @Prop({ type: [String], default: [] })
+  channels!: string[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

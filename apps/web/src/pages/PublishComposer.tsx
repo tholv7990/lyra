@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { Channel, PublishJob } from '@lyra/shared';
+import type { Channel, Project, PublishJob } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { api } from '../lib/api';
 import { connectorsApi } from '../lib/connectors';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 import './connectors.css';
@@ -34,6 +35,8 @@ export function PublishComposer() {
   const ws = current?.id;
 
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectId, setProjectId] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [caption, setCaption] = useState('');
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
@@ -54,6 +57,20 @@ export function PublishComposer() {
     }
   }, [ws, t]);
   useEffect(() => { void load(); }, [load]);
+
+  // Projects (to publish "for" a project — preselects that project's channels).
+  useEffect(() => {
+    if (!ws) return;
+    api<Project[]>(`/workspaces/${ws}/projects`).then(setProjects).catch(() => setProjects([]));
+  }, [ws]);
+
+  // Choosing a project preselects its channels (kept to those still connected).
+  // The selection stays editable — a project is a default, not a hard limit.
+  const pickProject = (pid: string) => {
+    setProjectId(pid);
+    const proj = projects.find((p) => p.id === pid);
+    if (proj) setPicked(proj.channels.filter((c) => channels.some((ch) => ch.id === c)));
+  };
 
   const addMedia = () => {
     const u = mediaInput.trim();
@@ -118,6 +135,17 @@ export function PublishComposer() {
                 <PlusIcon width={12} height={12} /> {t('connectors.manageInConnections')}
               </button>
             </div>
+            {projects.length > 0 && (
+              <div className="pub-project">
+                <label htmlFor="pub-project">{t('connectors.forProject')}</label>
+                <select id="pub-project" className="pub-input" value={projectId} onChange={(e) => pickProject(e.target.value)}>
+                  <option value="">{t('connectors.noProject')}</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             {channels.length === 0 ? (
               <p className="muted">{t('connectors.noChannels')}</p>
             ) : (

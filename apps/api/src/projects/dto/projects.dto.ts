@@ -55,6 +55,12 @@ export class CreateProjectBody implements CreateProjectDto {
   @IsArray()
   @IsString({ each: true })
   sharedWith?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  channels?: string[];
 }
 
 export class UpdateProjectBody implements UpdateProjectDto {
@@ -86,4 +92,10 @@ export class UpdateProjectBody implements UpdateProjectDto {
   @IsArray()
   @IsString({ each: true })
   sharedWith?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  channels?: string[];
 }

@@ -24,6 +24,8 @@ export default {
   publishSubtitle:
     'Compose once, post to every connected channel. You review before anything goes out.',
   postTo: 'Post to',
+  forProject: 'For project',
+  noProject: 'No project (pick channels manually)',
   manageInConnections: 'Manage in Connections',
   captionHint: 'Variables resolve from the project at publish time.',
   preview: 'Preview',

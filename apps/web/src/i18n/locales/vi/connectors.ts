@@ -24,6 +24,8 @@ export default {
   publishSubtitle:
     'Soạn một lần, đăng lên mọi kênh đã kết nối. Bạn duyệt trước khi đăng.',
   postTo: 'Đăng lên',
+  forProject: 'Cho dự án',
+  noProject: 'Không theo dự án (tự chọn kênh)',
   manageInConnections: 'Quản lý ở Kết nối',
   captionHint: 'Biến được thay thế từ dự án khi đăng.',
   preview: 'Xem trước',

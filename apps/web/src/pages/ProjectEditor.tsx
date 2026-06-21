@@ -6,11 +6,13 @@ import {
   labelColor,
   ProjectShare,
   ProjectStatus,
+  type Channel,
   type MemberView,
   type Project,
   type ProjectVariable,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { connectorsApi } from '../lib/connectors';
 import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -26,6 +28,7 @@ interface Form {
   status: ProjectStatus;
   shared: ProjectShare;
   sharedWith: string[]; // member userIds
+  channels: string[]; // connected-channel ids from the Connections pool
 }
 
 const empty: Form = {
@@ -35,9 +38,14 @@ const empty: Form = {
   status: ProjectStatus.Draft,
   shared: ProjectShare.All,
   sharedWith: [],
+  channels: [],
 };
 
 const QUICK_KEYS = ['product', 'niche', 'homepage'];
+
+// Small platform indicator (mirrors PublishComposer); avoids a shared dep for two maps.
+const CH_GLYPH: Record<string, string> = { tiktok: '♪', instagram: '◎', youtube: '▶', facebook: 'f', x: '𝕏' };
+const CH_COLOR: Record<string, string> = { tiktok: '#111827', instagram: '#e1306c', youtube: '#ff0000', facebook: '#1877f2', x: '#111827' };
 
 export function ProjectEditor() {
   const { t } = useTranslation();
@@ -51,6 +59,7 @@ export function ProjectEditor() {
   const [form, setForm] = useState<Form>(empty);
   useBreadcrumb(isEdit ? form.name.trim() || '…' : t('projects.breadcrumbNew'));
   const [members, setMembers] = useState<MemberView[]>([]);
+  const [pool, setPool] = useState<Channel[]>([]); // connected channels (workspace pool)
   const [loading, setLoading] = useState(isEdit);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +89,7 @@ export function ProjectEditor() {
           status: p.status,
           shared: p.shared ?? ProjectShare.All,
           sharedWith: (p.sharedWith ?? []).map((u) => u.id),
+          channels: p.channels ?? [],
         });
       })
       .catch((e) => setError(e instanceof Error ? e.message : t('projects.loadFailed')))
@@ -91,6 +101,18 @@ export function ProjectEditor() {
     if (!wsId) return;
     api<MemberView[]>(`/workspaces/${wsId}/members`).then(setMembers).catch(() => setMembers([]));
   }, [wsId]);
+
+  // The connected-channel pool (workspace Connections) to select this project's channels from.
+  useEffect(() => {
+    if (!wsId) return;
+    connectorsApi.channels(wsId).then((r) => setPool(r.channels)).catch(() => setPool([]));
+  }, [wsId]);
+
+  const toggleChannel = (cid: string) =>
+    setForm((f) => ({
+      ...f,
+      channels: f.channels.includes(cid) ? f.channels.filter((x) => x !== cid) : [...f.channels, cid],
+    }));
 
   const cancelTo = isEdit ? `/projects/${id}` : '/projects';
 
@@ -118,6 +140,8 @@ export function ProjectEditor() {
       description: form.description,
       variables,
       status: form.status,
+      // Keep only ids that still exist in the pool (a channel may have been disconnected).
+      channels: pool.length ? form.channels.filter((c) => pool.some((p) => p.id === c)) : form.channels,
       // Visibility only matters for a public project; a draft is creator-only.
       ...(isPublic
         ? {
@@ -242,6 +266,41 @@ export function ProjectEditor() {
             <PlusIcon width={14} height={14} />
             {t('projects.addVariable').replace('+ ', '')}
           </button>
+        </section>
+
+        {/* Channels — which connected channels this project publishes to */}
+        <section className="pe-section">
+          <div className="pe-label">{t('projects.channelsLabel')}</div>
+          <div className="pe-sub">{t('projects.channelsHelp')}</div>
+          {pool.length === 0 ? (
+            <div className="pe-quick">
+              {t('projects.noChannels')}{' '}
+              <button type="button" className="pe-quick-chip" onClick={() => navigate('/connections')}>
+                {t('projects.manageChannels')}
+              </button>
+            </div>
+          ) : (
+            <div className="pe-members-list">
+              {pool.map((c) => {
+                const selected = form.channels.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`pe-member${selected ? ' selected' : ''}`}
+                    onClick={() => toggleChannel(c.id)}
+                  >
+                    <span className="pe-member-av" style={{ background: CH_COLOR[c.platform] ?? 'var(--ink-tertiary)' }}>{CH_GLYPH[c.platform] ?? '◆'}</span>
+                    <span className="pe-member-id">
+                      <span className="pe-member-name">{c.displayName}</span>
+                      <span className="pe-member-role">{c.platform}</span>
+                    </span>
+                    <span className="pe-member-check">{selected && <CheckIcon width={12} height={12} />}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Status toggle */}
