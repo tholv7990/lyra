@@ -480,7 +480,7 @@ select.text-input {
   min-height: var(--control-h);
   border-radius: var(--radius-button);
   padding: 0 14px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -519,22 +519,22 @@ select.text-input {
   background: var(--primary);
   color: #fff;
   border: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button);
+  box-shadow: none;
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button-strong);
+  box-shadow: none;
 }
 
 .btn-primary:active {
   background: var(--primary-pressed);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .btn-primary:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--focus-ring);
+  box-shadow: var(--focus-ring);
 }
 
 .btn-primary:disabled {
@@ -547,19 +547,19 @@ select.text-input {
 /* Secondary — Linear's soft-filled button: a visible hairline border + micro
    shadow so it reads as a real, liftable control (not a flat grey wash). */
 .btn-ghost {
-  background: var(--surface-2);
+  background: var(--card);
   color: var(--ink);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--shadow-button);
+  border: 1px solid var(--hairline-strong);
+  box-shadow: none;
 }
 
 .btn-ghost:hover {
-  background: var(--surface-3);
+  background: var(--surface-1);
   border-color: var(--hairline-strong);
 }
 
 .btn-ghost:active {
-  background: var(--surface-4, #e1e1e6);
+  background: var(--surface-2);
   box-shadow: none;
 }
 
@@ -574,17 +574,17 @@ select.text-input {
   background: var(--danger);
   color: #fff;
   border: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button);
+  box-shadow: none;
 }
 
 .btn-danger:hover {
   background: #d33b40;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--shadow-button-strong);
+  box-shadow: none;
 }
 
 .btn-danger:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), var(--focus-ring-danger);
+  box-shadow: var(--focus-ring-danger);
 }
 
 .btn-danger:disabled {
