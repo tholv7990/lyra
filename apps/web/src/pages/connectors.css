@@ -62,15 +62,6 @@
 .cx-type-gologin { background: var(--primary-tint); color: var(--primary); }
 .cx-note { font-size: var(--text-small); color: var(--ink-muted); line-height: 1.55; margin: 0; }
 
-.cx-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--on-accent); font-size: 14px; flex: none; }
-/* Platform brand colors — intentional literals (official TikTok/X/Instagram/
-   YouTube/Facebook brand identities), not theme tokens. */
-.cx-ic.tiktok, .cx-dot.tiktok, .cx-ic.x, .cx-dot.x { background: #111; }
-.cx-ic.instagram, .cx-dot.instagram { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
-.cx-ic.youtube, .cx-dot.youtube { background: #ff0000; }
-.cx-ic.facebook, .cx-dot.facebook { background: #1877f2; }
-.cx-ic.generic, .cx-dot.generic { background: var(--surface-3); color: var(--ink); }
-
 .cx-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .cx-chip { display: flex; align-items: center; gap: 7px; border: 1px solid var(--hairline); border-radius: 999px; padding: 6px 12px; font-size: var(--text-small); cursor: pointer; color: var(--ink-muted); background: var(--card); }
 .cx-chip.on { border-color: var(--primary); background: var(--primary-tint); color: var(--primary); font-weight: 600; }
