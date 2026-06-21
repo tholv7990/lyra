@@ -2,6 +2,8 @@ import type { BrowserPlatform } from './dto';
 import type { PuppetPage } from './puppet';
 import { uploadTikTok } from './scripts/tiktok.upload';
 import { uploadYouTube } from './scripts/youtube.upload';
+import { uploadFacebook } from './scripts/facebook.upload';
+import { uploadInstagram } from './scripts/instagram.upload';
 
 export interface UploadJob {
   mediaPaths: string[]; // local file paths (already downloaded)
@@ -21,6 +23,8 @@ interface Puppeteer {
 const SCRIPTS: Record<BrowserPlatform, (page: PuppetPage, job: UploadJob) => Promise<string>> = {
   tiktok: uploadTikTok,
   youtube: uploadYouTube,
+  facebook: uploadFacebook,
+  instagram: uploadInstagram,
 };
 
 // Attach Puppeteer to the GoLogin profile's CDP endpoint and run the platform's

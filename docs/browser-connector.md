@@ -14,7 +14,7 @@ A second, **off-by-default** publisher inside `apps/connectors-service`, on its 
 
 1. launches a **GoLogin** profile that's already logged into the target account,
 2. attaches **Puppeteer** (`puppeteer-core`) to that profile over CDP,
-3. runs a per-platform upload script (`scripts/tiktok.upload.ts`, `youtube.upload.ts`).
+3. runs a per-platform upload script (`scripts/{tiktok,youtube,facebook,instagram}.upload.ts`).
 
 The upload scripts are **best-effort skeletons** — the platforms' web UIs drift, so
 the selectors need verifying/tuning against the live page, and expect captcha / 2FA /
@@ -42,7 +42,7 @@ TOKEN=<CONNECTORS_SERVICE_TOKEN>
 
 # Is it armed?
 curl -s localhost:9100/browser/status -H "Authorization: Bearer $TOKEN"
-# → {"enabled":true,"gologinConfigured":true,"platforms":["tiktok","youtube"]}
+# → {"enabled":true,"gologinConfigured":true,"platforms":["tiktok","youtube","facebook","instagram"]}
 
 # Dry run (reaches the upload page, does NOT post)
 curl -s localhost:9100/browser/publish -H "Authorization: Bearer $TOKEN" \
@@ -58,8 +58,13 @@ When `enabled` is false, `/browser/publish` returns 403 and nothing launches.
 
 - **Per-account proxy:** to avoid the platform correlating accounts, each GoLogin
   profile should use its own residential proxy (configured in GoLogin).
-- **YouTube script** stops after upload+title (the multi-step Studio publish wizard
-  needs tuning) — it's a deliberate dry stop until you wire the remaining steps.
+- **Per-platform tuning:** all scripts are best-effort skeletons — selectors drift,
+  so run `dryRun:true` first and adjust against the live UI.
+  - **YouTube** stops after upload+title (the multi-step Studio publish wizard needs
+    wiring) — a deliberate dry stop.
+  - **Facebook** targets the personal feed; for a Page, `goto` the Page URL first.
+  - **Instagram** walks the New-post dialog (select ▸ crop ▸ edit ▸ caption ▸ share);
+    the two "Next" steps + caption box are the most drift-prone.
 - No retries/queue/scheduling — it's a scaffold to iterate on, run one at a time.
 - Surfacing it in the Lyra UI is intentionally **not** done; keep it off the
   customer path until you've decided it's worth the risk.

@@ -1,7 +1,7 @@
 import { ArrayMinSize, IsArray, IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
 
 // Platforms with an upload script. Add a scripts/<name>.upload.ts + a runner case.
-export const BROWSER_PLATFORMS = ['tiktok', 'youtube'] as const;
+export const BROWSER_PLATFORMS = ['tiktok', 'youtube', 'facebook', 'instagram'] as const;
 export type BrowserPlatform = (typeof BROWSER_PLATFORMS)[number];
 
 export class BrowserPublishBody {
