@@ -325,3 +325,20 @@
   border-color: var(--primary);
   background: var(--primary);
 }
+
+/* Mobile: the {key} = value rows are too wide for a phone — stack the key on its
+   own line; the value + remove share the next. Visibility cards stack too. */
+@media (max-width: 560px) {
+  .pe-var-row {
+    flex-wrap: wrap;
+  }
+  .pe-key-wrap {
+    flex: 1 1 100%;
+  }
+  .pe-eq {
+    display: none;
+  }
+  .pe-vis-cards {
+    flex-direction: column;
+  }
+}
