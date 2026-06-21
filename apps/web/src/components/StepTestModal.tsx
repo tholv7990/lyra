@@ -4,6 +4,7 @@ import type { Prompt, PromptMedia, Provider } from '@lyra/shared';
 import { api } from '../lib/api';
 import type { ModelCatalog } from '../lib/useModels';
 import { ChatPane } from './ChatPane';
+import { Modal } from './Modal';
 import { PlayIcon } from '../layout/icons';
 
 export interface StepTestModalProps {
@@ -19,9 +20,9 @@ export interface StepTestModalProps {
 }
 
 /**
- * Full-screen "test this step" surface. A thin shell (header + back) around the shared
- * `<ChatPane>` — the same conversation component the Chats page uses — seeded with the step's
- * prompt, provider, and model. Reuses the chat instead of reimplementing it.
+ * "Test this step" — a centered chat modal (the shared `<Modal>` shell, same as the
+ * Build-with-AI popup) wrapping the shared `<ChatPane>`, seeded with the step's prompt,
+ * provider, and model. Reuses the chat instead of reimplementing it.
  */
 export function StepTestModal({
   wsId,
@@ -56,36 +57,31 @@ export function StepTestModal({
   }, [promptId, initialPrompt, initialMedia]);
 
   return (
-    <div className="step-test">
-      <div className="step-test-main">
-        <header className="step-test-top">
-          <button type="button" className="eshell-back step-test-back" onClick={onClose} aria-label={t('run.closeTest')}>
-            &lsaquo;
-          </button>
-          <div className="step-test-title">
-            <span className="step-test-kicker">{t('run.stepTest')}</span>
-            <h2>{t('run.testTitle', { title })}</h2>
-          </div>
-        </header>
-
-        <ChatPane
-          wsId={wsId}
-          catalog={catalog}
-          initialProvider={provider}
-          initialModel={model}
-          seedInput={seedInput}
-          seedMedia={seedMedia}
-          autoFocus
-          composerPlaceholder={t('run.testPromptPlaceholder')}
-          emptyState={
-            <div className="chat-empty step-test-empty">
-              <span className="step-test-empty-ico" aria-hidden><PlayIcon width={22} height={22} /></span>
-              <h3>{t('run.testThisNode')}</h3>
-              <p>{t('run.testNodeHint')}</p>
-            </div>
-          }
-        />
+    <Modal onClose={onClose} className="bwa-chat">
+      <div className="bwa-head">
+        <h3>{t('run.testTitle', { title })}</h3>
+        <button type="button" className="srm-x" onClick={onClose} aria-label={t('common.close')}>
+          ×
+        </button>
       </div>
-    </div>
+
+      <ChatPane
+        wsId={wsId}
+        catalog={catalog}
+        initialProvider={provider}
+        initialModel={model}
+        seedInput={seedInput}
+        seedMedia={seedMedia}
+        autoFocus
+        composerPlaceholder={t('run.testPromptPlaceholder')}
+        emptyState={
+          <div className="chat-empty">
+            <span className="step-test-empty-ico" aria-hidden><PlayIcon width={22} height={22} /></span>
+            <h3>{t('run.testThisNode')}</h3>
+            <p>{t('run.testNodeHint')}</p>
+          </div>
+        }
+      />
+    </Modal>
   );
 }
