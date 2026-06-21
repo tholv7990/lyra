@@ -1738,8 +1738,8 @@
 
 .project-visibility-card.active {
   background: var(--primary-tint);
-  border-color: rgba(255, 106, 43, 0.42);
-  box-shadow: inset 0 0 0 1px rgba(255, 106, 43, 0.12);
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .project-visibility-card strong {
@@ -3413,13 +3413,13 @@
 .lin-filter-btn.active {
   color: var(--primary);
   background: var(--primary-tint);
-  border-color: rgba(255, 106, 43, 0.48);
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
 }
 
 .lin-filter-btn.active:hover {
   color: var(--primary-hover);
-  background: rgba(255, 106, 43, 0.12);
-  border-color: rgba(255, 106, 43, 0.62);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 62%, transparent);
 }
 
 .lin-filter-count {
@@ -5097,7 +5097,7 @@
   margin-bottom: 18px;
   color: var(--primary);
   background: var(--primary-tint);
-  box-shadow: 0 8px 22px rgba(255, 107, 26, 0.18);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .prompt-empty h3 {

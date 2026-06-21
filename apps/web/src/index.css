@@ -22,10 +22,11 @@
      white field, vs ~1.9:1 for the old --ink-tertiary 0.3) while staying lighter
      than entered text. One token so every input matches. */
   --placeholder: rgba(60, 60, 67, 0.66);
-  --primary: #ff6b1a;
-  --primary-hover: #ff7d35;
-  --primary-pressed: #e25a0e;
-  --primary-tint: rgba(255, 107, 26, 0.12);
+  /* Brand accent — warm clay/terracotta (pairs with the warm neutrals). */
+  --primary: #b85a37;
+  --primary-hover: #c76a45;
+  --primary-pressed: #9f4c2d;
+  --primary-tint: rgba(184, 90, 55, 0.12);
   --danger: #eb5757;
   --success: #4cb782;
   --warning: #d4a72c;
@@ -124,10 +125,11 @@
   --ink-muted: rgba(240, 236, 227, 0.82);
   --ink-tertiary: rgba(240, 236, 227, 0.72);
   --placeholder: rgba(235, 235, 245, 0.6);
-  --primary: #ff6b1a;
-  --primary-hover: #ff7d35;
-  --primary-pressed: #e25a0e;
-  --primary-tint: rgba(255, 107, 26, 0.2);
+  /* Brand accent — warm clay/terracotta (pairs with the warm neutrals). */
+  --primary: #c2603c;
+  --primary-hover: #d0714b;
+  --primary-pressed: #a84f30;
+  --primary-tint: rgba(194, 96, 60, 0.2);
   --danger: #eb5757;
   --success: #4cb782;
   --warning: #f2c94c;
