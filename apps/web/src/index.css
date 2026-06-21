@@ -315,11 +315,38 @@ h4 {
 
 /* Theme + language controls on the public auth pages, top-right above the
    rain (z-1). Lets a user who lands directly on /login switch appearance. */
-.auth-prefs {
+.auth-topbar {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 2;
+  height: 60px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+}
+.auth-brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: block;
+}
+.auth-brand-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.auth-prefs {
   display: inline-flex;
   align-items: center;
   gap: 8px;

@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useTheme } from '../lib/prefs';
 
-// Matrix-style digital rain for the auth pages — warm brand colors (orange
-// glyphs, bright sparkle heads) on near-black. Canvas-based, ~18fps (light on
-// CPU), DPR-aware, and calm/static when prefers-reduced-motion is set.
+// Matrix-style digital rain for the auth pages — Notion-blue glyphs + bright
+// sparkle heads on near-black. Canvas-based, ~18fps (light on CPU), DPR-aware,
+// and calm/static when prefers-reduced-motion is set.
 const GLYPHS =
   'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモ0123456789ABCDEFGHJKLMNPRSTUVWXYZ<>/*+=';
 
@@ -23,8 +23,8 @@ export function MatrixRain() {
     const dark = resolved === 'dark';
     const bg = dark ? '#0c0c0f' : '#ffffff';
     const fade = dark ? 'rgba(12, 12, 15, 0.16)' : 'rgba(255, 255, 255, 0.10)';
-    const trail = dark ? '#ff8a3d' : '#ff9a55';
-    const head = dark ? '#ffd0b0' : '#ea580c';
+    const trail = dark ? '#2c79c9' : '#bcdcf7';
+    const head = dark ? '#9ecbf5' : '#0075de';
     const fontSize = 16;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let width = 0;
@@ -59,7 +59,7 @@ export function MatrixRain() {
         const ch = GLYPHS[(Math.random() * GLYPHS.length) | 0];
         const x = i * fontSize;
         const y = drops[i] * fontSize;
-        // Soft orange trail; brighter head for depth.
+        // Soft blue trail; brighter head for depth.
         g.fillStyle = Math.random() > 0.9 ? head : trail;
         g.fillText(ch, x, y);
         if (y > height && Math.random() > 0.975) drops[i] = 0;

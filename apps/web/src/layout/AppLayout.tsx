@@ -263,7 +263,6 @@ export function AppLayout() {
             aria-label={t('nav.chats')}
           >
             <ChatsIcon />
-            <span className="ai-fab-txt">{t('nav.aiButton')}</span>
           </button>
         )}
 
