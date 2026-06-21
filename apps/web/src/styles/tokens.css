@@ -100,9 +100,9 @@
 
   /* ===== Text (dark ink on light) ===== */
   --color-ink: #1d1d1f;
-  --color-ink-muted: rgba(60, 60, 67, 0.62);
-  --color-ink-subtle: rgba(60, 60, 67, 0.4);
-  --color-ink-tertiary: rgba(60, 60, 67, 0.24);
+  --color-ink-muted: rgba(60, 60, 67, 0.82);
+  --color-ink-subtle: rgba(60, 60, 67, 0.6);
+  --color-ink-tertiary: rgba(60, 60, 67, 0.72);
 
   /* ===== Semantic ===== */
   --color-success: #2da44e;

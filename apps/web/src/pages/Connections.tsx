@@ -7,6 +7,7 @@ import { channelsApi } from '../lib/channels';
 import { fmtDate } from '../lib/format';
 import { platformColor, platformGlyph, platformLabel } from '../lib/platform';
 import { Modal } from '../components/Modal';
+import { Field } from '../components/Field';
 import { PlatformSelect } from '../components/PlatformSelect';
 import { GologinMark } from '../components/GologinMark';
 import { PlusIcon, PublishIcon, TrashIcon, XIcon } from '../layout/icons';
@@ -139,7 +140,7 @@ export function Connections() {
             <button type="button" className="cx-modal-x" onClick={() => setAddOpen(false)} aria-label={t('common.close')}><XIcon /></button>
           </div>
           <div className="cx-modal-body">
-            <div className="cx-field">
+            <div className="field">
               <span>{t('connectors.connectionType')}</span>
               <div className="cx-seg">
                 <button type="button" className={connType === ChannelType.GoLogin ? 'on' : ''} onClick={() => setConnType(ChannelType.GoLogin)}>
@@ -153,22 +154,19 @@ export function Connections() {
 
             {connType === ChannelType.GoLogin ? (
               <>
-                <div className="cx-field">
+                <div className="field">
                   <span id="m-plat">{t('connectors.channelPlatform')}</span>
                   <PlatformSelect value={form.platform} onChange={(platform) => setForm({ ...form, platform })} labelledBy="m-plat" />
                 </div>
-                <label className="cx-field">
-                  <span>{t('connectors.channelDisplayName')}</span>
-                  <input className="cx-input" value={form.displayName} placeholder="@handle" onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
-                </label>
-                <label className="cx-field">
-                  <span>{t('connectors.gologinProfileId')}</span>
-                  <input className="cx-input" value={form.profileId} placeholder="6a33…" onChange={(e) => setForm({ ...form, profileId: e.target.value })} />
-                </label>
-                <label className="cx-field">
-                  <span>{t('connectors.gologinProxy')}</span>
-                  <input className="cx-input" value={form.proxy} placeholder="optional" onChange={(e) => setForm({ ...form, proxy: e.target.value })} />
-                </label>
+                <Field label={t('connectors.channelDisplayName')}>
+                  <input className="text-input" value={form.displayName} placeholder="@handle" onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
+                </Field>
+                <Field label={t('connectors.gologinProfileId')}>
+                  <input className="text-input" value={form.profileId} placeholder="6a33…" onChange={(e) => setForm({ ...form, profileId: e.target.value })} />
+                </Field>
+                <Field label={t('connectors.gologinProxy')}>
+                  <input className="text-input" value={form.proxy} placeholder="optional" onChange={(e) => setForm({ ...form, proxy: e.target.value })} />
+                </Field>
                 {error && <p className="cx-error">{error}</p>}
                 <div className="cx-modal-actions">
                   <button type="button" className="btn-ghost btn-inline" onClick={() => setAddOpen(false)}>{t('common.cancel')}</button>
