@@ -4,6 +4,7 @@ export default {
   noChatsYet: 'Chưa có cuộc trò chuyện nào.',
   deleteChat: 'Xóa cuộc trò chuyện',
   messageCount: '{{count}} tin nhắn',
+  showMore: 'Xem thêm',
   menu: 'Menu',
   openMenu: 'Mở menu',
   openHistory: 'Cuộc trò chuyện',

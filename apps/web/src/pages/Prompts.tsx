@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   PromptStatus,
   Provider,
-  defaultModel,
   labelColor,
-  type ConversationSummary,
   type Paged,
   type ProviderCount,
   type PromptAuthorCount,
@@ -17,6 +15,7 @@ import {
   type TagCount,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { openPromptInChat } from '../lib/openPromptInChat';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
 import { TagChip } from '../components/TagChip';
@@ -185,41 +184,10 @@ export function Prompts() {
   }
 
   async function openInChat(p: Prompt) {
-    const prov = p.provider ?? Provider.Anthropic;
-    const from = { label: t('prompts.breadcrumb'), to: '/prompts', record: p.title };
-    try {
-      const existing = await api<ConversationSummary | null>(
-        `/workspaces/${wsId}/conversations/prompt-history`,
-        { method: 'POST', body: JSON.stringify({ promptId: p.id, content: p.content }) },
-      );
-      if (existing) {
-        // Ensure the conversation is linked to this prompt — otherwise the chat's
-        // "Save answer" button never appears (it gates on the parent prompt). A
-        // legacy/content match returns an unlinked conversation; link it now.
-        if (existing.originPromptId !== p.id) {
-          try {
-            await api(`/conversations/${existing.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ originPromptId: p.id }),
-            });
-          } catch {
-            // non-fatal: the chat still opens (just without the save link)
-          }
-        }
-        navigate(`/chats/${existing.id}`, { state: { from } });
-        return;
-      }
-    } catch {
-      // fall through to a draft chat
-    }
-    navigate('/chats', {
-      state: {
-        seed: p.content,
-        provider: prov,
-        model: p.model ?? defaultModel(prov),
-        originPromptId: p.id,
-        from,
-      },
+    await openPromptInChat(p, {
+      wsId: wsId ?? '',
+      navigate,
+      from: { label: t('prompts.breadcrumb'), to: '/prompts', record: p.title },
     });
   }
 

@@ -33,6 +33,7 @@ const COND_OPS: { op: ConditionOp; labelKey: string }[] = [
 ];
 const COND_NEEDS_VALUE = (op: ConditionOp) => op !== 'exists' && op !== 'empty';
 import { api } from '../lib/api';
+import { openPromptInChat } from '../lib/openPromptInChat';
 import { RUN_STATUS_LABEL_KEY } from '../lib/constants';
 import { useModels } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
@@ -50,7 +51,6 @@ import { PromptDetails } from '../components/PromptDetails';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
-import { StepTestModal } from '../components/StepTestModal';
 import { PlayIcon, SparkleIcon } from '../layout/icons';
 import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
 import { buildEditGraph } from '../components/flow/buildGraph';
@@ -91,7 +91,6 @@ export function PipelineBuilder() {
   const [steps, setSteps] = useState<PipelineStep[]>([]);
   const [variables, setVariables] = useState<PipelineVariable[]>([]);
   const [editing, setEditing] = useState<Editing>(null);
-  const [testingStep, setTestingStep] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -447,7 +446,19 @@ export function PipelineBuilder() {
       const pr = prompts.find((x) => x.id === id);
       if (pr) setDetailPrompt(pr);
     },
-    onTestStep: (index) => setTestingStep(index),
+    onTestStep: (index) => {
+      const step = steps[index];
+      const prompt = prompts.find((x) => x.id === step.promptId);
+      if (prompt) {
+        void openPromptInChat(prompt, {
+          wsId: wsId ?? '',
+          navigate,
+          from: { label: t('nav.pipelines'), to: id ? `/pipelines/${id}` : '/pipelines', record: step.name },
+          provider: step.provider,
+          model: step.model,
+        });
+      }
+    },
   };
 
   // One editable step node — reused by the desktop canvas (Task 9) and the mobile pager.
@@ -799,19 +810,6 @@ export function PipelineBuilder() {
         />
       )}
 
-      {testingStep !== null && steps[testingStep] && (
-        <StepTestModal
-          wsId={wsId ?? ''}
-          title={steps[testingStep].name}
-          promptId={steps[testingStep].promptId}
-          initialPrompt={prompts.find((x) => x.id === steps[testingStep].promptId)?.content ?? ''}
-          initialMedia={prompts.find((x) => x.id === steps[testingStep].promptId)?.media ?? []}
-          provider={steps[testingStep].provider}
-          model={steps[testingStep].model}
-          catalog={catalog}
-          onClose={() => setTestingStep(null)}
-        />
-      )}
     </EditorShell>
   );
 }

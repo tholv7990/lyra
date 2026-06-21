@@ -21,6 +21,7 @@ import { useModels, type ModelCatalog } from '../lib/useModels';
 import { useLabels } from '../lib/useLabels';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
+import { fmtDate } from '../lib/format';
 import { ChatPane } from '../components/ChatPane';
 import { ProviderIcon } from '../components/ProviderIcon';
 import { SaveAsPromptModal } from '../components/SaveAsPromptModal';
@@ -70,6 +71,7 @@ export function Chats() {
   const openNav = useAppNav();
 
   const [list, setList] = useState<ConversationSummary[]>([]);
+  const [historyLimit, setHistoryLimit] = useState(20);
   const [title, setTitle] = useState(t('chats.newChat'));
   const [origin, setOrigin] = useState<ChatOrigin | null>(null);
   // Mirror origin in a ref so the page can carry it through ChatPane's onCreated
@@ -267,7 +269,8 @@ export function Chats() {
           {list.length === 0 ? (
             <p className="pg-empty">{t('chats.noChatsYet')}</p>
           ) : (
-            list.map((c) => (
+            <>
+            {list.slice(0, historyLimit).map((c) => (
               <div key={c.id} className={`cl-item ${c.id === id ? 'active' : ''}`}>
                 <button
                   className="cl-open"
@@ -282,13 +285,21 @@ export function Chats() {
                     <span className="cl-title">{c.title}</span>
                     {c.starred && <span className="pg-star">★</span>}
                   </span>
-                  <span className="cl-sub">{modelLabel(catalog, c.provider, c.model)} · {t('chats.messageCount', { count: c.messageCount })}</span>
+                  <span className="cl-sub">
+                    {modelLabel(catalog, c.provider, c.model)} · {t('chats.messageCount', { count: c.messageCount })} · {fmtDate(c.lastMessageAt ?? c.updatedAt)}
+                  </span>
                 </button>
                 <button className="cl-del" onClick={() => void removeChat(c)} title={t('chats.deleteChat')} aria-label={t('chats.deleteChat')}>
                   <TrashIcon />
                 </button>
               </div>
-            ))
+            ))}
+            {list.length > historyLimit && (
+              <button type="button" className="cl-more" onClick={() => setHistoryLimit((n) => n + 20)}>
+                {t('chats.showMore')}
+              </button>
+            )}
+            </>
           )}
         </div>
       </aside>

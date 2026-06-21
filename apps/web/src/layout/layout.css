@@ -7580,6 +7580,25 @@
 .cl-item:hover .cl-del { opacity: 1; }
 .cl-del:hover { background: var(--surface-2); color: var(--danger); }
 
+/* "Show more" — reveals the next page of the conversation history list. */
+.cl-more {
+  width: 100%;
+  margin-top: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.cl-more:hover {
+  background: var(--surface-1);
+  color: var(--ink);
+}
+
 /* per-message meta (provider icon + model label) */
 .cmsg-meta {
   display: flex;
@@ -8483,27 +8502,6 @@
   display: flex;
   flex-direction: column;
   height: min(640px, 86vh);
-}
-
-/* Modals tagged `full-mobile` (e.g. the step tester) go edge-to-edge on phones — a
-   centered card is too cramped for tall chat content + the on-screen keyboard.
-   Placed after the size rules above so it wins. The scrim tracks the *visual*
-   viewport (--vv-*, set by useViewportFit) so it shrinks above the keyboard instead
-   of staying 100dvh and pushing the header off-screen; falls back to 100dvh. */
-@media (max-width: 560px) {
-  .dialog-scrim:has(.dialog.full-mobile) {
-    padding: 0;
-    top: var(--vv-top, 0px);
-    bottom: auto;
-    height: var(--vv-height, 100dvh);
-    align-items: stretch;
-  }
-  .dialog.full-mobile {
-    max-width: none;
-    height: 100%;
-    max-height: none;
-    border-radius: 0;
-  }
 }
 
 .bwa-head {

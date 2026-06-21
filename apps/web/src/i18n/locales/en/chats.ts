@@ -4,6 +4,7 @@ export default {
   noChatsYet: 'No chats yet.',
   deleteChat: 'Delete chat',
   messageCount: '{{count}} msg',
+  showMore: 'Show more',
   menu: 'Menu',
   openMenu: 'Open menu',
   openHistory: 'Conversations',
