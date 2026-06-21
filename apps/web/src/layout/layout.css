@@ -8748,20 +8748,24 @@
   max-height: calc(100dvh - 48px);
 }
 @media (max-width: 760px) {
-  /* Top sheet: anchor to the top and take ~half the screen so the composer (at
-     the sheet's bottom) stays ABOVE the on-screen keyboard. A full-height modal
-     puts the composer behind the keyboard, so iOS scrolls and shoves the header
-     off — this keeps everything in the keyboard-free top half. */
+  /* Top sheet pinned to the VISUAL viewport (the area above the keyboard, via
+     the --vvh/--vvt vars Modal sets). The scrim covers only the visible area, so
+     iOS never scrolls/shifts the overlay or "loses height" when the keyboard
+     opens. The sheet is ~half the screen when the keyboard is closed and fills
+     the visible area (composer just above the keyboard) when it's open. Falls
+     back to dvh where the visualViewport API is unavailable. */
   .dialog-scrim:has(.bwa-chat) {
     align-items: flex-start;
-    justify-content: stretch;
     padding: 0;
+    top: var(--vvt, 0px);
+    bottom: auto;
+    height: var(--vvh, 100dvh);
   }
   .dialog.bwa-chat {
     width: 100%;
     max-width: none;
-    height: 50dvh;
-    max-height: 50dvh;
+    height: 56dvh;
+    max-height: 100%;
     border-radius: 0 0 16px 16px;
   }
 }

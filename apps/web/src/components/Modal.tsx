@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { useEscapeKey } from '../lib/useEscapeKey';
 import { useScrollLock } from '../lib/useScrollLock';
+import { useViewportVars } from '../lib/useViewportVars';
 
 /**
  * Centered modal shell: the `dialog-scrim` backdrop (click to close) + the
@@ -21,6 +22,7 @@ export function Modal({
 }) {
   useEscapeKey(onClose);
   useScrollLock();
+  useViewportVars();
   return (
     <div className="dialog-scrim" onClick={onClose}>
       <div
