@@ -23,6 +23,7 @@ import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
 import { Checkbox } from '../components/Checkbox';
 import { MarketplaceDetails } from '../components/MarketplaceDetails';
+import { Pager } from '../components/Pager';
 import {
   CheckIcon,
   CopyIcon,
@@ -389,36 +390,7 @@ export function Marketplace() {
       ) : (
         <>
           <div className="mkt-grid">{items.map((p) => card(p))}</div>
-          {totalPages > 1 && (
-            <div className="mkt-pager">
-              <button
-                type="button"
-                className="mkt-page-btn"
-                disabled={page <= 1}
-                onClick={() => setPage((n) => n - 1)}
-              >
-                ‹ {t('marketplace.prev')}
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`mkt-page-num${n === page ? ' active' : ''}`}
-                  onClick={() => setPage(n)}
-                >
-                  {n}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="mkt-page-btn"
-                disabled={page >= totalPages}
-                onClick={() => setPage((n) => n + 1)}
-              >
-                {t('marketplace.next')} ›
-              </button>
-            </div>
-          )}
+          <Pager page={page} totalPages={totalPages} onChange={setPage} />
         </>
       )}
 

@@ -41,6 +41,7 @@ import {
 } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
+import { Pager } from '../components/Pager';
 import './marketplace.css';
 import './prompts.css';
 
@@ -486,26 +487,7 @@ export function Prompts() {
             })}
           </div>
 
-          {totalPages > 1 && (
-            <div className="mkt-pager">
-              <button type="button" className="mkt-page-btn" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
-                ‹ {t('prompts.prev')}
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`mkt-page-num${n === page ? ' active' : ''}`}
-                  onClick={() => setPage(n)}
-                >
-                  {n}
-                </button>
-              ))}
-              <button type="button" className="mkt-page-btn" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
-                {t('prompts.next')} ›
-              </button>
-            </div>
-          )}
+          <Pager page={page} totalPages={totalPages} onChange={setPage} />
         </>
       )}
 

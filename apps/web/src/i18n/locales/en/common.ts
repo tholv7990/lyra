@@ -13,6 +13,7 @@ export default {
   loading: 'Loading…',
   back: 'Back',
   next: 'Next',
+  prev: 'Prev',
   search: 'Search',
   copy: 'Copy',
   copied: 'Copied',

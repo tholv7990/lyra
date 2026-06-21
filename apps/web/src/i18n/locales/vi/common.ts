@@ -13,6 +13,7 @@ export default {
   loading: 'Đang tải…',
   back: 'Quay lại',
   next: 'Tiếp',
+  prev: 'Trước',
   search: 'Tìm kiếm',
   copy: 'Sao chép',
   copied: 'Đã sao chép',

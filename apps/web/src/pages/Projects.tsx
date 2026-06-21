@@ -14,6 +14,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
+import { Pager } from '../components/Pager';
 import { PlusIcon, ProjectsIcon, TrashIcon } from '../layout/icons';
 import './marketplace.css';
 import './projects.css';
@@ -277,21 +278,7 @@ export function Projects() {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="mkt-pager">
-              <button type="button" className="mkt-page-btn" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
-                ‹ {t('projects.prev')}
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" className={`mkt-page-num${n === page ? ' active' : ''}`} onClick={() => setPage(n)}>
-                  {n}
-                </button>
-              ))}
-              <button type="button" className="mkt-page-btn" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
-                {t('projects.next')} ›
-              </button>
-            </div>
-          )}
+          <Pager page={page} totalPages={totalPages} onChange={setPage} />
         </>
       )}
 

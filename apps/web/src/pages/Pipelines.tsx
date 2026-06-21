@@ -16,6 +16,7 @@ import { EmptyState } from '../components/EmptyState';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
+import { Pager } from '../components/Pager';
 import { CopyIcon, PipelinesIcon, PlusIcon, SparkleIcon, TrashIcon } from '../layout/icons';
 import './marketplace.css';
 import './pipelines.css';
@@ -347,21 +348,7 @@ export function Pipelines() {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="mkt-pager">
-              <button type="button" className="mkt-page-btn" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
-                ‹ {t('pipelines.prev')}
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" className={`mkt-page-num${n === page ? ' active' : ''}`} onClick={() => setPage(n)}>
-                  {n}
-                </button>
-              ))}
-              <button type="button" className="mkt-page-btn" disabled={page >= totalPages} onClick={() => setPage((n) => n + 1)}>
-                {t('pipelines.next')} ›
-              </button>
-            </div>
-          )}
+          <Pager page={page} totalPages={totalPages} onChange={setPage} />
         </>
       )}
 
