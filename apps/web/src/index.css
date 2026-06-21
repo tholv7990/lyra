@@ -110,14 +110,14 @@
  * (set pre-paint by the inline script in index.html, managed at runtime by
  * src/lib/prefs.ts). */
 [data-theme='dark'] {
-  --canvas: #1a1714;
-  --app-bg: #100e0b;
-  --card: #211e19;
-  --surface-1: #1b1813;
-  --surface-2: #29251f;
-  --surface-3: #332f27;
-  --surface-4: #3d3930;
-  --field: #1b1813;
+  --canvas: #211d18;
+  --app-bg: #1a1713;
+  --card: #262019;
+  --surface-1: #211d17;
+  --surface-2: #2e2920;
+  --surface-3: #38322a;
+  --surface-4: #433d33;
+  --field: #211d17;
   --hairline: rgba(255, 255, 255, 0.09);
   --hairline-strong: rgba(255, 255, 255, 0.16);
   --ink: #f2efe7;
