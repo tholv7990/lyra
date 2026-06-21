@@ -328,6 +328,17 @@ export class RunsController {
     return this.runs.approveGate(run, i, user.id);
   }
 
+  @Post('runs/:id/steps/:i/reject')
+  @UseGuards(RunAccessGuard)
+  @RequireCreate()
+  reject(
+    @CurrentRun() run: RunDocument,
+    @Param('i', ParseIntPipe) i: number,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    return this.runs.rejectGate(run, i, user.id);
+  }
+
   @Post('runs/:id/run-all')
   @UseGuards(RunAccessGuard)
   @RequireCreate()

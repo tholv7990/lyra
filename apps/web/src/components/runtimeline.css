@@ -219,6 +219,9 @@
   margin-top: 12px;
   flex-wrap: wrap;
 }
+.rt-reject {
+  color: var(--danger);
+}
 
 /* edit & rerun + run */
 .rt-edit {

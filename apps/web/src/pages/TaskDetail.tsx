@@ -321,6 +321,8 @@ export function TaskDetail() {
     });
   const approve = (i: number) =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/steps/${i}/approve`, { method: 'POST' })));
+  const reject = (i: number) =>
+    run && act(async () => setRun(await api<Run>(`/runs/${run.id}/steps/${i}/reject`, { method: 'POST' })));
   const savePrompt = (i: number, prompt: string) =>
     run &&
     act(async () =>
@@ -523,6 +525,7 @@ export function TaskDetail() {
                           hasKey={(p) => !providerNeedsKey(p as Provider) || keysSet.has(keyProviderFor(p as Provider))}
                           onRunStep={runStep}
                           onApprove={approve}
+                          onReject={reject}
                           onSavePrompt={savePrompt}
                           assets={runAssets}
                           historyForStep={historyForStep}

@@ -6,6 +6,7 @@ import {
   completeStep,
   failStep,
   approveGateAt,
+  rejectGateAt,
   resetRun,
   StepLockedError,
   RunTransitionError,
@@ -70,6 +71,24 @@ describe('run engine', () => {
     expect(s.currentStep).toBe(8);
     expect(s.status).toBe(RunStatus.Done);
     expect(s.steps.every((st) => st.status === StepStatus.Done)).toBe(true);
+  });
+
+  it('rejecting a gate returns the step to idle and pauses for a re-run', () => {
+    const s = freshState();
+    runStep(s, 0);
+    runStep(s, 1);
+    runStep(s, 2); // gate Brief
+    expect(s.status).toBe(RunStatus.AwaitingGate);
+    rejectGateAt(s, 2);
+    expect(s.status).toBe(RunStatus.Idle);
+    expect(s.steps[2].status).toBe(StepStatus.Idle);
+    expect(s.currentStep).toBe(2); // still on the rejected step
+    expect(() => assertRunnable(s, 2, ALL_KEYS)).not.toThrow(); // can re-run it
+  });
+
+  it('throws when rejecting with no gate awaiting', () => {
+    const s = freshState();
+    expect(() => rejectGateAt(s, 0)).toThrow(RunTransitionError);
   });
 
   it('rejects running a step whose provider key is missing', () => {

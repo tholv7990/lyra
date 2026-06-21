@@ -192,6 +192,21 @@ export function approveGateAt(state: RunState, index: number): void {
     state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
 }
 
+// Reject the gate awaiting approval: the output is not accepted, so the step
+// drops back to idle and the run pauses at this index — the user can re-run it
+// (Run / Edit & rerun) or reset. Pure; throws on anything invalid.
+export function rejectGateAt(state: RunState, index: number): void {
+  if (state.status !== RunStatus.AwaitingGate) {
+    throw new RunTransitionError('No gate is awaiting approval');
+  }
+  const step = state.steps[index];
+  if (!step || index !== state.currentStep || step.status !== StepStatus.Waiting) {
+    throw new RunTransitionError('No such gate to reject');
+  }
+  step.status = StepStatus.Idle;
+  state.status = RunStatus.Idle;
+}
+
 export function stopRun(state: RunState): void {
   for (const step of state.steps) {
     if (step.status === StepStatus.Running || step.status === StepStatus.Queued) {

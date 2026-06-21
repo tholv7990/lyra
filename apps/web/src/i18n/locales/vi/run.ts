@@ -9,6 +9,7 @@ export default {
   gatedTitle: 'Bước này cần duyệt',
   gatedSub: 'Xem kết quả trước khi pipeline lưu lại và tiếp tục.',
   approveContinue: 'Duyệt & tiếp tục',
+  reject: 'Từ chối',
   editRerun: 'Sửa & chạy lại',
   saveRerun: 'Lưu & chạy lại',
   queuedNote: 'Đang chờ — chạy khi bước trên hoàn tất.',

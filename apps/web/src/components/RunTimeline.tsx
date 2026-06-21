@@ -13,6 +13,7 @@ interface RunTimelineProps {
   hasKey: (provider: string) => boolean;
   onRunStep: (index: number) => void;
   onApprove: (index: number) => void;
+  onReject?: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
   assets?: Asset[];
   historyForStep?: (index: number) => StepHistoryEntry[];
@@ -59,6 +60,7 @@ export function RunTimeline({
   hasKey,
   onRunStep,
   onApprove,
+  onReject,
   onSavePrompt,
   assets = [],
   historyForStep,
@@ -172,6 +174,11 @@ export function RunTimeline({
                       <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M6.16 11.1 3.3 8.24a.9.9 0 0 1 1.27-1.27l2.18 2.18 4.65-4.66a.9.9 0 1 1 1.28 1.28l-5.3 5.3a.9.9 0 0 1-1.27 0Z" /></svg>
                       {t('run.approveContinue')}
                     </button>
+                    {onReject && (
+                      <button type="button" className="btn-ghost btn-inline btn-sm rt-reject" disabled={busy} onClick={() => onReject(step.index)}>
+                        {t('run.reject')}
+                      </button>
+                    )}
                     <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => startEdit(step)}>
                       {t('run.editRerun')}
                     </button>

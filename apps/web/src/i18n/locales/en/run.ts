@@ -9,6 +9,7 @@ export default {
   gatedTitle: 'This step is gated',
   gatedSub: 'Review the output before the pipeline saves it and continues.',
   approveContinue: 'Approve & continue',
+  reject: 'Reject',
   editRerun: 'Edit & rerun',
   saveRerun: 'Save & rerun',
   queuedNote: 'Queued — runs once the step above completes.',

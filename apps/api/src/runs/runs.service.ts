@@ -31,6 +31,7 @@ import {
   skipStep,
   shouldSkip,
   approveGateAt,
+  rejectGateAt,
   stopRun,
   resetRun,
   isLocked,
@@ -349,6 +350,12 @@ export class RunsService extends BaseRepository<Run> {
   approveGate(doc: RunDocument, index: number, actorId: string) {
     const state = toState(doc);
     this.guard(() => approveGateAt(state, index));
+    return this.persist(doc, state, actorId);
+  }
+
+  rejectGate(doc: RunDocument, index: number, actorId: string) {
+    const state = toState(doc);
+    this.guard(() => rejectGateAt(state, index));
     return this.persist(doc, state, actorId);
   }
 
