@@ -79,9 +79,12 @@ services:
     ports:
       - "5000:5000"
     environment:
-      MAIN_URL: "http://localhost:5000"
-      FRONTEND_URL: "http://localhost:5000"
-      NEXT_PUBLIC_BACKEND_URL: "http://localhost:5000/api"
+      # Public Postiz URL — set POSTIZ_PUBLIC_URL in the compose env (.env) to your
+      # tunnel hostname (e.g. https://postiz.getlyras.app) so OAuth redirects + the UI
+      # work remotely; defaults to localhost for a purely-local stack.
+      MAIN_URL: "${POSTIZ_PUBLIC_URL:-http://localhost:5000}"
+      FRONTEND_URL: "${POSTIZ_PUBLIC_URL:-http://localhost:5000}"
+      NEXT_PUBLIC_BACKEND_URL: "${POSTIZ_PUBLIC_URL:-http://localhost:5000}/api"
       JWT_SECRET: "change-me-postiz-jwt"
       DATABASE_URL: "postgresql://postiz:postiz@postiz-postgres:5432/postiz"
       REDIS_URL: "redis://postiz-redis:6379"
@@ -129,7 +132,7 @@ services:
       FILE_TTL_MS: "900000"
       JOB_TTL_MS: "900000"
       POSTIZ_API_URL: "http://postiz:5000"
-      POSTIZ_PUBLIC_URL: "http://localhost:5000"
+      POSTIZ_PUBLIC_URL: "${POSTIZ_PUBLIC_URL:-http://localhost:5000}"
     depends_on:
       - postiz
 
