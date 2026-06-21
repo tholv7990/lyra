@@ -8741,7 +8741,26 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: min(640px, 86vh);
+  /* dvh (not vh) so the mobile keyboard / URL bar can't push the modal off the
+     screen — the same sizing + mobile full-screen treatment the prompt-details
+     modal already uses. */
+  height: min(640px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+}
+@media (max-width: 760px) {
+  .dialog-scrim:has(.bwa-chat) {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+  .dialog.bwa-chat {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 
 .bwa-head {
