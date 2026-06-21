@@ -1,8 +1,8 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Param, Post, UseGuards } from '@nestjs/common';
 import type { PublishJob } from '@lyra/shared';
 import { ServiceTokenGuard } from '../auth/service-token.guard';
 import { BrowserService } from './browser.service';
-import { BrowserPublishBody } from './dto';
+import { BrowserPublishBody, publishMode } from './dto';
 
 // ⚠️ FENCED browser-automation connector — see browser.service.ts. Off by default
 // (BROWSER_CONNECTOR_ENABLED=true to arm). Same service-token auth as the rest of
@@ -22,6 +22,9 @@ export class BrowserController {
   publish(@Body() body: BrowserPublishBody): { jobId: string; status: PublishJob['status'] } {
     if (!this.svc.cfg.enabled) {
       throw new ForbiddenException('browser connector disabled (set BROWSER_CONNECTOR_ENABLED=true)');
+    }
+    if (!publishMode(body)) {
+      throw new BadRequestException('provide exactly one of profileId or wsEndpoint');
     }
     return this.svc.publish(body);
   }

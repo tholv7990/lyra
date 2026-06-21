@@ -35,6 +35,17 @@ sets file + caption, does **not** submit).
    ```
    then `pnpm --filter @lyra/connectors-service build && pm2 restart lyra-connectors`.
 
+## Two modes (publish takes exactly one of these)
+
+- **`profileId`** — **SDK-launch** (production). GoLogin opens that profile, posts,
+  then stops it. Unattended + scalable; needs `GOLOGIN_API_TOKEN`.
+- **`wsEndpoint`** — **attach** (dev/tuning). You open the profile yourself in the
+  GoLogin desktop app, copy its CDP endpoint, and Puppeteer attaches to it. No
+  token/SDK, and your browser stays open — best for tuning selectors and clearing
+  captchas/2FA by hand. Use this to get a script working, then switch to `profileId`.
+
+Sending both, or neither, is a 400.
+
 ## Use (direct calls — it's not wired into the Lyra UI)
 
 ```bash
@@ -44,14 +55,23 @@ TOKEN=<CONNECTORS_SERVICE_TOKEN>
 curl -s localhost:9100/browser/status -H "Authorization: Bearer $TOKEN"
 # → {"enabled":true,"gologinConfigured":true,"platforms":["tiktok","youtube","facebook","instagram"]}
 
-# Dry run (reaches the upload page, does NOT post)
+# A) SDK-launch by profile id (production path)
 curl -s localhost:9100/browser/publish -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"platform":"tiktok","profileId":"<gologin-profile-id>","mediaUrls":["https://…/clip.mp4"],"caption":"hello","dryRun":true}'
+
+# B) Attach to a profile you opened in the GoLogin app (dev/tuning)
+#    (get the ws endpoint from the GoLogin app's automation/debug, e.g. ws://127.0.0.1:<port>…)
+curl -s localhost:9100/browser/publish -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"platform":"tiktok","wsEndpoint":"ws://127.0.0.1:<port>/devtools/browser/<id>","mediaUrls":["https://…/clip.mp4"],"caption":"hello","dryRun":true}'
+
 # → {"jobId":"…","status":"queued"}  — then poll:
 curl -s localhost:9100/browser/jobs/<jobId> -H "Authorization: Bearer $TOKEN"
 ```
 
+Attach mode needs neither `GOLOGIN_API_TOKEN` nor the `gologin` package — only
+`puppeteer-core` (the connector still has to be `BROWSER_CONNECTOR_ENABLED=true`).
 When `enabled` is false, `/browser/publish` returns 403 and nothing launches.
 
 ## Notes / limits

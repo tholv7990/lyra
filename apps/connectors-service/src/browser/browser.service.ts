@@ -59,19 +59,30 @@ export class BrowserService {
         await writeFile(p, Buffer.from(await res.arrayBuffer()));
         mediaPaths.push(p);
       }
-      const session = await startProfile(this.cfg.gologinToken, b.profileId);
+      // Attach mode: connect to a profile you opened in the GoLogin app (no SDK/token,
+      // and we leave your browser open). Profile mode: SDK launches + stops it.
+      let wsUrl: string;
+      let stop: () => Promise<void>;
+      if (b.wsEndpoint) {
+        wsUrl = b.wsEndpoint;
+        stop = async () => undefined;
+      } else {
+        const session = await startProfile(this.cfg.gologinToken, b.profileId ?? '');
+        wsUrl = session.wsUrl;
+        stop = session.stop;
+      }
       try {
-        const note = await runUpload(session.wsUrl, b.platform, {
+        const note = await runUpload(wsUrl, b.platform, {
           mediaPaths,
           caption: b.caption,
           dryRun: !!b.dryRun,
         });
         this.store.update(jobId, {
           status: 'done',
-          receipts: [{ platform: b.platform, accountId: b.profileId, status: 'ok', error: note }],
+          receipts: [{ platform: b.platform, accountId: b.profileId ?? 'attached', status: 'ok', error: note }],
         });
       } finally {
-        await session.stop();
+        await stop();
       }
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -80,5 +91,5 @@ export class BrowserService {
 }
 
 function fail(b: BrowserPublishBody, message: string) {
-  return { platform: b.platform, accountId: b.profileId, status: 'failed' as const, error: message };
+  return { platform: b.platform, accountId: b.profileId ?? 'attached', status: 'failed' as const, error: message };
 }
