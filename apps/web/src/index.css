@@ -315,41 +315,84 @@ h4 {
 
 /* Theme + language controls on the public auth pages, top-right above the
    rain (z-1). Lets a user who lands directly on /login switch appearance. */
+/* Auth header — mirrors the landing nav (.l-nav) so home + auth share a header:
+   blurred bar, hairline base, centered 66px inner, the BrandLogo, transparent
+   language/theme toggles. */
 .auth-topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 2;
-  height: 60px;
-  padding: 0 20px;
+  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-bottom: 1px solid var(--hairline);
+}
+.auth-topbar-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 66px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 24px;
 }
 .auth-brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  color: var(--ink);
+  flex-shrink: 0;
 }
-.auth-brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+.auth-brand img {
+  height: 26px;
+  width: auto;
   display: block;
-}
-.auth-brand-name {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink);
 }
 .auth-prefs {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+.auth-prefs .pref-theme-toggle,
+.auth-prefs .l-nav-icon-action {
+  width: var(--control-h);
+  height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+.auth-prefs .pref-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  padding: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 0.12s ease;
+}
+.auth-prefs .pref-theme-toggle:hover,
+.auth-prefs .pref-lang-toggle:hover {
+  color: var(--ink);
+}
+.auth-prefs .pref-lang-flag {
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  flex: none;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 
 /* Matrix digital-rain backdrop on the auth pages (see MatrixRain.tsx) */

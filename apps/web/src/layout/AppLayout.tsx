@@ -17,7 +17,7 @@ import {
   ProjectsIcon,
   PromptsIcon,
   MarketplaceIcon,
-  ChatsIcon,
+  SparkleIcon,
   PipelinesIcon,
   MembersIcon,
   SettingsIcon,
@@ -262,7 +262,7 @@ export function AppLayout() {
             title={t('nav.chats')}
             aria-label={t('nav.chats')}
           >
-            <ChatsIcon />
+            <SparkleIcon />
           </button>
         )}
 
