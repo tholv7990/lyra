@@ -1,5 +1,5 @@
 import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority } from '../enums';
-import type { FanOutConfig, PipelineOrigin, PromptMedia, StepCondition } from '../models';
+import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
 // The api implements each as a class-validator class that `implements`
@@ -346,6 +346,13 @@ export interface PublishDto {
   channelIds: string[];
   caption: string;
   mediaUrls: string[];
+}
+// Record a finished publish as a project post. projectId comes from the route; the
+// server rolls `targets` up into the post status.
+export interface CreatePublishedPostDto {
+  caption: string;
+  mediaUrls: string[];
+  targets: Receipt[];
 }
 export interface ResolveDto {
   url: string;

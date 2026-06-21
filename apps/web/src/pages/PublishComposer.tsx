@@ -5,6 +5,7 @@ import type { Channel, Project, PublishJob } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { connectorsApi } from '../lib/connectors';
+import { postsApi } from '../lib/posts';
 import { platformColor as color, platformGlyph as glyph } from '../lib/platform';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 import './connectors.css';
@@ -39,6 +40,9 @@ export function PublishComposer() {
   const [error, setError] = useState<string | null>(null);
   const alive = useRef(true);
   useEffect(() => () => { alive.current = false; }, []);
+  // What to record as a project post once the job finishes (captured at publish time
+  // to dodge the poll closure's stale state). Null = workspace-level publish, not recorded.
+  const pendingPostRef = useRef<{ projectId: string; caption: string; mediaUrls: string[] } | null>(null);
 
   const load = useCallback(async () => {
     if (!ws) return;
@@ -93,7 +97,18 @@ export function PublishComposer() {
         const j = await connectorsApi.job(ws, jobId);
         if (!alive.current) return;
         setJob(j);
-        if (j.status === 'done' || j.status === 'failed') { setPublishing(false); return; }
+        if (j.status === 'done' || j.status === 'failed') {
+          setPublishing(false);
+          // Record the outcome as a project post (once), if this was project-scoped.
+          const pend = pendingPostRef.current;
+          if (pend && j.receipts?.length) {
+            pendingPostRef.current = null;
+            void postsApi
+              .create(pend.projectId, { caption: pend.caption, mediaUrls: pend.mediaUrls, targets: j.receipts })
+              .catch(() => undefined);
+          }
+          return;
+        }
         setTimeout(() => void poll(jobId), 1500);
       } catch {
         if (alive.current) { setPublishing(false); setError(t('connectors.error')); }
@@ -107,6 +122,7 @@ export function PublishComposer() {
     setPublishing(true);
     setError(null);
     setJob(null);
+    pendingPostRef.current = projectId ? { projectId, caption, mediaUrls } : null;
     connectorsApi
       .publish(ws, picked, caption, mediaUrls)
       .then((j) => { if (alive.current) { setJob(j); void poll(j.jobId); } })

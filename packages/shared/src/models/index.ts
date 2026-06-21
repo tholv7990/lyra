@@ -457,6 +457,21 @@ export interface PublishJob {
   receipts?: Receipt[];
 }
 
+// A recorded publish to a project's channels — the project's post history. Created
+// when a project-scoped publish finishes; `targets` are the per-channel receipts and
+// `status` is their roll-up (all ok / mixed / all failed).
+export interface PublishedPost {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  caption: string;
+  mediaUrls: string[];
+  targets: Receipt[];
+  status: 'ok' | 'partial' | 'failed';
+  createdBy: UserRef;
+  createdAt: string;
+}
+
 // A selectable download quality for a MediaItem, derived from yt-dlp's format
 // list. `format` is the yt-dlp -f selector to pass back on download.
 export interface MediaQuality {

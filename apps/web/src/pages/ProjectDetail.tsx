@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { canEditProject, type Channel, type Project } from '@lyra/shared';
+import { canEditProject, type Channel, type Project, type PublishedPost } from '@lyra/shared';
 import { api } from '../lib/api';
 import { connectorsApi } from '../lib/connectors';
+import { postsApi } from '../lib/posts';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
@@ -28,6 +29,7 @@ export function ProjectDetail() {
   const { current } = useWorkspace();
   const [project, setProject] = useState<Project | null>(null);
   const [pool, setPool] = useState<Channel[]>([]); // connected-channel pool (to resolve project.channels)
+  const [posts, setPosts] = useState<PublishedPost[]>([]); // post history for this project
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addTick, setAddTick] = useState(0); // header "New task" → open New column composer
@@ -54,6 +56,12 @@ export function ProjectDetail() {
     if (!ws) return;
     connectorsApi.channels(ws).then((r) => setPool(r.channels)).catch(() => setPool([]));
   }, [current?.id]);
+
+  // This project's published-post history.
+  useEffect(() => {
+    if (!id) return;
+    postsApi.list(id).then(setPosts).catch(() => setPosts([]));
+  }, [id]);
 
   const canEdit = useMemo(
     () =>
@@ -153,6 +161,39 @@ export function ProjectDetail() {
                 </span>
               ))}
             </div>
+          )}
+        </section>
+
+        {/* Post history — what this project has published, newest first. */}
+        <section className="pd-posts">
+          <div className="pd-channels-head">
+            <span className="pd-section-label">{t('projects.postsLabel')}</span>
+          </div>
+          {posts.length === 0 ? (
+            <p className="pd-channels-empty">{t('projects.noPosts')}</p>
+          ) : (
+            <ul className="pd-post-list">
+              {posts.slice(0, 8).map((post) => (
+                <li className="pd-post" key={post.id}>
+                  <span className={`pd-post-status pd-post-${post.status}`} title={post.status} />
+                  <span className="pd-post-cap" title={post.caption}>{post.caption || t('projects.noCaption')}</span>
+                  <span className="pd-post-outlets">
+                    {post.targets.map((tg, i) =>
+                      tg.url ? (
+                        <a key={i} href={tg.url} target="_blank" rel="noreferrer" className="pd-post-ico" title={`${tg.platform} ↗`} style={{ background: platformColor(tg.platform) }}>
+                          {platformGlyph(tg.platform)}
+                        </a>
+                      ) : (
+                        <span key={i} className="pd-post-ico" title={`${tg.platform} · ${tg.status}`} style={{ background: platformColor(tg.platform), opacity: tg.status === 'ok' ? 1 : 0.4 }}>
+                          {platformGlyph(tg.platform)}
+                        </span>
+                      ),
+                    )}
+                  </span>
+                  <span className="pd-post-date">{fmtDate(post.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 

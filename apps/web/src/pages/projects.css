@@ -275,6 +275,68 @@
 }
 .pd-channel-name { font-weight: 500; }
 
+/* Post history list on the project hub. */
+.pd-posts { margin: 14px 0 4px; }
+.pd-post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pd-post {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.pd-post + .pd-post { border-top: 1px solid var(--hairline); }
+.pd-post-status {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-tertiary);
+}
+.pd-post-status.pd-post-ok { background: var(--success); }
+.pd-post-status.pd-post-partial { background: var(--warning); }
+.pd-post-status.pd-post-failed { background: var(--danger); }
+.pd-post-cap {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.pd-post-outlets {
+  flex: none;
+  display: inline-flex;
+  gap: 4px;
+}
+.pd-post-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.pd-post-date {
+  flex: none;
+  color: var(--ink-tertiary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* Mobile: the board stacks vertically, so the page grows with content and the
    shell body scrolls (no fixed-height flex column). Header actions collapse to
    icons (the design's compact mobile header). */

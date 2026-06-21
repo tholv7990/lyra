@@ -22,6 +22,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
 import { AdminModule } from './admin/admin.module';
 import { RequestsModule } from './requests/requests.module';
 import { TasksModule } from './tasks/tasks.module';
+import { PostsModule } from './posts/posts.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthController } from './health.controller';
 
@@ -57,6 +58,7 @@ import { HealthController } from './health.controller';
     AdminModule,
     RequestsModule,
     TasksModule,
+    PostsModule,
     AuthModule,
   ],
   controllers: [HealthController],
