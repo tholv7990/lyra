@@ -43,3 +43,6 @@ coverage/
 
 # brainstorming visual companion
 .superpowers/
+
+# Impeccable design-hook cache (per-tree, not source)
+.impeccable/
