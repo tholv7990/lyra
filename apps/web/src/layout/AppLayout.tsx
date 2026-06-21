@@ -254,11 +254,24 @@ export function AppLayout() {
           </div>
         </div>
 
-        {/* Floating AI launcher — opens Chats from anywhere (hidden while in Chats). */}
+        {/* Floating AI launcher — opens Chats from anywhere (hidden while in Chats).
+            Carry the launching page as the chat origin so the in-chat X (close)
+            returns here instead of falling back to Home. */}
         {!location.pathname.startsWith('/chats') && (
           <button
             className="ai-fab"
-            onClick={() => { close(); navigate('/chats'); }}
+            onClick={() => {
+              close();
+              navigate('/chats', {
+                state: {
+                  from: {
+                    label: modLabel,
+                    to: location.pathname + location.search,
+                    record: t('chats.newChat'),
+                  },
+                },
+              });
+            }}
             title={t('nav.chats')}
             aria-label={t('nav.chats')}
           >
