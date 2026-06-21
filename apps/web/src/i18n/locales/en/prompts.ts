@@ -108,7 +108,7 @@ export default {
   variablesPrevStep: 'previous step',
   variablesOr: 'or',
   variablesAnyStep: 'any earlier step',
-  addPrompt: 'Write your prompt — use variables like {product}, {niche} or {input}…',
+  addPrompt: 'Add prompt…',
   saveShortcut: 'to save',
   charCount: '{{chars}} chars',
   onlyEditOwn: 'You can only edit prompts you created.',

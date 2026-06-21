@@ -108,7 +108,7 @@ export default {
   variablesPrevStep: 'bước trước',
   variablesOr: 'hoặc',
   variablesAnyStep: 'bất kỳ bước nào trước đó',
-  addPrompt: 'Nhập prompt — dùng biến như {product}, {niche} hoặc {input}…',
+  addPrompt: 'Thêm prompt…',
   saveShortcut: 'để lưu',
   charCount: '{{chars}} ký tự',
   onlyEditOwn: 'Bạn chỉ có thể sửa prompt do mình tạo.',

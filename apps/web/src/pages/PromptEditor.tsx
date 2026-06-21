@@ -243,15 +243,6 @@ export function PromptEditor() {
         />
       </div>
 
-      {/* Write-your-prompt heading + variables hint */}
-      <div className="pe2-write">
-        <h3>{t('prompts.writeHeading')}</h3>
-        <p>
-          {t('prompts.writeHint')}{' '}
-          <code>{'{product}'}</code> <code>{'{niche}'}</code> <code>{'{homepage}'}</code> — <code>{'{input}'}</code> / <code>{'{step:Name}'}</code>
-        </p>
-      </div>
-
       {/* The composer is the prompt-content editor (textarea + media + model + send). */}
       <Composer
         className="pe2-composer"
