@@ -135,7 +135,7 @@ export function CopilotPanel({ wsId, onClose }: Props) {
 
         <div className="bwa-compose">
           <textarea
-            className="text-input bwa-input"
+            className="bwa-input"
             rows={2}
             placeholder={t('copilot.placeholder')}
             value={input}
@@ -146,11 +146,13 @@ export function CopilotPanel({ wsId, onClose }: Props) {
           />
           <button
             type="button"
-            className="btn-primary bwa-send btn-inline"
+            className="send-btn"
             disabled={busy || !input.trim()}
             onClick={() => void send()}
+            title={t('pipelines.send')}
+            aria-label={t('pipelines.send')}
           >
-            {t('pipelines.send')}
+            ↑
           </button>
         </div>
     </Modal>
