@@ -6,7 +6,6 @@ import { Provider } from '@lyra/shared';
 import { BrandLogo } from '../components/BrandLogo';
 import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
 import { ProviderIcon } from '../components/ProviderIcon';
-import { LoginIcon } from '../layout/icons';
 import './landing.css';
 
 // ---- Small inline glyphs (kept local to the marketing page) ----
@@ -44,6 +43,19 @@ const Key = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="7.5" cy="15.5" r="4.5" />
     <path d="m10.7 12.3 9.3-9.3M17 5l3 3M14 8l2 2" />
+  </svg>
+);
+// Task-board status glyphs (Projects feature mockup).
+const ProgGlyph = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="6" stroke="#ff6b1a" strokeWidth="1.6" />
+    <path d="M8 8V2.6A5.4 5.4 0 0 1 8 13.4Z" fill="#ff6b1a" />
+  </svg>
+);
+const DoneGlyph = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="7" fill="#1f8a4c" />
+    <path d="M5 8.2 7 10.2 11 6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -161,17 +173,17 @@ export function Landing() {
           </Link>
           <nav className="l-nav-links" aria-label={t('landing.navAria')}>
             <a href="#how">{t('landing.navHow')}</a>
-            <a href="#features">{t('landing.navFeatures')}</a>
+            <a href="#pipelines">{t('landing.navPipelines')}</a>
+            <a href="#marketplace">{t('landing.navMarketplace')}</a>
             <a href="#security">{t('landing.navSecurity')}</a>
           </nav>
           <div className="l-nav-cta">
             <div className="l-nav-prefs" aria-label={t('landing.preferences')}>
               <LanguageToggleButton />
-              <Link to="/login" className="l-nav-icon-action l-nav-login" aria-label={t('landing.login')} title={t('landing.login')}>
-                <LoginIcon />
-              </Link>
               <ThemeToggleButton />
             </div>
+            <Link to="/login" className="l-btn l-btn-ghost l-btn-sm l-nav-hide-sm">{t('landing.signIn')}</Link>
+            <Link to="/signup" className="l-btn l-btn-primary l-btn-sm">{t('landing.startFree')}</Link>
           </div>
         </div>
       </header>
@@ -294,6 +306,7 @@ export function Landing() {
         <section className="l-flow" id="how">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
+              <span className="l-eyebrow">{t('landing.flowEyebrow')}</span>
               <h2 className="l-h2">{t('landing.flowTitle')}</h2>
               <p className="l-lead">{t('landing.flowLead')}</p>
             </div>
@@ -321,13 +334,41 @@ export function Landing() {
 
         {/* ==================== FEATURE BANDS ==================== */}
         <div id="features">
-          {/* Feature A: Pipelines (image collage) */}
-          <section className="l-feature-band">
+          {/* Prompts & Marketplace (collage) */}
+          <section className="l-feature-band" id="marketplace">
             <div className="l-container l-feature">
               <div className="l-feature-copy l-reveal">
+                <span className="l-eyebrow">{t('landing.features.library.eyebrow')}</span>
+                <h3 className="l-h3">{t('landing.features.library.title')}</h3>
+                <p className="l-body">
+                  <Trans i18nKey="landing.features.library.body" components={{ chip: <span className="l-chip" /> }} />
+                </p>
+                <ul className="l-feature-points">
+                  <li><Tick /> {t('landing.features.library.point1')}</li>
+                  <li><Tick /> <Trans i18nKey="landing.features.library.point2" components={{ chip: <span className="l-chip" /> }} /></li>
+                  <li><Tick /> {t('landing.features.library.point3')}</li>
+                </ul>
+              </div>
+              <div className="l-feature-visual l-reveal">
+                <div className="l-feature-collage">
+                  <div className="span-rows">
+                    <img src="/landing/lyra-pipe-main.webp" width={700} height={900} loading="lazy" alt={t('landing.features.library.alt')} />
+                  </div>
+                  <div><img src="/landing/lyra-pipe-brief.webp" width={500} height={400} loading="lazy" alt="" /></div>
+                  <div><img src="/landing/lyra-pipe-render.webp" width={500} height={400} loading="lazy" alt="" /></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Pipelines & the run engine (gate glimpse, reversed) */}
+          <section className="l-feature-band" id="pipelines">
+            <div className="l-container l-feature rev">
+              <div className="l-feature-copy l-reveal">
+                <span className="l-eyebrow">{t('landing.features.pipeline.eyebrow')}</span>
                 <h3 className="l-h3">{t('landing.features.pipeline.title')}</h3>
                 <p className="l-body">
-                  <Trans i18nKey="landing.features.pipeline.body" components={{ chip: <span className="l-chip" /> }} />
+                  <Trans i18nKey="landing.features.pipeline.body" components={{ chip: <span className="l-chip" />, b: <b /> }} />
                 </p>
                 <ul className="l-feature-points">
                   <li><Tick /> {t('landing.features.pipeline.point1')}</li>
@@ -336,75 +377,89 @@ export function Landing() {
                 </ul>
               </div>
               <div className="l-feature-visual l-reveal">
-                <div className="l-feature-collage">
-                  <div className="span-rows">
-                    <img
-                      src="/landing/lyra-pipe-main.webp"
-                      width={700}
-                      height={900}
-                      loading="lazy"
-                      alt={t('landing.features.pipeline.altMain')}
-                    />
-                    {/* TODO: swap for real brand asset */}
-                  </div>
-                  <div>
-                    <img
-                      src="/landing/lyra-pipe-brief.webp"
-                      width={500}
-                      height={400}
-                      loading="lazy"
-                      alt={t('landing.features.pipeline.altBrief')}
-                    />
-                    {/* TODO: swap for real brand asset */}
-                  </div>
-                  <div>
-                    <img
-                      src="/landing/lyra-pipe-render.webp"
-                      width={500}
-                      height={400}
-                      loading="lazy"
-                      alt={t('landing.features.pipeline.altRender')}
-                    />
-                    {/* TODO: swap for real brand asset */}
+                <div className="l-glimpse" role="img" aria-label={t('landing.features.pipeline.glimpseAria')}>
+                  <img src="/landing/lyra-gate-render.webp" width={900} height={720} loading="lazy" alt="" />
+                  <div className="l-glimpse-card" aria-hidden="true">
+                    <div className="l-glimpse-top">
+                      <span className="l-glimpse-gate-dot" />
+                      {t('landing.features.pipeline.heroShot')}
+                      <span className="l-glimpse-status">{t('landing.features.pipeline.gateWaiting')}</span>
+                    </div>
+                    <p className="l-glimpse-body">{t('landing.features.pipeline.glimpseBody')}</p>
+                    <div className="l-glimpse-actions">
+                      <span className="l-glimpse-btn primary">{t('landing.features.pipeline.approve')}</span>
+                      <span className="l-glimpse-btn">{t('landing.features.pipeline.viewOutput')}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Feature B: Library (image-led, reversed) */}
+          {/* Projects & task board (mockup) */}
           <section className="l-feature-band">
-            <div className="l-container l-feature rev">
+            <div className="l-container l-feature">
               <div className="l-feature-copy l-reveal">
-                <h3 className="l-h3">{t('landing.features.library.title')}</h3>
+                <span className="l-eyebrow">{t('landing.features.projects.eyebrow')}</span>
+                <h3 className="l-h3">{t('landing.features.projects.title')}</h3>
                 <p className="l-body">
-                  <Trans i18nKey="landing.features.library.body" components={{ chip: <span className="l-chip" /> }} />
+                  <Trans i18nKey="landing.features.projects.body" components={{ b: <b /> }} />
                 </p>
                 <ul className="l-feature-points">
-                  <li><Tick /> {t('landing.features.library.point1')}</li>
-                  <li><Tick /> {t('landing.features.library.point2')}</li>
-                  <li><Tick /> {t('landing.features.library.point3')}</li>
+                  <li><Tick /> {t('landing.features.projects.point1')}</li>
+                  <li><Tick /> {t('landing.features.projects.point2')}</li>
+                  <li><Tick /> {t('landing.features.projects.point3')}</li>
                 </ul>
               </div>
               <div className="l-feature-visual l-reveal">
-                <div className="l-feature-photo">
-                  <img
-                    src="/landing/lyra-library-brand.webp"
-                    width={900}
-                    height={700}
-                    loading="lazy"
-                    alt={t('landing.features.library.alt')}
-                  />
-                  {/* TODO: swap for real brand asset */}
+                <div className="l-board" aria-hidden="true">
+                  <div className="l-board-head">
+                    <span className="l-board-title">{t('landing.features.projects.boardTitle')}</span>
+                    <span className="l-board-badge">{t('landing.features.projects.draft')}</span>
+                  </div>
+                  <div className="l-board-col">
+                    <div className="l-board-colh"><ProgGlyph />{t('landing.features.projects.inProgress')}<span>2</span></div>
+                    <div className="l-board-card">
+                      <div className="l-board-card-top"><ProgGlyph />{t('landing.features.projects.task1')}</div>
+                      <div className="l-board-card-meta">
+                        <span className="l-board-tag" style={{ color: '#0891b2', background: '#0891b21f' }}>{t('landing.features.projects.task1Tag')}</span>
+                        <span className="l-board-run gate">{t('landing.features.projects.task1Run')}</span>
+                        <span className="l-board-grow" />
+                        <span className="l-board-av" style={{ background: '#7c5cff' }}>TL</span>
+                      </div>
+                    </div>
+                    <div className="l-board-card">
+                      <div className="l-board-card-top"><ProgGlyph />{t('landing.features.projects.task2')}</div>
+                      <div className="l-board-card-meta">
+                        <span className="l-board-tag" style={{ color: '#d6409f', background: '#d6409f1f' }}>{t('landing.features.projects.task2Tag')}</span>
+                        <span className="l-board-run">{t('landing.features.projects.task2Run')}</span>
+                        <span className="l-board-grow" />
+                        <span className="l-board-av" style={{ background: '#0891b2' }}>MT</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="l-board-col">
+                    <div className="l-board-colh"><DoneGlyph />{t('landing.features.projects.complete')}<span>2</span></div>
+                    <div className="l-board-card">
+                      <div className="l-board-card-top"><DoneGlyph />{t('landing.features.projects.task3')}</div>
+                      <div className="l-board-card-meta">
+                        <span className="l-board-tag" style={{ color: '#db2777', background: '#ec48991f' }}>{t('landing.features.projects.task3Tag')}</span>
+                        <span className="l-board-run done">{t('landing.features.projects.task3Run')}</span>
+                        <span className="l-board-grow" />
+                        <span className="l-board-av" style={{ background: '#0891b2' }}>MT</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Feature C: Crawl / media import (full-width band, different family) */}
+          {/* Crawl (full-width band, different family) */}
           <section className="l-feature-band">
             <div className="l-container l-crawl l-reveal">
               <div className="l-crawl-copy">
+                <span className="l-eyebrow">{t('landing.features.import.eyebrow')}</span>
                 <h3 className="l-h3">{t('landing.features.import.title')}</h3>
                 <p className="l-body">{t('landing.features.import.body')}</p>
                 <ul className="l-feature-points l-crawl-points">
@@ -414,9 +469,7 @@ export function Landing() {
                 </ul>
               </div>
               <div className="l-crawl-strip" aria-hidden="true">
-                <span className="l-crawl-url">
-                  https://www.tiktok.com/@seller/video/winning-product
-                </span>
+                <span className="l-crawl-url">https://cozyclaw.shop/products/cat-cave</span>
                 <span className="l-crawl-arrow">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 5v14M6 13l6 6 6-6" />
@@ -424,89 +477,36 @@ export function Landing() {
                 </span>
                 <span className="l-crawl-tiles">
                   <img src="/landing/lyra-crawl-a.webp" width={240} height={240} loading="lazy" alt={t('landing.features.import.altA')} />
-                  {/* TODO: swap for real brand asset */}
                   <img src="/landing/lyra-crawl-b.webp" width={240} height={240} loading="lazy" alt={t('landing.features.import.altB')} />
-                  {/* TODO: swap for real brand asset */}
                   <img src="/landing/lyra-crawl-c.webp" width={240} height={240} loading="lazy" alt={t('landing.features.import.altC')} />
-                  {/* TODO: swap for real brand asset */}
                 </span>
               </div>
             </div>
           </section>
 
-          {/* Feature D: Multi-channel publish (image-led, reversed) */}
+          {/* Publish (image-led, reversed) */}
           <section className="l-feature-band">
             <div className="l-container l-feature rev">
               <div className="l-feature-copy l-reveal">
+                <span className="l-eyebrow">{t('landing.features.publish.eyebrow')}</span>
                 <h3 className="l-h3">{t('landing.features.publish.title')}</h3>
                 <p className="l-body">{t('landing.features.publish.body')}</p>
                 <ul className="l-feature-points">
                   <li><Tick /> {t('landing.features.publish.point1')}</li>
                   <li><Tick /> {t('landing.features.publish.point2')}</li>
-                  <li><Tick /> {t('landing.features.publish.point3')}</li>
                 </ul>
                 <p className="l-feature-note">{t('landing.features.publish.note')}</p>
               </div>
               <div className="l-feature-visual l-reveal">
                 <div className="l-publish">
-                  <img
-                    src="/landing/lyra-publish-campaign.webp"
-                    width={900}
-                    height={720}
-                    loading="lazy"
-                    alt={t('landing.features.publish.alt')}
-                  />
-                  {/* TODO: swap for real brand asset */}
+                  <img src="/landing/lyra-publish-campaign.webp" width={900} height={720} loading="lazy" alt={t('landing.features.publish.alt')} />
                   <div className="l-publish-rail" aria-hidden="true">
-                    {['TikTok', 'Instagram', 'Bluesky', 'X', 'YouTube'].map((c) => (
+                    {['TikTok', 'Instagram', 'YouTube', 'Facebook'].map((c) => (
                       <span className="l-publish-pill" key={c}>
                         <span className="l-publish-dot" />
                         {c}
                       </span>
                     ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Feature E: Gates + BYOK (the ONE small real-UI glimpse, over a photo) */}
-          <section className="l-feature-band">
-            <div className="l-container l-feature">
-              <div className="l-feature-copy l-reveal">
-                <h3 className="l-h3">{t('landing.features.gates.title')}</h3>
-                <p className="l-body">{t('landing.features.gates.body')}</p>
-                <ul className="l-feature-points">
-                  <li><Tick /> {t('landing.features.gates.point1')}</li>
-                  <li><Tick /> {t('landing.features.gates.point2')}</li>
-                  <li><Tick /> {t('landing.features.gates.point3')}</li>
-                </ul>
-              </div>
-              <div className="l-feature-visual l-reveal">
-                <div
-                  className="l-glimpse"
-                  role="img"
-                  aria-label={t('landing.features.gates.glimpseAria')}
-                >
-                  <img
-                    src="/landing/lyra-gate-render.webp"
-                    width={900}
-                    height={720}
-                    loading="lazy"
-                    alt=""
-                  />
-                  {/* TODO: swap for real brand asset */}
-                  <div className="l-glimpse-card" aria-hidden="true">
-                    <div className="l-glimpse-top">
-                      <span className="l-glimpse-gate-dot" />
-                      {t('landing.features.gates.heroShot')}
-                      <span className="l-glimpse-status">{t('landing.features.gates.gateWaiting')}</span>
-                    </div>
-                    <p className="l-glimpse-body">{t('landing.features.gates.glimpseBody')}</p>
-                    <div className="l-glimpse-actions">
-                      <span className="l-glimpse-btn primary">{t('landing.features.gates.approve')}</span>
-                      <span className="l-glimpse-btn">{t('landing.features.gates.editRerun')}</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -518,6 +518,7 @@ export function Landing() {
         <section className="l-gallery-sec">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
+              <span className="l-eyebrow">{t('landing.galleryEyebrow')}</span>
               <h2 className="l-h2">{t('landing.galleryTitle')}</h2>
               <p className="l-lead">{t('landing.galleryLead')}</p>
             </div>
@@ -542,7 +543,9 @@ export function Landing() {
         <section className="l-security" id="security">
           <div className="l-container">
             <div className="l-section-head l-section-head-centered">
+              <span className="l-eyebrow">{t('landing.securityEyebrow')}</span>
               <h2 className="l-h2">{t('landing.securityTitle')}</h2>
+              <p className="l-lead">{t('landing.securityLead')}</p>
             </div>
             <div className="l-sec-grid">
               {SECURITY.map(({ Icon, key }) => (
@@ -564,7 +567,7 @@ export function Landing() {
               <p>{t('landing.ctaBody')}</p>
               <div className="l-cta-actions">
                 <Link to="/signup" className="l-btn l-btn-onwarm-solid">{t('landing.startFree')}</Link>
-                <a href="#how" className="l-btn l-btn-onwarm">{t('landing.seeHow')}</a>
+                <a href="#how" className="l-btn l-btn-onwarm">{t('landing.bookWalkthrough')}</a>
               </div>
               <p className="l-cta-note">{t('landing.noCard')}</p>
             </div>
@@ -582,21 +585,24 @@ export function Landing() {
             </div>
             <div className="l-footer-col">
               <h4>{t('landing.footerProduct')}</h4>
-              <a href="#how">{t('landing.navHow')}</a>
-              <a href="#features">{t('landing.navFeatures')}</a>
+              <a href="#pipelines">{t('landing.navPipelines')}</a>
+              <a href="#marketplace">{t('landing.navMarketplace')}</a>
+              <a href="#features">{t('landing.projects')}</a>
+              <a href="#features">{t('landing.publish')}</a>
+              <a href="#features">{t('landing.crawler')}</a>
+            </div>
+            <div className="l-footer-col">
+              <h4>{t('landing.footerResources')}</h4>
+              <a href="#">{t('landing.docs')}</a>
+              <a href="#">{t('landing.changelog')}</a>
               <a href="#security">{t('landing.navSecurity')}</a>
-              <Link to="/login">{t('landing.signIn')}</Link>
+              <a href="#">{t('landing.status')}</a>
             </div>
             <div className="l-footer-col">
               <h4>{t('landing.footerCompany')}</h4>
               <a href="#">{t('landing.about')}</a>
-              <a href="#">{t('landing.blog')}</a>
+              <a href="#">{t('landing.careers')}</a>
               <a href="#">{t('landing.contact')}</a>
-            </div>
-            <div className="l-footer-col">
-              <h4>{t('landing.footerLegal')}</h4>
-              <a href="#">{t('landing.privacy')}</a>
-              <a href="#">{t('landing.terms')}</a>
             </div>
           </div>
           <div className="l-footer-bottom">
