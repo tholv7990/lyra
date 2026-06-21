@@ -9,5 +9,7 @@
   "moduleNameMapper": {
     "^archiver$": "<rootDir>/__mocks__/archiver.ts"
   },
+  "setupFiles": ["<rootDir>/setup-e2e-env.ts"],
+  "maxWorkers": 1,
   "testTimeout": 60000
 }

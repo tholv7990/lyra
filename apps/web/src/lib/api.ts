@@ -53,9 +53,21 @@ async function doRefresh(): Promise<boolean> {
   return true;
 }
 
+// Serialize refreshes ACROSS tabs with the Web Locks API. The server rotates
+// the refresh token on every /auth/refresh (consumes the old one, no grace
+// window), so two tabs refreshing at once race: the loser presents an
+// already-consumed token, gets 401, and the whole session is signed out. The
+// lock makes each tab refresh in turn against the latest cookie. Falls back to
+// a bare call where Web Locks is unavailable (older / non-secure contexts, the
+// node test env) — there the single-flight guard below still covers same-tab.
+function lockedRefresh(): Promise<boolean> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  return locks ? locks.request('lyra-auth-refresh', doRefresh) : doRefresh();
+}
+
 export function refreshSession(): Promise<boolean> {
   if (!refreshing) {
-    refreshing = doRefresh().finally(() => {
+    refreshing = lockedRefresh().finally(() => {
       refreshing = null;
     });
   }
@@ -63,13 +75,14 @@ export function refreshSession(): Promise<boolean> {
 }
 
 // Single-flight session restore for app load. Memoized for the whole page
-// lifetime (never reset) so StrictMode double-mounts / multiple providers can't
-// fire a second /auth/refresh that races the rotated cookie — which would 401
-// and sign the user out on every reload.
+// lifetime (never reset) so StrictMode double-mounts / multiple providers reuse
+// one result. Routed through refreshSession so a query that 401s before
+// bootstrap resolves collapses into the SAME request instead of firing a second
+// /auth/refresh that races the rotated cookie — which would sign the user out.
 let bootstrapPromise: Promise<boolean> | null = null;
 
 export function bootstrapSession(): Promise<boolean> {
-  if (!bootstrapPromise) bootstrapPromise = doRefresh();
+  if (!bootstrapPromise) bootstrapPromise = refreshSession();
   return bootstrapPromise;
 }
 
