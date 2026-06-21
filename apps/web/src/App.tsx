@@ -11,7 +11,6 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
-import { MatrixRain } from './components/MatrixRain';
 import { Landing } from './pages/Landing';
 import { Home } from './pages/Home';
 import { Projects } from './pages/Projects';
@@ -59,10 +58,7 @@ function PublicOnlyLayout() {
   if (loading) return <Loading />;
   if (user && location.pathname !== '/reset-password') return <Navigate to="/" replace />;
   return (
-    <>
-      <MatrixRain />
-      <Outlet />
-    </>
+    <Outlet />
   );
 }
 

@@ -1564,7 +1564,13 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-  padding-bottom: 12px;
+  height: 52px;
+  padding: 0 16px;
+  margin-bottom: 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 68%, transparent);
+  backdrop-filter: blur(14px);
 }
 .eshell-back {
   display: none; /* desktop relies on the app breadcrumb back; shown on mobile */
