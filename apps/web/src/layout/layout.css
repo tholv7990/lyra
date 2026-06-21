@@ -8607,6 +8607,23 @@
   flex-direction: column;
   height: min(640px, 86vh);
 }
+
+/* Modals tagged `full-mobile` (e.g. the step tester) go edge-to-edge on phones — a
+   centered card is too cramped for tall chat content + the on-screen keyboard.
+   Placed after the size rules above so it wins; 100dvh keeps the composer pinned
+   above the keyboard. */
+@media (max-width: 560px) {
+  .dialog-scrim:has(.dialog.full-mobile) {
+    padding: 0;
+  }
+  .dialog.full-mobile {
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+  }
+}
+
 .bwa-head {
   display: flex;
   align-items: center;

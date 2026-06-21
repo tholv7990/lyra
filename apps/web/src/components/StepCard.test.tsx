@@ -45,7 +45,7 @@ describe('StepCard', () => {
       </FlowCallbacksProvider>,
     );
 
-    expect(html).toContain('Test');
+    expect(html).toContain('Try');
     expect(html).toContain('Claude Sonnet 4');
     expect(html).not.toContain('Anthropic ·');
   });

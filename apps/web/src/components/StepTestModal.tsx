@@ -57,7 +57,7 @@ export function StepTestModal({
   }, [promptId, initialPrompt, initialMedia]);
 
   return (
-    <Modal onClose={onClose} className="bwa-chat">
+    <Modal onClose={onClose} className="bwa-chat full-mobile">
       <div className="bwa-head">
         <h3>{t('run.testTitle', { title })}</h3>
         <button type="button" className="srm-x" onClick={onClose} aria-label={t('common.close')}>
