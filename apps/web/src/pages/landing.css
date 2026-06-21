@@ -563,7 +563,7 @@
 }
 /* Image blocks carry a vibrant on-brand gradient so they always render rich,
    even when a remote photo is slow or blocked on the visitor's network. The
-   <img> covers it on load; a slow/failed photo just shows the gradient. */
+   photo covers it on load; a slow or failed photo just shows the gradient. */
 .l-make,
 .l-feature-photo,
 .l-feature-collage > div,

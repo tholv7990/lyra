@@ -59,19 +59,19 @@ const DoneGlyph = () => (
   </svg>
 );
 
-// Model strip: providers you bring keys for. Video is roadmap, marked Soon.
+// Model strip: the providers you bring keys for (+ the no-key crawler).
 const MODELS: { provider: Provider; label: string; soon?: boolean }[] = [
-  { provider: Provider.OpenAI, label: 'OpenAI' },
   { provider: Provider.Anthropic, label: 'Claude' },
+  { provider: Provider.OpenAI, label: 'GPT-4o' },
+  { provider: Provider.Image, label: 'GPT Image 1' },
   { provider: Provider.DeepSeek, label: 'DeepSeek' },
-  { provider: Provider.Image, label: 'Image' },
-  { provider: Provider.Video, label: 'Video', soon: true },
+  { provider: Provider.Crawl, label: 'Crawl · no key' },
 ];
 
-const FLOW: { n: number; key: string; soon?: boolean }[] = [
-  { n: 1, key: 'find', soon: true },
+const FLOW: { n: number; key: string }[] = [
+  { n: 1, key: 'find' },
   { n: 2, key: 'brand' },
-  { n: 3, key: 'create', soon: true },
+  { n: 3, key: 'create' },
   { n: 4, key: 'approve' },
   { n: 5, key: 'publish' },
 ];
@@ -87,7 +87,7 @@ const MAKE: { cls: string; key: string; seed: string; w: number; h: number }[] =
 ];
 
 // Channel chips shown on the hero campaign-flow preview.
-const CHANNELS = ['TikTok', 'Instagram', 'Bluesky', 'X'];
+const CHANNELS = ['TikTok', 'Instagram', 'YouTube'];
 
 const SECURITY: { Icon: () => ReactElement; key: string }[] = [
   { Icon: Lock, key: 'keys' },
@@ -317,7 +317,7 @@ export function Landing() {
                     <span className="l-flow-n">{s.n}</span>
                     <h3 className="l-flow-h">{t(`landing.flow.${s.key}.h`)}</h3>
                     <p className="l-flow-b">{t(`landing.flow.${s.key}.b`)}</p>
-                    <span className={`l-flow-chip${s.soon ? ' soon' : ''}`}>{t(`landing.flow.${s.key}.chip`)}</span>
+                    <span className="l-flow-chip">{t(`landing.flow.${s.key}.chip`)}</span>
                   </div>
                   {i < FLOW.length - 1 && (
                     <span className="l-flow-arrow" aria-hidden="true">
