@@ -21,14 +21,15 @@ The workbench SPA. Keep it thin: no business logic in components, server is the 
     `--success`/`--warning`/`--danger`, `--accent-*`, `--radius-*`, `--text-*`,
     `--shadow-*`. New status/section colors belong in the token block (and the
     dark block), not inline.
-  - **Spec:** [docs/lyra-linear-audit.md](../../docs/lyra-linear-audit.md) — Linear's
-    geometry/type/elevation measured from Figma, and how Lyra matches it (light +
-    orange `#FF6B1A`). `scripts/figma-mcp.sh` re-pulls specs from the Figma MCP.
-  - Orange is scarce — brand mark, primary CTA, focus, active only.
+  - **Spec:** [docs/notion-design.md](../../docs/notion-design.md) — the LIVE
+    Notion design system (neutral paper + blue `#0075DE`, system UI font, bold
+    700 headings, flat components). `lyra-linear-audit.md` is historical
+    (superseded). `scripts/figma-mcp.sh` re-pulls specs from the Figma MCP.
+  - Blue `#0075DE` is the single accent — brand mark, primary CTA, focus, active.
   - **i18n:** all user-facing copy goes through `t('…')` with keys in
     `src/i18n/locales/{en,vi}/*` — add BOTH locales.
-- The `frontend-design` plugin is installed; pair it with `lyra-linear-audit.md`
-  (not the superseded dark doc) for new screens.
+- The `frontend-design` plugin is installed; pair it with `docs/notion-design.md`
+  for new screens.
 
 ## Build & test
 

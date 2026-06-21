@@ -79,11 +79,11 @@
  * radii/shadows). Plain :root custom properties — available to all CSS. */
 :root {
   /* ===== Brand / Accent (orange retained) ===== */
-  --color-primary: #ff6b1a;
-  --color-primary-hover: #ff7d35;
-  --color-primary-pressed: #e25a0e;
-  --color-primary-tint: rgba(255, 107, 26, 0.14);
-  --color-primary-glow: rgba(255, 107, 26, 0.34);
+  --color-primary: #0075de;
+  --color-primary-hover: #2383e2;
+  --color-primary-pressed: #005bab;
+  --color-primary-tint: rgba(0, 117, 222, 0.14);
+  --color-primary-glow: rgba(0, 117, 222, 0.34);
   --color-on-primary: #ffffff;
   --color-gold: #c9a060;
 
