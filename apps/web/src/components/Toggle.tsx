@@ -4,15 +4,22 @@ export function Toggle({
   checked,
   onChange,
   label,
+  labelLeft,
+  title,
   disabled,
 }: {
   checked: boolean;
   onChange?: (checked: boolean) => void;
   label?: string;
+  /** Render the label before the switch (default: after). */
+  labelLeft?: boolean;
+  title?: string;
   disabled?: boolean;
 }) {
+  const text = label ? <span className="tgl-label">{label}</span> : null;
   return (
-    <label className="tgl">
+    <label className="tgl" title={title}>
+      {labelLeft && text}
       <input
         type="checkbox"
         role="switch"
@@ -23,7 +30,7 @@ export function Toggle({
       <span className="tgl-track" aria-hidden="true">
         <span className="tgl-knob" />
       </span>
-      {label && <span className="tgl-label">{label}</span>}
+      {!labelLeft && text}
     </label>
   );
 }

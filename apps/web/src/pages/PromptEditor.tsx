@@ -20,6 +20,7 @@ import { LabelPicker } from '../components/LabelPicker';
 import { Composer } from '../components/Composer';
 import { CheckIcon } from '../layout/icons';
 import { TypeSelect } from '../components/TypeSelect';
+import { Toggle } from '../components/Toggle';
 import { useBreadcrumb } from '../layout/breadcrumb';
 
 interface FormState {
@@ -213,17 +214,13 @@ export function PromptEditor() {
           <span className="pe2-mini-label" id="pe-type-label">{t('prompts.typeLabel')}</span>
           <TypeSelect value={form.type} onChange={(type) => setForm({ ...form, type })} labelledBy="pe-type-label" />
         </div>
-        <label className="pe-toggle" title={t('prompts.publicHint')}>
-          <span className={`pe-toggle-text${isPublic ? ' on' : ''}`}>
-            {isPublic ? t('prompts.publicLabel') : t('prompts.statusDraft')}
-          </span>
-          <input
-            type="checkbox"
-            checked={isPublic}
-            onChange={(e) => setForm({ ...form, status: e.target.checked ? PromptStatus.Public : PromptStatus.Draft })}
-          />
-          <span className="pe-track"><span className="pe-knob" /></span>
-        </label>
+        <Toggle
+          checked={isPublic}
+          onChange={(v) => setForm({ ...form, status: v ? PromptStatus.Public : PromptStatus.Draft })}
+          label={isPublic ? t('prompts.publicLabel') : t('prompts.statusDraft')}
+          labelLeft
+          title={t('prompts.publicHint')}
+        />
       </div>
 
       {/* Labels */}

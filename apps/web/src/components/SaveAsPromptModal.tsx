@@ -9,6 +9,7 @@ import {
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { LabelPicker } from './LabelPicker';
+import { Toggle } from './Toggle';
 
 interface Props {
   wsId: string;
@@ -90,15 +91,13 @@ export function SaveAsPromptModal({
           <div className="sap-tags">
             <LabelPicker value={tags} labels={labels} onChange={setTags} onCreate={onCreateLabel} />
           </div>
-          <label className="pe-toggle" title={t('prompts.publicHint')}>
-            <span className="pe-toggle-text">{t('prompts.publicLabel')}</span>
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-            />
-            <span className="pe-track"><span className="pe-knob" /></span>
-          </label>
+          <Toggle
+            checked={isPublic}
+            onChange={setIsPublic}
+            label={t('prompts.publicLabel')}
+            labelLeft
+            title={t('prompts.publicHint')}
+          />
         </div>
 
         <label className="field">
