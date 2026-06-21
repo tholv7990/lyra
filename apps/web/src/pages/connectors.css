@@ -8,10 +8,7 @@
 .cx-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .cx-sec-title { font-weight: 700; font-size: var(--text-small); color: var(--ink); }
 .cx-badge-ok { color: var(--success); font-size: var(--text-mini); }
-.cx-label { font-size: var(--text-micro); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-tertiary); margin: 4px 0 10px; }
 
-.cx-keyrow { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.cx-keyrow label { font-size: var(--text-mini); color: var(--ink-muted); width: 104px; flex: none; }
 .cx-input { flex: 1; min-width: 180px; padding: 8px 10px; border: 1px solid var(--hairline); border-radius: 8px; font-size: var(--text-small); color: var(--ink); background: var(--surface-1); }
 .cx-btn { padding: 8px 13px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--card); font-size: var(--text-mini); cursor: pointer; color: var(--ink); }
 .cx-btn:disabled { opacity: .5; cursor: default; }
@@ -21,11 +18,6 @@
 .cx-spin { animation: cx-spin .8s linear infinite; transform-origin: center; }
 @keyframes cx-spin { to { transform: rotate(360deg); } }
 
-.cx-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.cx-card { display: flex; align-items: center; gap: 10px; border: 1px solid var(--hairline); border-radius: 10px; padding: 10px 12px; background: var(--card); }
-.cx-name { font-size: var(--text-small); font-weight: 600; color: var(--ink); }
-.cx-card-id { min-width: 0; }
-.cx-plat { display: flex; align-items: center; gap: 6px; font-size: var(--text-micro); color: var(--ink-tertiary); }
 /* connection-type pill on a channel card */
 .cx-type { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px 1px 5px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
 .cx-type svg { flex-shrink: 0; }
@@ -69,14 +61,9 @@
 .set-keyrow .text-input { flex: 1; }
 .cx-type-postiz { background: var(--surface-2); color: var(--ink-muted); }
 .cx-type-gologin { background: var(--primary-tint); color: var(--primary); }
-.cx-del { margin-left: auto; color: var(--ink-tertiary); cursor: pointer; font-size: 18px; background: none; border: none; line-height: 1; padding: 0 2px; }
-.cx-del:hover { color: var(--danger); }
-/* add-GoLogin-channel inline form */
-.cx-addform { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 12px; padding: 12px; border: 1px solid var(--hairline); border-radius: 10px; background: var(--surface-1); }
+/* form field (label + control) — add-channel modal + crawler */
 .cx-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; }
 .cx-field > span { font-size: var(--text-micro); font-weight: 600; color: var(--ink-muted); }
-.cx-x { margin-left: auto; color: var(--ink-tertiary); cursor: pointer; font-size: 16px; background: none; border: none; line-height: 1; }
-.cx-add { display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed var(--hairline-strong); border-radius: 10px; padding: 11px; color: var(--primary); font-size: var(--text-small); font-weight: 600; cursor: pointer; background: none; }
 .cx-note { font-size: var(--text-small); color: var(--ink-muted); line-height: 1.55; margin: 0; }
 
 .cx-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--on-accent); font-size: 14px; flex: none; }
