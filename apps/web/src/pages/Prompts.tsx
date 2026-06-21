@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,7 +18,6 @@ import {
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { fmtDate, initials } from '../lib/format';
-import { useOutsideClick } from '../lib/useOutsideClick';
 import { PROVIDER_LABELS, STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { TYPE_COLOR } from '../lib/promptType';
@@ -32,7 +31,6 @@ import { PromptDetails } from '../components/PromptDetails';
 import { ProviderIcon } from '../components/ProviderIcon';
 import {
   ChatsIcon,
-  FilterIcon,
   PencilIcon,
   PromptsIcon,
   PlusIcon,
@@ -40,6 +38,7 @@ import {
   TrashIcon,
 } from '../layout/icons';
 import { IconButton } from '../components/IconButton';
+import { FilterPopover } from '../components/FilterPopover';
 import './marketplace.css';
 import './prompts.css';
 
@@ -120,8 +119,6 @@ export function Prompts() {
   const [creators, setCreators] = useState<PromptAuthorCount[]>([]);
   const [providerVocab, setProviderVocab] = useState<[Provider, number][]>([]);
   const [typeVocab, setTypeVocab] = useState<PromptTypeCount[]>([]);
-  const [filterMenu, setFilterMenu] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
 
   const [toDelete, setToDelete] = useState<Prompt | null>(null);
   const [deleteUsage, setDeleteUsage] = useState<number | null>(null);
@@ -136,8 +133,6 @@ export function Prompts() {
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   useEffect(() => setPage(1), [statuses, tags, createdBy, providers, type, sort, q]);
-
-  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   const buildQuery = () =>
     buildPromptQuery({
@@ -285,35 +280,16 @@ export function Prompts() {
             aria-label={t('prompts.searchPlaceholder')}
           />
         </label>
-        <div className="mkt-filter" ref={filterRef}>
-          <button
-            type="button"
-            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
-            aria-expanded={filterMenu}
-            aria-haspopup="true"
-            onClick={() => setFilterMenu((s) => !s)}
-          >
-            <FilterIcon width={15} height={15} />
-            {t('prompts.filter')}
-            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
-          </button>
-          {filterMenu && (
-            <div className="lin-menu">
-              <div className="lin-menu-actions">
-                <button
-                  type="button"
-                  className="lin-menu-clear"
-                  disabled={filterCount === 0}
-                  onClick={() => {
-                    setStatuses([]);
-                    setTags([]);
-                    setProviders([]);
-                    setCreatedBy([]);
-                  }}
-                >
-                  {t('common.clear')}
-                </button>
-              </div>
+        <FilterPopover
+          label={t('prompts.filter')}
+          count={filterCount}
+          onClear={() => {
+            setStatuses([]);
+            setTags([]);
+            setProviders([]);
+            setCreatedBy([]);
+          }}
+        >
               <div className="lin-menu-label">{t('prompts.filterStatus')}</div>
               {[PromptStatus.Draft, PromptStatus.Public].map((s) => (
                 <button key={s} className="lin-menu-item" onClick={() => setStatuses((list) => toggleInList(list, s))}>
@@ -359,9 +335,7 @@ export function Prompts() {
                   ))}
                 </details>
               )}
-            </div>
-          )}
-        </div>
+        </FilterPopover>
         {mayCreate && (
           <button className="btn-primary btn-inline btn-lg pl-new" onClick={() => navigate('/prompts/new')}>
             <PlusIcon width={15} height={15} />

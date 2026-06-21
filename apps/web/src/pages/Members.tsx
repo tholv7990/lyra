@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Role, WorkspaceType } from '@lyra/shared';
 import type { Invite, MemberView } from '@lyra/shared';
@@ -6,12 +6,12 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { initial, avatarStyle, fmtDate } from '../lib/format';
-import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
 import { ROLE_LABELS } from '../lib/constants';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconButton } from '../components/IconButton';
+import { FilterPopover } from '../components/FilterPopover';
 import { RequestTeamUpgradeModal } from '../components/RequestTeamUpgradeModal';
 import { MembersIcon, PlusIcon, XIcon } from '../layout/icons';
 import './members.css';
@@ -37,11 +37,9 @@ export function Members() {
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [roleFilters, setRoleFilters] = useState<Role[]>([]);
-  const [filterMenu, setFilterMenu] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeSent, setUpgradeSent] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     if (!wsId) return;
@@ -61,8 +59,6 @@ export function Members() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   if (!current) return <p className="empty">{t('members.loading')}</p>;
 
@@ -126,32 +122,11 @@ export function Members() {
           onChange={(e) => setQ(e.target.value)}
           aria-label={t('members.searchPlaceholder')}
         />
-        <div className="lin-filter" ref={filterRef}>
-          <button
-            type="button"
-            className={`lin-filter-btn ${roleFilters.length > 0 || filterMenu ? 'active' : ''}`}
-            onClick={() => setFilterMenu((s) => !s)}
-          >
-            {t('members.filter')}
-            {roleFilters.length > 0 && (
-              <>
-                {' '}
-                <span className="lin-filter-count">{roleFilters.length}</span>
-              </>
-            )}
-          </button>
-          {filterMenu && (
-            <div className="lin-menu">
-              <div className="lin-menu-actions">
-                <button
-                  type="button"
-                  className="lin-menu-clear"
-                  disabled={roleFilters.length === 0}
-                  onClick={() => setRoleFilters([])}
-                >
-                  {t('common.clear')}
-                </button>
-              </div>
+        <FilterPopover
+          label={t('members.filter')}
+          count={roleFilters.length}
+          onClear={() => setRoleFilters([])}
+        >
               <div className="lin-menu-label">{t('members.role')}</div>
               {ROLES.map((r) => (
                 <button
@@ -164,9 +139,7 @@ export function Members() {
                   {roleFilters.includes(r) && <span className="lin-menu-check">✓</span>}
                 </button>
               ))}
-            </div>
-          )}
-        </div>
+        </FilterPopover>
         {isOwner && (
           <button
             type="button"

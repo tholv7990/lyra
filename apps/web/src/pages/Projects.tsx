@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { canEditProject, labelColor, ProjectShare, ProjectStatus, type Project } from '@lyra/shared';
 import { api } from '../lib/api';
 import { fmtDate, initials } from '../lib/format';
-import { useOutsideClick } from '../lib/useOutsideClick';
 import { STATUS_COLOR } from '../lib/constants';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
@@ -13,7 +12,8 @@ import { canCreateIn } from '../lib/perms';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { IconButton } from '../components/IconButton';
-import { FilterIcon, PlusIcon, ProjectsIcon, TrashIcon } from '../layout/icons';
+import { FilterPopover } from '../components/FilterPopover';
+import { PlusIcon, ProjectsIcon, TrashIcon } from '../layout/icons';
 import './marketplace.css';
 import './projects.css';
 
@@ -62,8 +62,6 @@ export function Projects() {
   const [q, setQ] = useState('');
   const [statusFilters, setStatusFilters] = useState<ProjectStatus[]>([]);
   const [creatorFilters, setCreatorFilters] = useState<string[]>([]);
-  const [filterMenu, setFilterMenu] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Project | null>(null);
@@ -109,7 +107,6 @@ export function Projects() {
   const rangeEnd = Math.min(page * PAGE_SIZE, visible.length);
   useEffect(() => { setPage(1); }, [q, statusFilters, creatorFilters]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
-  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   function canEdit(p: Project) {
     if (!current || !user) return false;
@@ -150,30 +147,11 @@ export function Projects() {
             aria-label={t('projects.searchPlaceholder')}
           />
         </label>
-        <div className="mkt-filter" ref={filterRef}>
-          <button
-            type="button"
-            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
-            aria-expanded={filterMenu}
-            aria-haspopup="true"
-            onClick={() => setFilterMenu((s) => !s)}
-          >
-            <FilterIcon width={15} height={15} />
-            {t('projects.filterLabel')}
-            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
-          </button>
-          {filterMenu && (
-            <div className="lin-menu">
-              <div className="lin-menu-actions">
-                <button
-                  type="button"
-                  className="lin-menu-clear"
-                  disabled={filterCount === 0}
-                  onClick={() => { setStatusFilters([]); setCreatorFilters([]); }}
-                >
-                  {t('common.clear')}
-                </button>
-              </div>
+        <FilterPopover
+          label={t('projects.filterLabel')}
+          count={filterCount}
+          onClear={() => { setStatusFilters([]); setCreatorFilters([]); }}
+        >
               <div className="lin-menu-label">{t('projects.status')}</div>
               {Object.values(ProjectStatus).map((status) => (
                 <button key={status} className="lin-menu-item" onClick={() => setStatusFilters((list) => toggleInList(list, status))}>
@@ -197,9 +175,7 @@ export function Projects() {
                   ))}
                 </details>
               )}
-            </div>
-          )}
-        </div>
+        </FilterPopover>
         {mayCreate && (
           <button className="btn-primary btn-inline btn-lg pr-new" onClick={() => navigate('/projects/new')}>
             <PlusIcon width={15} height={15} />

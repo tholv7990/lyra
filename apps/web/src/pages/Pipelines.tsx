@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { StepMode, labelColor, type Pipeline } from '@lyra/shared';
 import { api } from '../lib/api';
 import { fmtDate, initials } from '../lib/format';
-import { useOutsideClick } from '../lib/useOutsideClick';
 import { toggleInList } from '../lib/array';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -14,7 +13,8 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { IconButton } from '../components/IconButton';
-import { CopyIcon, FilterIcon, PipelinesIcon, PlusIcon, SparkleIcon, TrashIcon } from '../layout/icons';
+import { FilterPopover } from '../components/FilterPopover';
+import { CopyIcon, PipelinesIcon, PlusIcon, SparkleIcon, TrashIcon } from '../layout/icons';
 import './marketplace.css';
 import './pipelines.css';
 
@@ -74,8 +74,6 @@ export function Pipelines() {
   const [creatorFilters, setCreatorFilters] = useState<string[]>([]);
   const [aiOnly, setAiOnly] = useState(false);
   const [gateOnly, setGateOnly] = useState(false);
-  const [filterMenu, setFilterMenu] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Pipeline | null>(null);
@@ -123,7 +121,6 @@ export function Pipelines() {
   const rangeEnd = Math.min(page * PAGE_SIZE, visible.length);
   useEffect(() => { setPage(1); }, [q, tagFilters, creatorFilters, aiOnly, gateOnly]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
-  useOutsideClick(filterRef, filterMenu, () => setFilterMenu(false));
 
   const canEdit = (p: Pipeline) => !!user && (p.createdBy.id === user.id || current?.role === 'owner');
 
@@ -188,30 +185,11 @@ export function Pipelines() {
             aria-label={t('pipelines.searchPlaceholder')}
           />
         </label>
-        <div className="mkt-filter" ref={filterRef}>
-          <button
-            type="button"
-            className={`mkt-tool-btn${filterCount > 0 || filterMenu ? ' active' : ''}`}
-            aria-expanded={filterMenu}
-            aria-haspopup="true"
-            onClick={() => setFilterMenu((s) => !s)}
-          >
-            <FilterIcon width={15} height={15} />
-            {t('pipelines.filterLabel')}
-            {filterCount > 0 && <span className="mkt-filter-count">{filterCount}</span>}
-          </button>
-          {filterMenu && (
-            <div className="lin-menu">
-              <div className="lin-menu-actions">
-                <button
-                  type="button"
-                  className="lin-menu-clear"
-                  disabled={filterCount === 0}
-                  onClick={() => { setTagFilters([]); setCreatorFilters([]); setAiOnly(false); setGateOnly(false); }}
-                >
-                  {t('common.clear')}
-                </button>
-              </div>
+        <FilterPopover
+          label={t('pipelines.filterLabel')}
+          count={filterCount}
+          onClear={() => { setTagFilters([]); setCreatorFilters([]); setAiOnly(false); setGateOnly(false); }}
+        >
               <button className="lin-menu-item" onClick={() => setAiOnly((v) => !v)}>
                 <SparkleIcon width={14} height={14} />
                 {t('pipelines.filterAiOnly')}
@@ -252,9 +230,7 @@ export function Pipelines() {
                   ))}
                 </details>
               )}
-            </div>
-          )}
-        </div>
+        </FilterPopover>
         <button type="button" className="btn-ai btn-lg pl-build" onClick={() => setAiOpen(true)}>
           <SparkleIcon width={15} height={15} />
           {t('pipelines.buildWithAi')}
