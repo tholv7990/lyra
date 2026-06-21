@@ -1854,7 +1854,7 @@
   border-radius: 6px;
   padding: 6px 14px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ink-muted);
   cursor: pointer;
@@ -1864,7 +1864,7 @@
 .seg-btn.active {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .seg-btn .sdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
@@ -2961,7 +2961,7 @@
 .select-sm {
   width: auto;
   padding: 7px 10px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .form-inline {
@@ -4180,7 +4180,7 @@
   border: 1px solid var(--hairline);
   background: var(--card);
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
