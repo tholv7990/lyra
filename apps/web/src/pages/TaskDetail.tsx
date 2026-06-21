@@ -6,7 +6,6 @@ import {
   providerNeedsKey,
   keyProviderFor,
   ProjectStatus,
-  StepMode,
   StepStatus,
   TaskStatus,
   TaskPriority,
@@ -32,7 +31,7 @@ import { RunRating } from '../components/RunRating';
 import type { StepHistoryEntry } from '../components/StepResultModal';
 import { RunSummary } from '../components/RunSummary';
 import { RunVariablesModal } from '../components/RunVariablesModal';
-import { PencilIcon, PipelinesIcon, PlayIcon, PlusIcon, XIcon } from '../layout/icons';
+import { PencilIcon, PipelinesIcon, PlayIcon } from '../layout/icons';
 import { TaskStatusIcon } from '../components/TaskStatusIcon';
 import { TaskStatusPicker } from '../components/TaskStatusPicker';
 import { TaskPriorityPicker } from '../components/TaskPriorityPicker';
@@ -268,8 +267,6 @@ export function TaskDetail() {
     setAdding(false);
     return savePipelines([...(task?.pipelines ?? []), pid]);
   };
-  const detachPipeline = (pid: string) =>
-    savePipelines((task?.pipelines ?? []).filter((x) => x !== pid));
 
   const startRun = (
     pipelineId: string,
@@ -291,15 +288,6 @@ export function TaskDetail() {
     if (pipeline.variables.length > 0 || fanOutNames(pipeline).length > 0) setAskVarsFor(pipeline);
     else void startRun(pipeline.id, {});
   };
-
-  const runAllPipelines = () =>
-    act(async () => {
-      const created = await api<Run[]>(`/projects/${projectId}/tasks/${taskId}/runs/all`, {
-        method: 'POST',
-        body: JSON.stringify({}),
-      });
-      if (created.length > 0) setRuns((r) => [...created, ...r]);
-    });
 
   const openRun = (r: Run) => { setRun(r); setActivePipeId(r.pipelineId ?? null); };
 
@@ -393,8 +381,7 @@ export function TaskDetail() {
       )}
 
       <div className="proj-page">
-          <div className="td-grid">
-            <div className="td-main">
+          <div className="tw-single">
             {error && <p className="error">{error}</p>}
 
             {/* Task title + status */}
@@ -403,6 +390,49 @@ export function TaskDetail() {
               <h1>{task.name}</h1>
             </div>
             <p className="tw-desc">{task.description || t('tasks.descriptionPlaceholder')}</p>
+
+            {/* Properties — compact inline row (single-column, no sidebar) */}
+            <div className="tw-props">
+              <TaskStatusPicker status={task.status} disabled={!canEdit || savingTask} onChange={(s) => void patchTask({ status: s })} />
+              <TaskPriorityPicker priority={task.priority} disabled={!canEdit || savingTask} onChange={(p) => void patchTask({ priority: p })} />
+              {!isPersonal && (
+                <div className="task-assignee-wrap">
+                  <button className="btn-ghost task-assignee-btn btn-inline" disabled={!canEdit || savingTask} onClick={() => setAssigneeOpen((o) => !o)} aria-label={t('tasks.assignee')}>
+                    {task.assignee ? (
+                      <>
+                        <span className="prow-updated-icon" style={avatarStyle(task.assignee.name)} aria-hidden="true">{initial(task.assignee.name)}</span>
+                        {task.assignee.name}
+                      </>
+                    ) : t('tasks.unassigned')}
+                  </button>
+                  {assigneeOpen && canEdit && (
+                    <div className="lin-menu task-assignee-menu">
+                      <button className="lin-menu-item" onClick={() => { void patchTask({ assigneeId: null }); setAssigneeOpen(false); }}>{t('tasks.unassigned')}</button>
+                      {members.map((m) => (
+                        <button key={m.userId} className="lin-menu-item" onClick={() => { void patchTask({ assigneeId: m.userId }); setAssigneeOpen(false); }}>
+                          <span className="prow-updated-icon" style={avatarStyle(m.name)} aria-hidden="true">{initial(m.name)}</span>
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {canEdit ? (
+                <LabelPicker value={task.tags} labels={labels} onChange={(tags) => void patchTask({ tags })} onCreate={createLabel} />
+              ) : task.tags.length > 0 ? (
+                <div className="task-tags-read">
+                  {task.tags.map((name) => (
+                    <span className="tag-chip" key={name}><span className="tdot" style={{ background: labelColor(name, labels) }} />{name}</span>
+                  ))}
+                </div>
+              ) : null}
+              {canEdit && (
+                <button type="button" className="tw-edit btn-ghost btn-inline" onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}>
+                  <PencilIcon width={14} height={14} /> {t('common.edit')}
+                </button>
+              )}
+            </div>
 
             {assigned.length === 0 ? (
               <div className="prompt-empty">
@@ -426,8 +456,9 @@ export function TaskDetail() {
                 {/* Pipeline tabs */}
                 <div className="tw-tabs">
                   {assigned.map((p) => (
-                    <button key={p.id} type="button" className={`tw-tab${activePipeId === p.id ? ' active' : ''}`} onClick={() => selectPipe(p.id)}>
-                      <PipelinesIcon width={14} height={14} /> {p.name}
+                    <button key={p.id} type="button" className={`tw-tab${activePipeId === p.id ? ' active' : ''}`} onClick={() => selectPipe(p.id)} title={p.name}>
+                      <PipelinesIcon width={14} height={14} />
+                      <span className="tw-tab-name">{p.name}</span>
                     </button>
                   ))}
                   {canEdit && unassigned.length > 0 && (
@@ -526,190 +557,6 @@ export function TaskDetail() {
                 )}
               </>
             )}
-            </div>
-
-            <aside className="td-side">
-              <div className="td-side-h">{t('tasks.properties')}</div>
-
-              <div className="td-prop">
-                <span className="td-prop-k">{t('tasks.statusLabel')}</span>
-                <span className="td-prop-v">
-                  <TaskStatusPicker
-                    status={task.status}
-                    disabled={!canEdit || savingTask}
-                    onChange={(s) => void patchTask({ status: s })}
-                  />
-                </span>
-              </div>
-              <div className="td-prop">
-                <span className="td-prop-k">{t('tasks.priorityLabel')}</span>
-                <span className="td-prop-v">
-                  <TaskPriorityPicker
-                    priority={task.priority}
-                    disabled={!canEdit || savingTask}
-                    onChange={(p) => void patchTask({ priority: p })}
-                  />
-                </span>
-              </div>
-              {!isPersonal && (
-                <div className="td-prop">
-                  <span className="td-prop-k">{t('tasks.assignee')}</span>
-                  <span className="td-prop-v">
-                    <div className="task-assignee-wrap">
-                      <button
-                        className="btn-ghost task-assignee-btn btn-inline"
-                        disabled={!canEdit || savingTask}
-                        onClick={() => setAssigneeOpen((o) => !o)}
-                        aria-label={t('tasks.assignee')}
-                      >
-                        {task.assignee ? (
-                          <>
-                            <span className="prow-updated-icon" style={avatarStyle(task.assignee.name)} aria-hidden="true">
-                              {initial(task.assignee.name)}
-                            </span>
-                            {task.assignee.name}
-                          </>
-                        ) : (
-                          t('tasks.unassigned')
-                        )}
-                      </button>
-                      {assigneeOpen && canEdit && (
-                        <div className="lin-menu task-assignee-menu">
-                          <button
-                            className="lin-menu-item"
-                            onClick={() => { void patchTask({ assigneeId: null }); setAssigneeOpen(false); }}
-                          >
-                            {t('tasks.unassigned')}
-                          </button>
-                          {members.map((m) => (
-                            <button
-                              key={m.userId}
-                              className="lin-menu-item"
-                              onClick={() => { void patchTask({ assigneeId: m.userId }); setAssigneeOpen(false); }}
-                            >
-                              <span className="prow-updated-icon" style={avatarStyle(m.name)} aria-hidden="true">
-                                {initial(m.name)}
-                              </span>
-                              {m.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </span>
-                </div>
-              )}
-              <div className="td-prop tags">
-                <span className="td-prop-k">{t('tasks.tagsLabel')}</span>
-                <span className="td-prop-v">
-                  {canEdit ? (
-                    <LabelPicker
-                      value={task.tags}
-                      labels={labels}
-                      onChange={(tags) => void patchTask({ tags })}
-                      onCreate={createLabel}
-                    />
-                  ) : task.tags.length > 0 ? (
-                    <div className="task-tags-read">
-                      {task.tags.map((name) => (
-                        <span className="tag-chip" key={name}>
-                          <span className="tdot" style={{ background: labelColor(name, labels) }} />
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="muted">—</span>
-                  )}
-                </span>
-              </div>
-
-              <div className="td-side-sep" />
-              <div className="td-pipes-h">
-                <span>{t('projects.pipelines')}</span>
-                {assigned.length > 1 && (
-                  <button type="button" className="td-pipes-runall" disabled={busy} onClick={runAllPipelines} title={t('projects.runAllTitle')}>
-                    {t('projects.runAllPipelines')}
-                  </button>
-                )}
-              </div>
-              {assigned.length > 0 && (
-                <div className="td-pipes-list">
-                  {assigned.map((p) => {
-                    const gates = p.steps.filter((s) => s.mode === StepMode.Gate).length;
-                    return (
-                      <div className="td-pipe" key={p.id}>
-                        <span className="td-pipe-ico"><PipelinesIcon width={14} height={14} /></span>
-                        <div className="td-pipe-id">
-                          <div className="td-pipe-name">{p.name}</div>
-                          <div className="td-pipe-meta">
-                            {t('projects.stepCount', { count: p.steps.length })}
-                            {gates > 0 ? ` · ${t('tasks.gateCount', { count: gates })}` : ''}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="td-pipe-run"
-                          disabled={busy || p.steps.length === 0}
-                          title={p.steps.length === 0 ? t('projects.addStepsFirst') : t('projects.runNamedTitle', { name: p.name })}
-                          aria-label={t('projects.runNamed', { name: p.name })}
-                          onClick={() => runPipeline(p)}
-                        >
-                          <PlayIcon width={11} height={11} />
-                        </button>
-                        {canEdit && (
-                          <button
-                            type="button"
-                            className="td-pipe-del"
-                            disabled={busy}
-                            title={t('projects.removeFromProject', { name: p.name })}
-                            aria-label={t('projects.remove')}
-                            onClick={() => void detachPipeline(p.id)}
-                          >
-                            <XIcon width={11} height={11} />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {canEdit && unassigned.length > 0 && (
-                <div className="td-assign-wrap">
-                  <button type="button" className="td-assign" disabled={busy} onClick={() => setAdding((s) => !s)}>
-                    <PlusIcon width={13} height={13} /> {t('projects.addPipeline')}
-                  </button>
-                  {adding && (
-                    <div className="lin-menu td-assign-menu">
-                      {unassigned.map((p) => (
-                        <button key={p.id} className="lin-menu-item" disabled={busy} onClick={() => void attachPipeline(p.id)}>
-                          {p.name}
-                          <span className="lin-menu-count">{t('projects.stepCount', { count: p.steps.length })}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {canEdit && (
-                <>
-                  <div className="td-side-sep" />
-                  <button
-                    type="button"
-                    className="btn-ghost btn-inline"
-                    onClick={() => navigate(`/projects/${projectId}/tasks/${taskId}/edit`)}
-                  >
-                    <PencilIcon width={14} height={14} /> {t('common.edit')}
-                  </button>
-                </>
-              )}
-
-              <div className="td-side-sep" />
-              <div className="td-meta">
-                {t('projects.createdByOn', { date: fmtDate(task.createdAt), name: task.createdBy.name })}
-              </div>
-            </aside>
           </div>
       </div>
     </EditorShell>

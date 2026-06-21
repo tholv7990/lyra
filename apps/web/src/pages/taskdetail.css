@@ -14,7 +14,23 @@
   gap: 0;
 }
 
-/* ===== Run workbench (design): title · tabs · run header · timeline · earlier ===== */
+/* ===== Run workbench (design): single centered column ===== */
+.tw-single {
+  max-width: 760px;
+  margin: 0 auto;
+}
+/* Compact inline properties row (replaces the sidebar). */
+.tw-props {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -8px 0 18px;
+}
+.tw-props .tw-edit {
+  margin-left: auto;
+}
+
 .tw-title {
   display: flex;
   align-items: center;
@@ -29,7 +45,7 @@
   color: var(--ink);
 }
 .tw-desc {
-  margin: 0 0 22px;
+  margin: 0 0 14px;
   font-size: 13.5px;
   color: var(--ink-muted);
   line-height: 1.6;
@@ -43,11 +59,19 @@
   gap: 8px;
   margin-bottom: 18px;
   border-bottom: 1px solid var(--hairline);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tw-tabs::-webkit-scrollbar {
+  height: 0;
 }
 .tw-tab {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  flex: none;
+  max-width: 240px;
   padding: 0 4px 10px;
   margin-bottom: -1px;
   border: 0;
@@ -58,6 +82,11 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+}
+.tw-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tw-tab.active {
   color: var(--ink);
