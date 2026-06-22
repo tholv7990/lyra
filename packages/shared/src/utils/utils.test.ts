@@ -18,9 +18,10 @@ import {
   isAllowedMedia,
   parsePromptVariables,
   toLyraPlaceholders,
+  isActionStep,
   type MemberCtx,
 } from './index';
-import { MediaType, Provider } from '../enums';
+import { MediaType, Provider, StepKind } from '../enums';
 import {
   MODEL_CATALOG,
   isModelAllowed,
@@ -364,5 +365,15 @@ describe('prompt marketplace placeholders', () => {
       'Hi {name}, about {topic}',
     );
     expect(toLyraPlaceholders('plain text')).toBe('plain text');
+  });
+});
+
+describe('isActionStep', () => {
+  it('is false for prompt steps and undefined kind (back-compat)', () => {
+    expect(isActionStep({ kind: StepKind.Prompt })).toBe(false);
+    expect(isActionStep({})).toBe(false); // legacy step: no kind === prompt
+  });
+  it('is true only for action steps', () => {
+    expect(isActionStep({ kind: StepKind.Action })).toBe(true);
   });
 });

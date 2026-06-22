@@ -1,5 +1,5 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority } from '../enums';
-import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition } from '../models';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind } from '../enums';
+import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition, ActionStep, ProjectBrandKit } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
 // The api implements each as a class-validator class that `implements`
@@ -54,6 +54,7 @@ export interface UpdateProjectDto {
   shared?: ProjectShare;
   sharedWith?: string[];
   channels?: string[];
+  brandKit?: ProjectBrandKit;
 }
 
 export interface CreateWorkspaceDto {
@@ -159,6 +160,8 @@ export interface PipelineStepInput {
   mode: StepMode;
   fanOut?: FanOutConfig;
   condition?: StepCondition;
+  kind?: StepKind;
+  action?: ActionStep;
 }
 
 export interface PipelineVariableInput {

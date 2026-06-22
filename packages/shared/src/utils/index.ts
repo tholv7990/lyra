@@ -1,4 +1,4 @@
-import { MediaType, Provider, Role, ProjectStatus, ProjectShare } from '../enums';
+import { MediaType, Provider, Role, ProjectStatus, ProjectShare, StepKind } from '../enums';
 import type { StepCondition } from '../models';
 import { TAG_MAX, TAG_MAX_LEN, TAG_PALETTE } from '../constants/tags';
 import { MEDIA_ALLOWED_EXT, MEDIA_ALLOWED_MIME } from '../constants/media';
@@ -308,4 +308,9 @@ export function toLyraPlaceholders(content: string): string {
     new RegExp(PROMPT_VAR_PATTERN, 'g'),
     (_m, name: string) => `{${name}}`,
   );
+}
+
+// A step is an action (non-prompt) step. Undefined kind === prompt (back-compat).
+export function isActionStep(step: { kind?: StepKind }): boolean {
+  return step.kind === StepKind.Action;
 }

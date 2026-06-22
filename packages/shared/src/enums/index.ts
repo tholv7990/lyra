@@ -83,6 +83,10 @@ export enum PromptType {
   File = 'file',
 }
 
+export enum StepKind { Prompt = 'prompt', Action = 'action' }
+export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish' }
+export enum Corner { TL = 'tl', TR = 'tr', BL = 'bl', BR = 'br', Center = 'center' }
+
 // Workspace kind: Personal workspaces are created automatically on sign-up;
 // team workspaces are upgraded via an admin-approved TeamUpgrade request.
 export enum WorkspaceType {

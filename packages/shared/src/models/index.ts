@@ -16,6 +16,9 @@ import {
   TaskStatus,
   TaskPriority,
   ChannelType,
+  StepKind,
+  ActionType,
+  Corner,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -134,6 +137,7 @@ export interface Project extends Audited {
   channels: string[];
   taskCount?: number; // active tasks on the board — populated in the list view only
   // pipelines now live on a Task (the project is a board of tasks).
+  brandKit?: ProjectBrandKit;
 }
 
 // Run activity rolled up for a task's board card — populated in the list view.
@@ -182,6 +186,16 @@ export interface StepCondition {
   value?: string; // operand (omit for exists/empty)
 }
 
+export type ActionStep =
+  | { type: ActionType.Brand; position: Corner; size: 'sm' | 'md' | 'lg' }
+  | { type: ActionType.Crawl; source: 'input' | 'homepage'; quality?: string }
+  | { type: ActionType.Publish; channelIds?: string[]; captionFrom?: string };
+
+export interface ProjectBrandKit {
+  logoUrl?: string;
+  accentColor?: string;
+}
+
 export interface Step {
   index: number;
   key?: StepKey; // fixed pipeline only; composable pipeline steps omit it
@@ -201,6 +215,8 @@ export interface Step {
   error?: string;
   startedAt?: string;
   finishedAt?: string;
+  kind?: StepKind;
+  action?: ActionStep;
 }
 
 // A per-run 👍/👎 verdict on the run's overall output. One per run (last-writer-
