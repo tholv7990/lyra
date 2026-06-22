@@ -1,0 +1,583 @@
+/* =============================================================================
+   Crawler / ImportMedia page — new mockup layout.
+   Token-only. No hardcoded colors, no new font, no new radius beyond
+   existing --radius-* vars. All structural values map to nearest token.
+   =============================================================================
+*/
+
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+.im-page {
+  max-width: 920px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Page title block ────────────────────────────────────────────────────── */
+.im-page-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.im-page-h1 {
+  font-size: var(--text-title2);   /* 24px */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+  line-height: var(--lh-tight);
+}
+
+.im-page-sub {
+  font-size: var(--text-small);    /* 13px */
+  color: var(--ink-muted);
+  line-height: var(--lh-body);
+  margin: 0;
+}
+
+/* ── Import composer card ────────────────────────────────────────────────── */
+.im-composer-card {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);  /* 12px — nearest to mockup 14px */
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.im-composer-card-body {
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.im-textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);  /* 8px */
+  background: var(--field);
+  color: var(--ink);
+  font-size: var(--text-small);     /* 13px */
+  font-family: inherit;
+  line-height: var(--lh-body);
+  padding: 13px 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.im-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+.im-textarea::placeholder {
+  color: var(--placeholder);
+}
+
+/* Footer row inside composer: platforms + Fetch button */
+.im-composer-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.im-platforms-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.im-platforms-label {
+  font-size: var(--text-mini);    /* 12px */
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+
+.im-platform-chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.im-platform-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 27px;
+  padding: 0 9px;
+  border-radius: var(--radius-md);  /* 8px */
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  font-size: var(--text-mini);      /* 12px */
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.im-fetch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 18px;
+  flex-shrink: 0;
+}
+
+/* Cookies footer strip inside composer card */
+.im-composer-card-cookies {
+  border-top: 1px solid var(--hairline);
+  background: var(--surface-1);
+  padding: 11px 18px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-wrap: wrap;
+}
+
+/* Override CrawlerCookies to sit inline in the strip */
+.im-composer-card-cookies .cx-cookies {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.im-status-inline {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+}
+
+/* ── Section header (queue + recent) ────────────────────────────────────── */
+.im-section {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.im-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.im-section-head-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.im-section-h2 {
+  font-size: var(--text-small);   /* 13px */
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.im-count-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);  /* 6px */
+  background: var(--surface-2);
+  font-size: var(--text-micro);     /* 11px */
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+/* ── Queue section buttons ───────────────────────────────────────────────── */
+.im-btn-clear {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: var(--radius-md);   /* 8px */
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--ink-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-mini);       /* 12px */
+  font-weight: 600;
+  transition: color 0.12s;
+}
+.im-btn-clear:hover { color: var(--ink); }
+
+/* ── Queue card ──────────────────────────────────────────────────────────── */
+.im-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.im-queue-card {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);   /* 12px */
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* Card header row */
+.im-queue-card-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+}
+
+.im-queue-card-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);    /* 8px */
+  background: var(--surface-2);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  overflow: hidden;
+}
+.im-queue-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.im-queue-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.im-queue-card-url {
+  font-size: var(--text-small);    /* 13px */
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.im-queue-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-mini);     /* 12px */
+  color: var(--ink-tertiary);
+}
+
+.im-queue-card-resolving {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-mini);
+  color: var(--ink-muted);
+}
+
+.im-queue-card-remove {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);    /* 8px */
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-tertiary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s, border-color 0.12s;
+}
+.im-queue-card-remove:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Card body (tiles / error) */
+.im-queue-card-body {
+  border-top: 1px solid var(--hairline);
+  padding: 12px 14px;
+}
+
+/* Download-all footer */
+.im-queue-card-foot {
+  border-top: 1px solid var(--hairline);
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.im-btn-dl-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 15px;
+  flex-shrink: 0;
+}
+
+/* Progress bar for in-flight "download all" */
+.im-dl-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.im-dl-bar-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+  flex: 1;
+  max-width: 200px;
+}
+
+.im-dl-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--primary);
+  border-radius: 99px;
+  transform-origin: left center;
+  transition: transform 0.3s ease;
+}
+
+.im-dl-pct {
+  font-size: var(--text-micro);    /* 11px */
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Retry button inside error section */
+.im-btn-retry {
+  margin-top: 8px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-mini);
+  font-weight: 600;
+}
+
+/* ── Status pills ────────────────────────────────────────────────────────── */
+.im-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--radius-sm);    /* 6px */
+  font-size: var(--text-micro);       /* 11px */
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.im-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.im-pill--resolving {
+  background: var(--surface-2);
+  color: var(--ink-muted);
+}
+
+.im-pill--done {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+
+.im-pill--error {
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+/* ── Recent imports section ─────────────────────────────────────────────── */
+
+/* Tab segment (All / Video / Images) */
+.im-tab-seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-md);   /* 8px — nearest to mockup 9px */
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+
+.im-tab-btn {
+  height: 26px;
+  padding: 0 11px;
+  border-radius: var(--radius-sm);   /* 6px — inside the track */
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-mini);       /* 12px */
+  font-weight: 600;
+  background: transparent;
+  color: var(--ink-tertiary);
+  transition: background 0.12s, color 0.12s;
+}
+
+.im-tab-btn--on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Recent table */
+.im-recent-table {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);   /* 12px */
+  background: var(--card);
+  overflow: hidden;
+}
+
+.im-recent-table-head {
+  display: grid;
+  grid-template-columns: 1fr 120px 100px;
+  gap: 14px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+  font-size: var(--text-micro);      /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+.im-recent-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 100px;
+  gap: 14px;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--hairline);
+  transition: background 0.1s;
+}
+.im-recent-row:last-child { border-bottom: none; }
+.im-recent-row:hover { background: var(--surface-1); }
+
+.im-recent-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);   /* 8px */
+  background: var(--surface-2);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+}
+
+.im-recent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Source column spans the first grid cell — flex inside it */
+.im-recent-row > :first-child {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.im-recent-url {
+  font-size: var(--text-small);      /* 13px */
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.im-recent-meta {
+  font-size: var(--text-mini);       /* 12px */
+  color: var(--ink-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.im-recent-empty {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 24px 16px;
+  text-align: center;
+}
+
+/* Quality picker (segment control) */
+.im-quality-track {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--radius-md);   /* 8px */
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  align-self: flex-start;
+}
+
+.im-quality-btn {
+  height: 25px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);   /* 6px */
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-micro);      /* 11px */
+  font-weight: 600;
+  background: transparent;
+  color: var(--ink-tertiary);
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+
+.im-quality-btn--on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .im-composer-footer-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .im-fetch-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .im-recent-table-head,
+  .im-recent-row {
+    grid-template-columns: 1fr 80px;
+  }
+  /* Hide Items column on mobile */
+  .im-recent-table-head > :nth-child(2),
+  .im-recent-row > :nth-child(2) {
+    display: none;
+  }
+  .cx-mgrid { grid-template-columns: repeat(2, 1fr); }
+}

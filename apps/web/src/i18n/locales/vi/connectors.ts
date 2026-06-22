@@ -93,6 +93,22 @@ export default {
   nothingResolved: 'Không có gì để tải từ liên kết đó.',
   retry: 'Thử lại',
 
+  // Crawler queue + recent
+  worksWithLabel: 'Hỗ trợ',
+  queueTitle: 'Sẵn sàng tải',
+  queueClear: 'Xóa hết',
+  recentTitle: 'Đã tải gần đây',
+  recentEmpty: 'Các liên kết đã xử lý sẽ hiển thị ở đây.',
+  recentTabAll: 'Tất cả',
+  recentTabVideo: 'Video',
+  recentTabImage: 'Ảnh',
+  recentColSource: 'Nguồn',
+  recentColItems: 'Mục',
+  recentColStatus: 'Trạng thái',
+  recentJustNow: 'vừa xong',
+  recentMinutesAgo: '{{n}} phút trước',
+  recentStatusReady: 'Sẵn sàng',
+
   // shared
   loading: 'Đang tải…',
   error: 'Đã xảy ra lỗi. Vui lòng thử lại.',

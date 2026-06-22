@@ -93,6 +93,22 @@ export default {
   nothingResolved: 'Nothing to import from that link.',
   retry: 'Retry',
 
+  // Crawler queue + recent
+  worksWithLabel: 'Works with',
+  queueTitle: 'Ready to download',
+  queueClear: 'Clear',
+  recentTitle: 'Recent imports',
+  recentEmpty: 'Fetched links will appear here.',
+  recentTabAll: 'All',
+  recentTabVideo: 'Video',
+  recentTabImage: 'Images',
+  recentColSource: 'Source',
+  recentColItems: 'Items',
+  recentColStatus: 'Status',
+  recentJustNow: 'just now',
+  recentMinutesAgo: '{{n}}m ago',
+  recentStatusReady: 'Ready',
+
   // shared
   loading: 'Loading…',
   error: 'Something went wrong. Try again.',
