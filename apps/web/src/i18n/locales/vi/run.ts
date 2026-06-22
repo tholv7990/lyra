@@ -98,4 +98,6 @@ export default {
   testPromptPlaceholder: 'Kiểm thử prompt của bước này...',
   moveEarlier: 'Di chuyển lên trước',
   moveLater: 'Di chuyển xuống sau',
+  cached: 'Đã lưu',
+  regenerate: 'Tạo lại',
 } as const;

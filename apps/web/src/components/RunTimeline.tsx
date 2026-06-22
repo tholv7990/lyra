@@ -119,6 +119,7 @@ export function RunTimeline({
                   </span>
                 )}
                 {isGate && <span className="rt-gated">{t('run.gated')}</span>}
+                {step.cached && <span className="rt-cached">{t('run.cached')}</span>}
                 <span className="rt-flex" />
                 {hasResult && (
                   <button type="button" className="rt-toggle" onClick={() => toggle(step.index)}>

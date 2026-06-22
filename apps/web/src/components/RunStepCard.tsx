@@ -114,6 +114,7 @@ export function RunStepCard(props: RunStepCardProps) {
             <span className="flow-name">{stepTitle(step)}</span>
             <span className={`mode-tag ${isGate ? 'gate' : 'auto'}`}>{isGate ? t('run.gate') : t('run.auto')}</span>
             <span className={`badge status-${step.status}`}>{t(`run.status_${step.status}`)}</span>
+            {step.cached && <span className="badge badge-cached">{t('run.cached')}</span>}
           </div>
           <div className="flow-node-sub">{step.model}</div>
         </button>

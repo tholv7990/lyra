@@ -8012,6 +8012,11 @@
   color: var(--ink-subtle);
   border-color: var(--hairline);
 }
+.badge.badge-cached {
+  color: var(--ink-tertiary);
+  background: var(--surface-2);
+  border-color: var(--hairline);
+}
 
 /* ===== Workbench steps ===== */
 .steps {
