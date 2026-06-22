@@ -19,6 +19,13 @@ describe('providerCatalog', () => {
     expect(google?.modalities).not.toContain(PromptType.Audio);
     expect(google?.modalities).not.toContain(PromptType.Video);
   });
+
+  it('lists Replicate as an addable key stored under Provider.Video', () => {
+    const r = AVAILABLE_PROVIDERS.find((p) => p.id === 'replicate');
+    expect(r).toBeTruthy();
+    expect(r?.provider).toBe(Provider.Video);
+    expect(r?.status).toBe('available');
+  });
 });
 
 describe('modelModality', () => {
