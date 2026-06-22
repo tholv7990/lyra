@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CrawlerCookieInfo, MediaItem, MediaQuality } from '@lyra/shared';
+import type { MediaItem, MediaQuality } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import { downloadFile } from '../lib/api';
 import { RefreshIcon } from '../layout/icons';
+import { CrawlerCookies } from '../components/CrawlerCookies';
 import './connectors.css';
 
 const TYPE_GLYPH: Record<MediaItem['type'], string> = { video: '▶', image: '🖼', audio: '♪' };
@@ -30,6 +31,20 @@ export function fetchButtonState(input: FetchButtonStateInput) {
   } as const;
 }
 
+// Parse the multi-link textarea into a clean list: split on whitespace/commas,
+// keep only http(s) links, dedupe (preserving order). Pure — unit-tested.
+export function parseLinks(input: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const tok of input.split(/[\s,]+/)) {
+    const u = tok.trim();
+    if (!u || !/^https?:\/\//i.test(u) || seen.has(u)) continue;
+    seen.add(u);
+    out.push(u);
+  }
+  return out;
+}
+
 function triggerDownload(url: string, filename: string) {
   const a = document.createElement('a');
   a.href = url;
@@ -52,72 +67,35 @@ export function defaultQualityFormat(qualities?: MediaQuality[]): string | undef
 
 const mb = (b?: number) => (b ? ` · ~${Math.round(b / 1e6)} MB` : '');
 
-// Built-ins → Import media. Paste a social link → Cobalt (via the proxy) resolves
-// it → preview the items → download. Mock-backed until the microservice exists.
-export function ImportMedia() {
+// One resolved link: resolves on mount, previews its items, downloads them. Each
+// instance is independent so several links run in parallel (the connectors service
+// caps how many actually download at once).
+function CrawlSource({ ws, url, showUrl }: { ws: string; url: string; showUrl: boolean }) {
   const { t } = useTranslation();
-  const { current, loading: workspaceLoading } = useWorkspace();
-  const ws = current?.id;
-
-  const [url, setUrl] = useState('');
   const [items, setItems] = useState<MediaItem[]>([]);
-  const [fetched, setFetched] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<'resolving' | 'resolved' | 'error'>('resolving');
   const [error, setError] = useState<string | null>(null);
   const [pick, setPick] = useState<Record<number, string>>({}); // item index → chosen -f selector
-  const [dl, setDl] = useState<Record<number, number>>({}); // index → download % in flight; key -1 = "download all"
-  const [cookieInfo, setCookieInfo] = useState<CrawlerCookieInfo | null>(null);
+  const [dl, setDl] = useState<Record<number, number>>({}); // index → % in flight; key -1 = "download all"
 
   useEffect(() => {
-    if (!ws) return;
-    connectorsApi.cookieStatus(ws).then(setCookieInfo).catch(() => setCookieInfo(null));
-  }, [ws]);
-
-  const uploadCookies = (file: File) => {
-    if (!ws) return;
-    setError(null);
-    file
-      .text()
-      .then((text) => connectorsApi.setCookies(ws, text))
-      .then(setCookieInfo)
-      .catch((err) => setError(err instanceof Error ? err.message : t('connectors.error')));
-  };
-
-  const removeCookies = () => {
-    if (!ws) return;
-    connectorsApi
-      .deleteCookies(ws)
-      .then(setCookieInfo)
-      .catch((err) => setError(err instanceof Error ? err.message : t('connectors.error')));
-  };
-
-  const fetchState = fetchButtonState({
-    hasWorkspace: Boolean(ws),
-    workspaceLoading,
-    url,
-    busy,
-  });
-
-  const fetchMedia = () => {
-    if (fetchState.disabled || !ws) return;
-    setBusy(true);
+    let alive = true;
+    setStatus('resolving');
     setError(null);
     connectorsApi
-      .resolve(ws, url.trim())
-      .then((r) => { setItems(r.items); setFetched(true); })
-      .catch((err) => setError(err instanceof Error ? err.message : t('connectors.error')))
-      .finally(() => setBusy(false));
-  };
+      .resolve(ws, url)
+      .then((r) => { if (alive) { setItems(r.items); setStatus('resolved'); } })
+      .catch((err) => { if (alive) { setError(err instanceof Error ? err.message : t('connectors.error')); setStatus('error'); } });
+    return () => { alive = false; };
+  }, [ws, url, t]);
 
   const download = (indices?: number[], format?: string) => {
-    if (!ws) return;
     const tag = indices ?? [-1]; // -1 marks the "download all" action
     const setPct = (pct: number) => setDl((d) => ({ ...d, ...Object.fromEntries(tag.map((i) => [i, pct])) }));
     const clear = () => setDl((d) => { const n = { ...d }; tag.forEach((i) => delete n[i]); return n; });
     const fail = (err: unknown) => { setError(err instanceof Error ? err.message : t('connectors.error')); clear(); };
     setPct(0);
     setError(null);
-    // Poll the job ~every 0.8s for live progress; on done, save the file(s).
     const poll = (jobId: string) =>
       connectorsApi
         .downloadJob(ws, jobId)
@@ -126,69 +104,35 @@ export function ImportMedia() {
           else if (job.status === 'done') {
             job.items?.forEach((it) =>
               it.url.startsWith('http')
-                ? triggerDownload(it.url, it.filename)    // absolute (mock/external)
-                : void downloadFile(it.url, it.filename), // proxied Lyra file (authed)
+                ? triggerDownload(it.url, it.filename)
+                : void downloadFile(it.url, it.filename),
             );
             clear();
           } else fail(new Error(job.error ?? t('connectors.error')));
         })
         .catch(fail);
-    connectorsApi.startDownload(ws, url.trim(), indices, format).then(({ jobId }) => poll(jobId)).catch(fail);
+    connectorsApi.startDownload(ws, url, indices, format).then(({ jobId }) => poll(jobId)).catch(fail);
   };
 
   return (
-    <div className="cx-page">
-      <h2 className="cx-title">{t('connectors.importTitle')}</h2>
-      <p className="cx-sub">{t('connectors.importSubtitle')}</p>
-
-      <div className="cx-bar">
-        <input
-          className="cx-url"
-          placeholder={t('connectors.urlPlaceholder')}
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') fetchMedia(); }}
-        />
-        <button
-          className="cx-btn-primary cx-fetch-btn"
-          disabled={fetchState.disabled}
-          aria-busy={fetchState.spin}
-          onClick={fetchMedia}
-        >
-          {fetchState.spin && <RefreshIcon className="cx-spin" />}
-          {t(`connectors.${fetchState.labelKey}`)}
-        </button>
-      </div>
-      {fetchState.statusKey && <p className="cx-status">{t(`connectors.${fetchState.statusKey}`)}</p>}
-      <div className="cx-plats">{t('connectors.supported')}</div>
-
-      <div className="cx-cookies">
-        {cookieInfo?.present ? (
-          <span className="cx-ck-on">
-            🔒 {t('connectors.cookiesActive')}
-            <button type="button" className="cx-ck-remove" onClick={removeCookies}>{t('connectors.cookiesRemove')}</button>
-          </span>
-        ) : (
-          <label className="cx-ck-upload">
-            {t('connectors.cookiesUpload')}
-            <input
-              type="file"
-              accept=".txt"
-              hidden
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCookies(f); e.target.value = ''; }}
-            />
-          </label>
-        )}
-        <span className="cx-ck-hint">{t('connectors.cookiesHint')}</span>
+    <div className="cx-section">
+      <div className="cx-sec-head">
+        {showUrl && <span className="cx-sec-url" title={url}>{url}</span>}
+        <span className="cx-sec-title">
+          {status === 'resolving' ? (
+            <><RefreshIcon className="cx-spin" /> {t('connectors.loading')}</>
+          ) : status === 'error' ? (
+            t('connectors.error')
+          ) : (
+            t('connectors.resolved', { count: items.length })
+          )}
+        </span>
       </div>
 
-      {error && <p className="cx-error">{error}</p>}
+      {status === 'error' && <p className="cx-error">{error}</p>}
 
-      {items.length > 0 && (
-        <div className="cx-section">
-          <div className="cx-sec-head">
-            <span className="cx-sec-title">{t('connectors.resolved', { count: items.length })}</span>
-          </div>
+      {status === 'resolved' && items.length > 0 && (
+        <>
           <div className="cx-mgrid">
             {items.map((it) => {
               const pct = dl[it.index] ?? dl[-1];
@@ -239,10 +183,59 @@ export function ImportMedia() {
                 : t('connectors.downloadAll')}
             </button>
           </div>
-        </div>
+        </>
       )}
 
-      {fetched && items.length === 0 && <p className="cx-empty">{t('connectors.nothingResolved')}</p>}
+      {status === 'resolved' && items.length === 0 && <p className="cx-empty">{t('connectors.nothingResolved')}</p>}
+    </div>
+  );
+}
+
+// Built-ins → Crawler. Paste one or more social links → the connectors service
+// resolves each → preview the items → download. Several links resolve/download in
+// parallel; the service caps how many download at once.
+export function ImportMedia() {
+  const { t } = useTranslation();
+  const { current, loading: workspaceLoading } = useWorkspace();
+  const ws = current?.id;
+
+  const [input, setInput] = useState('');
+  const [urls, setUrls] = useState<string[]>([]); // committed on Fetch; one CrawlSource each
+
+  const fetchState = fetchButtonState({ hasWorkspace: Boolean(ws), workspaceLoading, url: input, busy: false });
+  const fetchMedia = () => { if (!fetchState.disabled) setUrls(parseLinks(input)); };
+
+  return (
+    <div className="cx-page">
+      <h2 className="cx-title">{t('connectors.importTitle')}</h2>
+      <p className="cx-sub">{t('connectors.importSubtitle')}</p>
+
+      <div className="cx-bar">
+        <textarea
+          className="cx-url cx-url-multi"
+          placeholder={t('connectors.urlsPlaceholder')}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); fetchMedia(); } }}
+        />
+        <button
+          className="cx-btn-primary cx-fetch-btn"
+          disabled={fetchState.disabled}
+          aria-busy={fetchState.spin}
+          onClick={fetchMedia}
+        >
+          {fetchState.spin && <RefreshIcon className="cx-spin" />}
+          {t(`connectors.${fetchState.labelKey}`)}
+        </button>
+      </div>
+      {fetchState.statusKey && <p className="cx-status">{t(`connectors.${fetchState.statusKey}`)}</p>}
+      <div className="cx-plats">{t('connectors.supported')}</div>
+
+      {ws && <CrawlerCookies ws={ws} />}
+
+      {urls.map((u) => (
+        <CrawlSource key={u} ws={ws!} url={u} showUrl={urls.length > 1} />
+      ))}
     </div>
   );
 }

@@ -69,6 +69,7 @@ export default {
   importSubtitle:
     'Dán liên kết mạng xã hội để lấy video hoặc ảnh. Dành cho nội dung bạn sở hữu hoặc có quyền dùng.',
   urlPlaceholder: 'Dán liên kết TikTok / Instagram / YouTube / X / Facebook…',
+  urlsPlaceholder: 'Dán một hoặc nhiều liên kết — mỗi dòng một liên kết. Chúng xử lý song song.',
   fetch: 'Lấy',
   preparingWorkspace: 'Đang chuẩn bị workspace trước khi lấy media…',
   resolvingMedia: 'Đang xử lý media từ liên kết này…',

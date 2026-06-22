@@ -77,7 +77,12 @@ export function downloadArgs(
   cookiePath?: string,
 ): string[] {
   // --newline puts each progress update on its own line so runYtDlp can parse it.
-  const args = ['-o', outTemplate, '--no-warnings', '--newline'];
+  // --merge-output-format mp4 makes merged video+audio land in an .mp4 container
+  // (not the .webm/.mkv yt-dlp defaults to for VP9). -S prefers H.264/AAC so the
+  // merge is a fast remux into a universally-playable mp4 — no re-encode — falling
+  // back to the best available codec when H.264 isn't offered at that height.
+  // (Both are no-ops for an audio-only or image download.)
+  const args = ['-o', outTemplate, '--no-warnings', '--newline', '--merge-output-format', 'mp4', '-S', 'vcodec:h264,acodec:aac'];
   if (format) args.push('-f', format);
   if (cookiePath) args.push('--cookies', cookiePath);
   if (indices?.length) args.push('--playlist-items', indices.map((i) => i + 1).join(','));
@@ -126,7 +131,9 @@ export function runYtDlp(
   onProgress?: (pct: number) => void,
 ): Promise<{ stdout: string }> {
   return new Promise((resolve, reject) => {
-    const ps = spawn('yt-dlp', args, { timeout: timeoutMs });
+    // windowsHide: no console window pops up, and the child no longer dies with
+    // STATUS_CONTROL_C_EXIT (0xC000013A) when that window receives a CTRL/close event.
+    const ps = spawn('yt-dlp', args, { timeout: timeoutMs, windowsHide: true });
     let stdout = '';
     let stderr = '';
     const tracker = onProgress ? new ProgressTracker() : null;

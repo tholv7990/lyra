@@ -69,6 +69,7 @@ export default {
   importSubtitle:
     'Paste a social link to pull the video or images. For content you own or have rights to use.',
   urlPlaceholder: 'Paste a TikTok / Instagram / YouTube / X / Facebook link…',
+  urlsPlaceholder: 'Paste one or more links — one per line. They resolve in parallel.',
   fetch: 'Fetch',
   preparingWorkspace: 'Preparing workspace before fetching…',
   resolvingMedia: 'Resolving media from this link…',

@@ -1,5 +1,21 @@
 import { describe, expect, test } from 'vitest';
-import { fetchButtonState, defaultQualityFormat } from './ImportMedia';
+import { fetchButtonState, defaultQualityFormat, parseLinks } from './ImportMedia';
+
+describe('parseLinks', () => {
+  test('splits on newlines/commas/spaces and keeps only http(s) links', () => {
+    expect(parseLinks('https://a.test/1\nhttps://b.test/2')).toEqual(['https://a.test/1', 'https://b.test/2']);
+    expect(parseLinks('https://a.test/1, https://b.test/2 https://c.test/3')).toEqual([
+      'https://a.test/1',
+      'https://b.test/2',
+      'https://c.test/3',
+    ]);
+  });
+  test('dedupes (order preserved) and drops non-http tokens', () => {
+    expect(parseLinks('https://a.test/1\nhttps://a.test/1')).toEqual(['https://a.test/1']);
+    expect(parseLinks('notaurl\nhttps://c.test/3\nftp://x/y')).toEqual(['https://c.test/3']);
+    expect(parseLinks('   \n , ')).toEqual([]);
+  });
+});
 
 describe('ImportMedia fetch button state', () => {
   test('disables fetch while workspace is missing so clicks do not silently no-op', () => {

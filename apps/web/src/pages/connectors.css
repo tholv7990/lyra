@@ -86,8 +86,11 @@
 .cx-rlink { margin-left: auto; color: var(--primary); font-size: var(--text-mini); text-decoration: none; }
 .cx-rerr { margin-left: auto; color: var(--ink-tertiary); font-size: var(--text-mini); }
 
-.cx-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+.cx-bar { display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-start; }
 .cx-url { flex: 1; padding: 11px 13px; border: 1px solid var(--hairline); border-radius: 10px; font-size: var(--text-small); color: var(--ink); box-sizing: border-box; background: var(--card); }
+.cx-url-multi { min-height: 46px; resize: vertical; font-family: inherit; line-height: 1.5; }
+/* Per-link header url (multi-link mode) — truncated so the header stays one line. */
+.cx-sec-url { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-mini); color: var(--ink-tertiary); margin-right: 10px; }
 .cx-plats { font-size: var(--text-micro); color: var(--ink-tertiary); margin-bottom: 18px; }
 .cx-status { color: var(--ink-muted); font-size: var(--text-small); margin: -2px 0 10px; }
 .cx-cookies { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin: -8px 0 14px; }

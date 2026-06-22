@@ -8,6 +8,7 @@ import { assertSafeUrl } from '../common/url';
 import { downloadArgs, mapResolveJson, resolveArgs, runYtDlpRetrying, ytDlpReason } from './ytdlp';
 import { FileStore } from './file-store';
 import { DownloadJobStore, ServiceDownloadJob } from './download-job-store';
+import { Semaphore } from './concurrency';
 
 // Write a cookies.txt to a private (0600) temp file for the duration of `fn`, then
 // delete it — cookies are session secrets, so they never persist alongside the
@@ -28,10 +29,15 @@ async function withCookies<T>(cookies: string | undefined, fn: (cookiePath?: str
 export class DownloadService {
   private readonly store: FileStore;
   private readonly jobs: DownloadJobStore;
+  // Cap simultaneous downloads (each = yt-dlp + a CPU-bound ffmpeg merge) so a
+  // batch of parallel Crawler links queues instead of overwhelming the box.
+  // Resolve stays uncapped — it's a quick metadata fetch.
+  private readonly downloadLimit: Semaphore;
   constructor(config: ConfigService) {
     const ttl = Number(config.get('FILE_TTL_MS') ?? 900_000);
     this.store = new FileStore(ttl);
     this.jobs = new DownloadJobStore(ttl);
+    this.downloadLimit = new Semaphore(Number(config.get('CRAWLER_MAX_CONCURRENT') ?? 3));
     setInterval(() => {
       this.store.sweep();
       this.jobs.sweep();
@@ -56,14 +62,18 @@ export class DownloadService {
 
   private async runJob(id: string, url: string, indices?: number[], format?: string, cookies?: string): Promise<void> {
     try {
-      const dir = await mkdtemp(join(tmpdir(), 'lyra-dl-'));
-      await withCookies(cookies, (cp) =>
-        runYtDlpRetrying(downloadArgs(url, join(dir, '%(id)s.%(ext)s'), indices, format, cp), 4, 600_000, (pct) =>
-          this.jobs.update(id, { pct }),
-        ),
-      );
-      const files = await readdir(dir);
-      const items = files.map((f) => ({ fileId: this.store.put(join(dir, f)), filename: f }));
+      // Held for the whole heavy op (download + merge); excess jobs queue here,
+      // staying at 0% until a slot frees.
+      const items = await this.downloadLimit.run(async () => {
+        const dir = await mkdtemp(join(tmpdir(), 'lyra-dl-'));
+        await withCookies(cookies, (cp) =>
+          runYtDlpRetrying(downloadArgs(url, join(dir, '%(id)s.%(ext)s'), indices, format, cp), 4, 600_000, (pct) =>
+            this.jobs.update(id, { pct }),
+          ),
+        );
+        const files = await readdir(dir);
+        return files.map((f) => ({ fileId: this.store.put(join(dir, f)), filename: f }));
+      });
       this.jobs.update(id, { status: 'done', pct: 100, items });
     } catch (err) {
       this.jobs.update(id, { status: 'error', error: ytDlpReason(err) });

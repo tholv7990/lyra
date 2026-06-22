@@ -58,6 +58,11 @@ describe('arg builders', () => {
   it('downloadArgs requests --newline so progress is parseable', () => {
     expect(downloadArgs('https://x/v', '/tmp/o')).toContain('--newline');
   });
+  it('downloadArgs forces an mp4 container and prefers H.264/AAC (clean remux, no re-encode)', () => {
+    const a = downloadArgs('https://x/v', '/tmp/o', undefined, 'bv*[height<=1080]+ba/b[height<=1080]');
+    expect(a).toEqual(expect.arrayContaining(['--merge-output-format', 'mp4']));
+    expect(a).toEqual(expect.arrayContaining(['-S', 'vcodec:h264,acodec:aac']));
+  });
   it('resolveArgs/downloadArgs add --cookies only when a cookie file is given', () => {
     expect(resolveArgs('https://x/v', '/tmp/c.txt')).toEqual(['-J', '--no-warnings', '--cookies', '/tmp/c.txt', 'https://x/v']);
     expect(resolveArgs('https://x/v')).not.toContain('--cookies');
