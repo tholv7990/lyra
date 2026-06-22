@@ -85,6 +85,12 @@
   gap: 16px;
 }
 
+/* header row above provider cards (houses "+ New connection") */
+.cxv2-providers-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* ── provider card ── */
 .cxv2-provider-card {
   border: 1px solid var(--hairline);
@@ -127,6 +133,33 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* short profile-id chip inside connection header */
+.cxv2-profile-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0;
+}
+
+.cxv2-proxy-chip {
+  background: color-mix(in srgb, var(--accent-keys) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent-keys) 25%, transparent);
+  color: var(--accent-keys);
+  font-family: inherit;
 }
 
 .cxv2-provider-desc {
@@ -611,6 +644,7 @@
 /* Postiz key row in Settings (PostizKeySection) */
 .set-keyrow { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
 .set-keyrow .text-input { flex: 1; }
+.text-input--readonly { background: var(--surface-1); color: var(--ink-muted); cursor: not-allowed; opacity: 0.75; }
 .cx-type-postiz { background: var(--surface-2); color: var(--ink-muted); }
 .cx-type-gologin { background: var(--primary-tint); color: var(--primary); }
 .cx-note { font-size: var(--text-small); color: var(--ink-muted); line-height: 1.55; margin: 0; }

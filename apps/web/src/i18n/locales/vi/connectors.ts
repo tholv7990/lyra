@@ -129,6 +129,15 @@ export default {
   recentMinutesAgo: '{{n}} phút trước',
   recentStatusReady: 'Sẵn sàng',
 
+  // Connections (multi-account)
+  browserProfile: 'Hồ sơ trình duyệt',
+  postizPool: 'Nhóm kênh Postiz',
+  addAccount: 'Thêm tài khoản',
+  addAccountTitle: 'Thêm một tài khoản',
+  newConnection: 'Kết nối mới',
+  accountsSuffix: 'tài khoản',
+  proxyLabel: 'Proxy',
+
   // shared
   loading: 'Đang tải…',
   error: 'Đã xảy ra lỗi. Vui lòng thử lại.',

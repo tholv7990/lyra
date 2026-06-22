@@ -129,6 +129,15 @@ export default {
   recentMinutesAgo: '{{n}}m ago',
   recentStatusReady: 'Ready',
 
+  // Connections (multi-account)
+  browserProfile: 'Browser profile',
+  postizPool: 'Postiz pool',
+  addAccount: 'Add account',
+  addAccountTitle: 'Add an account',
+  newConnection: 'New connection',
+  accountsSuffix: 'accounts',
+  proxyLabel: 'Proxy',
+
   // shared
   loading: 'Loading…',
   error: 'Something went wrong. Try again.',

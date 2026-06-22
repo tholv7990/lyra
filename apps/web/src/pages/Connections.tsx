@@ -5,6 +5,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { connectorsApi } from '../lib/connectors';
 import { channelsApi } from '../lib/channels';
 import { platformColor, platformLabel } from '../lib/platform';
+import { groupChannels, shortProfileId, type Connection } from '../lib/connections';
 import { Modal } from '../components/Modal';
 import { Field } from '../components/Field';
 import { PlatformSelect } from '../components/PlatformSelect';
@@ -94,31 +95,45 @@ function PlatformChip({ platform }: { platform: string }) {
   );
 }
 
-// ── provider block ────────────────────────────────────────────────────────────
+// ── connection block (one card per connection) ─────────────────────────────────
 
-interface ProviderBlockProps {
-  meta: ProviderMeta;
-  channels: Channel[];
+interface ConnectionBlockProps {
+  conn: Connection;
   busy: boolean;
-  onAdd: () => void;
+  onAddAccount: (profileId: string) => void;
   onRemove: (c: Channel) => void;
-  onConnect?: () => void;
+  onConnect: () => void;
 }
 
-function ProviderBlock({ meta, channels, busy, onAdd, onRemove, onConnect }: ProviderBlockProps) {
+function ConnectionBlock({ conn, busy, onAddAccount, onRemove, onConnect }: ConnectionBlockProps) {
   const { t } = useTranslation();
+  const meta = PROVIDER_META[conn.connector];
 
   return (
     <div className="cxv2-provider-card">
-      {/* provider header */}
+      {/* connection header */}
       <div className="cxv2-provider-head">
         <span className="cxv2-provider-icon" style={{ background: meta.iconBg, color: meta.iconColor }}>
           {meta.icon}
         </span>
         <div className="cxv2-provider-info">
           <div className="cxv2-provider-name-row">
-            <span className="cxv2-provider-name">{meta.label}</span>
-            {channels.length > 0 && (
+            {conn.connector === ChannelType.GoLogin ? (
+              <span className="cxv2-provider-name">
+                {t('connectors.browserProfile')}
+                {conn.profileId && (
+                  <span className="cxv2-profile-chip">{shortProfileId(conn.profileId)}</span>
+                )}
+                {conn.proxy && (
+                  <span className="cxv2-profile-chip cxv2-proxy-chip">
+                    {t('connectors.proxyLabel')}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="cxv2-provider-name">{t('connectors.postizPool')}</span>
+            )}
+            {conn.accounts.length > 0 && (
               <span className="cxv2-status-pill cxv2-status-ok">
                 <span className="cxv2-status-dot" />
                 {t('connectors.connected')}
@@ -126,18 +141,18 @@ function ProviderBlock({ meta, channels, busy, onAdd, onRemove, onConnect }: Pro
             )}
           </div>
           <div className="cxv2-provider-desc">
-            {meta.desc} · {channels.length} {t('connectors.statChannels')}
+            {conn.accounts.length} {t('connectors.accountsSuffix')}
           </div>
         </div>
-        {meta.type === ChannelType.GoLogin ? (
+        {conn.connector === ChannelType.GoLogin ? (
           <button
             type="button"
             className="cxv2-add-btn"
-            onClick={onAdd}
+            onClick={() => onAddAccount(conn.profileId!)}
             disabled={busy}
           >
             <PlusIcon width={13} height={13} />
-            {t('connectors.addChannel')}
+            {t('connectors.addAccount')}
           </button>
         ) : (
           <button
@@ -165,8 +180,8 @@ function ProviderBlock({ meta, channels, busy, onAdd, onRemove, onConnect }: Pro
         </button>
       </div>
 
-      {/* column headers — only show when there are channels */}
-      {channels.length > 0 && (
+      {/* column headers — only show when there are accounts */}
+      {conn.accounts.length > 0 && (
         <div className="cxv2-col-head">
           <div className="cxv2-col-labels">
             <span>{t('connectors.colAccount')}</span>
@@ -176,15 +191,15 @@ function ProviderBlock({ meta, channels, busy, onAdd, onRemove, onConnect }: Pro
         </div>
       )}
 
-      {/* channel rows */}
-      {channels.length === 0 ? (
+      {/* account rows */}
+      {conn.accounts.length === 0 ? (
         <div className="cxv2-provider-empty">
-          {meta.type === ChannelType.GoLogin
+          {conn.connector === ChannelType.GoLogin
             ? t('connectors.noChannelsYet')
             : t('connectors.postizAutoNote')}
         </div>
       ) : (
-        channels.map((c) => (
+        conn.accounts.map((c) => (
           <div key={c.id} className="cxv2-channel-row">
             {/* inner two-column: [avatar+name | platforms] */}
             <div className="cxv2-channel-inner">
@@ -227,15 +242,15 @@ function ProviderBlock({ meta, channels, busy, onAdd, onRemove, onConnect }: Pro
       )}
 
       {/* Mobile-only bottom "Add" button (mimics mockup full-width strip) */}
-      {meta.type === ChannelType.GoLogin && (
+      {conn.connector === ChannelType.GoLogin && (
         <button
           type="button"
           className="cxv2-provider-add-strip"
-          onClick={onAdd}
+          onClick={() => onAddAccount(conn.profileId!)}
           disabled={busy}
         >
           <PlusIcon width={13} height={13} />
-          {t('connectors.addChannel')}
+          {t('connectors.addAccount')}
         </button>
       )}
     </div>
@@ -252,6 +267,7 @@ export function Connections() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [lockedProfile, setLockedProfile] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -279,7 +295,16 @@ export function Connections() {
     }
   }
 
-  const openAdd = () => { setForm(emptyForm); setError(null); setAddOpen(true); };
+  /** Open modal for a brand-new connection (no profileId prefilled). */
+  const openAdd = () => { setForm(emptyForm); setLockedProfile(null); setError(null); setAddOpen(true); };
+
+  /** Open modal to add an account to an existing GoLogin profile (profileId locked). */
+  const openAddAccount = (profileId: string) => {
+    setForm({ ...emptyForm, profileId });
+    setLockedProfile(profileId);
+    setError(null);
+    setAddOpen(true);
+  };
 
   const openPostiz = () =>
     void act(async () => {
@@ -295,6 +320,7 @@ export function Connections() {
         profileId: form.profileId.trim(),
         ...(form.proxy.trim() ? { proxy: form.proxy.trim() } : {}),
       });
+      setLockedProfile(null);
       setAddOpen(false);
       await load();
     });
@@ -304,15 +330,8 @@ export function Connections() {
 
   const canAdd = !!form.displayName.trim() && !!form.profileId.trim();
 
-  // ── derived stats ────────────────────────────────────────────────────────
-  // Group channels by provider type for the provider blocks
-  const byType: Partial<Record<ChannelType, Channel[]>> = {};
-  for (const c of channels) {
-    (byType[c.type] ??= []).push(c);
-  }
-
-  // Stat strip: connections (distinct connector types used) / channels (total) / platforms (distinct)
-  const connectedTypes = Object.keys(byType).length;
+  // ── derived ──────────────────────────────────────────────────────────────
+  const connections = groupChannels(channels);
   const totalChannels = channels.length;
   const distinctPlatforms = new Set(channels.map((c) => c.platform)).size;
 
@@ -328,7 +347,7 @@ export function Connections() {
       <div className="cxv2-stat-strip">
         <StatCard
           label={t('connectors.statConnections')}
-          value={connectedTypes}
+          value={connections.length}
           iconBg={tokenTint('var(--primary)', 13)}
           iconColor="var(--primary)"
           icon={<ConnectionsIcon width={15} height={15} />}
@@ -353,13 +372,26 @@ export function Connections() {
 
       {/* ── provider blocks ── */}
       <div className="cxv2-providers">
-        {([ChannelType.GoLogin, ChannelType.Postiz] as ChannelType[]).map((type) => (
-          <ProviderBlock
-            key={type}
-            meta={PROVIDER_META[type]}
-            channels={byType[type] ?? []}
+        {/* "+ New connection" button — always visible so empty workspaces can create the first profile */}
+        <div className="cxv2-providers-header">
+          <button
+            type="button"
+            className="cxv2-add-btn"
+            onClick={openAdd}
+            disabled={busy}
+          >
+            <PlusIcon width={13} height={13} />
+            {t('connectors.newConnection')}
+          </button>
+        </div>
+
+        {/* one card per connection (GoLogin per-profile + Postiz pool when present) */}
+        {connections.map((conn) => (
+          <ConnectionBlock
+            key={conn.key}
+            conn={conn}
             busy={busy}
-            onAdd={openAdd}
+            onAddAccount={openAddAccount}
             onRemove={removeChannel}
             onConnect={openPostiz}
           />
@@ -397,13 +429,13 @@ export function Connections() {
 
       {/* ── add-channel modal (GoLogin only) ── */}
       {addOpen && (
-        <Modal onClose={() => setAddOpen(false)} className="cx-add-modal">
+        <Modal onClose={() => { setLockedProfile(null); setAddOpen(false); }} className="cx-add-modal">
           <div className="cx-modal-head">
-            <h3>{t('connectors.addChannelTitle')}</h3>
+            <h3>{lockedProfile ? t('connectors.addAccountTitle') : t('connectors.addChannelTitle')}</h3>
             <button
               type="button"
               className="cx-modal-x"
-              onClick={() => setAddOpen(false)}
+              onClick={() => { setLockedProfile(null); setAddOpen(false); }}
               aria-label={t('common.close')}
             >
               <XIcon />
@@ -428,10 +460,12 @@ export function Connections() {
             </Field>
             <Field label={t('connectors.gologinProfileId')}>
               <input
-                className="text-input"
+                className={`text-input${lockedProfile ? ' text-input--readonly' : ''}`}
                 value={form.profileId}
                 placeholder="6a33…"
-                onChange={(e) => setForm({ ...form, profileId: e.target.value })}
+                readOnly={!!lockedProfile}
+                disabled={!!lockedProfile}
+                onChange={lockedProfile ? undefined : (e) => setForm({ ...form, profileId: e.target.value })}
               />
             </Field>
             <Field label={t('connectors.gologinProxy')}>
@@ -447,7 +481,7 @@ export function Connections() {
               <button
                 type="button"
                 className="btn-ghost btn-inline"
-                onClick={() => setAddOpen(false)}
+                onClick={() => { setLockedProfile(null); setAddOpen(false); }}
               >
                 {t('common.cancel')}
               </button>
