@@ -22,9 +22,6 @@ function tokenTint(token: string, pct = 14) {
 }
 
 interface ProviderMeta {
-  type: ChannelType;
-  label: string;
-  desc: string;
   iconBg: string;
   iconColor: string;
   icon: React.ReactNode;
@@ -32,9 +29,6 @@ interface ProviderMeta {
 
 const PROVIDER_META: Record<ChannelType, ProviderMeta> = {
   [ChannelType.GoLogin]: {
-    type: ChannelType.GoLogin,
-    label: 'GoLogin',
-    desc: 'Anti-detect browser profiles',
     iconBg: tokenTint('var(--accent-keys)'),
     iconColor: 'var(--accent-keys)',
     icon: (
@@ -45,9 +39,6 @@ const PROVIDER_META: Record<ChannelType, ProviderMeta> = {
     ),
   },
   [ChannelType.Postiz]: {
-    type: ChannelType.Postiz,
-    label: 'Postiz',
-    desc: 'Schedule & publish to channels',
     iconBg: tokenTint('var(--accent-publish)'),
     iconColor: 'var(--accent-publish)',
     icon: (
@@ -126,7 +117,7 @@ function ConnectionBlock({ conn, busy, onAddAccount, onRemove, onConnect }: Conn
                 )}
                 {conn.proxy && (
                   <span className="cxv2-profile-chip cxv2-proxy-chip">
-                    {t('connectors.proxyLabel')}
+                    {`${t('connectors.proxyLabel')} · ${conn.proxy}`}
                   </span>
                 )}
               </span>
@@ -491,7 +482,7 @@ export function Connections() {
                 disabled={busy || !canAdd}
                 onClick={addChannel}
               >
-                {t('connectors.addChannelBtn')}
+                {lockedProfile ? t('connectors.addAccount') : t('connectors.addChannelBtn')}
               </button>
             </div>
           </div>
