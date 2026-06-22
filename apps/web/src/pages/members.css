@@ -394,6 +394,10 @@
 .mem-role-pick {
   flex: 1;
 }
+.mem-role-pick .menupick-wrap,
+.mem-role-pick .menupick-btn {
+  width: 100%;
+}
 .mem-select {
   width: 100%;
   padding: 6px 10px;
@@ -427,7 +431,8 @@
   width: auto;
   margin-top: 0;
 }
-.mem-invite-row .mem-select {
+.mem-invite-row .mem-select,
+.mem-invite-row .menupick-wrap {
   width: auto;
 }
 

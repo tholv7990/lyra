@@ -56,6 +56,7 @@ import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
 import { CheckIcon, PlayIcon, SparkleIcon } from '../layout/icons';
+import { MenuPicker } from '../components/MenuPicker';
 import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
 import { buildEditGraph } from '../components/flow/buildGraph';
 import { useBreadcrumb } from '../layout/breadcrumb';
@@ -796,20 +797,17 @@ export function PipelineBuilder() {
                       })
                     }
                   />
-                  <select
-                    className="text-input addstep-cond-op"
+                  <MenuPicker<ConditionOp>
                     value={ed.condition.op}
-                    onChange={(e) =>
+                    options={COND_OPS.map((o) => ({ value: o.op as ConditionOp, label: t(o.labelKey) }))}
+                    onChange={(v) =>
                       setEditing({
                         ...editing!,
-                        step: { ...ed, condition: { ...ed.condition!, op: e.target.value as ConditionOp } },
+                        step: { ...ed, condition: { ...ed.condition!, op: v as ConditionOp } },
                       })
                     }
-                  >
-                    {COND_OPS.map((o) => (
-                      <option key={o.op} value={o.op}>{t(o.labelKey)}</option>
-                    ))}
-                  </select>
+                    ariaLabel={t('pipelines.condition')}
+                  />
                   {COND_NEEDS_VALUE(ed.condition.op) && (
                     <input
                       className="text-input addstep-cond-val"

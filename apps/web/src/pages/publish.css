@@ -104,6 +104,8 @@
   white-space: nowrap;
 }
 .pub-project select { flex: 1; }
+.pub-project .menupick-wrap,
+.pub-project .menupick-btn { width: 100%; }
 
 /* ── Channel cards (2-up grid) ───────────────────────────────────────────── */
 .pub-channels {

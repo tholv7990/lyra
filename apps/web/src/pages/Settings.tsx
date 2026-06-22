@@ -17,6 +17,7 @@ import {
   type ProviderCatalogEntry,
 } from '../lib/providerCatalog';
 import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
+import { MenuPicker } from '../components/MenuPicker';
 import { PostizKeySection } from '../components/PostizKeySection';
 import { PlusIcon } from '../layout/icons';
 
@@ -205,18 +206,12 @@ export function Settings() {
 
         {canManage && addable.length > 0 && (
           <div className="prov-add">
-            <select
-              className="text-input prov-select"
+            <MenuPicker<string>
               value={pick}
-              onChange={(e) => setPick(e.target.value)}
-              aria-label={t('settings.chooseProvider')}
-            >
-              {addable.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              options={addable.map((p) => ({ value: p.id, label: p.label }))}
+              onChange={(v) => setPick(v)}
+              ariaLabel={t('settings.chooseProvider')}
+            />
             <button type="button" className="btn-primary prov-add-btn" onClick={() => openAdd(pick)} disabled={!pick}>
               <PlusIcon width={15} height={15} />
               {t('settings.addProvider')}

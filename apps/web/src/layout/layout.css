@@ -2683,7 +2683,9 @@
   gap: 8px;
   margin-bottom: 14px;
 }
-.prov-select {
+.prov-select,
+.prov-add .menupick-wrap,
+.prov-add .menupick-btn {
   flex: 1;
   max-width: 280px;
 }
@@ -2961,7 +2963,9 @@
   .prov-add {
     flex-direction: column;
   }
-  .prov-select {
+  .prov-select,
+  .prov-add .menupick-wrap,
+  .prov-add .menupick-btn {
     max-width: none;
   }
   .prov-add-btn {

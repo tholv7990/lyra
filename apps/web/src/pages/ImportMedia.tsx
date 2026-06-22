@@ -6,6 +6,7 @@ import { connectorsApi } from '../lib/connectors';
 import { downloadFile } from '../lib/api';
 import { RefreshIcon } from '../layout/icons';
 import { CrawlerCookies } from '../components/CrawlerCookies';
+import { MenuPicker } from '../components/MenuPicker';
 import './connectors.css';
 import './importmedia.css';
 
@@ -275,18 +276,15 @@ function CrawlSource({
                         ) : (
                           <>
                             {it.qualities?.length ? (
-                              <select
-                                className="cx-qsel"
+                              <MenuPicker<string>
                                 value={chosen}
-                                aria-label={t('connectors.quality')}
-                                onChange={(e) => setPick((p) => ({ ...p, [it.index]: e.target.value }))}
-                              >
-                                {it.qualities.map((q) => (
-                                  <option key={q.format} value={q.format}>
-                                    {(q.height ? q.label : t('connectors.audioOnly')) + mb(q.approxBytes)}
-                                  </option>
-                                ))}
-                              </select>
+                                options={it.qualities.map((q) => ({
+                                  value: q.format,
+                                  label: (q.height ? q.label : t('connectors.audioOnly')) + mb(q.approxBytes),
+                                }))}
+                                onChange={(v) => setPick((p) => ({ ...p, [it.index]: v }))}
+                                ariaLabel={t('connectors.quality')}
+                              />
                             ) : null}
                             <button
                               type="button"

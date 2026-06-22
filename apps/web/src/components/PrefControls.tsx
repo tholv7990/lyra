@@ -1,24 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { useLanguage, useTheme, type ThemePref } from '../lib/prefs';
 import { LANG_LABELS, type Lang } from '../i18n';
+import { MenuPicker } from './MenuPicker';
 
 // Language picker — a compact select (English / Tiếng Việt).
-export function LanguageSelect({ className }: { className?: string }) {
+export function LanguageSelect({ className: _className }: { className?: string }) {
   const { t } = useTranslation();
   const { lang, setLang, supported } = useLanguage();
   return (
-    <select
-      className={className ?? 'text-input select-sm pref-lang'}
+    <MenuPicker<Lang>
       value={lang}
-      onChange={(e) => setLang(e.target.value as Lang)}
-      aria-label={t('common.language')}
-    >
-      {supported.map((l) => (
-        <option key={l} value={l}>
-          {LANG_LABELS[l]}
-        </option>
-      ))}
-    </select>
+      options={supported.map((l) => ({ value: l, label: LANG_LABELS[l] }))}
+      onChange={(v) => setLang(v)}
+      ariaLabel={t('common.language')}
+    />
   );
 }
 

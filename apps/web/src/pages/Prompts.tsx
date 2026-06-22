@@ -43,6 +43,7 @@ import {
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
 import { Pager } from '../components/Pager';
+import { MenuPicker } from '../components/MenuPicker';
 import './marketplace.css';
 import './prompts.css';
 
@@ -328,17 +329,18 @@ export function Prompts() {
           <span className="mkt-meta-count">
             {t('prompts.showingRange', { start: rangeStart, end: rangeEnd, total })}
           </span>
-          <label className="mkt-sort">
+          <div className="mkt-sort">
             {t('prompts.sortLabel')}
-            <select
-              className="mkt-sort-select"
+            <MenuPicker<PromptSort>
               value={sort}
-              onChange={(e) => setSort(e.target.value as PromptSort)}
-            >
-              <option value="updated">{t('prompts.sortUpdated')}</option>
-              <option value="az">{t('prompts.sortAz')}</option>
-            </select>
-          </label>
+              options={[
+                { value: 'updated' as PromptSort, label: t('prompts.sortUpdated') },
+                { value: 'az' as PromptSort, label: t('prompts.sortAz') },
+              ]}
+              onChange={(v) => setSort(v as PromptSort)}
+              ariaLabel={t('prompts.sortLabel')}
+            />
+          </div>
         </div>
       )}
 

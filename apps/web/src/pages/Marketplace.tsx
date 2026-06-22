@@ -34,6 +34,7 @@ import {
   SearchGlyph,
   SparkleIcon,
 } from '../layout/icons';
+import { MenuPicker } from '../components/MenuPicker';
 import './marketplace.css';
 
 const PAGE_SIZE = 30;
@@ -343,17 +344,18 @@ export function Marketplace() {
           <span className="mkt-meta-count">
             {t('marketplace.showingRange', { start: rangeStart, end: rangeEnd, total })}
           </span>
-          <label className="mkt-sort">
+          <div className="mkt-sort">
             {t('marketplace.sortLabel')}
-            <select
-              className="mkt-sort-select"
+            <MenuPicker<MarketplaceSort>
               value={sort}
-              onChange={(e) => setSort(e.target.value as MarketplaceSort)}
-            >
-              <option value="newest">{t('marketplace.sortNewest')}</option>
-              <option value="az">{t('marketplace.sortAz')}</option>
-            </select>
-          </label>
+              options={[
+                { value: 'newest' as MarketplaceSort, label: t('marketplace.sortNewest') },
+                { value: 'az' as MarketplaceSort, label: t('marketplace.sortAz') },
+              ]}
+              onChange={(v) => setSort(v as MarketplaceSort)}
+              ariaLabel={t('marketplace.sortLabel')}
+            />
+          </div>
         </div>
       )}
 

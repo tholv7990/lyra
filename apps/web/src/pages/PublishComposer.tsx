@@ -11,6 +11,7 @@ import { platformColor as color, platformGlyph as glyph, platformLabel } from '.
 import { groupChannels, shortProfileId } from '../lib/connections';
 import { fmtDate } from '../lib/format';
 import { CheckIcon, PlusIcon } from '../layout/icons';
+import { MenuPicker } from '../components/MenuPicker';
 import './connectors.css';
 import './publish.css';
 
@@ -174,13 +175,16 @@ export function PublishComposer() {
             </div>
             {projects.length > 0 && (
               <div className="pub-project">
-                <label htmlFor="pub-project">{t('connectors.forProject')}</label>
-                <select id="pub-project" className="pub-input" value={projectId} onChange={(e) => pickProject(e.target.value)}>
-                  <option value="">{t('connectors.noProject')}</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <label>{t('connectors.forProject')}</label>
+                <MenuPicker<string>
+                  value={projectId}
+                  options={[
+                    { value: '', label: t('connectors.noProject') },
+                    ...projects.map((p) => ({ value: p.id, label: p.name })),
+                  ]}
+                  onChange={(v) => pickProject(v)}
+                  ariaLabel={t('connectors.forProject')}
+                />
               </div>
             )}
             {channels.length === 0 ? (

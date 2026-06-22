@@ -13,6 +13,7 @@ import { initial, avatarStyle, fmtDate } from '../lib/format';
 import { adminApi, type CatalogStats } from '../lib/admin';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
+import { MenuPicker } from '../components/MenuPicker';
 import { ListIcon, MembersIcon, RefreshIcon, XIcon } from '../layout/icons';
 import './admin.css';
 
@@ -523,30 +524,30 @@ function RequestsSection() {
       </div>
 
       <div className="lin-toolbar admin-req-toolbar">
-        <select
-          className="text-input admin-req-filter"
-          value={typeF}
-          onChange={(e) => setTypeF(e.target.value)}
-          aria-label={t('admin.reqFilterType')}
-        >
-          <option value="">{t('admin.reqAllTypes')}</option>
-          <option value="provider">{t('admin.reqType.provider')}</option>
-          <option value="bug">{t('admin.reqType.bug')}</option>
-          <option value="team-upgrade">{t('admin.reqType.team-upgrade')}</option>
-        </select>
-        <select
-          className="text-input admin-req-filter"
-          value={statusF}
-          onChange={(e) => setStatusF(e.target.value)}
-          aria-label={t('admin.reqFilterStatus')}
-        >
-          <option value="">{t('admin.reqAllStatuses')}</option>
-          {REQUEST_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`admin.reqStatus.${s}`)}
-            </option>
-          ))}
-        </select>
+        <div className="admin-req-filter">
+          <MenuPicker<string>
+            value={typeF}
+            options={[
+              { value: '', label: t('admin.reqAllTypes') },
+              { value: 'provider', label: t('admin.reqType.provider') },
+              { value: 'bug', label: t('admin.reqType.bug') },
+              { value: 'team-upgrade', label: t('admin.reqType.team-upgrade') },
+            ]}
+            onChange={(v) => setTypeF(v)}
+            ariaLabel={t('admin.reqFilterType')}
+          />
+        </div>
+        <div className="admin-req-filter">
+          <MenuPicker<string>
+            value={statusF}
+            options={[
+              { value: '', label: t('admin.reqAllStatuses') },
+              ...REQUEST_STATUSES.map((s) => ({ value: s, label: t(`admin.reqStatus.${s}`) })),
+            ]}
+            onChange={(v) => setStatusF(v)}
+            ariaLabel={t('admin.reqFilterStatus')}
+          />
+        </div>
       </div>
 
       {error && (
@@ -604,18 +605,14 @@ function RequestRow({
             </>
           )}
         </span>
-        <select
-          className={`text-input admin-req-status status-${row.status}`}
-          value={row.status}
-          onChange={(e) => onStatus(row.id, e.target.value as RequestStatus)}
-          aria-label={t('admin.reqFilterStatus')}
-        >
-          {REQUEST_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`admin.reqStatus.${s}`)}
-            </option>
-          ))}
-        </select>
+        <div className={`admin-req-status status-${row.status}`}>
+          <MenuPicker<RequestStatus>
+            value={row.status}
+            options={REQUEST_STATUSES.map((s) => ({ value: s as RequestStatus, label: t(`admin.reqStatus.${s}`) }))}
+            onChange={(v) => onStatus(row.id, v)}
+            ariaLabel={t('admin.reqFilterStatus')}
+          />
+        </div>
       </div>
     </div>
   );

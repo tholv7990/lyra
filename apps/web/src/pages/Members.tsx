@@ -13,6 +13,7 @@ import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
+import { MenuPicker } from '../components/MenuPicker';
 import { RequestTeamUpgradeModal } from '../components/RequestTeamUpgradeModal';
 import { KeyIcon, MembersIcon, PersonIcon, PlusIcon, PromptsIcon, XIcon } from '../layout/icons';
 import './members.css';
@@ -255,21 +256,15 @@ function MemberCard({ member, isSelf, canManage, wsId, onChanged, onError }: Mem
 
       {canManage && (
         <div className="mem-actions">
-          <label className="mem-role-pick">
-            <span className="sr-only">{t('members.role')}</span>
-            <select
-              className="mem-select"
+          <span className="mem-role-pick">
+            <MenuPicker<Role>
               value={member.role}
+              options={ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+              onChange={(v) => void changeRole(v)}
               disabled={busy}
-              onChange={(e) => void changeRole(e.target.value as Role)}
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </option>
-              ))}
-            </select>
-          </label>
+              ariaLabel={t('members.role')}
+            />
+          </span>
           <IconButton
             icon={<XIcon />}
             label={isSelf ? t('members.cantRemoveSelf') : t('members.remove')}
@@ -351,13 +346,12 @@ function InviteForm({
           autoFocus
           required
         />
-        <select className="mem-select" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {ROLE_LABELS[r]}
-            </option>
-          ))}
-        </select>
+        <MenuPicker<Role>
+          value={role}
+          options={ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+          onChange={(v) => setRole(v)}
+          ariaLabel={t('members.role')}
+        />
         <button className="btn-primary" type="submit" disabled={busy}>
           {busy ? t('members.sending') : t('members.sendInvite')}
         </button>

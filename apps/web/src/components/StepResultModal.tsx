@@ -6,6 +6,7 @@ import { fmtDuration } from '../lib/format';
 import { useCopyToClipboard } from '../lib/useCopyToClipboard';
 import { XIcon } from '../layout/icons';
 import { IconButton } from './IconButton';
+import { MenuPicker } from './MenuPicker';
 import { Modal } from './Modal';
 import { useMediaViewer } from './MediaViewer';
 
@@ -142,18 +143,15 @@ export function StepResultModal({ runId, step, assets, input, history = [], onCl
         {versions.length > 1 && (
           <div className="srm-versions">
             <span className="srm-versions-label">{t('run.version')}</span>
-            <select
-              className="srm-version-select"
-              value={Math.min(sel, versions.length - 1)}
-              onChange={(e) => setSel(Number(e.target.value))}
-            >
-              {versions.map((v, i) => (
-                <option key={v.key} value={i}>
-                  {v.label}
-                  {i === 0 ? ` · ${t('run.latest')}` : ''}
-                </option>
-              ))}
-            </select>
+            <MenuPicker<string>
+              value={String(Math.min(sel, versions.length - 1))}
+              options={versions.map((v, i) => ({
+                value: String(i),
+                label: v.label + (i === 0 ? ` · ${t('run.latest')}` : ''),
+              }))}
+              onChange={(v) => setSel(Number(v))}
+              ariaLabel={t('run.version')}
+            />
             <span className="srm-version-count">{t('run.runsCount', { n: versions.length })}</span>
           </div>
         )}

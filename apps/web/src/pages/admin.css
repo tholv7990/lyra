@@ -366,6 +366,10 @@
   width: auto;
   min-width: 150px;
 }
+.admin-req-filter .menupick-wrap,
+.admin-req-filter .menupick-btn {
+  width: 100%;
+}
 .admin-req-list {
   display: flex;
   flex-direction: column;
@@ -437,9 +441,13 @@
   min-width: 130px;
   flex-shrink: 0;
 }
-.admin-req-status.status-resolved {
+.admin-req-status .menupick-wrap,
+.admin-req-status .menupick-btn {
+  width: 100%;
+}
+.admin-req-status.status-resolved .menupick-btn {
   color: var(--success);
 }
-.admin-req-status.status-declined {
+.admin-req-status.status-declined .menupick-btn {
   color: var(--ink-muted);
 }
