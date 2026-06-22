@@ -20,6 +20,9 @@ import { CrawlStepProvider } from './providers/crawl.provider';
 import { ImageStepProvider } from './providers/image.provider';
 import { MockStepProvider } from './providers/mock.provider';
 import { ProviderRegistry } from './providers/provider.registry';
+import { RenderClient } from './providers/render.client';
+import { BrandActionProvider } from './providers/brand.action';
+import { ActionRegistry } from './providers/action.registry';
 
 @Module({
   imports: [
@@ -46,6 +49,10 @@ import { ProviderRegistry } from './providers/provider.registry';
     ImageStepProvider,
     MockStepProvider,
     ProviderRegistry,
+    // Action execution: one ActionProvider per ActionType, dispatched via ActionRegistry.
+    RenderClient,
+    BrandActionProvider,
+    ActionRegistry,
   ],
   exports: [RunsService], // Lyra Copilot reads runs
 })
