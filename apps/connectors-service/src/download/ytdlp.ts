@@ -96,12 +96,13 @@ export function downloadArgs(
   cookiePath?: string,
 ): string[] {
   // --newline puts each progress update on its own line so runYtDlp can parse it.
+  // -c resumes partial .part files across retry attempts (the per-job dir is stable).
   // --merge-output-format mp4 makes merged video+audio land in an .mp4 container
   // (not the .webm/.mkv yt-dlp defaults to for VP9). -S prefers H.264/AAC so the
   // merge is a fast remux into a universally-playable mp4 — no re-encode — falling
   // back to the best available codec when H.264 isn't offered at that height.
   // (Both are no-ops for an audio-only or image download.)
-  const args = ['-o', outTemplate, '--no-warnings', '--newline', '--socket-timeout', '15', '--merge-output-format', 'mp4', '-S', 'vcodec:h264,acodec:aac'];
+  const args = ['-o', outTemplate, '--no-warnings', '--newline', '-c', '--socket-timeout', '15', '--merge-output-format', 'mp4', '-S', 'vcodec:h264,acodec:aac'];
   if (format) args.push('-f', format);
   if (cookiePath) args.push('--cookies', cookiePath);
   if (indices?.length) args.push('--playlist-items', indices.map((i) => i + 1).join(','));

@@ -50,6 +50,18 @@ describe('arg builders', () => {
       expect.arrayContaining(['--playlist-items', '1,3']),
     );
   });
+  it('downloadArgs builds the exact args array with -c resume flag', () => {
+    expect(downloadArgs('https://x/v', '/tmp/o')).toEqual([
+      '-o', '/tmp/o',
+      '--no-warnings',
+      '--newline',
+      '-c',
+      '--socket-timeout', '15',
+      '--merge-output-format', 'mp4',
+      '-S', 'vcodec:h264,acodec:aac',
+      'https://x/v',
+    ]);
+  });
   it('downloadArgs passes -f when a format is chosen, and omits it otherwise', () => {
     expect(downloadArgs('https://x/v', '/tmp/o', undefined, 'bv*[height<=720]+ba/b[height<=720]')).toEqual(
       expect.arrayContaining(['-f', 'bv*[height<=720]+ba/b[height<=720]']),

@@ -6,6 +6,7 @@ import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import type { MediaItem } from '@lyra/shared';
 import { assertSafeUrl } from '../common/url';
 import { downloadArgs, mapResolveJson, resolveArgs, runYtDlpRetrying, stripYoutubePlaylist, ytDlpReason } from './ytdlp';
+import { sweepOrphanTempDirs } from './temp-sweep';
 import { FileStore } from './file-store';
 import { DownloadJobStore, ServiceDownloadJob } from './download-job-store';
 import { Semaphore } from './concurrency';
@@ -41,6 +42,7 @@ export class DownloadService {
     this.jobs = new DownloadJobStore(ttl);
     this.downloadLimit = new Semaphore(Number(config.get('CRAWLER_MAX_CONCURRENT') ?? 3));
     this.resolveLimit = new Semaphore(Number(config.get('CRAWLER_MAX_RESOLVE') ?? 4));
+    void sweepOrphanTempDirs();
     setInterval(() => {
       this.store.sweep();
       this.jobs.sweep();
