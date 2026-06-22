@@ -1,3 +1,289 @@
+/* =========================================================================
+   Solo-workspace upgrade hero
+   All values use existing :root tokens. No hardcoded colors.
+   ========================================================================= */
+
+/* Root wrapper — matches the .members max-width/padding already applied by
+   the parent .members container, so no duplication needed here. */
+.mem-solo-root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Hero card ─────────────────────────────────────────────────────────── */
+.mem-hero-card {
+  position: relative;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* Gradient wash — primary tint fading to transparent, top 128px. */
+.mem-hero-gradient {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 128px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 9%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.mem-hero-body {
+  position: relative;
+  padding: 32px 28px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0; /* children set own margins for fine-grained rhythm */
+}
+
+/* Overlapping avatar roster */
+.mem-hero-roster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.mem-hero-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  font-size: var(--text-small);
+  font-weight: 700;
+  border: 3px solid var(--card);
+  box-shadow: var(--shadow-sm);
+  /* Overlap each circle to the left */
+  margin-left: -10px;
+}
+.mem-hero-avatar:first-child {
+  margin-left: 0;
+}
+
+/* Dashed "+" slot — no colored fill, uses surface tokens */
+.mem-hero-avatar-plus {
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  border: 3px dashed var(--hairline-strong);
+  font-weight: 600;
+  font-size: var(--text-large);
+}
+
+/* "Team workspace" badge — primary tint pill */
+.mem-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: var(--text-mini);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.mem-hero-title {
+  margin: 0 0 8px;
+  font-size: var(--text-title2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.mem-hero-desc {
+  margin: 0 auto 22px;
+  max-width: 440px;
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  line-height: var(--lh-body);
+}
+
+/* Inline "solo" chip inside the description */
+.mem-solo-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--text-mini);
+  font-weight: 600;
+  color: var(--ink-muted);
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.mem-hero-ctas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Primary CTA: inherits .btn-primary .btn-inline — just add icon gap */
+.mem-hero-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Secondary CTA: inherits .btn-ghost .btn-inline */
+.mem-hero-cta-secondary {
+  /* no extra styles needed — btn-ghost handles it */
+}
+
+/* ── Perk grid ─────────────────────────────────────────────────────────── */
+.mem-perks-section {
+  /* no extra wrapper styles needed — gap on root handles spacing */
+}
+
+.mem-perks-label {
+  font-size: var(--text-mini);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin: 6px 2px 12px;
+}
+
+.mem-perks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mem-perk-card {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  align-items: flex-start;
+}
+
+.mem-perk-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.mem-perk-text {
+  min-width: 0;
+}
+
+.mem-perk-title {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.mem-perk-desc {
+  font-size: var(--text-mini);
+  color: var(--ink-muted);
+  line-height: var(--lh-body);
+}
+
+/* ── Current plan strip ────────────────────────────────────────────────── */
+.mem-plan-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  flex-wrap: wrap;
+}
+
+.mem-plan-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mem-plan-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.mem-plan-name {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mem-plan-sub {
+  font-size: var(--text-mini);
+  color: var(--ink-tertiary);
+  margin-top: 1px;
+}
+
+.mem-plan-sales {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+.mem-plan-sales:hover {
+  text-decoration: underline;
+}
+
+/* ── Mobile responsive ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .mem-perks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mem-hero-body {
+    padding: 28px 20px 24px;
+  }
+
+  .mem-hero-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .mem-hero-ctas {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .mem-hero-cta-primary,
+  .mem-hero-cta-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* "Request sent" confirmation after asking to upgrade to a team. */
 .members-ok {
   margin: 0;

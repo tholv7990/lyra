@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type FormEvent, type ReactNode, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Role, WorkspaceType } from '@lyra/shared';
 import type { Invite, MemberView } from '@lyra/shared';
@@ -14,7 +14,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconButton } from '../components/IconButton';
 import { FilterPopover } from '../components/FilterPopover';
 import { RequestTeamUpgradeModal } from '../components/RequestTeamUpgradeModal';
-import { MembersIcon, PlusIcon, XIcon } from '../layout/icons';
+import { KeyIcon, MembersIcon, PersonIcon, PlusIcon, PromptsIcon, XIcon } from '../layout/icons';
 import './members.css';
 
 // Assignable roles. Owner = full control, Member = create/run, Viewer = read-only.
@@ -63,30 +63,14 @@ export function Members() {
 
   if (!current) return <p className="empty">{t('members.loading')}</p>;
 
-  // Personal workspaces: show the upgrade prompt instead of the members UI.
+  // Personal workspaces: show the hero upgrade gate instead of the members UI.
   if (current.type !== WorkspaceType.Team) {
     return (
       <div className="members">
-        <header className="mem-head">
-          <h1>{t('members.upgradeTitle')}</h1>
-          <p>{t('members.upgradeBody')}</p>
-        </header>
-
-        {upgradeSent ? (
-          <p className="members-ok" role="status" aria-live="polite">
-            {t('members.upgradeSent')}
-          </p>
-        ) : (
-          <button
-            type="button"
-            className="btn-primary"
-            style={{ width: 'auto' }}
-            onClick={() => setUpgradeOpen(true)}
-          >
-            {t('members.upgradeCta')}
-          </button>
-        )}
-
+        <SoloUpgradeHero
+          upgradeSent={upgradeSent}
+          onUpgradeClick={() => setUpgradeOpen(true)}
+        />
         {upgradeOpen && (
           <RequestTeamUpgradeModal
             workspaceId={current.id}
@@ -462,5 +446,222 @@ function PendingInvites({ wsId, invites, onChanged, onError }: PendingInvitesPro
         ))}
       </div>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SoloUpgradeHero — shown when WorkspaceType !== Team.
+// Structure mirrors the mockup (Lyra Members.dc.html): hero card with avatar
+// roster + gradient wash, perk grid, current-plan strip. Colors are strictly
+// from `:root` tokens; no hardcodes.
+// ---------------------------------------------------------------------------
+
+// Static roster initials used in the hero avatar strip — purely decorative.
+const ROSTER_AVATARS = [
+  { initials: 'JD', accentVar: '--accent-projects' },
+  { initials: 'MK', accentVar: '--accent-prompts' },
+  { initials: 'AR', accentVar: '--accent-members' },
+  { initials: 'SL', accentVar: '--accent-keys' },
+  { initials: 'TN', accentVar: '--accent-pipelines' },
+] as const;
+
+interface SoloUpgradeHeroProps {
+  upgradeSent: boolean;
+  onUpgradeClick: () => void;
+}
+
+function SoloUpgradeHero({ upgradeSent, onUpgradeClick }: SoloUpgradeHeroProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="mem-solo-root">
+      {/* ── Hero card ─────────────────────────────────────────────────── */}
+      <div className="mem-hero-card">
+        {/* Gradient wash at the top — uses primary tint, fades to transparent */}
+        <div className="mem-hero-gradient" aria-hidden="true" />
+
+        <div className="mem-hero-body">
+          {/* Overlapping avatar roster */}
+          <div className="mem-hero-roster" aria-hidden="true">
+            {ROSTER_AVATARS.map((a) => (
+              <span
+                key={a.initials}
+                className="mem-hero-avatar"
+                style={{ background: `var(${a.accentVar})` }}
+              >
+                {a.initials}
+              </span>
+            ))}
+            {/* Dashed "+" placeholder slot */}
+            <span className="mem-hero-avatar mem-hero-avatar-plus">+</span>
+          </div>
+
+          {/* "Team workspace" badge */}
+          <div className="mem-hero-badge">
+            <MembersIcon width={12} height={12} aria-hidden="true" />
+            {t('members.heroTeamBadge')}
+          </div>
+
+          <h1 className="mem-hero-title">{t('members.heroTitle')}</h1>
+          <HeroDesc />
+
+          {/* CTAs */}
+          {upgradeSent ? (
+            <p className="members-ok" role="status" aria-live="polite">
+              {t('members.upgradeSent')}
+            </p>
+          ) : (
+            <div className="mem-hero-ctas">
+              <button
+                type="button"
+                className="btn-primary btn-inline mem-hero-cta-primary"
+                onClick={onUpgradeClick}
+              >
+                <PlusIcon aria-hidden="true" />
+                {t('members.upgradeCta')}
+              </button>
+              <button type="button" className="btn-ghost btn-inline mem-hero-cta-secondary">
+                {t('members.heroComparePlans')}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── "What you unlock" perk grid ───────────────────────────────── */}
+      <div className="mem-perks-section">
+        <div className="mem-perks-label">{t('members.heroUnlocksLabel')}</div>
+        <div className="mem-perks-grid">
+          <PerkCard
+            iconEl={<MembersIcon width={17} height={17} aria-hidden="true" />}
+            accentVar="--accent-members"
+            title={t('members.perkInviteTitle')}
+            desc={t('members.perkInviteDesc')}
+          />
+          <PerkCard
+            iconEl={<ShieldGlyph />}
+            accentVar="--accent-keys"
+            title={t('members.perkRolesTitle')}
+            desc={t('members.perkRolesDesc')}
+          />
+          <PerkCard
+            iconEl={<PromptsIcon width={17} height={17} aria-hidden="true" />}
+            accentVar="--accent-prompts"
+            title={t('members.perkSharedTitle')}
+            desc={t('members.perkSharedDesc')}
+          />
+          <PerkCard
+            iconEl={<KeyIcon width={17} height={17} aria-hidden="true" />}
+            accentVar="--primary"
+            title={t('members.perkKeysTitle')}
+            desc={t('members.perkKeysDesc')}
+          />
+        </div>
+      </div>
+
+      {/* ── Current plan strip ────────────────────────────────────────── */}
+      <div className="mem-plan-strip">
+        <div className="mem-plan-left">
+          <span className="mem-plan-icon" aria-hidden="true">
+            <PersonIcon width={18} height={18} />
+          </span>
+          <div>
+            <div className="mem-plan-name">{t('members.heroPlanLabel')}</div>
+            <div className="mem-plan-sub">{t('members.heroPlanSub')}</div>
+          </div>
+        </div>
+        <a href="mailto:sales@lyra.app" className="mem-plan-sales">
+          {t('members.heroTalkSales')}
+          <ArrowRightGlyph />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// Renders the hero description with the "solo" word as an inline chip.
+function HeroDesc() {
+  const { t } = useTranslation();
+  const raw = t('members.heroBody');
+  const solo = t('members.heroSoloBadge');
+  const idx = raw.indexOf(solo);
+  if (idx === -1) return <p className="mem-hero-desc">{raw}</p>;
+  return (
+    <p className="mem-hero-desc">
+      {raw.slice(0, idx)}
+      <span className="mem-solo-chip">{solo}</span>
+      {raw.slice(idx + solo.length)}
+    </p>
+  );
+}
+
+// Perk feature card inside the unlock grid.
+function PerkCard({
+  iconEl,
+  accentVar,
+  title,
+  desc,
+}: {
+  iconEl: ReactNode;
+  accentVar: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="mem-perk-card">
+      <span
+        className="mem-perk-icon"
+        style={{
+          background: `color-mix(in srgb, var(${accentVar}) 14%, transparent)`,
+          color: `var(${accentVar})`,
+        }}
+        aria-hidden="true"
+      >
+        {iconEl}
+      </span>
+      <div className="mem-perk-text">
+        <div className="mem-perk-title">{title}</div>
+        <div className="mem-perk-desc">{desc}</div>
+      </div>
+    </div>
+  );
+}
+
+// Inline shield glyph for the Roles & permissions perk.
+function ShieldGlyph() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8 1.8 13 4v3.4c0 3.2-2.1 5.4-5 6.8-2.9-1.4-5-3.6-5-6.8V4Z" />
+      <path d="m6.2 7.8 1.3 1.3 2.5-2.6" />
+    </svg>
+  );
+}
+
+// Inline right-arrow glyph for the "Talk to sales" link.
+function ArrowRightGlyph() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3.5 8h9M8.5 4l4 4-4 4" />
+    </svg>
   );
 }

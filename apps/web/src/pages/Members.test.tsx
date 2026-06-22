@@ -69,19 +69,31 @@ function render() {
 }
 
 describe('Members page', () => {
-  test('personal workspace renders the upgrade prompt, not the member table', () => {
+  test('personal workspace renders the hero upgrade gate, not the member table', () => {
     _wsType = WorkspaceType.Personal;
     const html = render();
-    expect(html).toContain('members.upgradeTitle');
+    // Hero card landmarks
+    expect(html).toContain('members.heroTitle');
     expect(html).toContain('members.upgradeCta');
-    // Should not render the live members table header
+    expect(html).toContain('members.heroTeamBadge');
+    // Perk grid
+    expect(html).toContain('members.perkInviteTitle');
+    expect(html).toContain('members.perkRolesTitle');
+    expect(html).toContain('members.perkSharedTitle');
+    expect(html).toContain('members.perkKeysTitle');
+    // Plan strip
+    expect(html).toContain('members.heroPlanLabel');
+    expect(html).toContain('members.heroTalkSales');
+    // Should NOT render the live members table
     expect(html).not.toContain('members.peopleCount');
+    expect(html).not.toContain('members.searchPlaceholder');
   });
 
-  test('team workspace renders the members UI, not the upgrade prompt', () => {
+  test('team workspace renders the members UI, not the hero gate', () => {
     _wsType = WorkspaceType.Team;
     const html = render();
-    expect(html).not.toContain('members.upgradeTitle');
+    expect(html).not.toContain('members.heroTitle');
+    expect(html).not.toContain('members.heroTeamBadge');
     // Members UI renders the search toolbar and invite button
     expect(html).toContain('members.searchPlaceholder');
     expect(html).toContain('members.invite');
