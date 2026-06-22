@@ -3,6 +3,7 @@ import {
   mapResolveJson,
   resolveArgs,
   downloadArgs,
+  stripYoutubePlaylist,
   ytDlpReason,
   qualitiesFromFormats,
   parsePercents,
@@ -41,7 +42,7 @@ describe('mapResolveJson', () => {
 describe('arg builders', () => {
   it('resolveArgs ends with the url and has no shell metachars', () => {
     const a = resolveArgs('https://x/v');
-    expect(a).toEqual(['-J', '--no-warnings', 'https://x/v']);
+    expect(a).toEqual(['-J', '--no-warnings', '--socket-timeout', '15', 'https://x/v']);
   });
   it('downloadArgs targets a template + optional playlist items', () => {
     expect(downloadArgs('https://x/v', '/tmp/%(id)s.%(ext)s')).toContain('-o');
@@ -63,13 +64,30 @@ describe('arg builders', () => {
     expect(a).toEqual(expect.arrayContaining(['--merge-output-format', 'mp4']));
     expect(a).toEqual(expect.arrayContaining(['-S', 'vcodec:h264,acodec:aac']));
   });
+  it('resolveArgs + downloadArgs set a socket timeout so a stalled connection fails fast', () => {
+    expect(resolveArgs('https://x/v')).toEqual(expect.arrayContaining(['--socket-timeout', '15']));
+    expect(downloadArgs('https://x/v', '/tmp/o')).toEqual(expect.arrayContaining(['--socket-timeout', '15']));
+  });
   it('resolveArgs/downloadArgs add --cookies only when a cookie file is given', () => {
-    expect(resolveArgs('https://x/v', '/tmp/c.txt')).toEqual(['-J', '--no-warnings', '--cookies', '/tmp/c.txt', 'https://x/v']);
+    expect(resolveArgs('https://x/v', '/tmp/c.txt')).toEqual(['-J', '--no-warnings', '--socket-timeout', '15', '--cookies', '/tmp/c.txt', 'https://x/v']);
     expect(resolveArgs('https://x/v')).not.toContain('--cookies');
     expect(downloadArgs('https://x/v', '/tmp/o', undefined, undefined, '/tmp/c.txt')).toEqual(
       expect.arrayContaining(['--cookies', '/tmp/c.txt']),
     );
     expect(downloadArgs('https://x/v', '/tmp/o')).not.toContain('--cookies');
+  });
+});
+
+describe('stripYoutubePlaylist', () => {
+  it('drops playlist params from a youtube watch URL (avoids resolving the whole mix/playlist)', () => {
+    expect(stripYoutubePlaylist('https://www.youtube.com/watch?v=abc&list=PL123&index=4')).toBe(
+      'https://www.youtube.com/watch?v=abc',
+    );
+  });
+  it('leaves non-youtube URLs and carousels untouched (no playlist param to strip)', () => {
+    expect(stripYoutubePlaylist('https://www.instagram.com/p/ABC/')).toBe('https://www.instagram.com/p/ABC/');
+    expect(stripYoutubePlaylist('https://www.youtube.com/watch?v=abc')).toBe('https://www.youtube.com/watch?v=abc');
+    expect(stripYoutubePlaylist('not a url')).toBe('not a url');
   });
 });
 

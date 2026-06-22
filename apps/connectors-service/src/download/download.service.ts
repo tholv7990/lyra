@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import type { MediaItem } from '@lyra/shared';
 import { assertSafeUrl } from '../common/url';
-import { downloadArgs, mapResolveJson, resolveArgs, runYtDlpRetrying, ytDlpReason } from './ytdlp';
+import { downloadArgs, mapResolveJson, resolveArgs, runYtDlpRetrying, stripYoutubePlaylist, ytDlpReason } from './ytdlp';
 import { FileStore } from './file-store';
 import { DownloadJobStore, ServiceDownloadJob } from './download-job-store';
 import { Semaphore } from './concurrency';
@@ -29,15 +29,18 @@ async function withCookies<T>(cookies: string | undefined, fn: (cookiePath?: str
 export class DownloadService {
   private readonly store: FileStore;
   private readonly jobs: DownloadJobStore;
-  // Cap simultaneous downloads (each = yt-dlp + a CPU-bound ffmpeg merge) so a
-  // batch of parallel Crawler links queues instead of overwhelming the box.
-  // Resolve stays uncapped — it's a quick metadata fetch.
+  // Cap concurrent yt-dlp work so a batch of pasted links queues instead of
+  // spawning a process storm. Downloads are heavy (yt-dlp + a CPU-bound ffmpeg
+  // merge) so their cap is tighter; resolves are light metadata fetches but are
+  // still capped to avoid a burst that trips site rate-limiting / bot checks.
   private readonly downloadLimit: Semaphore;
+  private readonly resolveLimit: Semaphore;
   constructor(config: ConfigService) {
     const ttl = Number(config.get('FILE_TTL_MS') ?? 900_000);
     this.store = new FileStore(ttl);
     this.jobs = new DownloadJobStore(ttl);
     this.downloadLimit = new Semaphore(Number(config.get('CRAWLER_MAX_CONCURRENT') ?? 3));
+    this.resolveLimit = new Semaphore(Number(config.get('CRAWLER_MAX_RESOLVE') ?? 4));
     setInterval(() => {
       this.store.sweep();
       this.jobs.sweep();
@@ -45,8 +48,13 @@ export class DownloadService {
   }
 
   async resolve(url: string, cookies?: string): Promise<MediaItem[]> {
-    assertSafeUrl(url);
-    const { stdout } = await withCookies(cookies, (cp) => runYtDlpRetrying(resolveArgs(url, cp)));
+    const safe = stripYoutubePlaylist(url);
+    assertSafeUrl(safe);
+    // Capped + time-boxed: 3 attempts at 60s each, so a slow/hung extraction
+    // fails fast instead of holding a slot for the 10-minute default.
+    const { stdout } = await this.resolveLimit.run(() =>
+      withCookies(cookies, (cp) => runYtDlpRetrying(resolveArgs(safe, cp), 3, 60_000)),
+    );
     return mapResolveJson(JSON.parse(stdout));
   }
 
@@ -54,9 +62,10 @@ export class DownloadService {
   // The SSRF guard runs here (sync) so a bad URL fails fast; yt-dlp failures land
   // on the job as status 'error' with the parsed reason.
   startDownload(url: string, indices?: number[], format?: string, cookies?: string): string {
-    assertSafeUrl(url);
+    const safe = stripYoutubePlaylist(url);
+    assertSafeUrl(safe);
     const id = this.jobs.create();
-    void this.runJob(id, url, indices, format, cookies);
+    void this.runJob(id, safe, indices, format, cookies);
     return id;
   }
 

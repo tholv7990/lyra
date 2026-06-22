@@ -65,8 +65,27 @@ export function mapResolveJson(json: YtEntry): MediaItem[] {
   return [toItem(json ?? {}, 0)];
 }
 
+// A youtube.com/watch?v=X&list=Y link makes yt-dlp resolve the WHOLE playlist
+// (mixes, watch-later, auto-generated lists) — slow and almost never what's wanted
+// when crawling one clip. Drop the playlist params for youtube watch URLs only;
+// Instagram/TikTok carousels carry no such param, so they still resolve every entry.
+export function stripYoutubePlaylist(url: string): string {
+  try {
+    const u = new URL(url);
+    const yt = /(^|\.)youtube\.com$/.test(u.hostname);
+    if (yt && u.pathname === '/watch' && u.searchParams.has('v')) {
+      for (const p of ['list', 'index', 'start_radio', 'pp']) u.searchParams.delete(p);
+      return u.toString();
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
 export function resolveArgs(url: string, cookiePath?: string): string[] {
-  return ['-J', '--no-warnings', ...(cookiePath ? ['--cookies', cookiePath] : []), url];
+  // --socket-timeout fails fast on a stalled connection instead of hanging.
+  return ['-J', '--no-warnings', '--socket-timeout', '15', ...(cookiePath ? ['--cookies', cookiePath] : []), url];
 }
 
 export function downloadArgs(
@@ -82,7 +101,7 @@ export function downloadArgs(
   // merge is a fast remux into a universally-playable mp4 — no re-encode — falling
   // back to the best available codec when H.264 isn't offered at that height.
   // (Both are no-ops for an audio-only or image download.)
-  const args = ['-o', outTemplate, '--no-warnings', '--newline', '--merge-output-format', 'mp4', '-S', 'vcodec:h264,acodec:aac'];
+  const args = ['-o', outTemplate, '--no-warnings', '--newline', '--socket-timeout', '15', '--merge-output-format', 'mp4', '-S', 'vcodec:h264,acodec:aac'];
   if (format) args.push('-f', format);
   if (cookiePath) args.push('--cookies', cookiePath);
   if (indices?.length) args.push('--playlist-items', indices.map((i) => i + 1).join(','));
