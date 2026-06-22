@@ -36,7 +36,8 @@ export function useRunActions(run: Run | null, setRun: (r: Run) => void) {
     }
   }
 
-  const post = (path: string) => api<Run>(path, { method: 'POST' });
+  const post = (path: string, body?: unknown) =>
+    api<Run>(path, { method: 'POST', ...(body ? { body: JSON.stringify(body) } : {}) });
 
   return {
     busy,
@@ -44,7 +45,12 @@ export function useRunActions(run: Run | null, setRun: (r: Run) => void) {
     runAll: () => { if (run) void act(() => post(`/runs/${run.id}/run-all`), previewRunProgress(run)); },
     stop: () => { if (run) void act(() => post(`/runs/${run.id}/stop`)); },
     reset: () => { if (run) void act(() => post(`/runs/${run.id}/reset`)); },
-    runStep: (i: number) => { if (run) void act(() => post(`/runs/${run.id}/steps/${i}/run`), previewRunProgress(run, i)); },
+    runStep: (i: number, bypassCache?: boolean) => {
+      if (run) void act(() => post(`/runs/${run.id}/steps/${i}/run`, bypassCache ? { bypassCache: true } : undefined), previewRunProgress(run, i));
+    },
+    regenerate: (i: number) => {
+      if (run) void act(() => post(`/runs/${run.id}/steps/${i}/run`, { bypassCache: true }), previewRunProgress(run, i));
+    },
     approve: (i: number) => { if (run) void act(() => post(`/runs/${run.id}/steps/${i}/approve`)); },
     savePrompt: (i: number, prompt: string) => {
       if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/prompt`, { method: 'PATCH', body: JSON.stringify({ prompt }) }));

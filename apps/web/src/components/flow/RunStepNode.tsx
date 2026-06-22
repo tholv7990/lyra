@@ -20,6 +20,7 @@ export function RunStepNode({ data }: NodeProps) {
         onRun={() => cb.onRunStep?.(i)}
         onApprove={() => cb.onApprove?.(i)}
         onSavePrompt={(p) => cb.onSavePrompt?.(i, p)}
+        onRegenerate={cb.onRegenerate ? () => cb.onRegenerate!(i) : undefined}
         runId={d.runId}
         vars={d.vars}
         stepNames={d.stepNames}

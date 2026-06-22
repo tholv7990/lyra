@@ -32,7 +32,7 @@ import type { PipelineRunInput } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
 import type { RunDocument } from './run.schema';
-import { RateRunBody, RunPipelineBody, UpdatePromptBody } from './dto/runs.dto';
+import { RateRunBody, RunPipelineBody, RunStepBody, UpdatePromptBody } from './dto/runs.dto';
 
 // Merge entered values with the pipeline's variable definitions: only keys the
 // pipeline declares are kept; a missing value falls back to the variable default.
@@ -317,8 +317,9 @@ export class RunsController {
     @CurrentRun() run: RunDocument,
     @Param('i', ParseIntPipe) i: number,
     @CurrentUser() user: User,
+    @Body() body: RunStepBody,
   ): Promise<RunModel> {
-    return this.runs.runStep(run, i, user.id);
+    return this.runs.runStep(run, i, user.id, body?.bypassCache ?? false);
   }
 
   @Post('runs/:id/steps/:i/approve')

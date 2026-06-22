@@ -1,7 +1,10 @@
 import { ImageStepProvider } from './image.provider';
 
 describe('ImageStepProvider edit mode', () => {
-  const storage = { store: jest.fn().mockResolvedValue('https://cdn/o.png') };
+  const storage = {
+    store: jest.fn().mockResolvedValue('https://cdn/o.png'),
+    storeImage: jest.fn().mockResolvedValue({ url: 'https://cdn/o.png', thumbUrl: 'https://cdn/o.thumb.webp' }),
+  };
   const provider = () => new ImageStepProvider(storage as never);
   const okB64 = { ok: true, json: async () => ({ data: [{ b64_json: 'IMG' }] }) };
 

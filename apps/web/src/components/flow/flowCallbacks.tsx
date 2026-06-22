@@ -7,6 +7,7 @@ export interface FlowCallbacks {
   onRunStep?: (index: number) => void;
   onApprove?: (index: number) => void;
   onSavePrompt?: (index: number, prompt: string) => void;
+  onRegenerate?: (index: number) => void;
   // edit mode
   onEdit?: (index: number) => void;
   onToggleMode?: (index: number) => void;

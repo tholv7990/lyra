@@ -68,7 +68,7 @@ export class ImageStepProvider implements StepProvider {
 
     // Store durably (R2 when configured) — returns an R2 URL or an inline data: URL.
     const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.png`;
-    const url = await this.storage.store(Buffer.from(b64, 'base64'), 'image/png', key);
+    const { url, thumbUrl } = await this.storage.storeImage(Buffer.from(b64, 'base64'), 'image/png', key);
 
     // When inputs were supplied but the model can't use them, append an operator-
     // visible note so it's clear the chaining was silently dropped (spec §6, §8).
@@ -78,7 +78,7 @@ export class ImageStepProvider implements StepProvider {
         : '';
     return {
       result: `Generated 1 image with ${model}.${inputIgnoredNote}`,
-      assets: [{ type: 'image', url, meta: { role: 'generated', model, edited: canEdit } }],
+      assets: [{ type: 'image', url, thumbUrl, meta: { role: 'generated', model, edited: canEdit } }],
       usage: { tokens: 0 },
     };
   }

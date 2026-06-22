@@ -340,6 +340,12 @@ export interface RateRunDto {
   value: 'up' | 'down' | null;
 }
 
+// Optional flags for re-running a single step. `bypassCache: true` forces a
+// fresh provider call even when a cache entry exists (Regenerate action).
+export interface RunStepDto {
+  bypassCache?: boolean;
+}
+
 // ===== Built-in connectors =====
 export interface SaveCredentialDto {
   connector: string;

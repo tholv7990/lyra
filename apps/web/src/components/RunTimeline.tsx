@@ -16,6 +16,7 @@ interface RunTimelineProps {
   onApprove: (index: number) => void;
   onReject?: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
+  onRegenerate?: (index: number) => void;
   assets?: Asset[];
   historyForStep?: (index: number) => StepHistoryEntry[];
 }
@@ -63,6 +64,7 @@ export function RunTimeline({
   onApprove,
   onReject,
   onSavePrompt,
+  onRegenerate,
   assets = [],
   historyForStep,
 }: RunTimelineProps) {
@@ -119,6 +121,7 @@ export function RunTimeline({
                   </span>
                 )}
                 {isGate && <span className="rt-gated">{t('run.gated')}</span>}
+                {step.cached && <span className="rt-cached">{t('run.cached')}</span>}
                 <span className="rt-flex" />
                 {hasResult && (
                   <button type="button" className="rt-toggle" onClick={() => toggle(step.index)}>
@@ -204,6 +207,12 @@ export function RunTimeline({
                 <button type="button" className="btn-primary btn-inline btn-sm rt-run" disabled={busy} onClick={() => onRunStep(step.index)}>
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>
                   {t('common.run')}
+                </button>
+              )}
+
+              {step.status === StepStatus.Done && !locked && onRegenerate && editing !== step.index && (
+                <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => onRegenerate(step.index)}>
+                  {t('run.regenerate')}
                 </button>
               )}
 

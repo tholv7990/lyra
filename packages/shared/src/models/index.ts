@@ -219,6 +219,7 @@ export interface Step {
   error?: string;
   startedAt?: string;
   finishedAt?: string;
+  cached?: boolean;
   kind?: StepKind;
   action?: ActionStep;
 }

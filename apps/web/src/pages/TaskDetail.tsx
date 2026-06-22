@@ -318,6 +318,18 @@ export function TaskDetail() {
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/steps/${i}/approve`, { method: 'POST' })));
   const reject = (i: number) =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/steps/${i}/reject`, { method: 'POST' })));
+  const regenerate = (i: number) =>
+    run &&
+    act(async () => {
+      const before = run;
+      setRun(previewRunProgress(run, i));
+      try {
+        setRun(await api<Run>(`/runs/${run.id}/steps/${i}/run`, { method: 'POST', body: JSON.stringify({ bypassCache: true }) }));
+      } catch (err) {
+        setRun(before);
+        throw err;
+      }
+    });
   const savePrompt = (i: number, prompt: string) =>
     run &&
     act(async () =>
@@ -535,6 +547,7 @@ export function TaskDetail() {
                           onApprove={approve}
                           onReject={reject}
                           onSavePrompt={savePrompt}
+                          onRegenerate={regenerate}
                           assets={runAssets}
                           historyForStep={historyForStep}
                         />

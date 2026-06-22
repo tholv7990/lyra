@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import sharp from 'sharp';
 
 // Durable storage for generated media. When the R2_* env vars are set, bytes are
 // uploaded to Cloudflare R2 (S3-compatible) and a public URL is returned; that
@@ -62,5 +63,28 @@ export class AssetStorageService {
       }
     }
     return `data:${contentType};base64,${bytes.toString('base64')}`;
+  }
+
+  // Store an image plus a small webp thumbnail (R2 only — the data: fallback would
+  // double-inline base64, so it returns the full image with no thumb). Best-effort:
+  // any thumb/upload failure returns the full url with no thumbUrl (never throws).
+  async storeImage(
+    bytes: Buffer,
+    contentType: string,
+    key: string,
+  ): Promise<{ url: string; thumbUrl?: string }> {
+    const url = await this.store(bytes, contentType, key);
+    if (!this.enabled || !contentType.startsWith('image/')) return { url };
+    try {
+      const thumb = await sharp(bytes)
+        .resize(320, 320, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+      const thumbUrl = await this.store(thumb, 'image/webp', `thumbs/${key}.webp`);
+      return { url, thumbUrl };
+    } catch (e) {
+      this.log.warn(`thumbnail failed (${e instanceof Error ? e.message : 'error'}) — using full image`);
+      return { url };
+    }
   }
 }

@@ -99,4 +99,6 @@ export default {
   testPromptPlaceholder: 'Test this step prompt...',
   moveEarlier: 'Move earlier',
   moveLater: 'Move later',
+  cached: 'Cached',
+  regenerate: 'Regenerate',
 } as const;
