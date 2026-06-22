@@ -24,7 +24,7 @@ export class RenderClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Service-Token': this.config.get('RENDER_SERVICE_TOKEN') ?? '',
+        'Authorization': `Bearer ${this.config.get('RENDER_SERVICE_TOKEN') ?? ''}`,
       },
       body: JSON.stringify(req),
     });
