@@ -25,6 +25,7 @@ import {
   PublishIcon,
   ImportIcon,
   ConnectionsIcon,
+  MonitorIcon,
   AdminIcon,
 } from './icons';
 import './layout.css';
@@ -40,6 +41,7 @@ const MODULES = [
   { path: '/publish', name: 'Publish' },
   { path: '/import', name: 'Import media' },
   { path: '/connections', name: 'Connections' },
+  { path: '/monitor', name: 'Monitor' },
   { path: '/members', name: 'Members' },
   { path: '/settings', name: 'Settings' },
   { path: '/admin', name: 'Admin' },
@@ -91,6 +93,7 @@ export function AppLayout() {
     '/publish': 'nav.publish',
     '/import': 'nav.import',
     '/connections': 'nav.connections',
+    '/monitor': 'monitor.title',
     '/components': 'nav.components',
     '/members': 'nav.members',
     '/settings': 'nav.settings',
@@ -169,6 +172,10 @@ export function AppLayout() {
             </NavLink>
 
             <div className="nav-group-label">{t('nav.builtins')}</div>
+            <NavLink to="/monitor" title={t('monitor.title')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <MonitorIcon />
+              <span className="nav-txt">{t('monitor.title')}</span>
+            </NavLink>
             <NavLink to="/import" title={t('nav.import')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ImportIcon />
               <span className="nav-txt">{t('nav.import')}</span>

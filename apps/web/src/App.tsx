@@ -32,6 +32,7 @@ import { Members } from './pages/Members';
 import { TaskDetail } from './pages/TaskDetail';
 import { TaskEditor } from './pages/TaskEditor';
 import { Components } from './pages/Components';
+import { Monitor } from './pages/Monitor';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -100,6 +101,7 @@ const router = createBrowserRouter([
       { path: 'publish', element: <PublishComposer /> },
       { path: 'import', element: <ImportMedia /> },
       { path: 'connections', element: <Connections /> },
+      { path: 'monitor', element: <Monitor /> },
       { path: 'members', element: <Members /> },
       { path: 'settings', element: <Settings /> },
       { path: 'admin', element: <Admin /> },

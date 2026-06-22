@@ -332,6 +332,16 @@ export const ConnectionsIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Magnifying glass over a chart/dashboard — Monitor (competitors & ads).
+export const MonitorIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon" {...stroke}>
+    <circle cx="5.2" cy="4.6" r="2.8" />
+    <path d="M7.4 6.8 10.8 10.2" />
+    <rect x="2" y="7.6" width="4" height="5.4" rx="0.6" />
+    <rect x="7" y="5.6" width="4" height="7.4" rx="0.6" />
+  </svg>
+);
+
 // Generic fingerprint (nested arcs) — denotes a browser-automation (GoLogin)
 // connection. A neutral placeholder, not any brand's logo.
 export const FingerprintIcon = (p: SVGProps<SVGSVGElement>) => (
