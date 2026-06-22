@@ -48,11 +48,11 @@ export class ImageStepProvider implements StepProvider {
 
     // Store durably (R2 when configured) — returns an R2 URL or an inline data: URL.
     const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.png`;
-    const url = await this.storage.store(Buffer.from(b64, 'base64'), 'image/png', key);
+    const { url, thumbUrl } = await this.storage.storeImage(Buffer.from(b64, 'base64'), 'image/png', key);
 
     return {
       result: `Generated 1 image with ${model}.`,
-      assets: [{ type: 'image', url, meta: { role: 'generated', model } }],
+      assets: [{ type: 'image', url, thumbUrl, meta: { role: 'generated', model } }],
       usage: { tokens: 0 },
     };
   }
