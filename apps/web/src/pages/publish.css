@@ -37,14 +37,18 @@
   align-items: start;
 }
 @media (max-width: 920px) {
-  .pub-grid { grid-template-columns: 1fr; }
-  .pub-preview-col { order: -1; }        /* preview above composer on mobile */
+  /* minmax(0,1fr) so the column SHRINKS to the viewport (1fr alone keeps
+     max-content width → horizontal overflow on phones). */
+  .pub-grid { grid-template-columns: minmax(0, 1fr); }
+  /* composer first on mobile (source order), preview below — `order:-1` used to
+     push an empty preview to the top, leaving the composer off-screen on a phone. */
 }
 
 .pub-col {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-width: 0; /* allow cards (selects, header rows) to shrink, not overflow */
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */

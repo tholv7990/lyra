@@ -36,7 +36,9 @@
 /* ── stat strip ── */
 .cxv2-stat-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0,1fr) lets the 3 cards SHRINK below their content width so the strip
+     never forces horizontal overflow on narrow viewports. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -475,6 +477,8 @@
 /* ── responsive ── */
 @media (max-width: 680px) {
   .cxv2-stat-strip {
+    /* phones: stack the three stats so labels never clip / overflow */
+    grid-template-columns: 1fr;
     gap: 9px;
   }
 
