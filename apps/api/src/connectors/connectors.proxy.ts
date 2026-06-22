@@ -122,6 +122,12 @@ export class ConnectorsProxy {
         items: [{ url: 'https://example.com/mock-download', filename: 'media.zip' }],
       };
     }
+    if (path === 'adlibrary/search') {
+      return { advertisers: [{ pageId: 'mock-p1', pageName: 'Mock Brand', domain: 'mock-brand.com' }] };
+    }
+    if (path === 'adlibrary/ads') {
+      return { ads: [{ adId: 'mock-ad-1', creativeUrl: 'https://example.com/mock.jpg', copy: 'Mock hook', format: 'image' }] };
+    }
     return {};
   }
 }

@@ -41,6 +41,11 @@ export class ConnectorsController {
     return this.credentials.status(ws, POSTIZ);
   }
 
+  @Get('credentials/apify')
+  apifyStatus(@Param('id') ws: string): Promise<ConnectorCredentialInfo> {
+    return this.credentials.status(ws, 'apify');
+  }
+
   @Get('connect-link')
   @RequireManageKeys()
   connectLink(@Param('id') ws: string, @CurrentUser() u: User, @Query('connector') connector: string) {
