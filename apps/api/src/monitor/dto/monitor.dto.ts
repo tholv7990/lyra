@@ -1,4 +1,4 @@
-import { ArrayMaxSize, IsArray, IsString, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsString } from 'class-validator';
 import type { DiscoverDto } from '@lyra/shared';
 
 export class DiscoverBody implements DiscoverDto {

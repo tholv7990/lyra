@@ -55,7 +55,7 @@ describe('MonitorService.discover', () => {
   });
 
   it('throws BadRequestException when proxy.usesService() && no key', async () => {
-    const { s, creds, proxy } = svc({
+    const { s } = svc({
       creds: { getDecrypted: jest.fn().mockResolvedValue(null) },
       proxy: { usesService: () => true, forward: jest.fn() },
     });
@@ -65,7 +65,7 @@ describe('MonitorService.discover', () => {
   });
 
   it('proceeds with mock data when proxy.usesService() is false and no key', async () => {
-    const { s, competitors, proxy } = svc({
+    const { s, proxy } = svc({
       competitors: {
         find: jest.fn().mockReturnValue({
           exec: () => Promise.resolve([]),
@@ -87,7 +87,7 @@ describe('MonitorService.discover', () => {
 
 describe('MonitorService.approve', () => {
   it('resolves the Meta handle from stashed pageId and sets status to watching', async () => {
-    const { s, competitors, handles } = svc({
+    const { s, handles } = svc({
       competitors: {
         findById: jest.fn().mockReturnValue({
           exec: () =>

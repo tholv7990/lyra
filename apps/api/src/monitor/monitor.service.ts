@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CompetitorStatus, MonitorPlatform, AdStatus, AdEventType, computeAdDiff, type Competitor as CompetitorModel, type MonitorStats, type CompetitorChangelog } from '@lyra/shared';
+import { CompetitorStatus, MonitorPlatform, AdStatus, AdEventType, computeAdDiff, type MonitorStats, type CompetitorChangelog } from '@lyra/shared';
 import { Competitor, AdvertiserHandle, MonitorAd, AdEvent } from './monitor.schema';
 import { ConnectorsProxy } from '../connectors/connectors.proxy';
 import { ConnectorCredentialsService } from '../connectors/connector-credentials.service';
