@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ProjectStatus, ProjectShare, Role, type Project as ProjectModel } from '@lyra/shared';
+import { ProjectStatus, ProjectShare, Role, type Project as ProjectModel, type ProjectBrandKit } from '@lyra/shared';
 import { Project } from './project.schema';
 import type { ProjectDocument } from './project.schema';
 import { Task } from '../tasks/task.schema';
@@ -61,5 +61,11 @@ export class ProjectsService extends BaseRepository<Project> {
       },
       { sort: { createdAt: -1 } },
     );
+  }
+
+  // Retrieve the brand kit configuration for a project (used by action steps).
+  async brandKit(projectId: string): Promise<ProjectBrandKit | undefined> {
+    const project = await this.findById(projectId);
+    return project?.brandKit;
   }
 }

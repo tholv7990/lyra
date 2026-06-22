@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   fillPrompt,
+  isActionStep,
   keyProviderFor,
   resolveStepRefs,
   STEP_DEFS,
@@ -19,8 +20,10 @@ import { KeysService } from '../keys/keys.service';
 import { UsersService } from '../users/users.service';
 import { PromptsService } from '../prompts/prompts.service';
 import { AssetsService } from '../assets/assets.service';
+import { ProjectsService } from '../projects/projects.service';
 import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
+import { ActionRegistry } from './providers/action.registry';
 import type { StepRunOutput } from './providers/step-provider.interface';
 import {
   assertRunnable,
@@ -81,6 +84,8 @@ export class RunsService extends BaseRepository<Run> {
     private readonly registry: ProviderRegistry,
     private readonly prompts: PromptsService,
     private readonly assets: AssetsService,
+    private readonly actions: ActionRegistry,
+    private readonly projects: ProjectsService,
   ) {
     super(model);
   }
@@ -199,6 +204,25 @@ export class RunsService extends BaseRepository<Run> {
     index: number,
   ): Promise<StepRunOutput> {
     const step = state.steps[index];
+
+    // Action steps: dispatched to ActionRegistry without key decryption (invariant 7).
+    if (isActionStep(step) && step.action) {
+      // Resolve {input}/{step:Name} so the action gets the prior image URL etc.
+      const filled = fillPrompt(step.prompt, doc.variables ?? {});
+      const { prompt } = resolveStepRefs(filled, state.steps, index);
+      step.sentPrompt = prompt;
+      const brandKit = doc.projectId ? (await this.projects.brandKit(doc.projectId)) : undefined;
+      return this.actions.get(step.action.type).execute({
+        action: step.action,
+        step: { ...step, prompt },
+        projectId: doc.projectId,
+        workspaceId: doc.workspaceId,
+        priorResults: [],
+        brandKit,
+      });
+    }
+
+    // Prompt steps: dispatched to ProviderRegistry with key decryption.
     const provider = providerOf(step);
     // Some providers auth with another's key (image steps use the OpenAI key).
     const apiKey = (await this.keys.getDecrypted(doc.workspaceId, keyProviderFor(provider))) ?? '';
