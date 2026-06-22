@@ -31,6 +31,8 @@ export interface StepRunOutput {
   // returns one or more. Persisted as `Asset` docs and surfaced on the run.
   assets?: StepAssetOutput[];
   usage?: { tokens?: number; costUsd?: number };
+  // true when this output was served from the step cache (no provider call).
+  cached?: boolean;
 }
 
 // The single interface every step runs through. Implementations are registered

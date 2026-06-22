@@ -39,6 +39,7 @@ function toStep(s: RunStep): Step {
     error: s.error,
     startedAt: s.startedAt,
     finishedAt: s.finishedAt,
+    cached: s.cached,
   };
 }
 

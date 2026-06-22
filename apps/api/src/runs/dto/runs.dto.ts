@@ -1,5 +1,5 @@
-import { IsIn, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
-import type { RateRunDto, RunPipelineDto, UpdateStepPromptDto } from '@lyra/shared';
+import { IsBoolean, IsIn, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
+import type { RateRunDto, RunPipelineDto, RunStepDto, UpdateStepPromptDto } from '@lyra/shared';
 
 export class UpdatePromptBody implements UpdateStepPromptDto {
   @IsString()
@@ -12,6 +12,13 @@ export class RateRunBody implements RateRunDto {
   @ValidateIf((o) => o.value !== null && o.value !== undefined)
   @IsIn(['up', 'down'])
   value!: 'up' | 'down' | null;
+}
+
+// Optional flags for re-running a single step (e.g. Regenerate bypasses cache).
+export class RunStepBody implements RunStepDto {
+  @IsOptional()
+  @IsBoolean()
+  bypassCache?: boolean;
 }
 
 // Optional per-run variable values entered when starting a pipeline run.

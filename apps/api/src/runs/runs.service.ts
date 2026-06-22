@@ -5,6 +5,7 @@ import {
   fillPrompt,
   isActionStep,
   keyProviderFor,
+  providerNeedsKey,
   resolveStepRefs,
   STEP_DEFS,
   StepStatus,
@@ -17,6 +18,7 @@ import {
   type StepMode,
 } from '@lyra/shared';
 import { Run, RunDocument } from './run.schema';
+import { StepResultCache, stepCacheKey } from './step-cache.schema';
 import { BaseRepository } from '../common/database/base.repository';
 import { KeysService } from '../keys/keys.service';
 import { UsersService } from '../users/users.service';
@@ -79,6 +81,9 @@ export interface PipelineRunInput {
 const FANOUT_CONCURRENCY = 4;
 const FANOUT_RETRIES = 2;
 
+// How long a cached step result is reusable. Mongo TTL prunes past expiresAt.
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class RunsService extends BaseRepository<Run> {
   constructor(
@@ -90,6 +95,7 @@ export class RunsService extends BaseRepository<Run> {
     private readonly assets: AssetsService,
     private readonly actions: ActionRegistry,
     private readonly projects: ProjectsService,
+    @InjectModel(StepResultCache.name) private readonly cache: Model<StepResultCache>,
   ) {
     super(model);
   }
@@ -210,6 +216,7 @@ export class RunsService extends BaseRepository<Run> {
     doc: RunDocument,
     state: RunState,
     index: number,
+    bypassCache = false,
   ): Promise<StepRunOutput> {
     const step = state.steps[index];
 
@@ -258,7 +265,43 @@ export class RunsService extends BaseRepository<Run> {
               s.name ?? STEP_DEFS[s.index]?.title ?? s.key ?? `Step ${s.index + 1}`,
             result: s.result as string,
           }));
-    return this.registry.get(provider).execute({ step: stepForRun, apiKey, priorResults });
+    // Per-step cache: reuse an identical prior execution to avoid re-spending. Only
+    // key-requiring providers (skips Crawl); action + fan-out never reach here. Best-effort.
+    const cacheable = providerNeedsKey(provider);
+    const cacheKey = cacheable
+      ? stepCacheKey({ workspaceId: doc.workspaceId, provider, model: stepForRun.model, prompt })
+      : '';
+    if (cacheable && !bypassCache) {
+      try {
+        const hit = await this.cache.findOne({ workspaceId: doc.workspaceId, cacheKey }).lean().exec();
+        if (hit) return { result: hit.result, assets: (hit.assets ?? []) as StepRunOutput['assets'], usage: { tokens: 0 }, cached: true };
+      } catch {
+        // best-effort: a cache read failure falls through to a normal call
+      }
+    }
+    const output = await this.registry.get(provider).execute({ step: stepForRun, apiKey, priorResults });
+    if (cacheable) {
+      try {
+        await this.cache
+          .updateOne(
+            { cacheKey },
+            {
+              $set: {
+                workspaceId: doc.workspaceId,
+                cacheKey,
+                result: output.result,
+                assets: output.assets ?? [],
+                expiresAt: new Date(Date.now() + CACHE_TTL_MS),
+              },
+            },
+            { upsert: true },
+          )
+          .exec();
+      } catch {
+        // best-effort: a cache write failure must not fail the step
+      }
+    }
+    return output;
   }
 
   // Fan-out a step over a run collection: one (capped-parallel) provider call per
@@ -310,7 +353,7 @@ export class RunsService extends BaseRepository<Run> {
   // Run one step: validate, mark running, call the provider, then complete or
   // record the failure. A provider error is persisted on the step (run -> error)
   // and returned, so the workbench can show it.
-  async runStep(doc: RunDocument, index: number, actorId: string) {
+  async runStep(doc: RunDocument, index: number, actorId: string, bypassCache = false) {
     const present = await this.keysPresent(doc.workspaceId);
     const state = toState(doc);
     // A step whose guard condition fails is skipped — no provider call, no key.
@@ -322,7 +365,7 @@ export class RunsService extends BaseRepository<Run> {
     this.guard(() => assertRunnable(state, index, present));
     beginStep(state, index);
     try {
-      const output = await this.executeStep(doc, state, index);
+      const output = await this.executeStep(doc, state, index, bypassCache);
       completeStep(state, index, output);
       await this.saveAssets(doc, state, index, output, actorId);
     } catch (err) {

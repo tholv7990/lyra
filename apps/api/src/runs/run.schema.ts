@@ -71,6 +71,9 @@ export class RunStep {
 
   @Prop()
   finishedAt?: string;
+
+  @Prop()
+  cached?: boolean;
 }
 const RunStepSchema = SchemaFactory.createForClass(RunStep);
 
