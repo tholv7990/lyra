@@ -3,6 +3,7 @@ import { AssetStorageService } from '../../assets/asset-storage.service';
 import type { StepProvider, StepRunContext, StepRunOutput } from './step-provider.interface';
 
 const IMAGES_URL = 'https://api.openai.com/v1/images/generations';
+const EDITS_URL = 'https://api.openai.com/v1/images/edits';
 const MAX_PROMPT = 4000;
 
 // Real image generation via OpenAI (gpt-image-1 / DALL·E 3). Authenticates with
@@ -24,16 +25,35 @@ export class ImageStepProvider implements StepProvider {
     }
 
     const model = ctx.step.model || 'gpt-image-1';
-    const body: Record<string, unknown> = { model, prompt, n: 1, size: '1024x1024' };
-    // DALL·E returns a URL by default — ask for base64 so we can store it inline.
-    // gpt-image-1 always returns base64 (and rejects response_format).
-    if (model.startsWith('dall-e')) body.response_format = 'b64_json';
+    const inputs = ctx.inputImages ?? [];
+    // gpt-image-1 supports image editing/compositing; dall-e-3 has no edit endpoint.
+    const canEdit = inputs.length > 0 && model === 'gpt-image-1';
 
-    const res = await fetch(IMAGES_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${ctx.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    let res: Response;
+    if (canEdit) {
+      const form = new FormData();
+      form.append('model', model);
+      form.append('prompt', prompt);
+      form.append('n', '1');
+      form.append('size', '1024x1024');
+      for (const img of inputs) {
+        const blob = new Blob([Buffer.from(img.b64, 'base64')], { type: img.mime || 'image/png' });
+        form.append('image[]', blob, 'input.png');
+      }
+      res = await fetch(EDITS_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ctx.apiKey}` }, // let fetch set the multipart boundary
+        body: form,
+      });
+    } else {
+      const body: Record<string, unknown> = { model, prompt, n: 1, size: '1024x1024' };
+      if (model.startsWith('dall-e')) body.response_format = 'b64_json';
+      res = await fetch(IMAGES_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ctx.apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    }
     const data = (await res.json().catch(() => ({}))) as {
       data?: { b64_json?: string }[];
       error?: { message?: string };
@@ -52,7 +72,7 @@ export class ImageStepProvider implements StepProvider {
 
     return {
       result: `Generated 1 image with ${model}.`,
-      assets: [{ type: 'image', url, meta: { role: 'generated', model } }],
+      assets: [{ type: 'image', url, meta: { role: 'generated', model, edited: canEdit } }],
       usage: { tokens: 0 },
     };
   }
