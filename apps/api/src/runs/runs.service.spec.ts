@@ -425,4 +425,55 @@ describe('RunsService.executeStep', () => {
     expect(ctx.inputImages).toHaveLength(1);
     expect(ctx.inputImages[0].b64).toBe(Buffer.from('logodata').toString('base64'));
   });
+
+  it('Video steps also gather inputImages for img2video chaining', async () => {
+    const keys = { getDecrypted: jest.fn().mockResolvedValue('rep-test') };
+    const providerExecute = jest.fn().mockResolvedValue({
+      result: 'Generated 1 video with minimax/video-01.',
+      assets: [{ type: 'video', url: 'https://r2/generated/vid.mp4' }],
+      usage: { tokens: 0 },
+    });
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    // Prior step (index 0, name "Logo") has an image asset.
+    const logoImgUrl = `data:image/png;base64,${Buffer.from('logodata').toString('base64')}`;
+    const assets = {
+      listForRun: jest.fn().mockResolvedValue([{ stepIndex: 0, type: 'image', url: logoImgUrl }]),
+    };
+
+    const svc = new RunsService(
+      {} as never, // model
+      keys as never,
+      { refMap: jest.fn().mockResolvedValue(new Map()) } as never, // users
+      registry as never,
+      {} as never, // prompts
+      assets as never,
+      {} as never, // actions
+      {} as never, // projects
+      makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
+    );
+    jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
+
+    const state = {
+      steps: [
+        // step 0: Logo step (already completed, has image asset)
+        { index: 0, name: 'Logo', provider: Provider.Image, model: 'dall-e-3', prompt: 'A logo', mode: 'auto' as StepMode, status: 'done', result: 'Generated 1 image.' },
+        // step 1: Video step — prompt uses {step:Logo} to chain the prior image
+        { index: 1, name: 'Animate', provider: Provider.Video, model: 'minimax/video-01', prompt: 'animate {step:Logo}', mode: 'auto' as StepMode, status: 'running', result: undefined },
+      ],
+    };
+
+    const runDoc = {
+      _id: { toString: () => 'run-1' },
+      projectId: 'proj-1',
+      workspaceId: 'ws-1',
+      variables: {},
+    } as unknown as RunDocument;
+
+    await (svc as any).executeStep(runDoc, state, 1);
+
+    // The Video provider must have been called with inputImages (the Logo step's asset).
+    const ctx = providerExecute.mock.calls[0][0];
+    expect(ctx.inputImages).toHaveLength(1);
+    expect(ctx.inputImages[0].b64).toBe(Buffer.from('logodata').toString('base64'));
+  });
 });

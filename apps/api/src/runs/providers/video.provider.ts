@@ -6,6 +6,14 @@ import type { StepProvider, StepRunContext, StepRunOutput } from './step-provide
 const DEFAULT_VIDEO_MODEL = 'minimax/video-01';
 const MAX_PROMPT = 4000;
 
+// Per-model first-frame image input field for img2video. A model not listed here
+// is text->video only (an input image is ignored, with a note). Confirm field names
+// against the Replicate model schemas; add a slug here to make it animate images.
+const IMG2VIDEO_IMAGE_FIELD: Record<string, string> = {
+  'minimax/video-01': 'first_frame_image',
+  'kwaivgi/kling-v1.6-standard': 'start_image',
+};
+
 // Real video generation via Replicate (BYO token in the workspace 'video' key slot).
 // Creates a prediction, polls until done, then re-hosts the output mp4 to R2 (Replicate
 // output URLs expire). The run engine's synchronous await holds the request open while
@@ -27,8 +35,17 @@ export class VideoStepProvider implements StepProvider {
     const prompt = (ctx.step.prompt || '').trim().slice(0, MAX_PROMPT);
     if (!prompt) throw new Error('No prompt to render a video from.');
     const model = ctx.step.model || DEFAULT_VIDEO_MODEL;
+    // img2video: animate a prior step's image when the model supports an image input.
+    const imageField = IMG2VIDEO_IMAGE_FIELD[model];
+    const firstImage = ctx.inputImages?.[0]?.url;
+    const useImage = !!imageField && !!firstImage;
+    const input = useImage ? { prompt, [imageField]: firstImage } : { prompt };
+    const imageIgnoredNote =
+      ctx.inputImages?.length && !imageField
+        ? ` (note: ${model} has no image-to-video input — pick an img2video-capable model to animate the input.)`
+        : '';
 
-    const outputUrl = await this.replicate.run(model, { prompt }, ctx.apiKey, {});
+    const outputUrl = await this.replicate.run(model, input, ctx.apiKey, {});
 
     // Re-host to R2 — Replicate delivery URLs expire, so the asset must be durable.
     const res = await fetch(outputUrl, { signal: AbortSignal.timeout(120_000) });
@@ -38,8 +55,8 @@ export class VideoStepProvider implements StepProvider {
     const url = await this.storage.store(buf, 'video/mp4', key);
 
     return {
-      result: `Generated 1 video with ${model}.`,
-      assets: [{ type: 'video', url, meta: { role: 'generated', model } }],
+      result: `Generated 1 video with ${model}.${imageIgnoredNote}`,
+      assets: [{ type: 'video', url, meta: { role: 'generated', model, imageInput: useImage } }],
       usage: { tokens: 0 },
     };
   }

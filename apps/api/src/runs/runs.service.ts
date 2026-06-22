@@ -82,8 +82,8 @@ export interface PipelineRunInput {
 const FANOUT_CONCURRENCY = 4;
 const FANOUT_RETRIES = 2;
 
-// Image-capable providers — resolve inputImages for these.
-const IMAGE_PROVIDERS = new Set<Provider>([Provider.Image, Provider.Google]);
+// Visual-capable providers — resolve inputImages for these.
+const VISUAL_PROVIDERS = new Set<Provider>([Provider.Image, Provider.Google, Provider.Video]);
 // How long a cached step result is reusable. Mongo TTL prunes past expiresAt.
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -268,12 +268,12 @@ export class RunsService extends BaseRepository<Run> {
               s.name ?? STEP_DEFS[s.index]?.title ?? s.key ?? `Step ${s.index + 1}`,
             result: s.result as string,
           }));
-    // Image steps may take prior steps' images as inputs (edit/compose). Resolve
+    // Visual steps may take prior steps' images as inputs (edit/compose). Resolve
     // {input}/{step:Name} → prior image assets, fetched to base64 (capped). Pass
     // `filled` (pre-resolveStepRefs) — resolveStepRefs replaces the chaining tokens
     // with prior steps' result TEXT, so `prompt` no longer carries them.
     let inputImages: Awaited<ReturnType<typeof gatherInputImages>> = [];
-    if (IMAGE_PROVIDERS.has(provider)) {
+    if (VISUAL_PROVIDERS.has(provider)) {
       const runAssets = await this.assets.listForRun(doc._id.toString());
       inputImages = await gatherInputImages(
         filled,

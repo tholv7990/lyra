@@ -36,4 +36,39 @@ describe('VideoStepProvider', () => {
       .rejects.toThrow(/durable object storage|R2/i);
     expect(replicate.run).not.toHaveBeenCalled();
   });
+
+  it('img2video: passes the input image URL under the model image field for a mapped model', async () => {
+    const { p, replicate } = make();
+    jest.spyOn(global, 'fetch' as never).mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) } as never);
+    await p.execute({
+      step: { prompt: 'animate it', model: 'minimax/video-01' } as never,
+      apiKey: 'tok', priorResults: [],
+      inputImages: [{ url: 'https://r2/logo.png', mime: 'image/png', b64: 'x' }],
+    });
+    expect(replicate.run).toHaveBeenCalledWith(
+      'minimax/video-01',
+      { prompt: 'animate it', first_frame_image: 'https://r2/logo.png' },
+      'tok',
+      expect.anything(),
+    );
+  });
+
+  it('text->video + note when the model has no image-to-video field but an image was supplied', async () => {
+    const { p, replicate } = make();
+    jest.spyOn(global, 'fetch' as never).mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) } as never);
+    const out = await p.execute({
+      step: { prompt: 'a cat', model: 'luma/ray' } as never,
+      apiKey: 'tok', priorResults: [],
+      inputImages: [{ url: 'https://r2/logo.png', mime: 'image/png', b64: 'x' }],
+    });
+    expect(replicate.run).toHaveBeenCalledWith('luma/ray', { prompt: 'a cat' }, 'tok', expect.anything());
+    expect(out.result).toMatch(/no image-to-video input/i);
+  });
+
+  it('no input images -> plain prompt (unchanged)', async () => {
+    const { p, replicate } = make();
+    jest.spyOn(global, 'fetch' as never).mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) } as never);
+    await p.execute({ step: { prompt: 'a cat', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [] });
+    expect(replicate.run).toHaveBeenCalledWith('minimax/video-01', { prompt: 'a cat' }, 'tok', expect.anything());
+  });
 });
