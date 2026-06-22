@@ -119,6 +119,15 @@ export default {
   editStep: 'Edit Step',
   addStepTitle: 'Add step',
   saveStepTitle: 'Save step',
+  addPromptStep: 'Prompt step',
+  addActionStep: 'Action',
+  actionBrand: 'Brand',
+  brandImageSource: 'Brands the image from the previous step ({input}).',
+  brandPosition: 'Logo position',
+  brandSize: 'Logo size',
+  brandSize_sm: 'S',
+  brandSize_md: 'M',
+  brandSize_lg: 'L',
 
   // Fan-out
   fanOut: 'Fan out',

@@ -8,6 +8,9 @@ import {
   Provider,
   PromptStatus,
   StepMode,
+  StepKind,
+  ActionType,
+  Corner,
   type ApiKeyInfo,
   type ConditionOp,
   type GeneratedPipeline,
@@ -47,6 +50,7 @@ import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { RunFlow } from '../components/RunFlow';
 import { useFlowPager } from '../components/FlowPager';
 import { PromptPicker } from '../components/PromptPicker';
+import { BrandStepFields } from '../components/BrandStepFields';
 import { PromptDetails } from '../components/PromptDetails';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
@@ -256,16 +260,16 @@ export function PipelineBuilder() {
   function saveStep() {
     if (!editing) return;
     const s = editing.step;
-    if (!s.promptId) {
+    const isAction = s.kind === StepKind.Action && !!s.action;
+    if (!isAction && !s.promptId) {
       setError(t('pipelines.pickPromptError'));
       return;
     }
-    // Name/provider/model come from the chosen prompt (set on pick).
-    const p = prompts.find((x) => x.id === s.promptId);
+    const p = isAction ? undefined : prompts.find((x) => x.id === s.promptId);
     const finalStep: PipelineStep = {
       id: s.id ?? uuid(),
-      name: (s.name || p?.title || t('pipelines.defaultStepName')).trim(),
-      promptId: s.promptId,
+      name: (s.name || (isAction ? t('pipelines.actionBrand') : p?.title) || t('pipelines.defaultStepName')).trim(),
+      promptId: isAction ? '' : s.promptId,
       provider: s.provider,
       model: s.model,
       mode: s.mode,
@@ -279,6 +283,8 @@ export function PipelineBuilder() {
             value: COND_NEEDS_VALUE(s.condition.op) ? s.condition.value?.trim() || undefined : undefined,
           }
         : undefined,
+      kind: isAction ? StepKind.Action : undefined,
+      action: isAction ? s.action : undefined,
     };
     setSteps((list) => {
       if (editing.isNew) {
@@ -655,33 +661,68 @@ export function PipelineBuilder() {
                 <EditorActions
                   onConfirm={saveStep}
                   onCancel={() => setEditing(null)}
-                  confirmDisabled={!ed.promptId}
+                  confirmDisabled={ed.kind === StepKind.Action ? !ed.action : !ed.promptId}
                   confirmTitle={editing.isNew ? t('pipelines.addStepTitle') : t('pipelines.saveStepTitle')}
                 />
               </div>
             </div>
 
-            {/* A step just binds a prompt — name/provider/model (and a default
-                Auto mode) come from it; gate/auto is toggled on the flow node. */}
-            <PromptPicker
-              prompts={pickablePrompts}
-              labels={labels}
-              value={ed.promptId}
-              modelLabel={(p) => (p.model ? modelLabel(p.provider ?? Provider.Anthropic, p.model) : '')}
-              onChange={(promptId) => {
-                const p = pickablePrompts.find((x) => x.id === promptId);
-                setEditing({
-                  ...editing!,
-                  step: {
-                    ...ed,
-                    promptId,
-                    name: p?.title ?? ed.name,
-                    provider: p?.provider ?? ed.provider,
-                    model: p?.model ?? ed.model,
-                  },
-                });
-              }}
-            />
+            {/* Type chooser: for new steps, let the user pick prompt step or brand action. */}
+            {editing.isNew && (
+              <div className="addstep-type-chooser">
+                <button
+                  type="button"
+                  className={`addstep-type-btn${ed.kind === StepKind.Action ? '' : ' selected'}`}
+                  onClick={() => setEditing({ ...editing!, step: { ...ed, kind: undefined, action: undefined } })}
+                >
+                  {t('pipelines.addPromptStep')}
+                </button>
+                <button
+                  type="button"
+                  className={`addstep-type-btn${ed.kind === StepKind.Action ? ' selected' : ''}`}
+                  onClick={() => setEditing({
+                    ...editing!,
+                    step: {
+                      ...ed,
+                      kind: StepKind.Action,
+                      action: { type: ActionType.Brand, position: Corner.BR, size: 'md' },
+                      name: ed.name || t('pipelines.actionBrand'),
+                    },
+                  })}
+                >
+                  {t('pipelines.addActionStep')}
+                </button>
+              </div>
+            )}
+
+            {/* Step body: prompt picker for prompt steps, Brand fields for action steps. */}
+            {ed.kind === StepKind.Action && ed.action?.type === ActionType.Brand ? (
+              <BrandStepFields
+                action={ed.action}
+                onChange={(action) => setEditing({ ...editing!, step: { ...ed, action } })}
+                t={t}
+              />
+            ) : (
+              <PromptPicker
+                prompts={pickablePrompts}
+                labels={labels}
+                value={ed.promptId}
+                modelLabel={(p) => (p.model ? modelLabel(p.provider ?? Provider.Anthropic, p.model) : '')}
+                onChange={(promptId) => {
+                  const p = pickablePrompts.find((x) => x.id === promptId);
+                  setEditing({
+                    ...editing!,
+                    step: {
+                      ...ed,
+                      promptId,
+                      name: p?.title ?? ed.name,
+                      provider: p?.provider ?? ed.provider,
+                      model: p?.model ?? ed.model,
+                    },
+                  });
+                }}
+              />
+            )}
 
             {/* Fan-out: run this step once per item in a run collection (parallel). */}
             <div className="addstep-fanout">

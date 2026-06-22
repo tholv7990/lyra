@@ -120,6 +120,15 @@ export default {
   editStep: 'Sửa bước',
   addStepTitle: 'Thêm bước',
   saveStepTitle: 'Lưu bước',
+  addPromptStep: 'Bước prompt',
+  addActionStep: 'Hành động',
+  actionBrand: 'Thương hiệu',
+  brandImageSource: 'Gắn thương hiệu cho hình ảnh từ bước trước ({input}).',
+  brandPosition: 'Vị trí logo',
+  brandSize: 'Kích thước logo',
+  brandSize_sm: 'S',
+  brandSize_md: 'M',
+  brandSize_lg: 'L',
 
   // Fan-out
   fanOut: 'Phân nhánh',
