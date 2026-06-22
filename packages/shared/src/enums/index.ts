@@ -59,6 +59,7 @@ export enum Provider {
   Image = 'image',
   Video = 'video',
   Crawl = 'crawl', // Source step: fetch a URL → product images + text (no API key)
+  Google = 'google', // Gemini image provider (gemini-2.5-flash-image)
 }
 
 export enum PromptStatus {

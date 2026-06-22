@@ -19,6 +19,7 @@ import {
   parsePromptVariables,
   toLyraPlaceholders,
   isActionStep,
+  parseImageRefs,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -375,5 +376,23 @@ describe('isActionStep', () => {
   });
   it('is true only for action steps', () => {
     expect(isActionStep({ kind: StepKind.Action })).toBe(true);
+  });
+});
+
+describe('parseImageRefs', () => {
+  it('detects {input} and {step:Name} references', () => {
+    expect(parseImageRefs('Edit {input} to add {step:Brief}')).toEqual({
+      input: true,
+      names: ['Brief'],
+    });
+  });
+  it('returns no refs for a plain prompt', () => {
+    expect(parseImageRefs('A red sneaker on marble')).toEqual({ input: false, names: [] });
+  });
+  it('collects multiple named refs and trims them', () => {
+    expect(parseImageRefs('{step: Logo } over {step:Scene}')).toEqual({
+      input: false,
+      names: ['Logo', 'Scene'],
+    });
   });
 });
