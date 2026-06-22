@@ -68,14 +68,14 @@ export class ConnectorsController {
     return this.proxy.forward(ws, u.id, 'GET', `jobs/${j}`, undefined, await this.requireKey(ws));
   }
 
+  // Crawler probe + fetch. Viewer-accessible on purpose: these forward NO metered key
+  // (yt-dlp runs on the connectors service); only publish spends, so it stays gated.
   @Post('resolve')
-  @RequireCreate()
   async resolve(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: ResolveBody) {
     return this.proxy.forward(ws, u.id, 'POST', 'resolve', await this.withCookies(ws, b));
   }
 
   @Post('download')
-  @RequireCreate()
   async download(@Param('id') ws: string, @CurrentUser() u: User, @Body() b: DownloadBody) {
     return this.proxy.forward(ws, u.id, 'POST', 'download', await this.withCookies(ws, b)); // -> { jobId }
   }
