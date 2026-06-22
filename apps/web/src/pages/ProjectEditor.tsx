@@ -6,6 +6,7 @@ import {
   labelColor,
   ProjectShare,
   ProjectStatus,
+  ChannelType,
   type Channel,
   type MemberView,
   type Project,
@@ -17,6 +18,7 @@ import {
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { channelsApi } from '../lib/channels';
+import { groupChannels, shortProfileId } from '../lib/connections';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
@@ -315,24 +317,33 @@ export function ProjectEditor() {
             </div>
           ) : (
             <div className="pe-members-list">
-              {pool.map((c) => {
-                const selected = form.channels.includes(c.id);
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={`pe-member${selected ? ' selected' : ''}`}
-                    onClick={() => toggleChannel(c.id)}
-                  >
-                    <span className="pe-member-av" style={{ background: platformColor(c.platform) }}>{platformGlyph(c.platform)}</span>
-                    <span className="pe-member-id">
-                      <span className="pe-member-name">{c.displayName}</span>
-                      <span className="pe-member-role">{c.platform}</span>
-                    </span>
-                    <span className="pe-member-check">{selected && <CheckIcon width={12} height={12} />}</span>
-                  </button>
-                );
-              })}
+              {groupChannels(pool).map((conn) => (
+                <div key={conn.key} className="pe-channel-group">
+                  <div className="pe-channel-group-head">
+                    {conn.connector === ChannelType.Postiz
+                      ? t('connectors.postizPool')
+                      : `${t('connectors.browserProfile')} · ${shortProfileId(conn.profileId)}`}
+                  </div>
+                  {conn.accounts.map((c) => {
+                    const selected = form.channels.includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`pe-member${selected ? ' selected' : ''}`}
+                        onClick={() => toggleChannel(c.id)}
+                      >
+                        <span className="pe-member-av" style={{ background: platformColor(c.platform) }}>{platformGlyph(c.platform)}</span>
+                        <span className="pe-member-id">
+                          <span className="pe-member-name">{c.displayName}</span>
+                          <span className="pe-member-role">{c.platform}</span>
+                        </span>
+                        <span className="pe-member-check">{selected && <CheckIcon width={12} height={12} />}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           )}
         </section>

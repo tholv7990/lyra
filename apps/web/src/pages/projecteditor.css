@@ -415,6 +415,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Channel picker — grouped under connection headers */
+.pe-channel-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pe-channel-group + .pe-channel-group { margin-top: 10px; }
+.pe-channel-group-head {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
+  color: var(--ink-tertiary); padding: 2px 2px 0;
+}
+
 /* Mobile: the {key} = value rows are too wide for a phone — stack the key on its
    own line; the value + remove share the next. Visibility + brand stack too. */
 @media (max-width: 560px) {
