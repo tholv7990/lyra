@@ -43,8 +43,13 @@ describe('ProjectsService', () => {
       // Act: update project with brandKit
       const result = await service.findByIdAndUpdate(projectId, { brandKit, updatedBy: 'u1' });
 
-      // Assert: brandKit should be persisted
-      expect(result).toEqual(updatedProject);
+      // Assert: the service FORWARDS brandKit into the model update (the real
+      // persistence behavior — not just that the mock returns what it was told).
+      expect(projectModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        projectId,
+        expect.objectContaining({ brandKit, updatedBy: 'u1' }),
+        expect.objectContaining({ returnDocument: 'after' }),
+      );
       expect(result?.brandKit).toEqual(brandKit);
       expect(result?.brandKit?.logoUrl).toBe('https://x/logo.png');
     });
