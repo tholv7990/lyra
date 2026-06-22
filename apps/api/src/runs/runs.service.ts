@@ -267,9 +267,13 @@ export class RunsService extends BaseRepository<Run> {
           }));
     // Per-step cache: reuse an identical prior execution to avoid re-spending. Only
     // key-requiring providers (skips Crawl); action + fan-out never reach here. Best-effort.
+    // When used=false the provider receives priorResults as context — fold them into the
+    // key so an upstream result change (same workspace, same prompt) always misses. When
+    // used=true the refs are already substituted into `prompt`, so context is empty.
     const cacheable = providerNeedsKey(provider);
+    const context = used ? '' : priorResults.map((r) => r.result).join(' ');
     const cacheKey = cacheable
-      ? stepCacheKey({ workspaceId: doc.workspaceId, provider, model: stepForRun.model, prompt })
+      ? stepCacheKey({ workspaceId: doc.workspaceId, provider, model: stepForRun.model, prompt, context })
       : '';
     if (cacheable && !bypassCache) {
       try {

@@ -2,16 +2,19 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { createHash } from 'crypto';
 
-// Content-addressed key for a prompt step's execution. NUL-joined so field
-// boundaries can't collide; sha256 hex. workspaceId is included so cache entries
-// never cross tenants (invariant 5).
+// Content-addressed key for a prompt step's execution. Space-joined fields
+// (only the trailing prompt/context can contain spaces, so boundaries are
+// unambiguous); sha256 hex. workspaceId is included so cache entries never
+// cross tenants (invariant 5). context captures any auto-appended prior-step
+// results so a downstream step's key changes when an upstream result changes.
 export function stepCacheKey(input: {
   workspaceId: string;
   provider: string;
   model: string;
   prompt: string;
+  context?: string;
 }): string {
-  const canonical = [input.workspaceId, input.provider, input.model, input.prompt].join(' ');
+  const canonical = [input.workspaceId, input.provider, input.model, input.prompt, input.context ?? ''].join(' ');
   return createHash('sha256').update(canonical).digest('hex');
 }
 

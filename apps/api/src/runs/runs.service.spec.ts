@@ -241,6 +241,65 @@ describe('RunsService step cache', () => {
     expect(cache.updateOne).not.toHaveBeenCalled();
   });
 
+  it('C1 regression: static prompt with different prior-step results produces different cacheKeys', async () => {
+    // Scenario: Step 0 (Write tagline) → Step 1 (Improve the tagline above — no {input}, used=false).
+    // The cache key for Step 1 must differ between a run where Step 0 produced "Tagline A"
+    // vs one where Step 0 produced "Tagline B", even though Step 1's prompt is unchanged.
+    const cache1 = makeCacheMock(null);
+    const cache2 = makeCacheMock(null);
+    const providerOutput = { result: 'improved', assets: [], usage: { tokens: 2 } };
+    const { registry, keys, assets } = makeRegistryAndKeys(providerOutput);
+
+    function makeDocWithPrior(priorResult: string): RunDocument {
+      return {
+        _id: { toString: () => 'run-x' },
+        workspaceId: 'ws-1',
+        projectId: undefined,
+        variables: {},
+        collections: {},
+        status: 'idle',
+        currentStep: 1,
+        updatedBy: '',
+        steps: [
+          {
+            index: 0,
+            name: 'Write',
+            provider: Provider.Anthropic,
+            model: 'claude-3-haiku',
+            mode: StepMode.Auto,
+            status: StepStatus.Done,
+            prompt: 'Write a tagline for {product}',
+            result: priorResult,
+          },
+          {
+            index: 1,
+            name: 'Improve',
+            provider: Provider.Anthropic,
+            model: 'claude-3-haiku',
+            mode: StepMode.Auto,
+            status: StepStatus.Idle,
+            prompt: 'Improve the tagline above', // no {input}/{step:Name} → used=false
+          },
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(undefined),
+      } as unknown as RunDocument;
+    }
+
+    const svc1 = makeService({ cache: cache1, registry, keys, assets });
+    const svc2 = makeService({ cache: cache2, registry, keys, assets });
+
+    await svc1.runStep(makeDocWithPrior('Tagline A'), 1, 'actor-1');
+    await svc2.runStep(makeDocWithPrior('Tagline B'), 1, 'actor-1');
+
+    // Extract the cacheKey used in each findOne call — they must differ.
+    const key1 = cache1.findOne.mock.calls[0]?.[0]?.cacheKey as string;
+    const key2 = cache2.findOne.mock.calls[0]?.[0]?.cacheKey as string;
+    expect(typeof key1).toBe('string');
+    expect(typeof key2).toBe('string');
+    expect(key1).not.toBe(key2);
+  });
+
   it('cache READ error falls through to a normal provider call', async () => {
     // findOne chain rejects — the step must still complete via the provider.
     const execFindOne = jest.fn().mockRejectedValue(new Error('Mongo timeout'));

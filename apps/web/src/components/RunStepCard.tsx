@@ -44,6 +44,8 @@ export interface RunStepCardProps {
   onRun: () => void;
   onApprove: () => void;
   onSavePrompt: (prompt: string) => void;
+  // Bypass cache and re-run a completed step from scratch.
+  onRegenerate?: () => void;
   // The run this step belongs to — needed by the result modal for downloads.
   runId: string;
   // Composer affordance: variables this step can reference, and every step name
@@ -59,7 +61,7 @@ export interface RunStepCardProps {
 
 export function RunStepCard(props: RunStepCardProps) {
   const { t } = useTranslation();
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, runId, vars, stepNames, assets, history } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, runId, vars, stepNames, assets, history } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
@@ -142,6 +144,19 @@ export function RunStepCard(props: RunStepCardProps) {
                 }}
               >
                 {t('run.viewResult')}
+              </button>
+            )}
+            {!locked && step.status === StepStatus.Done && onRegenerate && (
+              <button
+                type="button"
+                className="btn-ghost btn-inline"
+                disabled={busy}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRegenerate();
+                }}
+              >
+                {t('run.regenerate')}
               </button>
             )}
           </div>

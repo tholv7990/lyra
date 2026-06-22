@@ -21,4 +21,18 @@ describe('stepCacheKey', () => {
       stepCacheKey({ ...base, provider: 'ab', model: 'c' }),
     );
   });
+  it('changes when context differs (auto-appended prior-step results)', () => {
+    const k = stepCacheKey({ ...base, context: 'Tagline A' });
+    expect(stepCacheKey({ ...base, context: 'Tagline B' })).not.toBe(k);
+  });
+  it('is identical when all inputs including context are the same', () => {
+    const k1 = stepCacheKey({ ...base, context: 'prior output' });
+    const k2 = stepCacheKey({ ...base, context: 'prior output' });
+    expect(k1).toBe(k2);
+  });
+  it('omitted context and empty string context produce the same key', () => {
+    const kOmitted = stepCacheKey(base);
+    const kEmpty = stepCacheKey({ ...base, context: '' });
+    expect(kOmitted).toBe(kEmpty);
+  });
 });

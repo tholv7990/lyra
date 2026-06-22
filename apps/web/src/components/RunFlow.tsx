@@ -15,6 +15,7 @@ interface RunFlowProps {
   onRunStep: (index: number) => void;
   onApprove: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
+  onRegenerate?: (index: number) => void;
   mobileLayout?: 'pager' | 'flow';
   // Media produced by the run's steps (from GET /runs/:id/assets), shown per step.
   assets?: Asset[];
@@ -34,6 +35,7 @@ export function RunFlow({
   onRunStep,
   onApprove,
   onSavePrompt,
+  onRegenerate,
   mobileLayout = 'pager',
   assets = [],
   historyForStep,
@@ -64,6 +66,7 @@ export function RunFlow({
       onRun={() => onRunStep(step.index)}
       onApprove={() => onApprove(step.index)}
       onSavePrompt={(p) => onSavePrompt(step.index, p)}
+      onRegenerate={onRegenerate ? () => onRegenerate(step.index) : undefined}
       runId={run.id}
       vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
       stepNames={stepNames}
@@ -104,7 +107,7 @@ export function RunFlow({
   const graph = buildRunGraph({ run, hasKey, assets, historyForStep });
   return (
     <Suspense fallback={<div className="flow-canvas loading">{t('common.loadingCanvas')}</div>}>
-      <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt }} />
+      <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt, onRegenerate }} />
     </Suspense>
   );
 }
