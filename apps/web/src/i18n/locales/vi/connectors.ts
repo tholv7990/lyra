@@ -3,6 +3,22 @@ export default {
   connectionsTitle: 'Kết nối',
   connectionsSubtitle:
     'Liên kết các tài khoản và dịch vụ cho công cụ tích hợp sẵn. Lưu an toàn; có thể ngắt bất cứ lúc nào.',
+  connectionsSubtitleV2:
+    'Kết nối qua GoLogin hoặc Postiz, rồi thêm tài khoản để đăng bài. Lưu an toàn; có thể ngắt bất cứ lúc nào.',
+  // stat strip
+  statConnections: 'Kết nối',
+  statAccounts: 'Tài khoản',
+  statPlatforms: 'Nền tảng',
+  statChannels: 'kênh',
+  // provider block
+  colAccount: 'Tài khoản',
+  colPlatforms: 'Nền tảng',
+  providerOptions: 'Tùy chọn',
+  // services strip
+  servicesLabel: 'Dịch vụ',
+  cobaltNoteV2:
+    'Cấu hình ở cấp workspace — không cần đăng nhập từng tài khoản. Dán liên kết trong Crawler để lấy video hoặc ảnh.',
+  workspaceLevel: 'Cấp workspace',
   publishing: 'Đăng bài',
   postizKey: 'Khóa API Postiz',
   update: 'Cập nhật',

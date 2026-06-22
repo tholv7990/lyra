@@ -1,5 +1,554 @@
 /* Built-in connectors pages (Connections, Publish, Import). Token-based so light +
    dark both work. Ported from the approved brainstorm mockups. */
+
+/* =============================================================================
+   Connections v3 — mockup-aligned layout (stat strip + provider blocks).
+   All radii via --radius-* tokens or 50%/9999px. No hardcoded px radii.
+   No new tokens — color tints via color-mix(in srgb, var(--token) N%, transparent).
+   ============================================================================= */
+
+/* ── page shell ── */
+.cxv2-page {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── title block ── */
+.cxv2-title-block { display: flex; flex-direction: column; gap: 5px; }
+
+.cxv2-h1 {
+  font-size: var(--text-title2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.cxv2-subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+/* ── stat strip ── */
+.cxv2-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.cxv2-stat-card {
+  padding: 15px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+.cxv2-stat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.cxv2-stat-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.cxv2-stat-label {
+  font-size: var(--text-mini);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.cxv2-stat-value {
+  font-size: var(--text-title2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* ── provider blocks container ── */
+.cxv2-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── provider card ── */
+.cxv2-provider-card {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  overflow: hidden;
+}
+
+/* provider header row */
+.cxv2-provider-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cxv2-provider-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.cxv2-provider-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cxv2-provider-name-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cxv2-provider-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.cxv2-provider-desc {
+  font-size: var(--text-mini);
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+
+/* status pill */
+.cxv2-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 21px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cxv2-status-ok {
+  background: color-mix(in srgb, var(--success) 13%, transparent);
+  color: var(--success);
+}
+
+.cxv2-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* "Add channel" button in provider header */
+.cxv2-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  flex: none;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.cxv2-add-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.cxv2-add-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 3-dot options button */
+.cxv2-more-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.cxv2-more-btn:hover {
+  color: var(--ink);
+}
+
+/* column header row (desktop) */
+.cxv2-col-head {
+  display: grid;
+  grid-template-columns: 1fr 32px;
+  gap: 13px;
+  padding: 7px 16px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+}
+
+.cxv2-col-labels {
+  display: grid;
+  grid-template-columns: 184px 1fr;
+  gap: 13px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+/* channel row — outer grid: [inner two-col | delete btn] */
+.cxv2-channel-row {
+  display: grid;
+  grid-template-columns: 1fr 32px;
+  gap: 13px;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--hairline);
+  transition: background 0.1s;
+}
+
+.cxv2-channel-row:last-child {
+  border-bottom: none;
+}
+
+.cxv2-channel-row:hover {
+  background: var(--surface-1);
+}
+
+/* inner two-column: [avatar+name (184px) | platforms] — mirrors col headers */
+.cxv2-channel-inner {
+  display: grid;
+  grid-template-columns: 184px 1fr;
+  gap: 13px;
+  align-items: center;
+  min-width: 0;
+}
+
+/* avatar + name side-by-side within the 184px cell */
+.cxv2-channel-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+/* avatar initial square */
+.cxv2-channel-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--primary-tint);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.cxv2-channel-name-col {
+  min-width: 0;
+}
+
+.cxv2-channel-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cxv2-status-dot-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.cxv2-status-dot-sm {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+
+.cxv2-channel-status-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+}
+
+/* platform chips column */
+.cxv2-channel-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  align-items: center;
+}
+
+/* single platform chip */
+.cxv2-plat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px 0 8px;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cxv2-plat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  flex: none;
+}
+
+/* row delete button */
+.cxv2-row-del {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  justify-self: end;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.cxv2-row-del:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.cxv2-row-del:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* grid spacer: holds the delete column for Postiz rows (no local delete) */
+.cxv2-row-spacer {
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+/* empty-state inside a provider block */
+.cxv2-provider-empty {
+  padding: 16px;
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+/* mobile-only full-width add strip at provider card bottom */
+.cxv2-provider-add-strip {
+  display: none; /* hidden on desktop */
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border: none;
+  border-top: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.cxv2-provider-add-strip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── services strip ── */
+.cxv2-services { display: flex; flex-direction: column; gap: 0; }
+
+.cxv2-services-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin: 2px 2px 12px;
+}
+
+.cxv2-service-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+.cxv2-service-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cxv2-service-name-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cxv2-service-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cxv2-service-note {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  margin: 3px 0 0;
+  line-height: 1.5;
+}
+
+.cxv2-service-note a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.cxv2-ws-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  font-size: var(--text-mini);
+  font-weight: 500;
+  flex: none;
+  white-space: nowrap;
+}
+
+/* ── responsive ── */
+@media (max-width: 680px) {
+  .cxv2-stat-strip {
+    gap: 9px;
+  }
+
+  .cxv2-stat-card {
+    padding: 11px 11px 12px;
+  }
+
+  /* stat value slightly smaller on mobile but still prominent */
+  .cxv2-stat-value {
+    font-size: var(--text-title3);
+  }
+
+  /* col headers hidden on mobile — platforms move below the avatar row */
+  .cxv2-col-head {
+    display: none;
+  }
+
+  /* channel row: collapse outer grid, use block layout */
+  .cxv2-channel-row {
+    display: block;
+    padding: 11px 12px;
+    position: relative; /* for the absolutely-positioned delete button */
+  }
+
+  /* inner two-column becomes single flex row (avatar+name only) */
+  .cxv2-channel-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    grid-template-columns: unset;
+  }
+
+  /* platforms move below, indented to align past the avatar */
+  .cxv2-channel-platforms {
+    margin-top: 9px;
+    padding-left: 44px; /* 34px avatar + 10px gap */
+  }
+
+  /* delete button: absolute top-right of the row block */
+  .cxv2-row-del {
+    position: absolute;
+    top: 11px;
+    right: 12px;
+    justify-self: unset;
+  }
+
+  /* spacer not needed on mobile */
+  .cxv2-row-spacer {
+    display: none;
+  }
+
+  /* show the mobile add strip at card bottom */
+  .cxv2-provider-add-strip {
+    display: flex;
+  }
+
+  /* hide the header-row add + options buttons on mobile — strip replaces them */
+  .cxv2-add-btn,
+  .cxv2-more-btn {
+    display: none;
+  }
+
+  /* services row: let the workspace badge wrap to its own line */
+  .cxv2-service-row {
+    flex-wrap: wrap;
+  }
+
+  .cxv2-ws-badge {
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+}
+
 .cx-page { max-width: 760px; }
 .cx-title { font-size: var(--text-title2); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 4px; }
 .cx-sub { color: var(--ink-muted); font-size: var(--text-small); margin: 0 0 20px; line-height: 1.5; }

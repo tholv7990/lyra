@@ -3,6 +3,22 @@ export default {
   connectionsTitle: 'Connections',
   connectionsSubtitle:
     'Link the accounts and services your built-in tools use. Stored securely; disconnect anytime.',
+  connectionsSubtitleV2:
+    'Connect through GoLogin or Postiz, then add the accounts each one posts from. Stored securely; disconnect anytime.',
+  // stat strip
+  statConnections: 'Connections',
+  statAccounts: 'Accounts',
+  statPlatforms: 'Platforms',
+  statChannels: 'channels',
+  // provider block
+  colAccount: 'Account',
+  colPlatforms: 'Platforms',
+  providerOptions: 'Options',
+  // services strip
+  servicesLabel: 'Services',
+  cobaltNoteV2:
+    'Configured at the workspace level — no per-account login. Paste a link in Crawler to pull video or images.',
+  workspaceLevel: 'Workspace-level',
   publishing: 'Publishing',
   postizKey: 'Postiz API key',
   update: 'Update',
