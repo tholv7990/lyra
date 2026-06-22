@@ -189,6 +189,11 @@
   padding-bottom: 4px;
   margin-bottom: 14px;
   scrollbar-width: none;
+  /* Right-edge fade cue: the row scrolls but the scrollbar is hidden, so without
+     this the last category just clips with no hint there's more. The fade reads
+     as "scroll for more". */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
 }
 .mkt-pills::-webkit-scrollbar {
   height: 0;

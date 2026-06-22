@@ -138,6 +138,15 @@
   background: var(--primary-hover);
 }
 
+/* Card delete: muted at rest (it sits beside the primary Open), danger on hover/
+   intent. The destructive weight lives in the confirm dialog, not the card. */
+.pr-del { color: var(--ink-tertiary); }
+.pr-del:hover {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--hairline));
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
 @media (max-width: 560px) {
   .pr-new {
     flex: 1;

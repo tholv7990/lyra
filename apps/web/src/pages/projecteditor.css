@@ -386,12 +386,33 @@
   flex-direction: column;
   gap: 6px;
 }
-.pe-brand-accent input[type="color"] {
-  width: 100%;
+.pe-brand-accent-label {
+  font-size: var(--text-mini);
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+.pe-brand-accent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pe-swatch {
+  width: 40px;
   height: 40px;
+  flex: none;
+  padding: 0;
   border: 1px solid var(--hairline-strong);
-  border-radius: 8px;
+  border-radius: 9px;
+  background: none;
   cursor: pointer;
+}
+.pe-swatch::-webkit-color-swatch-wrapper { padding: 2px; }
+.pe-swatch::-webkit-color-swatch { border: none; border-radius: 7px; }
+.pe-swatch::-moz-color-swatch { border: none; border-radius: 7px; }
+.pe-brand-accent-hex {
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Mobile: the {key} = value rows are too wide for a phone — stack the key on its

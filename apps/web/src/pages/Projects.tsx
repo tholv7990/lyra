@@ -274,7 +274,7 @@ export function Projects() {
                       <IconButton
                         boxed
                         size="sm"
-                        variant="danger"
+                        className="pr-del"
                         icon={<TrashIcon width={15} height={15} />}
                         label={`${t('common.delete')} ${p.name}`}
                         onClick={() => setToDelete(p)}

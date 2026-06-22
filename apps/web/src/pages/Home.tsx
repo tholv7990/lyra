@@ -107,6 +107,12 @@ export function Home() {
         pipelines: pipelines.length,
         projects: projects.length,
       });
+      // Auto-collapse the checklist once every step is done (first visit only) —
+      // a completed list shouldn't keep dominating the dashboard. A manual toggle
+      // (stored preference) always wins over this default.
+      const complete =
+        keys.length > 0 && (prompts.total ?? 0) > 0 && pipelines.length > 0 && projects.length > 0;
+      if (complete && localStorage.getItem(collapseKey(wsId)) === null) setCollapsed(true);
     });
     return () => {
       cancelled = true;

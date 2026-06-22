@@ -26,10 +26,19 @@ export function BrandKitSection({ brandKit, uploading, onLogoFile, onClearLogo, 
             <input type="file" accept="image/*" hidden onChange={(e) => onLogoFile(e.target.files)} />
           </label>
         )}
-        <label className="pe-brand-accent">
-          {t('projects.brandAccent')}
-          <input type="color" value={brandKit.accentColor ?? '#0075de'} onChange={(e) => onAccentChange(e.target.value)} />
-        </label>
+        <div className="pe-brand-accent">
+          <span className="pe-brand-accent-label">{t('projects.brandAccent')}</span>
+          <span className="pe-brand-accent-row">
+            <input
+              type="color"
+              className="pe-swatch"
+              aria-label={t('projects.brandAccent')}
+              value={brandKit.accentColor ?? '#0075de'}
+              onChange={(e) => onAccentChange(e.target.value)}
+            />
+            <span className="pe-brand-accent-hex">{(brandKit.accentColor ?? '#0075de').toUpperCase()}</span>
+          </span>
+        </div>
       </div>
     </section>
   );
