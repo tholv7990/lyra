@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { StepKind, ActionType } from '@lyra/shared';
+import { StepKind, ActionType, Provider } from '@lyra/shared';
 import { RunsService } from './runs.service';
 import type { RunDocument } from './run.schema';
 
@@ -144,5 +144,63 @@ describe('RunsService.executeStep', () => {
       result: 'https://cdn/out.png',
       assets: [{ type: 'image', url: 'https://cdn/out.png' }],
     });
+  });
+
+  // Regression test for C1: gatherInputImages must receive the pre-resolveStepRefs
+  // prompt (`filled`) so that {step:Name} / {input} tokens are still present for
+  // parseImageRefs to find. If the call used `prompt` (post-resolution) instead,
+  // resolveStepRefs would have already replaced those tokens with the prior step's
+  // result text and no image refs would be found, making inputImages always [].
+  it('regression(C1): passes the pre-resolved prompt to the provider so inputImages is non-empty', async () => {
+    const keys = { getDecrypted: jest.fn().mockResolvedValue('sk-test') };
+    const providerExecute = jest.fn().mockResolvedValue({
+      result: 'Generated 1 image with gemini-2.0-flash-preview-image-generation.',
+      assets: [{ type: 'image', url: 'data:image/png;base64,abc' }],
+      usage: { tokens: 0 },
+    });
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    // Prior step (index 0, name "Logo") has an image asset.
+    const logoImgUrl = `data:image/png;base64,${Buffer.from('logodata').toString('base64')}`;
+    const assets = {
+      listForRun: jest.fn().mockResolvedValue([{ stepIndex: 0, type: 'image', url: logoImgUrl }]),
+    };
+
+    const svc = new RunsService(
+      {} as never, // model
+      keys as never,
+      { refMap: jest.fn().mockResolvedValue(new Map()) } as never, // users
+      registry as never,
+      {} as never, // prompts
+      assets as never,
+      {} as never, // actions
+      {} as never, // projects
+    );
+    jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
+
+    const state = {
+      steps: [
+        // step 0: Logo step (already completed, has image asset)
+        { index: 0, name: 'Logo', provider: Provider.Google, model: 'gemini-2.0-flash-preview-image-generation', prompt: 'A logo', mode: 'auto', status: 'done', result: 'Generated 1 image with gemini.' },
+        // step 1: Compose step — prompt uses {step:Logo} to chain the prior image
+        { index: 1, name: 'Compose', provider: Provider.Google, model: 'gemini-2.0-flash-preview-image-generation', prompt: 'Add text to {step:Logo}', mode: 'auto', status: 'running' },
+      ],
+    };
+
+    const runDoc = {
+      _id: { toString: () => 'run-1' },
+      projectId: 'proj-1',
+      workspaceId: 'ws-1',
+      variables: {},
+    } as unknown as RunDocument;
+
+    await (svc as any).executeStep(runDoc, state, 1);
+
+    // The provider must have been called with at least one inputImage (the Logo
+    // step's asset). If C1 were present (prompt passed instead of filled),
+    // resolveStepRefs would replace {step:Logo} with the text result and
+    // parseImageRefs would find nothing, giving inputImages=[].
+    const ctx = providerExecute.mock.calls[0][0];
+    expect(ctx.inputImages).toHaveLength(1);
+    expect(ctx.inputImages[0].b64).toBe(Buffer.from('logodata').toString('base64'));
   });
 });

@@ -328,3 +328,12 @@ export function computeAdDiff(
   const ongoingIds = [...today].filter((id) => active.has(id));
   return { newIds, stoppedIds, ongoingIds };
 }
+
+// Which prior steps an image step pulls IMAGE inputs from. {input} = the previous
+// step; {step:Name} = named earlier steps. Pure (no asset knowledge — the engine
+// maps these to image assets). Names keep original case; whitespace trimmed.
+export function parseImageRefs(prompt: string): { input: boolean; names: string[] } {
+  const input = prompt.includes('{input}');
+  const names = [...prompt.matchAll(/\{step:([^}]+)\}/g)].map((m) => m[1].trim());
+  return { input, names };
+}

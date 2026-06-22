@@ -18,6 +18,8 @@ import { OpenAiCompatClient } from './providers/openai-compat.client';
 import { OpenAiCompatStepProvider } from './providers/openai-compat.provider';
 import { CrawlStepProvider } from './providers/crawl.provider';
 import { ImageStepProvider } from './providers/image.provider';
+import { GeminiClient } from './providers/gemini.client';
+import { GeminiImageStepProvider } from './providers/gemini-image.provider';
 import { MockStepProvider } from './providers/mock.provider';
 import { ProviderRegistry } from './providers/provider.registry';
 import { RenderClient } from './providers/render.client';
@@ -47,6 +49,8 @@ import { ActionRegistry } from './providers/action.registry';
     OpenAiCompatStepProvider,
     CrawlStepProvider,
     ImageStepProvider,
+    GeminiClient,
+    GeminiImageStepProvider,
     MockStepProvider,
     ProviderRegistry,
     // Action execution: one ActionProvider per ActionType, dispatched via ActionRegistry.

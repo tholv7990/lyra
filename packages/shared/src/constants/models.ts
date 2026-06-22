@@ -35,6 +35,7 @@ export const MODEL_CATALOG: Record<Provider, ModelOption[]> = {
   // Crawl has no model — it fetches a URL. A placeholder keeps the step's
   // required model non-empty.
   [Provider.Crawl]: [{ id: 'fetch', label: 'Fetch page' }],
+  [Provider.Google]: [{ id: 'gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image' }],
 };
 
 export function isModelAllowed(provider: Provider, model: string): boolean {

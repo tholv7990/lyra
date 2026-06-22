@@ -1,6 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { PromptType } from '@lyra/shared';
-import { modelModality } from './providerCatalog';
+import { PromptType, Provider } from '@lyra/shared';
+import { modelModality, AVAILABLE_PROVIDERS } from './providerCatalog';
+
+describe('providerCatalog', () => {
+  it('lists Google Gemini as an addable provider wired to Provider.Google', () => {
+    const google = AVAILABLE_PROVIDERS.find((p) => p.id === 'google');
+    expect(google).toBeTruthy();
+    expect(google?.provider).toBe(Provider.Google);
+    expect(google?.status).toBe('available');
+  });
+
+  // I3: Google must be Image-only so it is excluded from Chats (spec §11.3 scoped
+  // Chats out for Google; callModel falls through to a silent mock for non-Anthropic).
+  it('Google Gemini modalities are Image-only (not Text/Audio/Video)', () => {
+    const google = AVAILABLE_PROVIDERS.find((p) => p.id === 'google');
+    expect(google?.modalities).toEqual([PromptType.Image]);
+    expect(google?.modalities).not.toContain(PromptType.Text);
+    expect(google?.modalities).not.toContain(PromptType.Audio);
+    expect(google?.modalities).not.toContain(PromptType.Video);
+  });
+});
 
 describe('modelModality', () => {
   it('classifies model ids by output modality', () => {

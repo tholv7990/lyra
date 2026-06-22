@@ -7,6 +7,7 @@ export const PROVIDER_LABELS: Record<Provider, string> = {
   [Provider.OpenAI]: 'OpenAI',
   [Provider.Anthropic]: 'Anthropic',
   [Provider.DeepSeek]: 'DeepSeek',
+  [Provider.Google]: 'Google',
   [Provider.Image]: 'Image',
   [Provider.Video]: 'Video',
   [Provider.Crawl]: 'Crawl',

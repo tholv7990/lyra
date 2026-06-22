@@ -44,13 +44,18 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     modalities: [PromptType.Text],
     keyUrl: 'https://platform.deepseek.com/api_keys',
   },
-  // Coming soon — listed so the roadmap is visible; not addable until wired.
   {
     id: 'google',
     label: 'Google Gemini',
-    status: 'soon',
+    provider: Provider.Google,
+    status: 'available',
     color: '#1A73E8',
-    modalities: [PromptType.Text, PromptType.Image, PromptType.Audio, PromptType.Video],
+    // Only Image is wired for Google (Gemini image generation); Text/Audio/Video are
+    // not yet implemented and Chats is scoped out for Google (spec §11.3).
+    // Narrowing to Image prevents Google from appearing in the Chats model picker,
+    // where callModel falls through to a silent mock for non-Anthropic providers.
+    modalities: [PromptType.Image],
+    keyUrl: 'https://aistudio.google.com/app/apikey',
   },
   { id: 'mistral', label: 'Mistral', status: 'soon', color: '#FA520F', modalities: [PromptType.Text] },
   { id: 'xai', label: 'xAI Grok', status: 'soon', color: '#111111', modalities: [PromptType.Text, PromptType.Image] },

@@ -4,6 +4,7 @@ import { AnthropicStepProvider } from './anthropic.provider';
 import { OpenAiCompatStepProvider } from './openai-compat.provider';
 import { CrawlStepProvider } from './crawl.provider';
 import { ImageStepProvider } from './image.provider';
+import { GeminiImageStepProvider } from './gemini-image.provider';
 import { MockStepProvider } from './mock.provider';
 import type { StepProvider } from './step-provider.interface';
 
@@ -22,6 +23,7 @@ export class ProviderRegistry {
     openai: OpenAiCompatStepProvider,
     crawl: CrawlStepProvider,
     image: ImageStepProvider,
+    geminiImage: GeminiImageStepProvider,
     mock: MockStepProvider,
   ) {
     this.impls = {
@@ -30,6 +32,7 @@ export class ProviderRegistry {
       [Provider.DeepSeek]: openai,
       [Provider.Crawl]: crawl, // real: fetch a URL → images + text (no key)
       [Provider.Image]: image, // real: OpenAI gpt-image-1 (reuses the OpenAI key)
+      [Provider.Google]: geminiImage, // real: Gemini gemini-2.5-flash-image (Google key)
       [Provider.Video]: mock, // video stays mock until a real render provider is wired
     };
   }

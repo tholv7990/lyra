@@ -8,8 +8,8 @@ import {
   resolveStepRefs,
   STEP_DEFS,
   StepStatus,
+  Provider,
   type ActionStep,
-  type Provider,
   type Run as RunModel,
   type Step,
   type StepCondition,
@@ -27,6 +27,7 @@ import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
 import { ActionRegistry } from './providers/action.registry';
 import type { StepRunOutput } from './providers/step-provider.interface';
+import { gatherInputImages } from './providers/image-inputs';
 import {
   assertRunnable,
   assertStepPosition,
@@ -78,6 +79,9 @@ export interface PipelineRunInput {
 // Fan-out execution limits — how many items run concurrently, and per-item retries.
 const FANOUT_CONCURRENCY = 4;
 const FANOUT_RETRIES = 2;
+
+// Image-capable providers — resolve inputImages for these.
+const IMAGE_PROVIDERS = new Set<Provider>([Provider.Image, Provider.Google]);
 
 @Injectable()
 export class RunsService extends BaseRepository<Run> {
@@ -258,7 +262,23 @@ export class RunsService extends BaseRepository<Run> {
               s.name ?? STEP_DEFS[s.index]?.title ?? s.key ?? `Step ${s.index + 1}`,
             result: s.result as string,
           }));
-    return this.registry.get(provider).execute({ step: stepForRun, apiKey, priorResults });
+    // Image steps may take prior steps' images as inputs (edit/compose). Resolve
+    // {input}/{step:Name} → prior image assets, fetched to base64 (capped).
+    let inputImages: Awaited<ReturnType<typeof gatherInputImages>> = [];
+    if (IMAGE_PROVIDERS.has(provider)) {
+      const runAssets = await this.assets.listForRun(doc._id.toString());
+      // IMPORTANT: pass `filled` (pre-resolveStepRefs), not `prompt` (post-resolved).
+      // resolveStepRefs replaces {input}/{step:Name} tokens with prior steps' result
+      // TEXT, so by the time `prompt` is produced those tokens are gone and
+      // parseImageRefs finds nothing. `filled` still has the raw chaining tokens.
+      inputImages = await gatherInputImages(
+        filled,
+        state.steps,
+        index,
+        (i) => runAssets.filter((a) => a.stepIndex === i).map((a) => ({ type: a.type, url: a.url })),
+      );
+    }
+    return this.registry.get(provider).execute({ step: stepForRun, apiKey, priorResults, inputImages });
   }
 
   // Fan-out a step over a run collection: one (capped-parallel) provider call per

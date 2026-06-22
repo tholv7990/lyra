@@ -20,6 +20,7 @@ import {
   toLyraPlaceholders,
   isActionStep,
   computeAdDiff,
+  parseImageRefs,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -393,5 +394,23 @@ describe('computeAdDiff', () => {
   });
   it('dedupes ids within a set', () => {
     expect(computeAdDiff(['a', 'a'], ['a'])).toEqual({ newIds: [], stoppedIds: [], ongoingIds: ['a'] });
+  });
+});
+
+describe('parseImageRefs', () => {
+  it('detects {input} and {step:Name} references', () => {
+    expect(parseImageRefs('Edit {input} to add {step:Brief}')).toEqual({
+      input: true,
+      names: ['Brief'],
+    });
+  });
+  it('returns no refs for a plain prompt', () => {
+    expect(parseImageRefs('A red sneaker on marble')).toEqual({ input: false, names: [] });
+  });
+  it('collects multiple named refs and trims them', () => {
+    expect(parseImageRefs('{step: Logo } over {step:Scene}')).toEqual({
+      input: false,
+      names: ['Logo', 'Scene'],
+    });
   });
 });
