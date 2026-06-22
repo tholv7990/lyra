@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import type { CrawlerCookieInfo } from '@lyra/shared';
+import { isNetscapeCookies } from '@lyra/shared';
 import { ConnectorCredential, ConnectorCredentialDocument } from './connector-credential.schema';
 import { BaseRepository } from '../common/database/base.repository';
 import { EncryptionService } from '../keys/encryption.service';
@@ -22,6 +23,11 @@ export class CrawlerCookiesService extends BaseRepository<ConnectorCredential> {
   }
 
   async set(workspaceId: string, cookies: string, actorId: string): Promise<CrawlerCookieInfo> {
+    if (!isNetscapeCookies(cookies)) {
+      throw new BadRequestException(
+        'Not a valid Netscape cookies.txt — export cookies with a "Get cookies.txt" browser extension and upload that file.',
+      );
+    }
     const doc = await this.model
       .findOneAndUpdate(
         { workspaceId, connector: CONNECTOR },
