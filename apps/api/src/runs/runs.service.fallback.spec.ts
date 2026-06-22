@@ -16,8 +16,11 @@ function makeSvc(execMap: ExecMap, keyedProviders: Provider[]) {
   return { svc, keys };
 }
 const step = (p: Provider) => ({ provider: p, model: 'm', name: 'Hook' });
+type FallbackFn = (
+  primary: Provider, step: unknown, apiKey: string, priorResults: unknown[], inputImages: unknown[], workspaceId: string,
+) => Promise<{ output: { result?: string }; servedBy: Provider }>;
 const call = (svc: RunsService, primary: Provider) =>
-  (svc as unknown as { executeWithFallback: Function }).executeWithFallback(primary, step(primary), 'primary-key', [], [], 'ws');
+  (svc as unknown as { executeWithFallback: FallbackFn }).executeWithFallback(primary, step(primary), 'primary-key', [], [], 'ws');
 
 describe('RunsService.executeWithFallback', () => {
   it('primary success → primary served, no key lookup, no alt call', async () => {
