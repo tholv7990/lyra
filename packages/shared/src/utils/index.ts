@@ -314,3 +314,17 @@ export function toLyraPlaceholders(content: string): string {
 export function isActionStep(step: { kind?: StepKind }): boolean {
   return step.kind === StepKind.Action;
 }
+
+// Set-difference of today's crawled ad ids vs the currently-active ids. Pure —
+// the heart of the monitor's daily changelog. Dedupes each side.
+export function computeAdDiff(
+  todayIds: string[],
+  activeIds: string[],
+): { newIds: string[]; stoppedIds: string[]; ongoingIds: string[] } {
+  const today = new Set(todayIds);
+  const active = new Set(activeIds);
+  const newIds = [...today].filter((id) => !active.has(id));
+  const stoppedIds = [...active].filter((id) => !today.has(id));
+  const ongoingIds = [...today].filter((id) => active.has(id));
+  return { newIds, stoppedIds, ongoingIds };
+}

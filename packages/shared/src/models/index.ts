@@ -19,6 +19,10 @@ import {
   StepKind,
   ActionType,
   Corner,
+  MonitorPlatform,
+  CompetitorStatus,
+  AdStatus,
+  AdEventType,
 } from '../enums';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
@@ -640,3 +644,22 @@ export interface UserRequest extends Audited {
   workspaceId?: string; // context it was sent from
   voteCount: number; // reserved for the upcoming request-voting board
 }
+
+export interface Competitor {
+  id: string; workspaceId: string; brand: string; domain?: string; niche: string;
+  status: CompetitorStatus; lastError?: string; lastCrawledAt?: string;
+  createdAt: string; updatedAt: string;
+}
+export interface AdvertiserHandle {
+  id: string; workspaceId: string; competitorId: string; platform: MonitorPlatform; advertiserId: string; resolvedAt: string;
+}
+export interface MonitorAd {
+  id: string; workspaceId: string; competitorId: string; platform: MonitorPlatform; adId: string;
+  creativeUrl?: string; copy?: string; format?: string; status: AdStatus;
+  firstSeen: string; lastSeen: string; daysRunning: number;
+}
+export interface AdEvent {
+  id: string; workspaceId: string; competitorId: string; platform: MonitorPlatform; adId: string; event: AdEventType; date: string;
+}
+export interface MonitorStats { newToday: number; stoppedToday: number; watching: number }
+export interface CompetitorChangelog { competitorId: string; brand: string; newAds: MonitorAd[]; ongoing: MonitorAd[]; stopped: MonitorAd[] }

@@ -19,6 +19,7 @@ import {
   parsePromptVariables,
   toLyraPlaceholders,
   isActionStep,
+  computeAdDiff,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -375,5 +376,22 @@ describe('isActionStep', () => {
   });
   it('is true only for action steps', () => {
     expect(isActionStep({ kind: StepKind.Action })).toBe(true);
+  });
+});
+
+describe('computeAdDiff', () => {
+  it('splits today vs active into new / stopped / ongoing', () => {
+    expect(computeAdDiff(['a', 'b', 'c'], ['b', 'c', 'd'])).toEqual({
+      newIds: ['a'], stoppedIds: ['d'], ongoingIds: ['b', 'c'],
+    });
+  });
+  it('first run (no active) → everything new, nothing stopped', () => {
+    expect(computeAdDiff(['a', 'b'], [])).toEqual({ newIds: ['a', 'b'], stoppedIds: [], ongoingIds: [] });
+  });
+  it('empty crawl → everything stopped', () => {
+    expect(computeAdDiff([], ['a', 'b'])).toEqual({ newIds: [], stoppedIds: ['a', 'b'], ongoingIds: [] });
+  });
+  it('dedupes ids within a set', () => {
+    expect(computeAdDiff(['a', 'a'], ['a'])).toEqual({ newIds: [], stoppedIds: [], ongoingIds: ['a'] });
   });
 });

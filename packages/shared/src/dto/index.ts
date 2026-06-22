@@ -413,3 +413,5 @@ export interface TransferPreview {
   conflicts: TransferConflict[];
   targetHasKeys: string[];      // of providers, which the target team already has
 }
+
+export interface DiscoverDto { keywords: string[] }

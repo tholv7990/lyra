@@ -135,3 +135,8 @@ export enum ChannelType {
   Postiz = 'postiz',
   GoLogin = 'gologin',
 }
+
+export enum MonitorPlatform { Meta = 'meta' }
+export enum CompetitorStatus { Candidate = 'candidate', Watching = 'watching', Archived = 'archived' }
+export enum AdStatus { Active = 'active', Stopped = 'stopped' }
+export enum AdEventType { New = 'new', Stopped = 'stopped' }
