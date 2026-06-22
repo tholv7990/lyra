@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ReactFlow, ReactFlowProvider, Background, BackgroundVariant, Controls,
-  Panel, useNodesState, useEdgesState, useReactFlow, type Node, type Edge,
+  Panel, useNodesState, useEdgesState, useReactFlow, useNodesInitialized, type Node, type Edge,
 } from '@xyflow/react';
 import { CapNode } from './flow/CapNode';
 import { RunStepNode } from './flow/RunStepNode';
@@ -30,6 +30,8 @@ function Canvas({ graph, callbacks, editData }: FlowCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
   const { fitView } = useReactFlow();
+  const nodesInitialized = useNodesInitialized();
+  const fittedRef = useRef(false);
 
   // Re-derive when the source graph changes (status, reorder, insert/remove).
   // Preserve any user-dragged position by node id; new nodes follow layout.
@@ -40,6 +42,18 @@ function Canvas({ graph, callbacks, editData }: FlowCanvasProps) {
     });
     setEdges(graph.edges);
   }, [graph, setNodes, setEdges]);
+
+  // Fit the flow once, AFTER the async-loaded nodes are actually measured. The
+  // `fitView` prop only fires on mount — before the graph populates — so it
+  // leaves the flow stranded at the bottom of an empty canvas. `useNodesInitialized`
+  // is the reliable "nodes measured" signal. Guarded so later status updates
+  // (during a run) or a user pan/zoom don't re-yank the view.
+  useEffect(() => {
+    if (nodesInitialized && !fittedRef.current && nodes.length > 0) {
+      fittedRef.current = true;
+      fitView({ duration: 250, padding: 0.2 });
+    }
+  }, [nodesInitialized, nodes.length, fitView]);
 
   const tidy = () => {
     setNodes((prev) => prev.map((n) => {
