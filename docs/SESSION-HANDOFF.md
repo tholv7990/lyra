@@ -1,3 +1,72 @@
+# Session handoff — June 22, 2026 — **Multi-platform connections (derived grouping)** · **all dropdowns → MenuPicker** · mobile hotfixes · filesystem-corruption recovery
+
+> **Read this first.** Built in worktree **`.claude/worktrees/competitor-monitor`** off `codex-dev`; two feature branches **ff-merged → `codex-dev` → pushed `git push origin codex-dev:dev`**. **`origin/dev` HEAD = `eccc1322`** (== local `codex-dev`). **Web-only this session** — vite **HMRs from source**, no `shared`/`api`/`connectors` dist rebuild or pm2 restart needed. **Commit/push only when the user asks.** Stage explicit files only — **never `git add -A`** (a Codex agent shares this tree). Design system = **Notion** (`docs/notion-design.md`); accent blue `#0075de`. Test login: `tholv.7990@gmail.com` / `Putiin15042024@@` (browser may also be logged in as `designqa@test.local`).
+
+## ✅ Shipped this session (all live on dev through `eccc1322`)
+1. **Mobile responsive hotfixes** (`54afbc0b`): Connections stat strip `repeat(3,1fr)` → `minmax(0,1fr)` + stack ≤680px; Publish composer was below an empty preview on mobile (`order:-1`) → **composer-first** + `minmax(0,1fr)` + `.pub-col min-width:0`. (Reported broken on iPhone; the "fully unstyled" was a stale cached CSS chunk — hard-refresh.)
+2. **Multi-platform account/connection model — DERIVED grouping** (`feat/multi-platform-accounts`, commits `a0cd4453`→`0733f494`). One connection → many platform accounts, as a **pure view over the flat `Channel` list**, NO backend/DTO/Mongo/migration:
+   - `apps/web/src/lib/connections.ts` — `groupChannels(channels)` (GoLogin grouped by `profileId`; all Postiz → one pool) + `shortProfileId`; node unit tests.
+   - **Connections** page: per-profile connection cards + nested account rows + **"+ Add account"** (reuses `POST /channels` with the same `profileId`) + "+ New connection"; stat strip counts real connections.
+   - **Publish** "Post to" + **Project editor** channel picker: options grouped under connection headers; payload (`channelIds`) and saved `Project.channels` shapes **unchanged**.
+   - Spec/plan: `docs/superpowers/specs|plans/2026-06-22-multi-platform-accounts*.md`. Final review: ready-to-merge, 0 Critical/Important.
+3. **All dropdowns → shared `MenuPicker`** (`feat/dropdowns-menupicker`, `eccc1322`): converted **13 native `<select>`** across 10 files (Publish project, Members role ×2, Admin filters/status ×3, Settings provider, PrefControls language, Crawler quality, Marketplace/Prompts sort, PipelineBuilder condition op, StepResultModal version) to `apps/web/src/components/MenuPicker.tsx` (token-styled trigger→menu, `menuitemradio` a11y). Per-container width CSS added. Live-verified the Publish picker opens correctly (desktop + 390px). **Design-system rule now: every dropdown uses MenuPicker, never `<select>`** (`dropdowns-use-menupicker` memory).
+
+## ⚠️ Incidents handled this session
+- **Filesystem corruption (recovered).** An unclean shutdown (power/connection loss right after a `git merge --ff-only`) **zero-filled the 12 in-flight merge files** in the MAIN tree + corrupted `.git/index`; the live Publish page threw a Vite `PARSE_ERROR`. Git objects/refs + `origin/dev` were intact. Recovered: `rm .git/index && git reset` → `git checkout HEAD -- <12 zeroed files>`; left the genuinely-edited `SESSION-HANDOFF.md` alone. Lesson saved: **`verify-live-render-after-deploy`** (open the deployed page — a green worktree build won't catch main-tree corruption).
+- **mongodb MCP server "Failed"** = corrupted npx cache (broken `bson` under `…/_npx/<hash>`), NOT Mongo (rs0 PRIMARY, healthy). Cleared the hash dir + re-fetched → starts clean. Reconnect via `/mcp`.
+- **Subagent caveat:** the dropdown implementer self-parallelized into 3 stray agent worktrees (ignored "work from <dir>"). The complete sweep still landed in the build worktree (verified directly, gated, committed); stray worktrees + branches removed.
+
+## 🚀 Deploy / verify
+- **Deploy = ff `codex-dev` ← feature branch → `git push origin codex-dev:dev`** → vite HMRs on dev.getlyras.app. Web-only → no dist rebuild. `origin/dev` HEAD = **`eccc1322`**.
+- **Worktree shared-dist gotcha:** `pnpm --filter @lyra/shared` dist in a worktree's node_modules can be STALE (phantom `Provider.Google`/`Step.cached` type errors) → `pnpm --filter @lyra/shared build` first, then `--filter @lyra/web type-check|lint|test|build`.
+- Live visual pass: Playwright at desktop **and ~390px** (`verify-mobile-not-just-desktop` memory).
+
+## 🔜 Pending / open (don't start unless asked)
+- **Multi-platform:** real `Connection`/`Account` Mongo entity was deliberately **deferred** — revisit only if connections need their own lifecycle/metadata the derived view can't express (`multi-platform-accounts-derived` memory).
+- **Dropdowns:** rule saved; future dropdowns must use `MenuPicker` (no remaining `<select>` to migrate — count is 0).
+- **Roadmaps still open** (`members-area-roadmap`, `crawler-pending-work`, per-project-channels e2e / publish-as-pipeline-step).
+- **Uncommitted:** this handoff entry + the June 21 entry below are both uncommitted in the MAIN tree's `SESSION-HANDOFF.md` — commit when asked.
+- Worktrees live: `competitor-monitor` (`feat/dropdowns-menupicker` @ `eccc1322`), `notification-bell` (`feat/members-page`).
+
+---
+
+# Session handoff — June 21, 2026 — **Full design-system migration to Notion** (color · type · system font · flat buttons + icon buttons · landing · auth · unified nav)
+
+> **Read this first.** Worked in the **MAIN tree** `c:\Users\Admin\Desktop\Lyra` on branch **`codex-dev`**; deployed by **`git push origin codex-dev:dev`** → dev.getlyras.app, through **`c048d26c`** (`origin/dev` == local `codex-dev`). **Web-only this session** (CSS/TSX) — vite **HMRs from source**, so **no `shared`/`api`/`connectors` dist rebuild or pm2 restart** needed (that's only for those packages, per the `dev-deploy-rebuild-dist` memory). **Commit/push only when the user asks.** Stage explicit files only — **never `git add -A`** (a Codex agent shares this tree). The live design reference is now **`docs/notion-design.md`** (from `npx getdesign@latest add notion`); `docs/lyra-linear-audit.md` is **superseded/historical**.
+
+## ✅ Shipped this session (all live on dev)
+The whole UI moved from **Linear/orange → Notion**. The intermediate clay → Linear-indigo commits (`21f33bf3`…`c1547cdd`) are **SUPERSEDED**; the net state is **Notion: warm-neutral paper + a single blue accent + system font + flat components.**
+
+1. **Color tokens → Notion** (`0f4b954b`, `index.css` `:root` + `[data-theme=dark]`): blue accent **`#0075de`** (light) / **`#2383e2`** (dark). Light: `--app-bg #ffffff`, `--surface-1 #f6f5f4`, `--card #ffffff`, `--ink #31302e` / muted `#615d59` / tertiary `#75726b`. Dark (Notion warm-charcoal): `--app-bg #191919`, `--card #252525`, `--surface-1 #202020`, `--field #1c1c1c`, `--ink #ededeb`.
+2. **Canvas/sidebar/card mapping** (`a32253da`): Notion's literal split — **white main canvas, soft-gray sidebar** (`.sidebar` → `--surface-1`), flat hairline cards (resting shadow only on `:hover`).
+3. **Phase 1 foundations** (`1594efa3` + P1.5 `6b65502f`/`98562cd4`): **system font** (`-apple-system,…,'Segoe UI'` — dropped bundled Inter, in `index.css` + `styles/tokens.css`); **bold 700 headings** (global `h1–h4` + page-title rules `.home-greeting` / `.editor-title` / `.section-head h2` / `.prompts-head h2` / `.mkt-head h1`); **body 16px / lh 1.5**; **6px control radius** (`--radius-button`).
+4. **Phase 2 buttons** (`b77a6d44`): `.btn-*` flat — dropped Linear lift shadow + inset edge; primary = flat blue, secondary `.btn-ghost` = white + hairline, danger flat; 14px/500.
+5. **Phase 3 inputs** (`cd38e666`): `.mkt-search` → flat **soft-gray** field; `.mkt-tool-btn` aligned (white+hairline, 14px).
+6. **Phase 4 — app-wide button audit + fix** (`3853de84`, done via a 2-agent audit→fix, build green): every button + icon button flattened — removed lift/offset shadows + inset edges (`.lin-add`, `.chat-new`, `.mkd-add`, `.seg-btn`/`.pref-seg-btn`/`.cx-seg` active, `.google-btn`); **icon buttons made bare** (transparent + no border at rest, gray hover only); pill/odd radii → 6px; text buttons → 14px.
+7. **Landing → Notion** (`52a22c1e` accent indigo→blue; `3c219139` **neutral surfaces aligned to the app's Notion neutrals** so `--l-surface-1` == `--surface-1`). This fixed the home/auth nav-bg mismatch + removed the leftover navy tint.
+8. **Brand assets**: favicon + `lyra-mark-squircle.svg` + both horizontal logos recolored → Notion blue.
+9. **Auth pages** (`79817b95`, `24cc42d3`): `AuthTopBar` is a real header (shared **`BrandLogo`** + lang/theme toggles) **mirroring the landing nav `.l-nav`** (same blurred bar, 66px inner, transparent toggles); **`MatrixRain` restored + recolored blue** (was removed then re-added per the user); auth nav bg now == landing nav bg.
+10. **AI FAB** (`79817b95`/`24cc42d3`): `.ai-fab` is an **icon-only blue circle** with the **`SparkleIcon`** (was chat icon + "AI" label).
+11. **Unified nav** (`e70b9f3a`…`c048d26c`): **every in-app page header is the floating rounded bar** — mobile `margin: 12px 14px 0`, desktop `margin-bottom: 14px`, `padding: 0 14–16px`, `border-radius: 14px`, `1px solid var(--hairline)`, `background: color-mix(in srgb, var(--card) 68%, transparent)`, `backdrop-filter: blur(14px)`, `height: 52px`. Applied to `.eshell-head` (pipeline/project editor + run view), `.chat-top` (chats), `.pe-titlerow` (legacy). App `.topbar` already had it. Only 4 nav surfaces exist; all now match (desktop + mobile, verified live).
+12. **Docs**: added `docs/notion-design.md` (live reference); repointed `apps/web/CLAUDE.md` UI section to it; recolored the dead `tokens.css --color-primary` to blue.
+
+## ⚠️ Deploy / verify specifics
+- **Deploy = edit source (main tree) → `git push origin codex-dev:dev` → vite HMRs on dev.** No dist rebuild this session (web-only). `origin/dev` HEAD = **`c048d26c`**.
+- **Floating-nav-bar pattern** (reuse verbatim for any new page header): see #11.
+- **Live-verify recipe used all session**: Playwright `browser_run_code_unsafe` → `page.context().browser().newContext()` = a **logged-out incognito context** for `/login`·`/signup`·`/` (landing); the **authed** `page` for app pages; force theme via `document.documentElement.setAttribute('data-theme','dark'|'light')`. Web build check: `pnpm --filter @lyra/web build`.
+
+## 🔜 Pending / open (don't start unless asked)
+- **Landing ink left cool** (`--l-ink #1c1d2a`, etc.) while its surfaces went warm-neutral — a subtle temperature mismatch; aligning ink to `#31302e` / `#ededeb` would give full parity.
+- **Micro text-buttons** (11.5–12.5px: `.txt-btn`, `.se-btn`, `.pub-tool`, `.rt-toggle`, `.tcol-addrow`, `.pe-quick-chip`, …) left at their small sizes deliberately (not bumped to 14px).
+- **`.pe-titlerow`** floating styles added defensively, but the live project editor uses `.eshell-head` → `.pe`/`.pe-titlerow` is likely dead CSS.
+- **`.ai-fab` keeps `--shadow-lg`** (intentional — floating element, not an inline button).
+- **Pre-existing impeccable hook findings** in `layout.css` (side-tab accent focus bars; one bounce easing) left untouched — they predate this session, intentional/legacy.
+- **Root `CLAUDE.md`** + `docs/lyra-linear-audit.md` still describe the old Linear/orange system (only `apps/web/CLAUDE.md` repointed to Notion).
+- **This handoff entry is uncommitted** until you ask.
+- Prior entries' pending items still stand.
+
+---
+
 # Session handoff — June 20, 2026 (late PM) — Design-system polish (Linear tokens · Table/Form/Board · **Tailwind removed**) · Claude Design sync (components + context docs) · workspace name hidden · GainsSteel deleted
 
 > **Read this first.** Work in worktree **`.claude/worktrees/notification-bell`** (branch `feat/members-page`), pushed to **`origin/dev` through `b013a638`**; main tree `codex-dev` ff-merged + **DEPLOYED** (pm2 `lyra-web` restarted, vite ready, HTTP 200 — **web-only** this session: no api/shared/connectors change). **Commit/push only when the user asks.** Stage explicit files only — **never `git add -A`** (a Codex agent shares the main tree; this session `apps/web/.impeccable/` + `docs/superpowers/plans/.task-*.md` are NOT mine — left unstaged). Web gate green: `pnpm --filter @lyra/web type-check|lint|build`.
