@@ -5,10 +5,11 @@ export class ApifyClient {
   // Runs an actor synchronously and returns its dataset items. The token is the
   // workspace's BYO Apify key (never stored here — passed per call).
   async runActor(actorId: string, input: object, token: string): Promise<unknown[]> {
-    const url = `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${encodeURIComponent(token)}`;
+    const url = `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // Bearer header (not ?token= query) so the BYO key never lands in a URL/access log.
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(input),
       signal: AbortSignal.timeout(180_000),
     });

@@ -257,6 +257,19 @@ describe('MonitorService.runDailyForCompetitor', () => {
   });
 });
 
+describe('MonitorService.runDaily key gate', () => {
+  it('throws up-front (not per-competitor) when watching exists but no key in service mode', async () => {
+    const { s, events } = svc({
+      competitors: { find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([{ _id: 'c1', workspaceId: 'ws1', save: jest.fn() }]) }) },
+      creds: { getDecrypted: jest.fn().mockResolvedValue(null) },
+      proxy: { usesService: () => true, forward: jest.fn() },
+      events: { create: jest.fn() },
+    });
+    await expect(s.runDaily('ws1')).rejects.toThrow('Add an Apify key');
+    expect(events.create).not.toHaveBeenCalled(); // gate fired before the per-competitor crawl
+  });
+});
+
 describe('MonitorService.changelog', () => {
   it('groups events by day → competitor with joined new/stopped ad detail (desc by date)', async () => {
     const events = { find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([

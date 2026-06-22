@@ -117,6 +117,10 @@ export class MonitorService {
 
   async runDaily(ws: string): Promise<void> {
     const watching = await this.competitors.find({ workspaceId: ws, status: CompetitorStatus.Watching }).exec();
+    if (watching.length === 0) return;
+    // Gate the key ONCE up-front: run-now propagates a clean 400 (vs {ok:true} + a misleading
+    // lastError stamped on every competitor); the cron's per-ws catch logs+skips a keyless ws.
+    await this.apifyKey(ws);
     for (const c of watching) {
       try {
         await this.runDailyForCompetitor(ws, c as never);
