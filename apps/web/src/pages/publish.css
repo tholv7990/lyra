@@ -50,7 +50,7 @@
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 .pub-card {
   border: 1px solid var(--hairline);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   background: var(--card);
   padding: 16px 17px;
 }
@@ -115,7 +115,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 11px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1.5px solid var(--hairline-strong);
   background: transparent;
   cursor: pointer;
@@ -180,7 +180,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--primary);
   color: var(--on-accent);
   font-size: 11px;
@@ -213,7 +213,7 @@
 .pub-ta {
   width: 100%;
   border: 1px solid var(--hairline);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--field);
   color: var(--ink);
   font: inherit;
@@ -249,7 +249,7 @@
   position: relative;
   width: 84px;
   height: 84px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--hairline);
   background: var(--surface-2);
@@ -282,7 +282,7 @@
   min-width: 0;
   height: 34px;
   border: 1px solid var(--hairline);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--field);
   color: var(--ink);
   font: inherit;
@@ -294,7 +294,7 @@
 .pub-add-btn {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px dashed var(--hairline-strong);
   background: var(--surface-1);
   color: var(--primary);
@@ -310,7 +310,7 @@
   gap: 6px;
   height: 34px;
   padding: 0 11px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--hairline);
   background: var(--surface-1);
   color: var(--ink-muted);
@@ -352,7 +352,7 @@
 /* ── Preview panel ───────────────────────────────────────────────────────── */
 .pub-preview {
   border: 1px solid var(--hairline);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   background: var(--canvas);
   overflow: hidden;
 }
@@ -370,14 +370,14 @@
   align-items: center;
   gap: 3px;
   padding: 3px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-2);
   border: 1px solid var(--hairline);
 }
 .pub-tab {
   width: 26px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
   display: grid;
@@ -397,7 +397,7 @@
 /* Live post card */
 .pub-post {
   border: 1px solid var(--hairline);
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: var(--card);
   overflow: hidden;
 }
@@ -461,13 +461,13 @@
   gap: 10px;
   padding: 10px 11px;
   border: 1px solid var(--hairline);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--surface-1);
 }
 .pub-recent-icon {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   display: grid;
   place-items: center;
   flex: none;
@@ -497,7 +497,7 @@
   gap: 4px;
   height: 18px;
   padding: 0 7px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-size: 10px;
   font-weight: 600;
@@ -506,7 +506,7 @@
 .pub-recent-dot {
   width: 5px;
   height: 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   flex: none;
 }
 .pub-recent-status { font-size: 11px; font-weight: 500; }
@@ -516,7 +516,7 @@
 .pub-ico {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: grid;
   place-items: center;
   flex: none;
@@ -524,7 +524,7 @@
   font-size: 14px;
   font-weight: 700;
 }
-.pub-ico.sm { width: 26px; height: 26px; font-size: 12px; border-radius: 7px; }
+.pub-ico.sm { width: 26px; height: 26px; font-size: 12px; border-radius: var(--radius-sm); }
 
 /* ── Mobile sticky publish bar ───────────────────────────────────────────── */
 /* Hidden on desktop; shown as a fixed bottom bar on mobile */
@@ -553,7 +553,7 @@
     justify-content: center;
     gap: 7px;
     height: 44px;
-    border-radius: 11px;
+    border-radius: var(--radius-lg);
     border: none;
     cursor: pointer;
     font: inherit;
