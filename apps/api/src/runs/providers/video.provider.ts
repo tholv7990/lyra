@@ -21,6 +21,9 @@ export class VideoStepProvider implements StepProvider {
     if (!ctx.apiKey) {
       throw new Error('Video generation needs the workspace Replicate key — set it in Settings.');
     }
+    if (!this.storage.enabled) {
+      throw new Error('Video rendering needs durable object storage (R2) — set the R2_* env to enable it.');
+    }
     const prompt = (ctx.step.prompt || '').trim().slice(0, MAX_PROMPT);
     if (!prompt) throw new Error('No prompt to render a video from.');
     const model = ctx.step.model || DEFAULT_VIDEO_MODEL;

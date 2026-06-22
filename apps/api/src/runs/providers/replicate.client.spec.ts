@@ -46,4 +46,11 @@ describe('ReplicateClient', () => {
     jest.spyOn(global, 'fetch' as never).mockResolvedValueOnce({ ok: false, status: 402, json: async () => ({ detail: 'billing' }) } as never);
     await expect(new ReplicateClient().run('m/n', { prompt: 'x' }, 'secret', fast)).rejects.toThrow(/replicate create.*402/i);
   });
+
+  it('rejects on an invalid model slug and does not fetch', async () => {
+    const f = jest.spyOn(global, 'fetch' as never);
+    await expect(new ReplicateClient().run('not-a-slug', { prompt: 'x' }, 'tok', fast))
+      .rejects.toThrow(/invalid.*slug/i);
+    expect(f).not.toHaveBeenCalled();
+  });
 });

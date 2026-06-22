@@ -24,6 +24,9 @@ export class ReplicateClient {
     token: string,
     opts: { intervalMs?: number; deadlineMs?: number } = {},
   ): Promise<string> {
+    if (!/^[\w.-]+\/[\w.-]+$/.test(model)) {
+      throw new Error(`Invalid Replicate model slug: ${model}`);
+    }
     const created = await this.create(model, input, token);
     const final = await this.pollUntilDone(created.id, token, opts);
     const out = final.output;
