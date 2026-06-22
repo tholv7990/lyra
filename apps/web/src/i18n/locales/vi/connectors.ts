@@ -82,11 +82,13 @@ export default {
   audioOnly: 'Chỉ âm thanh',
   downloading: 'Đang tải…',
   cookiesActive: 'Đã bật cookie đăng nhập',
+  cookiesUpdatedAgo: 'cập nhật {{ago}}',
   cookiesUpload: 'Dùng đăng nhập của tôi (tải lên cookies.txt)',
   cookiesRemove: 'Xóa',
   cookiesHint: 'Chỉ dùng cho nội dung bạn sở hữu hoặc có quyền. Được mã hóa khi lưu; dùng cho video cần đăng nhập hoặc giới hạn độ tuổi.',
   tosNote: 'Chỉ tải nội dung bạn sở hữu hoặc có quyền dùng. Tuân theo điều khoản của từng nền tảng.',
   nothingResolved: 'Không có gì để tải từ liên kết đó.',
+  retry: 'Thử lại',
 
   // shared
   loading: 'Đang tải…',

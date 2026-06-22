@@ -75,6 +75,7 @@ function CrawlSource({ ws, url, showUrl }: { ws: string; url: string; showUrl: b
   const [items, setItems] = useState<MediaItem[]>([]);
   const [status, setStatus] = useState<'resolving' | 'resolved' | 'error'>('resolving');
   const [error, setError] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
   const [pick, setPick] = useState<Record<number, string>>({}); // item index → chosen -f selector
   const [dl, setDl] = useState<Record<number, number>>({}); // index → % in flight; key -1 = "download all"
 
@@ -93,9 +94,20 @@ function CrawlSource({ ws, url, showUrl }: { ws: string; url: string; showUrl: b
     const tag = indices ?? [-1]; // -1 marks the "download all" action
     const setPct = (pct: number) => setDl((d) => ({ ...d, ...Object.fromEntries(tag.map((i) => [i, pct])) }));
     const clear = () => setDl((d) => { const n = { ...d }; tag.forEach((i) => delete n[i]); return n; });
-    const fail = (err: unknown) => { setError(err instanceof Error ? err.message : t('connectors.error')); clear(); };
+    const fail = (err: unknown) => {
+      const msg = err instanceof Error ? err.message : t('connectors.error');
+      // Detect expired job error from connectors-service restart
+      if (msg.toLowerCase().includes('job expired') || msg.toLowerCase().includes('job not found')) {
+        setExpired(true);
+        setError(msg);
+      } else {
+        setError(msg);
+      }
+      clear();
+    };
     setPct(0);
     setError(null);
+    setExpired(false);
     const poll = (jobId: string) =>
       connectorsApi
         .downloadJob(ws, jobId)
@@ -129,7 +141,16 @@ function CrawlSource({ ws, url, showUrl }: { ws: string; url: string; showUrl: b
         </span>
       </div>
 
-      {status === 'error' && <p className="cx-error">{error}</p>}
+      {status === 'error' && (
+        <div className="cx-error-section">
+          <p className="cx-error">{error}</p>
+          {expired && (
+            <button className="cx-btn-retry" onClick={() => download()}>
+              {t('connectors.retry')}
+            </button>
+          )}
+        </div>
+      )}
 
       {status === 'resolved' && items.length > 0 && (
         <>

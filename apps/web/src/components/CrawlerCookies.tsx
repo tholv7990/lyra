@@ -3,6 +3,16 @@ import { useTranslation } from 'react-i18next';
 import type { CrawlerCookieInfo } from '@lyra/shared';
 import { connectorsApi } from '../lib/connectors';
 
+function formatDaysAgo(iso: string): string {
+  const now = new Date();
+  const then = new Date(iso);
+  const ms = now.getTime() - then.getTime();
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  if (days === 0) return 'today';
+  if (days === 1) return '1 day ago';
+  return `${days} days ago`;
+}
+
 // Workspace-level crawler cookies (cookies.txt) — used for logged-in / age-restricted
 // content the user owns or has rights to. Stored encrypted server-side.
 export function CrawlerCookies({ ws }: { ws: string }) {
@@ -36,6 +46,9 @@ export function CrawlerCookies({ ws }: { ws: string }) {
         {info?.present ? (
           <span className="cx-ck-on">
             🔒 {t('connectors.cookiesActive')}
+            {info.updatedAt && (
+              <span className="cx-ck-staleness">{t('connectors.cookiesUpdatedAgo', { ago: formatDaysAgo(info.updatedAt) })}</span>
+            )}
             <button type="button" className="cx-ck-remove" onClick={remove}>{t('connectors.cookiesRemove')}</button>
           </span>
         ) : (
