@@ -49,6 +49,12 @@ export class RunStep {
   condition?: { variable: string; op: string; value?: string };
 
   @Prop()
+  kind?: string; // 'prompt' (default) | 'action'
+
+  @Prop({ type: Object })
+  action?: { type: string; position?: string; size?: string; source?: string; quality?: string; channelIds?: string[]; captionFrom?: string };
+
+  @Prop()
   result?: string;
 
   @Prop({ type: [String] })

@@ -51,6 +51,10 @@ export class Project extends AuditedEntity {
   // Connected-channel ids (workspace Connections pool) this project posts to.
   @Prop({ type: [String], default: [] })
   channels!: string[];
+
+  // Brand kit configuration (logo, accent color, etc.)
+  @Prop({ type: Object })
+  brandKit?: { logoUrl?: string; accentColor?: string };
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

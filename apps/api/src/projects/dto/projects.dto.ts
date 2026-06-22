@@ -7,6 +7,7 @@ import {
   MaxLength,
   MinLength,
   ValidateNested,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProjectStatus, ProjectShare } from '@lyra/shared';
@@ -14,6 +15,7 @@ import type {
   CreateProjectDto,
   ProjectVariableInput,
   UpdateProjectDto,
+  ProjectBrandKit,
 } from '@lyra/shared';
 
 export class ProjectVariableBody implements ProjectVariableInput {
@@ -25,6 +27,16 @@ export class ProjectVariableBody implements ProjectVariableInput {
   @IsString()
   @MaxLength(4000)
   value!: string;
+}
+
+export class ProjectBrandKitBody implements ProjectBrandKit {
+  @IsOptional()
+  @IsUrl()
+  logoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  accentColor?: string;
 }
 
 export class CreateProjectBody implements CreateProjectDto {
@@ -98,4 +110,9 @@ export class UpdateProjectBody implements UpdateProjectDto {
   @ArrayMaxSize(100)
   @IsString({ each: true })
   channels?: string[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProjectBrandKitBody)
+  brandKit?: ProjectBrandKitBody;
 }
