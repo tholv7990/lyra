@@ -169,11 +169,7 @@ describe('RunsService step cache', () => {
 
     // Provider must NOT be called on a cache HIT.
     expect(providerExecute).not.toHaveBeenCalled();
-    // The step result should be from the cache.
-    const stepResult = (runDoc.save as jest.Mock).mock.calls.length > 0
-      ? (runDoc as any).steps[0]
-      : null;
-    // Verify via cache findOne being consulted.
+    // Verify the cache was consulted (and the step took the cached path).
     expect(cache.findOne).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: 'ws-1' }),
     );
