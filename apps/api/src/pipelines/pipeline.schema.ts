@@ -22,6 +22,14 @@ export class PipelineStepItem {
   // Guard condition — the step is skipped when it fails.
   @Prop({ type: Object })
   condition?: { variable: string; op: string; value?: string };
+
+  // Kind of step — 'prompt' (default) or 'action'
+  @Prop()
+  kind?: string; // 'prompt' (default) | 'action'
+
+  // Action payload for action steps
+  @Prop({ type: Object })
+  action?: { type: string; position?: string; size?: string; source?: string; quality?: string; channelIds?: string[]; captionFrom?: string };
 }
 const PipelineStepItemSchema = SchemaFactory.createForClass(PipelineStepItem);
 

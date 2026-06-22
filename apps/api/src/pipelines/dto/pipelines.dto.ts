@@ -3,6 +3,7 @@ import {
   IsArray,
   IsEnum,
   IsIn,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
@@ -12,9 +13,11 @@ import {
 import { Type } from 'class-transformer';
 import {
   Provider,
+  StepKind,
   StepMode,
   TAG_MAX,
   TAG_MAX_LEN,
+  type ActionStep,
   type AiChatDto,
   type AiChatTurn,
   type ConditionOp,
@@ -102,6 +105,14 @@ export class PipelineStepBody implements PipelineStepInput {
   @ValidateNested()
   @Type(() => ConditionBody)
   condition?: ConditionBody;
+
+  @IsOptional()
+  @IsEnum(StepKind)
+  kind?: StepKind;
+
+  @IsOptional()
+  @IsObject()
+  action?: ActionStep;
 }
 
 export class PipelineOriginBody implements PipelineOrigin {

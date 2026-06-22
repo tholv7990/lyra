@@ -8,10 +8,12 @@ import {
   resolveStepRefs,
   STEP_DEFS,
   StepStatus,
+  type ActionStep,
   type Provider,
   type Run as RunModel,
   type Step,
   type StepCondition,
+  type StepKind,
   type StepMode,
 } from '@lyra/shared';
 import { Run, RunDocument } from './run.schema';
@@ -68,6 +70,8 @@ export interface PipelineRunInput {
     mode: StepMode;
     fanOut?: { over: string; itemVar?: string };
     condition?: StepCondition;
+    kind?: StepKind;
+    action?: ActionStep;
   }[];
 }
 
@@ -107,6 +111,8 @@ export class RunsService extends BaseRepository<Run> {
         mode: ps.mode,
         fanOut: ps.fanOut,
         condition: ps.condition,
+        kind: ps.kind,
+        action: ps.action,
         status: StepStatus.Idle,
         // Store the raw template — project/custom/system vars and {input}/{step:Name}
         // resolve at run time from the run's variable snapshot + prior outputs.

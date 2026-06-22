@@ -15,7 +15,7 @@ import type { Response } from 'express';
 import { Readable } from 'node:stream';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import { ZipArchive } from 'archiver';
-import type { Asset as AssetModel, Run as RunModel, StepCondition, User } from '@lyra/shared';
+import type { ActionStep, Asset as AssetModel, Run as RunModel, StepCondition, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
@@ -95,6 +95,8 @@ export class RunsController {
         mode: s.mode,
         fanOut: s.fanOut,
         condition: s.condition as StepCondition | undefined,
+        kind: s.kind as any,
+        action: s.action as ActionStep | undefined,
       })),
     };
   }
@@ -185,6 +187,8 @@ export class RunsController {
           mode: s.mode,
           fanOut: s.fanOut,
           condition: s.condition as StepCondition | undefined,
+          kind: s.kind as any,
+          action: s.action as ActionStep | undefined,
         })),
       },
       user.id,

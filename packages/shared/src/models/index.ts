@@ -396,6 +396,8 @@ export interface PipelineStep {
   mode: StepMode;
   fanOut?: FanOutConfig; // map this step over a run collection (parallel, N items)
   condition?: StepCondition; // guard — skip this step when it fails
+  kind?: StepKind;
+  action?: ActionStep;
 }
 
 // A user-defined variable for a pipeline. Any step prompt can reference it as

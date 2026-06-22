@@ -73,6 +73,8 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         mode: s.mode,
         fanOut,
         condition,
+        kind: s.kind,
+        action: s.action,
       };
     });
   }
