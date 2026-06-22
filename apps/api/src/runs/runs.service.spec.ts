@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { StepKind, ActionType } from '@lyra/shared';
 import { RunsService } from './runs.service';
 import type { RunDocument } from './run.schema';
 
@@ -6,15 +7,17 @@ function makeService(deps?: {
   keys?: any;
   actions?: any;
   projects?: any;
+  model?: any;
+  prompts?: any;
 }): RunsService {
   const users = { refMap: jest.fn().mockResolvedValue(new Map()) };
   // rate() only touches doc + users (via toView, which we stub); other deps unused.
   const svc = new RunsService(
-    {} as never, // model
+    deps?.model ?? ({} as never), // model
     deps?.keys ?? ({} as never), // keys
     users as never, // users
     {} as never, // registry
-    {} as never, // prompts
+    deps?.prompts ?? ({} as never), // prompts
     {} as never, // assets
     deps?.actions ?? ({} as never), // actions
     deps?.projects ?? ({} as never), // projects
@@ -32,6 +35,47 @@ function doc(steps: { status: string }[], rating?: unknown): RunDocument {
     save: jest.fn().mockResolvedValue(undefined),
   } as unknown as RunDocument;
 }
+
+describe('RunsService.createForPipeline', () => {
+  it('skips the prompt lookup for action steps (empty promptId) and carries kind/action into the run', async () => {
+    const findActiveById = jest.fn().mockResolvedValue({ content: 'PROMPT BODY' });
+    // BaseRepository.create does `new this.model(doc).save()`.
+    const ModelMock = jest
+      .fn()
+      .mockImplementation((d: Record<string, unknown>) => ({ ...d, save: jest.fn().mockResolvedValue(d) }));
+    const svc = makeService({ model: ModelMock, prompts: { findActiveById } });
+
+    const run = (await svc.createForPipeline(
+      {
+        workspaceId: 'w1',
+        pipelineId: 'pl1',
+        pipelineName: 'P',
+        projectVariables: {},
+        steps: [
+          { name: 'Write', promptId: 'real-id', provider: 'anthropic', model: 'm', mode: 'auto' },
+          {
+            name: 'Brand',
+            promptId: '',
+            provider: 'anthropic',
+            model: '',
+            mode: 'auto',
+            kind: StepKind.Action,
+            action: { type: ActionType.Brand, position: 'br', size: 'md' },
+          },
+        ],
+      } as never,
+      'actor-1',
+    )) as unknown as { steps: { kind?: string; action?: { type: string } }[] };
+
+    // C1: never look up a prompt for the action step's empty id (would CastError).
+    expect(findActiveById).toHaveBeenCalledTimes(1);
+    expect(findActiveById).toHaveBeenCalledWith('real-id');
+    expect(findActiveById).not.toHaveBeenCalledWith('');
+    // The action step's kind/action reach the run document.
+    expect(run.steps[1].kind).toBe(StepKind.Action);
+    expect(run.steps[1].action?.type).toBe(ActionType.Brand);
+  });
+});
 
 describe('RunsService.rate', () => {
   it('sets a rating once a step has completed', async () => {

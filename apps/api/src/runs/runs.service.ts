@@ -101,7 +101,9 @@ export class RunsService extends BaseRepository<Run> {
     const steps: Partial<Step>[] = [];
     for (let i = 0; i < input.steps.length; i++) {
       const ps = input.steps[i];
-      const prompt = await this.prompts.findActiveById(ps.promptId);
+      // Action steps carry no promptId — don't look one up (an empty id would
+      // throw a Mongoose CastError). Prompt steps always have one.
+      const prompt = ps.promptId ? await this.prompts.findActiveById(ps.promptId) : null;
       steps.push({
         index: i,
         name: ps.name,

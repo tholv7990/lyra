@@ -10,6 +10,7 @@ import {
   evalCondition,
   providerNeedsKey,
   keyProviderFor,
+  isActionStep,
   type Step,
 } from '@lyra/shared';
 
@@ -57,6 +58,9 @@ export function providerOf(step: Step): Provider {
 }
 
 export function isLocked(step: Step, keysPresent: Set<string>): boolean {
+  // Action steps make no AI-provider call (invariant 7) — they're never key-gated,
+  // regardless of the stale `provider` they may carry from the builder defaults.
+  if (isActionStep(step)) return false;
   const provider = providerOf(step);
   return providerNeedsKey(provider) && !keysPresent.has(keyProviderFor(provider));
 }

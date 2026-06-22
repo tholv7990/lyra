@@ -1,7 +1,8 @@
-import { RunStatus, StepStatus } from '@lyra/shared';
+import { RunStatus, StepStatus, Provider, StepKind, ActionType, type Step } from '@lyra/shared';
 import {
   buildSteps,
   assertRunnable,
+  isLocked,
   beginStep,
   completeStep,
   failStep,
@@ -29,6 +30,22 @@ function runStep(s: RunState, index: number, keys = ALL_KEYS, result = 'ok') {
   beginStep(s, index);
   completeStep(s, index, { result });
 }
+
+describe('isLocked (action steps need no provider key — invariant 7)', () => {
+  it('never locks an action step, even with no keys present', () => {
+    const actionStep = {
+      provider: Provider.Anthropic, // stale builder default — must be ignored
+      kind: StepKind.Action,
+      action: { type: ActionType.Brand, position: 'br', size: 'md' },
+    } as unknown as Step;
+    expect(isLocked(actionStep, new Set())).toBe(false);
+  });
+
+  it('still locks a prompt step whose provider key is absent', () => {
+    const promptStep = { provider: Provider.Anthropic } as unknown as Step;
+    expect(isLocked(promptStep, new Set())).toBe(true);
+  });
+});
 
 describe('run engine', () => {
   it('builds 8 steps with filled prompts', () => {
