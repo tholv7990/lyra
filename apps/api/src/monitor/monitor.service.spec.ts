@@ -256,3 +256,37 @@ describe('MonitorService.runDailyForCompetitor', () => {
     expect(events.create).toHaveBeenCalledWith(expect.objectContaining({ adId: 'd', event: 'stopped', date: today }));
   });
 });
+
+describe('MonitorService.changelog', () => {
+  it('groups events by day → competitor with joined new/stopped ad detail (desc by date)', async () => {
+    const events = { find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([
+      { competitorId: 'c1', adId: 'a', event: 'new', date: '2026-06-22' },
+      { competitorId: 'c1', adId: 'b', event: 'stopped', date: '2026-06-22' },
+      { competitorId: 'c2', adId: 'x', event: 'new', date: '2026-06-21' },
+    ]) }) };
+    const competitors = {
+      find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([
+        { _id: 'c1', brand: 'Brand A' }, { _id: 'c2', brand: 'Brand B' },
+      ]) }),
+      countDocuments: jest.fn().mockReturnValue({ exec: () => Promise.resolve(2) }),
+    };
+    const ads = { find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([
+      { competitorId: 'c1', adId: 'a', creativeUrl: 'ua', daysRunning: 1 },
+      { competitorId: 'c1', adId: 'b', creativeUrl: 'ub', daysRunning: 4 },
+      { competitorId: 'c2', adId: 'x', creativeUrl: 'ux', daysRunning: 1 },
+    ]) }) };
+    const s = new MonitorService(
+      competitors as never, {} as never, ads as never, events as never,
+      { usesService: () => false } as never, {} as never,
+    );
+    const out = await s.changelog('ws1', 7);
+    expect(out.stats.watching).toBe(2);
+    expect(out.byDay.map((d) => d.date)).toEqual(['2026-06-22', '2026-06-21']); // newest first
+    const top = out.byDay[0].competitors[0];
+    expect(top.brand).toBe('Brand A');
+    expect(top.newAds.map((a) => a.adId)).toEqual(['a']);
+    expect(top.stopped.map((a) => a.adId)).toEqual(['b']);
+    expect(out.byDay[1].competitors[0].brand).toBe('Brand B');
+    expect(out.byDay[1].competitors[0].newAds.map((a) => a.adId)).toEqual(['x']);
+  });
+});

@@ -138,10 +138,41 @@ export class MonitorService {
       stoppedToday: evs.filter((e) => e.date === today && e.event === AdEventType.Stopped).length,
       watching,
     };
-    // Group events by day; resolve ad detail + brand lazily. (MVP: detail join kept simple — the
-    // web reads ad rows from the events + a /monitor/ads call per competitor if it needs creatives.)
-    const days_ = [...new Set(evs.map((e) => e.date))].sort().reverse();
-    const byDay = days_.map((date) => ({ date, competitors: [] as CompetitorChangelog[] }));
+    // Join creatives + brands for the events in range (one query each), then group
+    // day → competitor → {new, stopped}. `ongoing` is a current-state concept (the live
+    // still-running set is read per-competitor via GET /monitor/ads — spec §4 storage model).
+    const cids = [...new Set(evs.map((e) => e.competitorId))];
+    const adIds = [...new Set(evs.map((e) => e.adId))];
+    const brandById = new Map(
+      (await this.competitors.find({ workspaceId: ws, _id: { $in: cids } }).exec()).map(
+        (c) => [String((c as { _id: unknown })._id), c.brand] as const,
+      ),
+    );
+    const adByKey = new Map(
+      (await this.ads.find({ workspaceId: ws, adId: { $in: adIds } }).exec()).map(
+        (a) => [`${a.competitorId}:${a.adId}`, a] as const,
+      ),
+    );
+    const dates = [...new Set(evs.map((e) => e.date))].sort().reverse();
+    const byDay = dates.map((date) => {
+      const dayEvs = evs.filter((e) => e.date === date);
+      const dayCids = [...new Set(dayEvs.map((e) => e.competitorId))];
+      const competitors = dayCids.map((cid) => {
+        const pick = (event: AdEventType) =>
+          dayEvs
+            .filter((e) => e.competitorId === cid && e.event === event)
+            .map((e) => adByKey.get(`${cid}:${e.adId}`))
+            .filter(Boolean);
+        return {
+          competitorId: cid,
+          brand: brandById.get(cid) ?? 'Unknown',
+          newAds: pick(AdEventType.New),
+          ongoing: [],
+          stopped: pick(AdEventType.Stopped),
+        };
+      }) as unknown as CompetitorChangelog[];
+      return { date, competitors };
+    });
     return { stats, byDay };
   }
 }
