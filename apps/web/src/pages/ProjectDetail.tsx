@@ -10,7 +10,6 @@ import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
-import { EditorShell } from '../components/EditorShell';
 import { TaskList } from '../components/TaskList';
 import { StatusPill } from '../components/StatusPill';
 import { useLabels } from '../lib/useLabels';
@@ -18,9 +17,10 @@ import { PencilIcon, PlusIcon, PublishIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import './projects.css';
 
-// The project detail (design): a context strip (status · creator · description ·
-// variables) over a horizontal task board. The name lives in the shell header;
-// editing the project happens on the editor (own ✓/✕ flow).
+// The project detail page (design): a full-page layout with a project header
+// strip (title · author · date · status · edit) and a scrollable body containing
+// Channels, Posts, and the horizontal Task kanban board (TaskList).
+// No EditorShell wrapper — the page owns its own header area.
 export function ProjectDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -85,94 +85,130 @@ export function ProjectDetail() {
   const channels = project.channels?.length ? pool.filter((c) => project.channels.includes(c.id)) : [];
 
   return (
-    <EditorShell
-      wide
-      crumb={{ label: t('nav.projects'), to: '/projects' }}
-      onClose={() => navigate('/projects')}
-      title={<h2 className="eshell-name">{project.name}</h2>}
-    >
-      <div className="pd">
-        {error && <p className="error">{error}</p>}
+    <div className="pd-page">
+      {error && <p className="error">{error}</p>}
 
-        <div className="pd-context">
-          <div className="pd-meta">
-            <span className="pd-by" title={t('projects.createdByName', { name: project.createdBy.name })}>
-              <Avatar name={project.createdBy.name} size={20} />
-              {project.createdBy.name} · {fmtDate(project.createdAt)}
-            </span>
-            <span className="pd-meta-right">
-              <StatusPill status={project.status} />
-              {canEdit && (
-                <button
-                  type="button"
-                  className="icon-btn pd-edit"
-                  onClick={() => navigate(editUrl)}
-                  title={t('projects.editProject')}
-                  aria-label={t('projects.editProject')}
-                >
-                  <PencilIcon width={15} height={15} />
-                </button>
-              )}
-            </span>
-          </div>
-
-          <p className="pd-desc">{project.description || t('projects.noDescription')}</p>
-
-          {project.variables.length > 0 && (
-            <div className="pd-vars">
-              <span className="pd-vars-label">{t('projects.variablesLabel')}</span>
-              {project.variables.map((v) => (
-                <span className="pd-var" key={v.key}>
-                  <span className="pd-var-k">{v.key}</span>
-                  <span className="pd-var-eq">=</span>
-                  <span className="pd-var-v">{v.value || '—'}</span>
-                </span>
-              ))}
-            </div>
-          )}
+      {/* Project header strip: title + close / meta / description */}
+      <div className="pd-header">
+        <div className="pd-header-top">
+          <h1 className="pd-title">{project.name}</h1>
+          <button
+            type="button"
+            className="icon-btn pd-close"
+            onClick={() => navigate('/projects')}
+            title={t('common.close')}
+            aria-label={t('common.close')}
+          >
+            {/* X icon */}
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </button>
         </div>
+        <div className="pd-header-meta">
+          <span className="pd-by">
+            <Avatar name={project.createdBy.name} size={22} />
+            {project.createdBy.name} · {fmtDate(project.createdAt)}
+          </span>
+          <div className="pd-header-actions">
+            <StatusPill status={project.status} />
+            {canEdit && (
+              <button
+                type="button"
+                className="btn-ghost btn-inline btn-sm"
+                onClick={() => navigate(editUrl)}
+                title={t('projects.editProject')}
+              >
+                <PencilIcon width={13} height={13} />
+                <span>{t('projects.editProject')}</span>
+              </button>
+            )}
+          </div>
+        </div>
+        {project.description && (
+          <p className="pd-desc">{project.description}</p>
+        )}
+        {project.variables.length > 0 && (
+          <div className="pd-vars">
+            <span className="pd-vars-label">{t('projects.variablesLabel')}</span>
+            {project.variables.map((v) => (
+              <span className="pd-var" key={v.key}>
+                <span className="pd-var-k">{v.key}</span>
+                <span className="pd-var-eq">=</span>
+                <span className="pd-var-v">{v.value || '—'}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {/* Channels & publishing — the project posts to its own connected channels. */}
-        <section className="pd-channels">
-          <div className="pd-channels-head">
-            <span className="pd-section-label">{t('projects.channelsLabel')}</span>
+      {/* Scrollable body: channels · posts · tasks kanban */}
+      <div className="pd-body">
+
+        {/* Channels & publishing */}
+        <section className="pd-section">
+          <div className="pd-section-head">
+            <span className="pd-section-label">
+              {t('projects.channelsLabel')}
+              <span className="pd-count">{channels.length}</span>
+            </span>
             <button
               type="button"
               className="btn-primary btn-inline btn-sm pd-act"
               onClick={() => navigate(`/publish?project=${project.id}`)}
               title={t('projects.publish')}
             >
-              <PublishIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.publish')}</span>
+              <PublishIcon width={14} height={14} />
+              <span className="pd-act-label">{t('projects.publish')}</span>
             </button>
           </div>
           {channels.length === 0 ? (
-            <p className="pd-channels-empty">
-              {t('projects.noChannelsSet')}{' '}
+            <div className="pd-empty-card pd-empty-dashed">
+              <span className="pd-empty-ico">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6.6 9.4 9.4 6.6M7 4.6l.9-.9a2.5 2.5 0 0 1 3.5 3.5l-.9.9M9 11.4l-.9.9a2.5 2.5 0 0 1-3.5-3.5l.9-.9" /></svg>
+              </span>
+              <div className="pd-empty-body">
+                <div className="pd-empty-title">{t('projects.noChannelsSet')}</div>
+                <div className="pd-empty-sub">{t('projects.channelsHelp')}</div>
+              </div>
               {canEdit && (
-                <button type="button" className="pd-setlink" onClick={() => navigate(editUrl)}>
+                <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => navigate(editUrl)}>
+                  <PlusIcon width={13} height={13} />
                   {t('projects.setChannels')}
                 </button>
               )}
-            </p>
+            </div>
           ) : (
-            <div className="pd-channel-chips">
-              {channels.map((c) => (
-                <span className="pd-channel-chip" key={c.id}>
-                  <span className="pd-channel-ico" style={{ background: platformColor(c.platform) }}>{platformGlyph(c.platform)}</span>
-                  <span className="pd-channel-name">{c.displayName}</span>
-                </span>
-              ))}
+            <div className="pd-channel-row">
+              <span className="pd-channel-lbl">{t('projects.publish')}</span>
+              <div className="pd-channel-chips">
+                {channels.map((c) => (
+                  <span className="pd-channel-chip" key={c.id}>
+                    <span className="pd-channel-ico" style={{ background: platformColor(c.platform) }}>{platformGlyph(c.platform)}</span>
+                    <span className="pd-channel-name">{c.displayName}</span>
+                  </span>
+                ))}
+              </div>
+              {canEdit && (
+                <button type="button" className="pd-setlink" onClick={() => navigate(editUrl)}>
+                  {t('projects.manageChannels')}
+                </button>
+              )}
             </div>
           )}
         </section>
 
-        {/* Post history — what this project has published, newest first. */}
-        <section className="pd-posts">
-          <div className="pd-channels-head">
+        {/* Post history */}
+        <section className="pd-section">
+          <div className="pd-section-head">
             <span className="pd-section-label">{t('projects.postsLabel')}</span>
           </div>
           {posts.length === 0 ? (
-            <p className="pd-channels-empty">{t('projects.noPosts')}</p>
+            <div className="pd-empty-card pd-empty-dashed pd-empty-center">
+              <span className="pd-empty-ico pd-empty-ico--neutral">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="2.4" y="3" width="11.2" height="10" rx="1.6" /><path d="M2.4 6.2h11.2M5.2 9h5.6M5.2 11h3.4" /></svg>
+              </span>
+              <div className="pd-empty-title">{t('projects.noPosts')}</div>
+              <div className="pd-empty-sub">{t('projects.channelsHelp')}</div>
+            </div>
           ) : (
             <ul className="pd-post-list">
               {posts.slice(0, 8).map((post) => (
@@ -199,23 +235,26 @@ export function ProjectDetail() {
           )}
         </section>
 
-        <section className="pd-tasks">
-          <div className="pd-channels-head">
+        {/* Tasks — the horizontal kanban board */}
+        <section className="pd-section pd-tasks-section">
+          <div className="pd-section-head">
             <span className="pd-section-label">{t('projects.tasksLabel')}</span>
             {canEdit && (
               <button
                 type="button"
-                className="btn-primary btn-inline btn-sm pd-act"
+                className="btn-ghost btn-inline btn-sm pd-act"
                 onClick={() => setAddTick((n) => n + 1)}
                 title={t('projects.newTask')}
               >
-                <PlusIcon width={14} height={14} /> <span className="pd-act-label">{t('projects.newTask')}</span>
+                <PlusIcon width={14} height={14} />
+                <span className="pd-act-label">{t('projects.newTask')}</span>
               </button>
             )}
           </div>
           <TaskList projectId={project.id} projectName={project.name} canEdit={canEdit} labels={labels} openAddTick={addTick} />
         </section>
+
       </div>
-    </EditorShell>
+    </div>
   );
 }

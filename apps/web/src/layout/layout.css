@@ -577,6 +577,10 @@
 .content:has(.eshell.wide) { max-width: none; padding: 0; }
 /* Chats: full-bleed and blended with the page (no narrow centered card column). */
 .content:has(.chat) { max-width: none; padding: 12px 24px; }
+/* Project detail: full-bleed column so the inline header + kanban fill the
+   viewport. .main overflow is locked so only .pd-body scrolls internally. */
+.content:has(.pd-page) { max-width: none; padding: 0; display: flex; flex-direction: column; min-height: 0; }
+.main:has(.pd-page) { overflow-y: hidden; }
 
 /* ===== Home content ===== */
 /* Hero: greeting + workspace meta on the left, quick actions on the right. */
