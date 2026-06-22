@@ -175,4 +175,20 @@ export class MonitorService {
     });
     return { stats, byDay };
   }
+
+  async remove(ws: string, competitorId: string): Promise<{ ok: true }> {
+    const c = await this.competitors.findById(competitorId).exec();
+    if (!c || c.workspaceId !== ws) throw new NotFoundException('competitor not found');
+    await Promise.all([
+      this.competitors.deleteOne({ _id: competitorId }).exec(),
+      this.handles.deleteMany({ workspaceId: ws, competitorId }).exec(),
+      this.ads.deleteMany({ workspaceId: ws, competitorId }).exec(),
+      this.events.deleteMany({ workspaceId: ws, competitorId }).exec(),
+    ]);
+    return { ok: true };
+  }
+
+  adsForCompetitor(ws: string, competitorId: string) {
+    return this.ads.find({ workspaceId: ws, competitorId, status: AdStatus.Active }).sort({ daysRunning: -1 }).exec();
+  }
 }

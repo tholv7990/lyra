@@ -290,3 +290,57 @@ describe('MonitorService.changelog', () => {
     expect(out.byDay[1].competitors[0].newAds.map((a) => a.adId)).toEqual(['x']);
   });
 });
+
+describe('MonitorService.remove', () => {
+  it('deletes the competitor and cascades handles/ads/events', async () => {
+    const { s, competitors, handles, ads, events } = svc({
+      competitors: {
+        findById: jest.fn().mockReturnValue({ exec: () => Promise.resolve({ _id: 'c1', workspaceId: 'ws1' }) }),
+        deleteOne: jest.fn().mockReturnValue({ exec: () => Promise.resolve({}) }),
+      },
+      handles: { deleteMany: jest.fn().mockReturnValue({ exec: () => Promise.resolve({}) }) },
+      ads: { deleteMany: jest.fn().mockReturnValue({ exec: () => Promise.resolve({}) }) },
+      events: { deleteMany: jest.fn().mockReturnValue({ exec: () => Promise.resolve({}) }) },
+    });
+    await s.remove('ws1', 'c1');
+    expect(competitors.deleteOne).toHaveBeenCalledWith({ _id: 'c1' });
+    expect(handles.deleteMany).toHaveBeenCalledWith({ workspaceId: 'ws1', competitorId: 'c1' });
+    expect(ads.deleteMany).toHaveBeenCalledWith({ workspaceId: 'ws1', competitorId: 'c1' });
+    expect(events.deleteMany).toHaveBeenCalledWith({ workspaceId: 'ws1', competitorId: 'c1' });
+  });
+
+  it('throws NotFoundException for a competitor in another workspace', async () => {
+    const { s } = svc({
+      competitors: {
+        findById: jest.fn().mockReturnValue({ exec: () => Promise.resolve({ _id: 'c1', workspaceId: 'ws2' }) }),
+      },
+    });
+    const err = await s.remove('ws1', 'c1').catch((e) => e);
+    expect(err).toBeInstanceOf(NotFoundException);
+    expect(err.message).toContain('competitor not found');
+  });
+
+  it('throws NotFoundException for a non-existent competitor', async () => {
+    const { s } = svc({
+      competitors: {
+        findById: jest.fn().mockReturnValue({ exec: () => Promise.resolve(null) }),
+      },
+    });
+    const err = await s.remove('ws1', 'c1').catch((e) => e);
+    expect(err).toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('MonitorService.adsForCompetitor', () => {
+  it('queries active ads for the workspace+competitor, sorted by daysRunning desc', async () => {
+    const sortExec = { sort: jest.fn().mockReturnValue({ exec: () => Promise.resolve([
+      { adId: 'a', daysRunning: 5, status: AdStatus.Active },
+      { adId: 'b', daysRunning: 2, status: AdStatus.Active },
+    ]) }) };
+    const { s, ads } = svc({ ads: { find: jest.fn().mockReturnValue(sortExec) } });
+    const out = await s.adsForCompetitor('ws1', 'c1');
+    expect(ads.find).toHaveBeenCalledWith({ workspaceId: 'ws1', competitorId: 'c1', status: AdStatus.Active });
+    expect(out).toHaveLength(2);
+    expect(out[0].adId).toBe('a');
+  });
+});
