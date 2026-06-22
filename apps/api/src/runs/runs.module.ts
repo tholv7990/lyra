@@ -21,7 +21,8 @@ import { CrawlStepProvider } from './providers/crawl.provider';
 import { ImageStepProvider } from './providers/image.provider';
 import { GeminiClient } from './providers/gemini.client';
 import { GeminiImageStepProvider } from './providers/gemini-image.provider';
-import { MockStepProvider } from './providers/mock.provider';
+import { ReplicateClient } from './providers/replicate.client';
+import { VideoStepProvider } from './providers/video.provider';
 import { ProviderRegistry } from './providers/provider.registry';
 import { RenderClient } from './providers/render.client';
 import { BrandActionProvider } from './providers/brand.action';
@@ -55,7 +56,8 @@ import { ActionRegistry } from './providers/action.registry';
     ImageStepProvider,
     GeminiClient,
     GeminiImageStepProvider,
-    MockStepProvider,
+    ReplicateClient,
+    VideoStepProvider,
     ProviderRegistry,
     // Action execution: one ActionProvider per ActionType, dispatched via ActionRegistry.
     RenderClient,
