@@ -267,8 +267,12 @@ export class RunsService extends BaseRepository<Run> {
     let inputImages: Awaited<ReturnType<typeof gatherInputImages>> = [];
     if (IMAGE_PROVIDERS.has(provider)) {
       const runAssets = await this.assets.listForRun(doc._id.toString());
+      // IMPORTANT: pass `filled` (pre-resolveStepRefs), not `prompt` (post-resolved).
+      // resolveStepRefs replaces {input}/{step:Name} tokens with prior steps' result
+      // TEXT, so by the time `prompt` is produced those tokens are gone and
+      // parseImageRefs finds nothing. `filled` still has the raw chaining tokens.
       inputImages = await gatherInputImages(
-        prompt,
+        filled,
         state.steps,
         index,
         (i) => runAssets.filter((a) => a.stepIndex === i).map((a) => ({ type: a.type, url: a.url })),

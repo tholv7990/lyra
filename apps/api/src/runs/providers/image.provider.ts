@@ -70,8 +70,14 @@ export class ImageStepProvider implements StepProvider {
     const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.png`;
     const url = await this.storage.store(Buffer.from(b64, 'base64'), 'image/png', key);
 
+    // When inputs were supplied but the model can't use them, append an operator-
+    // visible note so it's clear the chaining was silently dropped (spec §6, §8).
+    const inputIgnoredNote =
+      inputs.length > 0 && !canEdit
+        ? ' (note: dall-e-3 ignores input images — switch to gpt-image-1 or gemini to edit.)'
+        : '';
     return {
-      result: `Generated 1 image with ${model}.`,
+      result: `Generated 1 image with ${model}.${inputIgnoredNote}`,
       assets: [{ type: 'image', url, meta: { role: 'generated', model, edited: canEdit } }],
       usage: { tokens: 0 },
     };

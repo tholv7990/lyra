@@ -29,7 +29,8 @@ const BRANDS: Partial<Record<Provider, Brand>> = {
 };
 
 function NeutralGlyph({ provider }: { provider: Provider }) {
-  if (provider === Provider.Image) {
+  // Image glyph for any image-only provider (Image category + Google Gemini image).
+  if (provider === Provider.Image || provider === Provider.Google) {
     return (
       <g fill="#fff">
         <circle cx="9.5" cy="9.5" r="1.4" />
