@@ -65,6 +65,25 @@ export function keyProviderFor(provider: Provider): Provider {
   return KEY_PROVIDER[provider] ?? provider;
 }
 
+// Text/brain providers whose output is interchangeable enough to retry across, in
+// fallback priority order. Image/Google/Video/Crawl are other modalities — no
+// cross-fallback. Used by the run engine's automatic provider fallback.
+export const TEXT_FALLBACK_ORDER: Provider[] = [Provider.Anthropic, Provider.OpenAI, Provider.DeepSeek];
+
+// Ordered providers to attempt for a step whose chosen provider is `primary`: the
+// primary first, then the other text providers (in TEXT_FALLBACK_ORDER) for which
+// `isEligible` is true (the workspace has their key). A non-text primary — or one
+// with no eligible alternates — yields just [primary] (today's no-fallback path).
+// Pure: the caller supplies eligibility so this stays dependency-free.
+export function fallbackChain(
+  primary: Provider,
+  isEligible: (p: Provider) => boolean,
+): Provider[] {
+  if (!TEXT_FALLBACK_ORDER.includes(primary)) return [primary];
+  const alts = TEXT_FALLBACK_ORDER.filter((p) => p !== primary && isEligible(p));
+  return [primary, ...alts];
+}
+
 // Substitute {key} tokens with values. Each key in `vars` whose value is
 // non-blank replaces every {key} occurrence; missing/blank keys leave the token
 // in place. {step:Name} is never touched (its colon isn't part of a {key}). Used

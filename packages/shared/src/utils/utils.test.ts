@@ -24,6 +24,7 @@ import {
   keyProviderFor,
   providerNeedsKey,
   isNetscapeCookies,
+  fallbackChain,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -453,5 +454,26 @@ describe('isNetscapeCookies', () => {
     expect(isNetscapeCookies('   \n\n')).toBe(false);
     expect(isNetscapeCookies('just some text\nno tabs here')).toBe(false);
     expect(isNetscapeCookies('{"cookies":[]}')).toBe(false);
+  });
+});
+
+describe('fallbackChain', () => {
+  const all = () => true;
+  const none = () => false;
+  it('text primary + all alts eligible → primary first, then Anthropic→OpenAI→DeepSeek order', () => {
+    expect(fallbackChain(Provider.OpenAI, all)).toEqual([Provider.OpenAI, Provider.Anthropic, Provider.DeepSeek]);
+    expect(fallbackChain(Provider.DeepSeek, all)).toEqual([Provider.DeepSeek, Provider.Anthropic, Provider.OpenAI]);
+  });
+  it('text primary + no alts eligible → just [primary]', () => {
+    expect(fallbackChain(Provider.Anthropic, none)).toEqual([Provider.Anthropic]);
+  });
+  it('includes only eligible alts', () => {
+    const onlyDeepSeek = (p: Provider) => p === Provider.DeepSeek;
+    expect(fallbackChain(Provider.OpenAI, onlyDeepSeek)).toEqual([Provider.OpenAI, Provider.DeepSeek]);
+  });
+  it('non-text primary → just [primary] (no cross-modality fallback)', () => {
+    expect(fallbackChain(Provider.Image, all)).toEqual([Provider.Image]);
+    expect(fallbackChain(Provider.Video, all)).toEqual([Provider.Video]);
+    expect(fallbackChain(Provider.Crawl, all)).toEqual([Provider.Crawl]);
   });
 });
