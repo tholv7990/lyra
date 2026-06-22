@@ -31,7 +31,11 @@ export const MODEL_CATALOG: Record<Provider, ModelOption[]> = {
     { id: 'gpt-image-1', label: 'GPT Image 1' },
     { id: 'dall-e-3', label: 'DALL·E 3' },
   ],
-  [Provider.Video]: [{ id: 'video-default', label: 'Video (default)' }],
+  [Provider.Video]: [
+    { id: 'minimax/video-01', label: 'MiniMax Hailuo (video-01)' },
+    { id: 'kwaivgi/kling-v1.6-standard', label: 'Kling v1.6 Standard' },
+    { id: 'luma/ray', label: 'Luma Ray' },
+  ],
   // Crawl has no model — it fetches a URL. A placeholder keeps the step's
   // required model non-empty.
   [Provider.Crawl]: [{ id: 'fetch', label: 'Fetch page' }],

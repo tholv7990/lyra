@@ -21,6 +21,8 @@ import {
   isActionStep,
   computeAdDiff,
   parseImageRefs,
+  keyProviderFor,
+  providerNeedsKey,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -412,5 +414,19 @@ describe('parseImageRefs', () => {
       input: false,
       names: ['Logo', 'Scene'],
     });
+  });
+});
+
+describe('video provider (Replicate-backed)', () => {
+  it('catalogs real Replicate video slugs (owner/name), not the placeholder', () => {
+    const ids = MODEL_CATALOG[Provider.Video].map((m) => m.id);
+    expect(ids).not.toContain('video-default');
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.every((id) => id.includes('/'))).toBe(true); // owner/name form
+    expect(defaultModel(Provider.Video)).toBe(ids[0]);
+  });
+  it('a video step is key-gated on the default (video) key slot', () => {
+    expect(keyProviderFor(Provider.Video)).toBe(Provider.Video);
+    expect(providerNeedsKey(Provider.Video)).toBe(true);
   });
 });
