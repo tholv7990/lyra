@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { Channel, Project, PublishJob } from '@lyra/shared';
+import type { Channel, Project, PublishJob, PublishedPost } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { channelsApi } from '../lib/channels';
 import { postsApi } from '../lib/posts';
-import { platformColor as color, platformGlyph as glyph } from '../lib/platform';
+import { platformColor as color, platformGlyph as glyph, platformLabel } from '../lib/platform';
+import { fmtDate } from '../lib/format';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 import './connectors.css';
 import './publish.css';
@@ -38,6 +39,7 @@ export function PublishComposer() {
   const [job, setJob] = useState<PublishJob | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recentPosts, setRecentPosts] = useState<PublishedPost[]>([]);
   const alive = useRef(true);
   useEffect(() => () => { alive.current = false; }, []);
   // What to record as a project post once the job finishes (captured at publish time
@@ -83,6 +85,12 @@ export function PublishComposer() {
     if (proj) setPicked((proj.channels ?? []).filter((c) => channels.some((ch) => ch.id === c)));
   }, [projectId, channels, projects]);
 
+  // Load recent posts for the active project (when one is selected).
+  useEffect(() => {
+    if (!projectId) { setRecentPosts([]); return; }
+    postsApi.list(projectId).then(setRecentPosts).catch(() => setRecentPosts([]));
+  }, [projectId]);
+
   const addMedia = () => {
     const u = mediaInput.trim();
     if (u) setMediaUrls((m) => [...m, u]);
@@ -105,6 +113,7 @@ export function PublishComposer() {
             pendingPostRef.current = null;
             void postsApi
               .create(pend.projectId, { caption: pend.caption, mediaUrls: pend.mediaUrls, channelIds: pend.channelIds, targets: j.receipts })
+              .then(() => postsApi.list(pend.projectId).then(setRecentPosts).catch(() => undefined))
               .catch(() => undefined);
           }
           return;
@@ -137,6 +146,9 @@ export function PublishComposer() {
     channels.find((c) => picked.includes(c.id)) ??
     channels[0];
   const over = caption.length > MAX_CAPTION;
+
+  // Selection summary
+  const selCount = picked.length;
 
   return (
     <div className="pub">
@@ -180,12 +192,23 @@ export function PublishComposer() {
                       <span className="pub-ico" style={{ background: color(c.platform) }}>{glyph(c.platform)}</span>
                       <span className="pub-channel-id">
                         <span className="pub-channel-name">{c.displayName}</span>
-                        <span className="pub-channel-handle">{c.platform}</span>
+                        <span className="pub-channel-handle">{platformLabel(c.platform)}</span>
                       </span>
                       <span className="pub-channel-check">{on && <CheckIcon width={11} height={11} />}</span>
                     </button>
                   );
                 })}
+              </div>
+            )}
+            {/* Selection summary badge */}
+            {channels.length > 0 && (
+              <div className="pub-sel-summary">
+                <span className="pub-sel-badge">{selCount}</span>
+                <span>
+                  {selCount === 1
+                    ? t('connectors.selSummaryOne')
+                    : t('connectors.selSummaryOther', { count: selCount })}
+                </span>
               </div>
             )}
           </div>
@@ -220,7 +243,9 @@ export function PublishComposer() {
                 {mediaUrls.map((u, i) => (
                   <div className="pub-thumb" key={`${u}-${i}`}>
                     <img src={u} alt="" />
-                    <button type="button" className="pub-thumb-x" aria-label={t('common.remove')} onClick={() => setMediaUrls((m) => m.filter((_, j) => j !== i))}>×</button>
+                    <button type="button" className="pub-thumb-x" aria-label={t('common.remove')} onClick={() => setMediaUrls((m) => m.filter((_, j) => j !== i))}>
+                      <svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -236,13 +261,28 @@ export function PublishComposer() {
               <button type="button" className="pub-add-btn" title={t('connectors.addMedia')} aria-label={t('connectors.addMedia')} onClick={addMedia}>
                 <PlusIcon width={15} height={15} />
               </button>
+              <button type="button" className="pub-crawler-btn" onClick={() => navigate('/import')}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 2.4v7M5 6.6 8 9.6l3-3M2.8 10.4v1.8a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-1.8"/>
+                </svg>
+                {t('connectors.fromCrawler')}
+              </button>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="pub-foot">
-            <span className="pub-gate">🔒 <b>{t('connectors.reviewNote')}</b></span>
+          {/* Footer — desktop only (mobile uses sticky bottom bar) */}
+          <div className="pub-foot pub-foot-desktop">
+            <span className="pub-gate">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="7" width="10" height="6.5" rx="1.5"/>
+                <path d="M5.2 7V5.4a2.8 2.8 0 0 1 5.6 0V7"/>
+              </svg>
+              <b>{t('connectors.reviewNote')}</b>
+            </span>
             <button type="button" className="btn-primary btn-inline" disabled={!picked.length || publishing} onClick={publish}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13.6 2.4 7.2 8.8M13.6 2.4l-4 11.2-2.4-4.8-4.8-2.4Z"/>
+              </svg>
               {publishing ? t('connectors.publishing_state') : t('connectors.publishBtn', { count: picked.length })}
             </button>
           </div>
@@ -254,7 +294,7 @@ export function PublishComposer() {
               {job.receipts.map((r) => (
                 <div className="cx-rcpt" key={`${r.platform}-${r.accountId}`}>
                   <span className="pub-ico sm" style={{ background: color(r.platform) }}>{glyph(r.platform)}</span>
-                  <span className="cx-rname">{r.platform} · {r.accountId}</span>
+                  <span className="cx-rname">{platformLabel(r.platform)} · {r.accountId}</span>
                   {r.status === 'ok' ? <span className="cx-ok">✓ {t('connectors.posted')}</span> : <span className="cx-fail">✗ {t('connectors.failed')}</span>}
                   {r.status === 'ok' && r.url
                     ? <a className="cx-rlink" href={r.url} target="_blank" rel="noreferrer">{t('connectors.viewPost')} ↗</a>
@@ -265,8 +305,9 @@ export function PublishComposer() {
           )}
         </div>
 
-        {/* PREVIEW */}
+        {/* RIGHT: preview + recent posts */}
         <div className="pub-preview-col">
+          {/* Preview */}
           <div className="pub-preview">
             <div className="pub-preview-head">
               <span className="pub-eyebrow" style={{ flex: 1 }}>{t('connectors.preview')}</span>
@@ -290,11 +331,14 @@ export function PublishComposer() {
             <div className="pub-preview-body">
               <div className="pub-post">
                 <div className="pub-post-head">
-                  <span className="pub-ico" style={{ background: color(previewChannel?.platform ?? '') }}>{glyph(previewChannel?.platform ?? '')}</span>
+                  <span className="pub-post-avatar">{(previewChannel?.displayName ?? 'C').charAt(0).toUpperCase()}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="pub-post-name">{previewChannel?.displayName ?? 'Channel'}</div>
-                    <div className="pub-post-handle">{previewChannel?.platform ?? ''}</div>
+                    <div className="pub-post-handle">{previewChannel ? platformLabel(previewChannel.platform) : ''}</div>
                   </div>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--ink-tertiary)">
+                    <circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/>
+                  </svg>
                 </div>
                 <div className="pub-post-media">
                   {mediaUrls[0] ? <img src={mediaUrls[0]} alt="" /> : t('connectors.previewEmpty')}
@@ -305,7 +349,72 @@ export function PublishComposer() {
               </div>
             </div>
           </div>
+
+          {/* Recent posts */}
+          <div className="pub-card pub-recent">
+            <span className="pub-eyebrow" style={{ display: 'block', marginBottom: 12 }}>{t('connectors.recentPosts')}</span>
+            {recentPosts.length === 0 ? (
+              <p className="pub-recent-empty">{t('connectors.noRecentPosts')}</p>
+            ) : (
+              <div className="pub-recent-list">
+                {recentPosts.slice(0, 5).map((post) => {
+                  const statusColor =
+                    post.status === 'ok' ? 'var(--success)' :
+                    post.status === 'failed' ? 'var(--danger)' : 'var(--warning)';
+                  const statusBg =
+                    post.status === 'ok' ? 'color-mix(in srgb, var(--success) 14%, transparent)' :
+                    post.status === 'failed' ? 'color-mix(in srgb, var(--danger) 14%, transparent)' :
+                    'color-mix(in srgb, var(--warning) 14%, transparent)';
+                  const statusIcon =
+                    post.status === 'ok' ? (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 8.5 6.5 11 12.5 4.5"/></svg>
+                    ) : post.status === 'failed' ? (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 4.4v4.4M8 11.2h.01"/></svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 4v4l2.6 1.6"/></svg>
+                    );
+                  const statusText =
+                    post.status === 'ok' ? t('connectors.posted') :
+                    post.status === 'failed' ? t('connectors.failed') :
+                    t('connectors.publishing_state');
+                  return (
+                    <div className="pub-recent-item" key={post.id}>
+                      <span className="pub-recent-icon" style={{ background: statusBg, color: statusColor }}>{statusIcon}</span>
+                      <div className="pub-recent-body">
+                        <div className="pub-recent-caption">{post.caption}</div>
+                        <div className="pub-recent-meta">
+                          <span className="pub-recent-chips">
+                            {post.channelIds.map((cid, i) => {
+                              const ch = channels.find((c) => c.id === cid);
+                              return ch ? (
+                                <span key={i} className="pub-recent-chip">
+                                  <span className="pub-recent-dot" style={{ background: color(ch.platform) }} />
+                                  {platformLabel(ch.platform)}
+                                </span>
+                              ) : null;
+                            })}
+                          </span>
+                          <span className="pub-recent-status" style={{ color: statusColor }}>{statusText}</span>
+                          <span className="pub-recent-date">· {fmtDate(post.createdAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+
+      {/* Mobile sticky publish bar */}
+      <div className="pub-mobile-bar">
+        <button type="button" className="pub-mobile-publish" disabled={!picked.length || publishing} onClick={publish}>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13.6 2.4 7.2 8.8M13.6 2.4l-4 11.2-2.4-4.8-4.8-2.4Z"/>
+          </svg>
+          {publishing ? t('connectors.publishing_state') : t('connectors.publishBtn', { count: picked.length })}
+        </button>
       </div>
     </div>
   );

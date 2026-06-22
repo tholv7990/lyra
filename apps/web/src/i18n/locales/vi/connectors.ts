@@ -63,6 +63,10 @@ export default {
   failed: 'Thất bại',
   viewPost: 'Xem bài',
   noChannels: 'Chưa có kênh nào — thêm trong Kết nối.',
+  selSummaryOne: 'kênh được chọn',
+  selSummaryOther: '{{count}} kênh được chọn',
+  recentPosts: 'Bài đăng gần đây',
+  noRecentPosts: 'Bài đăng đã xuất bản sẽ hiển thị ở đây.',
 
   // Crawler
   importTitle: 'Trình thu thập',

@@ -63,6 +63,10 @@ export default {
   failed: 'Failed',
   viewPost: 'View post',
   noChannels: 'No channels connected yet — add one in Connections.',
+  selSummaryOne: 'channel selected',
+  selSummaryOther: '{{count}} channels selected',
+  recentPosts: 'Recent posts',
+  noRecentPosts: 'Published posts will appear here.',
 
   // Crawler
   importTitle: 'Crawler',
