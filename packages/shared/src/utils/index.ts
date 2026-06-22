@@ -337,3 +337,17 @@ export function parseImageRefs(prompt: string): { input: boolean; names: string[
   const names = [...prompt.matchAll(/\{step:([^}]+)\}/g)].map((m) => m[1].trim());
   return { input, names };
 }
+
+// True when `text` looks like a Netscape cookies.txt (the format yt-dlp's --cookies
+// expects): either the well-known header comment, or at least one 7-tab-field cookie
+// record (domain<TAB>flag<TAB>path<TAB>secure<TAB>expiry<TAB>name<TAB>value). Pure —
+// guards the crawler cookies upload so garbage fails fast with a clear message.
+export function isNetscapeCookies(text: string): boolean {
+  if (!text || !text.trim()) return false;
+  const lines = text.split(/\r?\n/);
+  if (lines.some((l) => /^#\s*(Netscape\s+)?HTTP Cookie File/i.test(l.trim()))) return true;
+  return lines.some((l) => {
+    if (!l || l.trim().startsWith('#')) return false;
+    return l.split('\t').length === 7;
+  });
+}

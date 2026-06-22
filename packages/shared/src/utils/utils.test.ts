@@ -23,6 +23,7 @@ import {
   parseImageRefs,
   keyProviderFor,
   providerNeedsKey,
+  isNetscapeCookies,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -428,5 +429,21 @@ describe('video provider (Replicate-backed)', () => {
   it('a video step is key-gated on the default (video) key slot', () => {
     expect(keyProviderFor(Provider.Video)).toBe(Provider.Video);
     expect(providerNeedsKey(Provider.Video)).toBe(true);
+  });
+});
+
+describe('isNetscapeCookies', () => {
+  it('accepts a file with the Netscape header', () => {
+    expect(isNetscapeCookies('# Netscape HTTP Cookie File\n')).toBe(true);
+    expect(isNetscapeCookies('# HTTP Cookie File\n\n')).toBe(true);
+  });
+  it('accepts a file with a 7-field tab-separated cookie record', () => {
+    expect(isNetscapeCookies('.youtube.com\tTRUE\t/\tTRUE\t1799999999\tSID\tabc123')).toBe(true);
+  });
+  it('rejects empty / garbage / JSON', () => {
+    expect(isNetscapeCookies('')).toBe(false);
+    expect(isNetscapeCookies('   \n\n')).toBe(false);
+    expect(isNetscapeCookies('just some text\nno tabs here')).toBe(false);
+    expect(isNetscapeCookies('{"cookies":[]}')).toBe(false);
   });
 });
