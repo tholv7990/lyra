@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { MonitorService } from './monitor.service';
-import { CompetitorStatus, MonitorPlatform } from '@lyra/shared';
+import { CompetitorStatus, MonitorPlatform, AdStatus } from '@lyra/shared';
 
 function svc(over: Record<string, any> = {}) {
   const competitors = { find: jest.fn(), findById: jest.fn(), create: jest.fn(), ...over.competitors };
@@ -228,5 +228,31 @@ describe('MonitorService.list', () => {
       status: CompetitorStatus.Watching,
     });
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('MonitorService.runDailyForCompetitor', () => {
+  it('inserts new ads, bumps ongoing, stops missing, writes events', async () => {
+    const today = MonitorService.today();
+    const ads = {
+      find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([
+        { adId: 'b', daysRunning: 2, status: AdStatus.Active, save: jest.fn() },     // ongoing
+        { adId: 'd', daysRunning: 5, status: AdStatus.Active, save: jest.fn() },     // stopped
+      ]) }),
+      create: jest.fn().mockResolvedValue({}),
+      updateOne: jest.fn().mockReturnValue({ exec: () => Promise.resolve({}) }),
+    };
+    const handles = { find: jest.fn().mockReturnValue({ exec: () => Promise.resolve([{ advertiserId: 'PAGE1', platform: 'meta' }]) }) };
+    const events = { create: jest.fn().mockResolvedValue({}) };
+    const proxy = { usesService: () => true, forward: jest.fn().mockResolvedValue({ ads: [
+      { adId: 'a', creativeUrl: 'u', copy: 'c', format: 'image' }, { adId: 'b' },
+    ] }) };
+    const creds = { getDecrypted: jest.fn().mockResolvedValue('k') };
+    const competitors = {};
+    const s = new MonitorService(competitors as never, handles as never, ads as never, events as never, proxy as never, creds as never);
+    await s.runDailyForCompetitor('ws1', { _id: { toString: () => 'c1' }, brand: 'B', save: jest.fn() } as never);
+    expect(ads.create).toHaveBeenCalledTimes(1); // 'a' is new
+    expect(events.create).toHaveBeenCalledWith(expect.objectContaining({ adId: 'a', event: 'new', date: today }));
+    expect(events.create).toHaveBeenCalledWith(expect.objectContaining({ adId: 'd', event: 'stopped', date: today }));
   });
 });

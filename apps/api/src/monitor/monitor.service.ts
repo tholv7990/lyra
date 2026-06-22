@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CompetitorStatus, MonitorPlatform, type Competitor as CompetitorModel } from '@lyra/shared';
+import { CompetitorStatus, MonitorPlatform, AdStatus, AdEventType, computeAdDiff, type Competitor as CompetitorModel, type MonitorStats, type CompetitorChangelog } from '@lyra/shared';
 import { Competitor, AdvertiserHandle, MonitorAd, AdEvent } from './monitor.schema';
 import { ConnectorsProxy } from '../connectors/connectors.proxy';
 import { ConnectorCredentialsService } from '../connectors/connector-credentials.service';
@@ -74,5 +74,74 @@ export class MonitorService {
     c.status = CompetitorStatus.Archived;
     await c.save();
     return c;
+  }
+
+  static today(): string { return new Date().toISOString().slice(0, 10); }
+
+  async runDailyForCompetitor(ws: string, c: { _id: { toString(): string }; brand: string; save?: () => Promise<unknown> }): Promise<void> {
+    const competitorId = c._id.toString();
+    const handle = (await this.handles.find({ workspaceId: ws, competitorId, platform: MonitorPlatform.Meta }).exec())[0];
+    if (!handle) return;
+    const key = await this.apifyKey(ws);
+    const today = MonitorService.today();
+    const crawled = (await this.proxy.forward(ws, 'system', 'POST', 'adlibrary/ads', { pageId: handle.advertiserId }, key)) as {
+      ads?: { adId: string; creativeUrl?: string; copy?: string; format?: string }[];
+    };
+    const byId = new Map((crawled.ads ?? []).map((a) => [a.adId, a]));
+    const active = await this.ads.find({ workspaceId: ws, competitorId, platform: MonitorPlatform.Meta, status: AdStatus.Active }).exec();
+    const { newIds, stoppedIds, ongoingIds } = computeAdDiff([...byId.keys()], active.map((a) => a.adId));
+
+    for (const id of newIds) {
+      const a = byId.get(id)!;
+      await this.ads.create({
+        workspaceId: ws, competitorId, platform: MonitorPlatform.Meta, adId: id,
+        creativeUrl: a.creativeUrl, copy: a.copy, format: a.format,
+        status: AdStatus.Active, firstSeen: today, lastSeen: today, daysRunning: 1,
+      });
+      await this.events.create({ workspaceId: ws, competitorId, platform: MonitorPlatform.Meta, adId: id, event: AdEventType.New, date: today });
+    }
+    for (const id of ongoingIds) {
+      await this.ads.updateOne(
+        { workspaceId: ws, competitorId, platform: MonitorPlatform.Meta, adId: id },
+        { $set: { lastSeen: today }, $inc: { daysRunning: 1 } },
+      ).exec();
+    }
+    for (const id of stoppedIds) {
+      await this.ads.updateOne(
+        { workspaceId: ws, competitorId, platform: MonitorPlatform.Meta, adId: id },
+        { $set: { status: AdStatus.Stopped, lastSeen: today } },
+      ).exec();
+      await this.events.create({ workspaceId: ws, competitorId, platform: MonitorPlatform.Meta, adId: id, event: AdEventType.Stopped, date: today });
+    }
+  }
+
+  async runDaily(ws: string): Promise<void> {
+    const watching = await this.competitors.find({ workspaceId: ws, status: CompetitorStatus.Watching }).exec();
+    for (const c of watching) {
+      try {
+        await this.runDailyForCompetitor(ws, c as never);
+        c.lastError = undefined; c.lastCrawledAt = new Date(); await c.save();
+      } catch (err) {
+        c.lastError = err instanceof Error ? err.message.slice(0, 300) : 'crawl failed';
+        c.lastCrawledAt = new Date(); await c.save(); // isolate: one failure never aborts the run
+      }
+    }
+  }
+
+  async changelog(ws: string, days: number): Promise<{ stats: MonitorStats; byDay: { date: string; competitors: CompetitorChangelog[] }[] }> {
+    const today = MonitorService.today();
+    const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+    const evs = await this.events.find({ workspaceId: ws, date: { $gte: since } }).exec();
+    const watching = await this.competitors.countDocuments({ workspaceId: ws, status: CompetitorStatus.Watching }).exec();
+    const stats: MonitorStats = {
+      newToday: evs.filter((e) => e.date === today && e.event === AdEventType.New).length,
+      stoppedToday: evs.filter((e) => e.date === today && e.event === AdEventType.Stopped).length,
+      watching,
+    };
+    // Group events by day; resolve ad detail + brand lazily. (MVP: detail join kept simple — the
+    // web reads ad rows from the events + a /monitor/ads call per competitor if it needs creatives.)
+    const days_ = [...new Set(evs.map((e) => e.date))].sort().reverse();
+    const byDay = days_.map((date) => ({ date, competitors: [] as CompetitorChangelog[] }));
+    return { stats, byDay };
   }
 }
