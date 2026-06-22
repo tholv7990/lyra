@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -6,6 +6,8 @@ import {
   isActionStep,
   keyProviderFor,
   providerNeedsKey,
+  fallbackChain,
+  defaultModel,
   resolveStepRefs,
   STEP_DEFS,
   StepStatus,
@@ -28,8 +30,9 @@ import { ProjectsService } from '../projects/projects.service';
 import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
 import { ActionRegistry } from './providers/action.registry';
-import type { StepRunOutput } from './providers/step-provider.interface';
+import type { StepRunOutput, PriorStepResult, StepInputImage } from './providers/step-provider.interface';
 import { gatherInputImages } from './providers/image-inputs';
+import { isRetryableProviderError } from './providers/retryable';
 import {
   assertRunnable,
   assertStepPosition,
@@ -89,6 +92,8 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class RunsService extends BaseRepository<Run> {
+  private readonly logger = new Logger(RunsService.name);
+
   constructor(
     @InjectModel(Run.name) model: Model<Run>,
     private readonly keys: KeysService,
@@ -302,8 +307,12 @@ export class RunsService extends BaseRepository<Run> {
         // best-effort: a cache read failure falls through to a normal call
       }
     }
-    const output = await this.registry.get(provider).execute({ step: stepForRun, apiKey, priorResults, inputImages });
-    if (cacheable) {
+    const { output, servedBy } = await this.executeWithFallback(
+      provider, stepForRun, apiKey, priorResults, inputImages, doc.workspaceId,
+    );
+    // Cache only the PRIMARY's result — a transient fallback must not poison the
+    // (provider+model)-keyed cache (cacheKey above was built from the primary).
+    if (cacheable && servedBy === provider) {
       try {
         await this.cache
           .updateOne(
@@ -371,6 +380,50 @@ export class RunsService extends BaseRepository<Run> {
       ? `[fan-out ${ok.length}/${items.length} ok · ${failed.length} failed]\n`
       : `[fan-out ${ok.length}/${items.length}]\n`;
     return { result: head + body, assets, usage: { tokens } };
+  }
+
+  // Run a single-call step through its primary provider; on a RETRYABLE error, retry
+  // the same prompt on the other text providers the workspace has a key for (each
+  // with its own default model). Eligibility reuses the same gate as `isLocked`, so
+  // a provider is never called without its BYO key (invariant 7). The keys lookup is
+  // lazy — a healthy primary costs nothing extra. Returns which provider served.
+  private async executeWithFallback(
+    primary: Provider,
+    stepForRun: Step,
+    apiKey: string,
+    priorResults: PriorStepResult[],
+    inputImages: StepInputImage[],
+    workspaceId: string,
+  ): Promise<{ output: StepRunOutput; servedBy: Provider }> {
+    try {
+      const output = await this.registry
+        .get(primary)
+        .execute({ step: stepForRun, apiKey, priorResults, inputImages });
+      return { output, servedBy: primary };
+    } catch (primaryErr) {
+      if (!isRetryableProviderError(primaryErr)) throw primaryErr;
+      const present = await this.keysPresent(workspaceId);
+      const isEligible = (p: Provider) => !providerNeedsKey(p) || present.has(keyProviderFor(p));
+      const alts = fallbackChain(primary, isEligible).filter((p) => p !== primary);
+      let lastErr = primaryErr;
+      for (const alt of alts) {
+        const altKey = (await this.keys.getDecrypted(workspaceId, keyProviderFor(alt))) ?? '';
+        const altStep = { ...stepForRun, provider: alt, model: defaultModel(alt) };
+        try {
+          const output = await this.registry
+            .get(alt)
+            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages });
+          this.logger.warn(
+            `step "${stepForRun.name ?? stepForRun.key ?? ''}": ${primary} failed (${errMessage(primaryErr)}) → served by ${alt}`,
+          );
+          return { output, servedBy: alt };
+        } catch (altErr) {
+          lastErr = altErr;
+          if (!isRetryableProviderError(altErr)) throw altErr;
+        }
+      }
+      throw lastErr;
+    }
   }
 
   // Run one step: validate, mark running, call the provider, then complete or
