@@ -9,7 +9,11 @@ import {
   type Channel,
   type MemberView,
   type Project,
+  type ProjectBrandKit,
   type ProjectVariable,
+  type PromptMedia,
+  isAllowedMedia,
+  MEDIA_MAX_BYTES,
 } from '@lyra/shared';
 import { api } from '../lib/api';
 import { channelsApi } from '../lib/channels';
@@ -18,6 +22,7 @@ import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { EditorShell } from '../components/EditorShell';
+import { BrandKitSection } from '../components/BrandKitSection';
 import { CheckIcon, PlusIcon, XIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import './projecteditor.css';
@@ -30,6 +35,7 @@ interface Form {
   shared: ProjectShare;
   sharedWith: string[]; // member userIds
   channels: string[]; // connected-channel ids from the Connections pool
+  brandKit: ProjectBrandKit;
 }
 
 const empty: Form = {
@@ -40,6 +46,7 @@ const empty: Form = {
   shared: ProjectShare.All,
   sharedWith: [],
   channels: [],
+  brandKit: {},
 };
 
 const QUICK_KEYS = ['product', 'niche', 'homepage'];
@@ -59,6 +66,7 @@ export function ProjectEditor() {
   const [pool, setPool] = useState<Channel[]>([]); // connected channels (workspace pool)
   const [loading, setLoading] = useState(isEdit);
   const [busy, setBusy] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
 
@@ -87,6 +95,7 @@ export function ProjectEditor() {
           shared: p.shared ?? ProjectShare.All,
           sharedWith: (p.sharedWith ?? []).map((u) => u.id),
           channels: p.channels ?? [],
+          brandKit: p.brandKit ?? {},
         });
       })
       .catch((e) => setError(e instanceof Error ? e.message : t('projects.loadFailed')))
@@ -125,6 +134,26 @@ export function ProjectEditor() {
       sharedWith: f.sharedWith.includes(uid) ? f.sharedWith.filter((x) => x !== uid) : [...f.sharedWith, uid],
     }));
 
+  async function uploadLogo(files: FileList | null) {
+    if (!files || !wsId) return;
+    setError(null);
+    const file = files[0];
+    if (!file) return;
+    if (!isAllowedMedia(file.type, file.name)) { setError(t('prompts.errFileType', { name: file.name })); return; }
+    if (file.size > MEDIA_MAX_BYTES) { setError(t('prompts.errFileSize', { name: file.name })); return; }
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const media = await api<PromptMedia>(`/workspaces/${wsId}/files`, { method: 'POST', body: fd });
+      setForm((f) => ({ ...f, brandKit: { ...f.brandKit, logoUrl: media.url } }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('prompts.errUpload', { name: file.name }));
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
   async function save() {
     if (!wsId || !form.name.trim() || busy) return;
     setBusy(true);
@@ -139,6 +168,7 @@ export function ProjectEditor() {
       status: form.status,
       // Keep only ids that still exist in the pool (a channel may have been disconnected).
       channels: pool.length ? form.channels.filter((c) => pool.some((p) => p.id === c)) : form.channels,
+      brandKit: form.brandKit,
       // Visibility only matters for a public project; a draft is creator-only.
       ...(isPublic
         ? {
@@ -261,6 +291,16 @@ export function ProjectEditor() {
             {t('projects.addVariable').replace('+ ', '')}
           </button>
         </section>
+
+        {/* Brand Kit */}
+        <BrandKitSection
+          brandKit={form.brandKit}
+          uploading={uploadingLogo}
+          onLogoFile={uploadLogo}
+          onClearLogo={() => setForm((f) => ({ ...f, brandKit: { ...f.brandKit, logoUrl: undefined } }))}
+          onAccentChange={(hex) => setForm((f) => ({ ...f, brandKit: { ...f.brandKit, accentColor: hex } }))}
+          t={t}
+        />
 
         {/* Channels — which connected channels this project publishes to */}
         <section className="pe-section">

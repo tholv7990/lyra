@@ -326,19 +326,81 @@
   background: var(--primary);
 }
 
-/* Mobile: the {key} = value rows are too wide for a phone — stack the key on its
-   own line; the value + remove share the next. Visibility cards stack too. */
+/* Brand Kit */
+.pe-brand-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.pe-brand-logo {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+.pe-brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.pe-brand-logo .pe-var-del {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  background: var(--surface-1);
+  border-radius: 50%;
+  border: 1px solid var(--hairline-strong);
+}
+.pe-brand-add {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 9px;
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px;
+  transition: all 0.16s ease;
+}
+.pe-brand-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.pe-brand-accent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pe-brand-accent input[type="color"] {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Mobile: brand row stacks */
 @media (max-width: 560px) {
-  .pe-var-row {
-    flex-wrap: wrap;
-  }
-  .pe-key-wrap {
-    flex: 1 1 100%;
-  }
-  .pe-eq {
-    display: none;
-  }
-  .pe-vis-cards {
+  .pe-brand-row {
     flex-direction: column;
+    align-items: flex-start;
+  }
+  .pe-brand-accent {
+    width: 100%;
   }
 }

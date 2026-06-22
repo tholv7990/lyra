@@ -112,6 +112,14 @@ export default {
   removeVariable: 'Remove variable',
   addVariable: '+ Add variable',
 
+  // Brand kit
+  brandLabel: 'Brand',
+  brandHelp: 'Logo and accent color used when branding images in a pipeline.',
+  brandLogo: 'Logo',
+  brandAddLogo: 'Add logo',
+  brandClearLogo: 'Remove logo',
+  brandAccent: 'Accent',
+
   // Move to team
   moveToTeamAction: 'Move to team',
   moveToTeamTitle: 'Move project to team',

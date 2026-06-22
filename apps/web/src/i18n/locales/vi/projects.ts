@@ -112,6 +112,14 @@ export default {
   removeVariable: 'Xóa biến',
   addVariable: '+ Thêm biến',
 
+  // Brand kit
+  brandLabel: 'Thương hiệu',
+  brandHelp: 'Logo và màu nhấn dùng để tạo thương hiệu cho hình ảnh trong pipeline.',
+  brandLogo: 'Logo',
+  brandAddLogo: 'Thêm logo',
+  brandClearLogo: 'Xóa logo',
+  brandAccent: 'Màu nhấn',
+
   // Move to team
   moveToTeamAction: 'Chuyển vào nhóm',
   moveToTeamTitle: 'Chuyển dự án vào nhóm',
