@@ -31,12 +31,14 @@ describe('RunsService.executeWithFallback', () => {
   it('primary retryable (429) + alt keyed → alt serves with its default model', async () => {
     const primaryExec = jest.fn().mockRejectedValue({ status: 429 });
     const dsExec = jest.fn().mockResolvedValue({ result: 'from-deepseek' });
-    const { svc } = makeSvc({ [Provider.OpenAI]: primaryExec, [Provider.DeepSeek]: dsExec }, [Provider.DeepSeek]);
+    const { svc, keys } = makeSvc({ [Provider.OpenAI]: primaryExec, [Provider.DeepSeek]: dsExec }, [Provider.DeepSeek]);
     const res = await call(svc, Provider.OpenAI);
     expect(res.servedBy).toBe(Provider.DeepSeek);
     expect(res.output.result).toBe('from-deepseek');
     expect(dsExec.mock.calls[0][0].step.provider).toBe(Provider.DeepSeek);
     expect(dsExec.mock.calls[0][0].step.model).not.toBe('m');
+    // lazy lookup proof (positive): the keys list is resolved only after the primary fails
+    expect(keys.list).toHaveBeenCalledTimes(1);
   });
 
   it('primary retryable + no eligible alt → throws the primary error', async () => {
