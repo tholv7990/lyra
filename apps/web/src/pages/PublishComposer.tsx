@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChannelType } from '@lyra/shared';
 import type { Channel, Project, PublishJob, PublishedPost } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { api } from '../lib/api';
 import { channelsApi } from '../lib/channels';
 import { postsApi } from '../lib/posts';
 import { platformColor as color, platformGlyph as glyph, platformLabel } from '../lib/platform';
+import { groupChannels, shortProfileId } from '../lib/connections';
 import { fmtDate } from '../lib/format';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 import './connectors.css';
@@ -185,19 +187,28 @@ export function PublishComposer() {
               <p className="muted">{t('connectors.noChannels')}</p>
             ) : (
               <div className="pub-channels">
-                {channels.map((c) => {
-                  const on = picked.includes(c.id);
-                  return (
-                    <button key={c.id} type="button" className={`pub-channel${on ? ' on' : ''}`} onClick={() => setPicked((p) => togglePick(p, c.id))}>
-                      <span className="pub-ico" style={{ background: color(c.platform) }}>{glyph(c.platform)}</span>
-                      <span className="pub-channel-id">
-                        <span className="pub-channel-name">{c.displayName}</span>
-                        <span className="pub-channel-handle">{platformLabel(c.platform)}</span>
-                      </span>
-                      <span className="pub-channel-check">{on && <CheckIcon width={11} height={11} />}</span>
-                    </button>
-                  );
-                })}
+                {groupChannels(channels).map((conn) => (
+                  <div className="pub-channel-group" key={conn.key}>
+                    <div className="pub-channel-group-head">
+                      {conn.connector === ChannelType.Postiz
+                        ? t('connectors.postizPool')
+                        : `${t('connectors.browserProfile')} · ${shortProfileId(conn.profileId)}`}
+                    </div>
+                    {conn.accounts.map((c) => {
+                      const on = picked.includes(c.id);
+                      return (
+                        <button key={c.id} type="button" className={`pub-channel${on ? ' on' : ''}`} onClick={() => setPicked((p) => togglePick(p, c.id))}>
+                          <span className="pub-ico" style={{ background: color(c.platform) }}>{glyph(c.platform)}</span>
+                          <span className="pub-channel-id">
+                            <span className="pub-channel-name">{c.displayName}</span>
+                            <span className="pub-channel-handle">{platformLabel(c.platform)}</span>
+                          </span>
+                          <span className="pub-channel-check">{on && <CheckIcon width={11} height={11} />}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
             {/* Selection summary badge */}

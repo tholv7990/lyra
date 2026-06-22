@@ -327,6 +327,14 @@
 }
 .pub-crawler-btn:hover { color: var(--ink); }
 
+/* ── Channel group headers (Post-to grouped multiselect) ─────────────────── */
+.pub-channel-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pub-channel-group + .pub-channel-group { margin-top: 10px; }
+.pub-channel-group-head {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
+  color: var(--ink-tertiary); padding: 2px 2px 0;
+}
+
 /* ── Footer (desktop only) ───────────────────────────────────────────────── */
 .pub-foot {
   display: flex;
