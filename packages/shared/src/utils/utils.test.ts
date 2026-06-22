@@ -440,6 +440,14 @@ describe('isNetscapeCookies', () => {
   it('accepts a file with a 7-field tab-separated cookie record', () => {
     expect(isNetscapeCookies('.youtube.com\tTRUE\t/\tTRUE\t1799999999\tSID\tabc123')).toBe(true);
   });
+  it('accepts #HttpOnly_-prefixed cookie records (browser extension exports)', () => {
+    expect(isNetscapeCookies('#HttpOnly_.x.com\tTRUE\t/\tTRUE\t1799999999\ta\tb')).toBe(true);
+    expect(isNetscapeCookies('# Netscape HTTP Cookie File\n#HttpOnly_.google.com\tTRUE\t/\tTRUE\t1799999999\tSID\txxx')).toBe(true);
+  });
+  it('rejects a 7-column non-cookie TSV (weak false-positive guard)', () => {
+    expect(isNetscapeCookies('a\tb\tc\td\te\tf\tg')).toBe(false);
+    expect(isNetscapeCookies('col1\tcol2\tcol3\tcol4\tcol5\tcol6\tcol7')).toBe(false);
+  });
   it('rejects empty / garbage / JSON', () => {
     expect(isNetscapeCookies('')).toBe(false);
     expect(isNetscapeCookies('   \n\n')).toBe(false);

@@ -5,6 +5,8 @@ import { join } from 'path';
 // Best-effort one-shot cleanup of crawler temp dirs orphaned by a crash/restart
 // (lyra-dl-* downloads, lyra-ck-* cookie files). The in-process TTL sweep only
 // removes dirs it still tracks; a restart loses that tracking. Never throws.
+// Called ONCE at startup only. Do NOT convert to a periodic sweep — active job
+// dirs are matched by the same prefix and a long download (>1h) would be deleted.
 export async function sweepOrphanTempDirs(opts: {
   dir?: string; prefixes?: string[]; maxAgeMs?: number; now?: number;
 } = {}): Promise<void> {

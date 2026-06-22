@@ -347,7 +347,12 @@ export function isNetscapeCookies(text: string): boolean {
   const lines = text.split(/\r?\n/);
   if (lines.some((l) => /^#\s*(Netscape\s+)?HTTP Cookie File/i.test(l.trim()))) return true;
   return lines.some((l) => {
-    if (!l || l.trim().startsWith('#')) return false;
-    return l.split('\t').length === 7;
+    if (!l.trim()) return false;
+    // yt-dlp/curl mark httpOnly cookies with a "#HttpOnly_" prefix — still a valid record.
+    const line = l.startsWith('#HttpOnly_') ? l.slice('#HttpOnly_'.length) : l;
+    if (line.trim().startsWith('#')) return false; // a real comment, not a record
+    const f = line.split('\t');
+    // domain, flag(TRUE/FALSE), path, secure(TRUE/FALSE), expiry(digits), name, value
+    return f.length === 7 && /^(TRUE|FALSE)$/i.test(f[1]) && /^(TRUE|FALSE)$/i.test(f[3]) && /^\d+$/.test(f[4]);
   });
 }
