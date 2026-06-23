@@ -19,6 +19,7 @@ import {
 import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefControls';
 import { MenuPicker } from '../components/MenuPicker';
 import { PostizKeySection } from '../components/PostizKeySection';
+import { TavilyKeySection } from '../components/TavilyKeySection';
 import { PlusIcon } from '../layout/icons';
 
 export function Settings() {
@@ -276,6 +277,9 @@ export function Settings() {
 
       {/* ===== Publishing (Postiz API key) ===== */}
       <PostizKeySection />
+
+      {/* ===== Research (Tavily search key) ===== */}
+      <TavilyKeySection />
 
       {/* ===== Password ===== */}
       <section className="set-section">
