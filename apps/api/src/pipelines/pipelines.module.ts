@@ -10,6 +10,7 @@ import { Pipeline, PipelineSchema } from './pipeline.schema';
 import { Run, RunSchema } from '../runs/run.schema';
 import { PipelinesService } from './pipelines.service';
 import { PipelineAiService } from './pipeline-ai.service';
+import { ResearchTemplateService } from './research-template.service';
 import { PipelinesController } from './pipelines.controller';
 import { PipelineAccessGuard } from './guards/pipeline-access.guard';
 
@@ -26,7 +27,7 @@ import { PipelineAccessGuard } from './guards/pipeline-access.guard';
     ]),
   ],
   controllers: [PipelinesController],
-  providers: [PipelinesService, PipelineAiService, PipelineAccessGuard, AnthropicClient],
+  providers: [PipelinesService, PipelineAiService, ResearchTemplateService, PipelineAccessGuard, AnthropicClient],
   exports: [PipelinesService],
 })
 export class PipelinesModule {}

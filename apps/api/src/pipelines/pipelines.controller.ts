@@ -22,6 +22,7 @@ import { RequireCreate } from '../workspaces/decorators/require-create.decorator
 import { PipelinesService } from './pipelines.service';
 import { PipelineAiService } from './pipeline-ai.service';
 import { PipelineAccessGuard } from './guards/pipeline-access.guard';
+import { ResearchTemplateService } from './research-template.service';
 import {
   CurrentPipeline,
   RequirePipelineOwner,
@@ -41,6 +42,7 @@ export class PipelinesController {
     private readonly pipelines: PipelinesService,
     private readonly pipelineAi: PipelineAiService,
     private readonly cascade: CascadeService,
+    private readonly template: ResearchTemplateService,
   ) {}
 
   // ===== Library =====
@@ -67,6 +69,18 @@ export class PipelinesController {
         : {}),
     });
     return this.pipelines.toView(pipeline);
+  }
+
+  // Idempotently seed the built-in Product Research pipeline template for the
+  // workspace. Calling it multiple times is safe — only the first call creates.
+  @Post('workspaces/:id/pipelines/seed-research')
+  @UseGuards(WorkspaceGuard)
+  @RequireCreate()
+  seedResearch(
+    @Param('id') workspaceId: string,
+    @CurrentUser() user: User,
+  ): Promise<PipelineModel> {
+    return this.template.seed(workspaceId, user.id);
   }
 
   // Design a pipeline from the workspace's prompt library + a goal. Returns a
