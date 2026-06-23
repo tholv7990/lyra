@@ -21,7 +21,7 @@ export class EvaluateAction implements ActionProvider {
     };
     const score = weightedScore(data.subScores);
     const grade = gradeConfidence(evidence);
-    const decision = decide(score, gates);
+    const decision = decide(score, gates, data.subScores);
     const result = `# Evaluation\nScore ${score.toFixed(0)}/100 · grade ${grade} · decision ${decision}`;
     return { result, data: { score, grade, decision, subScores: data.subScores, hardGates: gates }, usage: { tokens: 0 } };
   }

@@ -5,6 +5,7 @@ import {
   ProductStatus,
   type CreateProductDto, type UpdateProductDto, type Product as ProductView,
   type EvidenceClaim, type SourceRow, type UnitEcon, type SubScores, type ConfidenceGrade, type Decision,
+  type HardGates, type UnitEconInputs,
   type SaveProductResultDto,
 } from '@lyra/shared';
 import { Product, ProductDocument } from './product.schema';
@@ -107,6 +108,7 @@ export class ProductsService {
   async applyResearch(productId: string, workspaceId: string, actorId: string, p: {
     evidence?: EvidenceClaim[]; sources?: SourceRow[]; unitEcon?: UnitEcon;
     subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;
+    hardGates?: HardGates; unitEconInputs?: UnitEconInputs;
   }): Promise<ProductView> {
     const set: Record<string, unknown> = { updatedBy: actorId };
     if (p.evidence !== undefined) set.evidence = p.evidence;
@@ -116,6 +118,8 @@ export class ProductsService {
     if (p.score !== undefined) set.score = p.score;
     if (p.grade !== undefined) set.grade = p.grade;
     if (p.decision !== undefined) set.decision = p.decision;
+    if (p.hardGates !== undefined) set.hardGates = p.hardGates;
+    if (p.unitEconInputs !== undefined) set.unitEconInputs = p.unitEconInputs;
     const doc = await this.model
       .findOneAndUpdate({ _id: productId, workspaceId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
       .exec();
