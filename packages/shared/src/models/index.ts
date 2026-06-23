@@ -222,6 +222,9 @@ export interface Step {
   condition?: StepCondition; // guard — skip the step when it fails
   result?: string;
   assetIds?: string[];
+  // Exact source asset(s) this step operates on (image actions). When set, the
+  // run engine feeds these as input images instead of resolving {input}/{step:Name}.
+  inputAssetIds?: string[];
   usage?: { tokens?: number; costUsd?: number };
   error?: string;
   startedAt?: string;

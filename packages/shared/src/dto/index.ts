@@ -1,4 +1,4 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind, ProductStatus } from '../enums';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind, ProductStatus, ImageOp } from '../enums';
 import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition, ActionStep, ProjectBrandKit, ProductSource, ProductEconInputs } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -344,6 +344,14 @@ export interface RateRunDto {
 // fresh provider call even when a cache entry exists (Regenerate action).
 export interface RunStepDto {
   bypassCache?: boolean;
+}
+
+// Request to apply an image operation to a result asset, spawning a derived
+// image step. `sourceStepIndex` + `assetId` identify the exact result image.
+export interface ImageActionDto {
+  sourceStepIndex: number;
+  assetId: string;
+  op: ImageOp;
 }
 
 // ===== Built-in connectors =====
