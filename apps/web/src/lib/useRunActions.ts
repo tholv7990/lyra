@@ -55,7 +55,8 @@ export function useRunActions(run: Run | null, setRun: (r: Run) => void) {
     savePrompt: (i: number, prompt: string) => {
       if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/prompt`, { method: 'PATCH', body: JSON.stringify({ prompt }) }));
     },
-    imageAction: (sourceStepIndex: number, assetId: string, op: ImageOp) =>
-      post(`/runs/${run!.id}/actions/image`, { sourceStepIndex, assetId, op }),
+    imageAction: (sourceStepIndex: number, assetId: string, op: ImageOp) => {
+      if (run) void act(() => post(`/runs/${run.id}/actions/image`, { sourceStepIndex, assetId, op }));
+    },
   };
 }
