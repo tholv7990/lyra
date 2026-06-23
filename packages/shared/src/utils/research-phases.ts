@@ -18,7 +18,8 @@ export function researchPhaseOf(step: Step): ResearchPhase | null {
   switch (step.action?.type) {
     case ActionType.DemandGate: return 2;
     case ActionType.Score:
-    case ActionType.UnitEcon: return 3;
+    case ActionType.UnitEcon:
+    case ActionType.RiskScreen: return 3;
     case ActionType.Evaluate:
     case ActionType.SaveProduct: return 4;
     case ActionType.ResolveInputs: return 1;

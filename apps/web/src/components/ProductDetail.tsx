@@ -312,6 +312,21 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
           <p className="muted" style={{ fontSize: 13 }}>{t('projects.notScored')}</p>
         ) : null}
 
+        {product.riskFlags && (product.riskFlags.unresolvedSafety || product.riskFlags.materialIpRisk || product.riskFlags.misleadingClaimsRequired) && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.riskTitle')}</h3>
+            <div className="pdtl-risk-flags">
+              {product.riskFlags.unresolvedSafety && <span className="pdtl-risk-flag">{t('projects.riskSafety')}</span>}
+              {product.riskFlags.materialIpRisk && <span className="pdtl-risk-flag">{t('projects.riskIp')}</span>}
+              {product.riskFlags.misleadingClaimsRequired && <span className="pdtl-risk-flag">{t('projects.riskClaims')}</span>}
+            </div>
+            {product.riskNotes && product.riskNotes.length > 0 && (
+              <ul className="pdtl-risk-notes">{product.riskNotes.map((n, i) => <li key={i}>{n}</li>)}</ul>
+            )}
+            <p className="pdtl-risk-verify">{t('projects.riskVerify')}</p>
+          </section>
+        )}
+
         {product.assumptions && product.assumptions.length > 0 && (
           <section className="pdtl-section">
             <h3 className="pdtl-section-label">{t('projects.assumptionsTitle')}</h3>
@@ -597,6 +612,23 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
                 <dd>{product.unitEcon.targetRoas}×</dd>
               </div>
             </dl>
+            {product.scenarios && (
+              <table className="pdtl-sensitivity">
+                <thead><tr><th>{t('projects.sensitivityTitle')}</th><th>CM1</th><th>ROAS</th></tr></thead>
+                <tbody>
+                  {([['scenarioBase','base'],['scenarioLow','low'],['scenarioHigh','high'],['scenarioCac','plus10Cac'],['scenarioLanded','plus10Landed'],['scenarioReturns','doubleReturns']] as const).map(([label, key]) => {
+                    const sc = product.scenarios![key];
+                    return (
+                      <tr key={key}>
+                        <td>{t(`projects.${label}`)}</td>
+                        <td>{Math.round(sc.cm1Pct * 100)}%</td>
+                        <td>{Number.isFinite(sc.breakEvenRoas) ? sc.breakEvenRoas.toFixed(2) + '×' : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </section>
         )}
 

@@ -1,5 +1,5 @@
 import type {
-  UnitEconInputs, UnitEcon, EvidenceClaim, ConfidenceGrade, HardGates, Decision,
+  UnitEconInputs, UnitEcon, EvidenceClaim, ConfidenceGrade, HardGates, Decision, Scenarios,
 } from '../models';
 import { WEIGHTS, type SubScores, type ScoreKey } from '../constants/research';
 
@@ -122,5 +122,17 @@ export function resolveInputs(raw: EconRaw): { inputs: UnitEconInputs; assumptio
       desiredPostAdCmPct: def(raw.desiredPostAdCmPct, 0.15, 'Assumed 15% desired post-ad margin — none provided'),
     },
     assumptions,
+  };
+}
+
+// §1D sensitivities — each case re-runs computeUnitEcon on a perturbed input set.
+export function runScenarios(b: UnitEconInputs): Scenarios {
+  return {
+    base: computeUnitEcon(b),
+    low: computeUnitEcon({ ...b, aov: b.aov * 0.9 }),                                  // price 10% lower
+    high: computeUnitEcon({ ...b, aov: b.aov * 1.1 }),                                 // price 10% higher
+    plus10Cac: computeUnitEcon({ ...b, desiredPostAdCmPct: b.desiredPostAdCmPct + 0.1 }), // 10-pt stricter post-ad margin
+    plus10Landed: computeUnitEcon({ ...b, landedCost: b.landedCost * 1.1 }),           // landed cost +10%
+    doubleReturns: computeUnitEcon({ ...b, expectedReturnLossPct: b.expectedReturnLossPct * 2 }), // returns 2x
   };
 }

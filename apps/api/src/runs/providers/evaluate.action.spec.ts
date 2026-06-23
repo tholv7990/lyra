@@ -17,4 +17,10 @@ describe('EvaluateAction', () => {
   it('missing subScores → clear error', async () => {
     await expect(new EvaluateAction().execute(ctx(led({ data: {} })))).rejects.toThrow(/score/i);
   });
+  it('riskFlags.materialIpRisk → REJECT', async () => {
+    const out = await new EvaluateAction().execute(ctx(led({ data: { subScores: fullScores, unitEcon: { cm1: 10, cm1Pct: 0.5, breakEvenRoas: 2, maxCac: 10, targetRoas: 2 }, riskFlags: { materialIpRisk: true, unresolvedSafety: false, misleadingClaimsRequired: false } }, evidence: [
+      { id: 'c1', statement: 'a', kind: 'verified', sourceId: 's1' }, { id: 'c2', statement: 'b', kind: 'verified', sourceId: 's2' }, { id: 'c3', statement: 'c', kind: 'verified', sourceId: 's3' },
+    ] })));
+    expect((out.data as any).decision).toBe('REJECT');
+  });
 });

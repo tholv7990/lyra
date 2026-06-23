@@ -25,6 +25,9 @@ describe('researchPhaseOf', () => {
     expect(researchPhaseOf(step({ action: { type: ActionType.ResolveInputs } as never }))).toBe(1);
     expect(researchPhaseOf(step({ action: { type: ActionType.Competition } as never }))).toBe(2);
   });
+  it('maps risk-screen to phase 3', () => {
+    expect(researchPhaseOf(step({ action: { type: ActionType.RiskScreen } as never }))).toBe(3);
+  });
 });
 
 describe('isResearchRun', () => {

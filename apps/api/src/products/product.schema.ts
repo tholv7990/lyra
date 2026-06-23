@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 import { ProductStatus } from '@lyra/shared';
 import type {
   EvidenceClaim, SourceRow, UnitEcon, SubScores, ConfidenceGrade, Decision,
-  HardGates, UnitEconInputs, CompetitionData,
+  HardGates, UnitEconInputs, CompetitionData, RiskFlags, Scenarios,
   ProductEconInputs, ProductSource,
 } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
@@ -104,6 +104,15 @@ export class Product extends AuditedEntity {
 
   @Prop({ type: Object })
   competition?: CompetitionData;
+
+  @Prop({ type: Object })
+  riskFlags?: RiskFlags;
+
+  @Prop({ type: [String], default: undefined })
+  riskNotes?: string[];
+
+  @Prop({ type: Object })
+  scenarios?: Scenarios;
 
   @Prop({ type: Object })
   econInputs?: ProductEconInputs;

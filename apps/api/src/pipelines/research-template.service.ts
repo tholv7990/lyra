@@ -52,15 +52,16 @@ export class ResearchTemplateService {
       act(ActionType.Competition, 'Competition'),
       act(ActionType.Score, 'Score'),
       act(ActionType.UnitEcon, 'Unit economics'),
+      act(ActionType.RiskScreen, 'Risk screen'),
       act(ActionType.Evaluate, 'Evaluate'),
       act(ActionType.SaveProduct, 'Save & review', StepMode.Gate),
     ] as never);
 
     if (existing) {
-      const hasCompetition = (existing.steps ?? []).some(
-        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.Competition,
+      const upToDate = (existing.steps ?? []).some(
+        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.RiskScreen,
       );
-      if (!hasCompetition) {
+      if (!upToDate) {
         const research = (existing.steps ?? []).find((s) => (s as { promptId?: string }).promptId);
         const pid = (research as { promptId?: string } | undefined)?.promptId ?? '';
         existing.steps = buildSteps(pid) as never;

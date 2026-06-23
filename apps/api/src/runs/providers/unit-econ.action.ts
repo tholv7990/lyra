@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { computeUnitEcon, type UnitEconInputs } from '@lyra/shared';
+import { computeUnitEcon, runScenarios, type UnitEconInputs } from '@lyra/shared';
 import type { ActionProvider, ActionRunContext } from './action-provider.interface';
 import type { StepRunOutput } from './step-provider.interface';
 
@@ -14,6 +14,6 @@ export class UnitEconAction implements ActionProvider {
     }
     const unitEcon = computeUnitEcon(e as UnitEconInputs);
     const result = `# Unit economics\nCM1 ${unitEcon.cm1.toFixed(2)} (${(unitEcon.cm1Pct * 100).toFixed(1)}%) · break-even ROAS ${unitEcon.breakEvenRoas.toFixed(2)} · max CAC ${unitEcon.maxCac.toFixed(2)} · target ROAS ${unitEcon.targetRoas.toFixed(2)}`;
-    return { result, data: { unitEcon }, usage: { tokens: 0 } };
+    return { result, data: { unitEcon, scenarios: runScenarios(e as UnitEconInputs) }, usage: { tokens: 0 } };
   }
 }
