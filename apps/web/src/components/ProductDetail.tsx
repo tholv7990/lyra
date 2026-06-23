@@ -312,6 +312,17 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
           <p className="muted" style={{ fontSize: 13 }}>{t('projects.notScored')}</p>
         ) : null}
 
+        {product.assumptions && product.assumptions.length > 0 && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.assumptionsTitle')}</h3>
+            <ul className="pdtl-assumptions">
+              {product.assumptions.map((a, i) => (
+                <li key={i} className="pdtl-assumption">{a}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Run timeline — shown once a research run has been started */}
         {run && run.steps.length > 0 && (
           <section className="pdtl-section">
@@ -503,6 +514,22 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
             <p className="muted" style={{ fontSize: 13 }}>{t('projects.insufficientEvidence')}</p>
           </section>
         ) : null}
+
+        {product.competition && product.competition.competitors.length > 0 && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.competitionTitle')}</h3>
+            <p className="pdtl-market">{t('projects.marketType')}: <span className="pdtl-market-pill">{product.competition.marketType}</span></p>
+            <ul className="pdtl-competitors">
+              {product.competition.competitors.map((c, i) => (
+                <li key={i} className="pdtl-competitor">
+                  <span className="pdtl-competitor-name">{c.name}</span>
+                  {c.price && <span className="pdtl-competitor-price">{c.price}</span>}
+                  {c.strengths && <span className="pdtl-competitor-strengths">{c.strengths}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Sources */}
         {product.sources.length > 0 && (
