@@ -15,6 +15,7 @@ describe('ImageStepProvider edit mode', () => {
     await provider().execute({
       step: { prompt: 'add a logo', model: 'gpt-image-1' } as never, apiKey: 'k', priorResults: [],
       inputImages: [{ url: 'u', mime: 'image/png', b64: Buffer.from('x').toString('base64') }], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.openai.com/v1/images/edits');
@@ -26,6 +27,7 @@ describe('ImageStepProvider edit mode', () => {
     await provider().execute({
       step: { prompt: 'a cat', model: 'dall-e-3' } as never, apiKey: 'k', priorResults: [],
       inputImages: [{ url: 'u', mime: 'image/png', b64: Buffer.from('x').toString('base64') }], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.openai.com/v1/images/generations');
@@ -35,6 +37,7 @@ describe('ImageStepProvider edit mode', () => {
     const fetchMock = jest.spyOn(global, 'fetch' as never).mockResolvedValue(okB64 as never);
     await provider().execute({
       step: { prompt: 'a cat', model: 'gpt-image-1' } as never, apiKey: 'k', priorResults: [], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.openai.com/v1/images/generations');
@@ -47,6 +50,7 @@ describe('ImageStepProvider edit mode', () => {
     const out = await provider().execute({
       step: { prompt: 'a cat', model: 'dall-e-3' } as never, apiKey: 'k', priorResults: [],
       inputImages: [{ url: 'u', mime: 'image/png', b64: Buffer.from('x').toString('base64') }], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     expect(out.result).toContain('dall-e-3 ignores input images');
   });
@@ -55,6 +59,7 @@ describe('ImageStepProvider edit mode', () => {
     jest.spyOn(global, 'fetch' as never).mockResolvedValue(okB64 as never);
     const out = await provider().execute({
       step: { prompt: 'a cat', model: 'dall-e-3' } as never, apiKey: 'k', priorResults: [], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     expect(out.result).not.toContain('ignores input images');
   });

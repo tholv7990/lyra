@@ -142,12 +142,15 @@ export function beginStep(state: RunState, index: number): void {
 export function completeStep(
   state: RunState,
   index: number,
-  out: { result: string; usage?: Step['usage']; cached?: boolean },
+  out: { result: string; usage?: Step['usage']; cached?: boolean; evidence?: Step['evidence']; sources?: Step['sources']; data?: Step['data'] },
 ): void {
   const step = state.steps[index];
   step.result = out.result;
   step.usage = out.usage ?? { tokens: 0 };
   step.cached = out.cached;
+  step.evidence = out.evidence;
+  step.sources = out.sources;
+  step.data = out.data;
   step.finishedAt = now();
 
   if (step.mode === StepMode.Gate) {
@@ -230,6 +233,9 @@ export function resetRun(state: RunState): void {
     step.error = undefined;
     step.startedAt = undefined;
     step.finishedAt = undefined;
+    step.evidence = undefined;
+    step.sources = undefined;
+    step.data = undefined;
   }
   state.currentStep = 0;
   state.status = RunStatus.Idle;

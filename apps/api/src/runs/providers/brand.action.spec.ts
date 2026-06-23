@@ -9,6 +9,7 @@ const ctx = (over = {}): ActionRunContext => ({
   workspaceId: 'w1',
   priorResults: [],
   brandKit: { logoUrl: 'https://cdn/logo.png' },
+  ledger: { evidence: [], sources: [], data: {}, variables: {} },
   ...over,
 });
 

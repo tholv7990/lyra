@@ -1,5 +1,6 @@
 import type { ActionStep, ProjectBrandKit, ActionType, Step } from '@lyra/shared';
 import type { PriorStepResult, StepRunOutput } from './step-provider.interface';
+import type { RunLedger } from '../run-ledger';
 
 export interface ActionRunContext {
   action: ActionStep;
@@ -8,6 +9,7 @@ export interface ActionRunContext {
   workspaceId: string;
   priorResults: PriorStepResult[];
   brandKit?: ProjectBrandKit; // resolved by the service for brand actions
+  ledger: RunLedger;
 }
 
 export interface ActionProvider {

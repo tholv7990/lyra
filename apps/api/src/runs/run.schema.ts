@@ -57,6 +57,15 @@ export class RunStep {
   @Prop()
   result?: string;
 
+  @Prop({ type: [Object], default: undefined })
+  evidence?: unknown[];
+
+  @Prop({ type: [Object], default: undefined })
+  sources?: unknown[];
+
+  @Prop({ type: Object })
+  data?: Record<string, unknown>;
+
   @Prop({ type: [String] })
   assetIds?: string[];
 

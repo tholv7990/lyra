@@ -33,6 +33,8 @@ import { ActionRegistry } from './providers/action.registry';
 import type { StepRunOutput, PriorStepResult, StepInputImage } from './providers/step-provider.interface';
 import { gatherInputImages } from './providers/image-inputs';
 import { isRetryableProviderError } from './providers/retryable';
+import { assembleLedger } from './run-ledger';
+import type { RunLedger } from './run-ledger';
 import {
   assertRunnable,
   assertStepPosition,
@@ -227,6 +229,7 @@ export class RunsService extends BaseRepository<Run> {
     bypassCache = false,
   ): Promise<StepRunOutput> {
     const step = state.steps[index];
+    const ledger = assembleLedger(state.steps.slice(0, index), doc.variables ?? {});
 
     // Action steps: dispatched to ActionRegistry without key decryption (invariant 7).
     if (isActionStep(step) && step.action) {
@@ -242,6 +245,7 @@ export class RunsService extends BaseRepository<Run> {
         workspaceId: doc.workspaceId,
         priorResults: [],
         brandKit,
+        ledger,
       });
     }
 
@@ -252,7 +256,7 @@ export class RunsService extends BaseRepository<Run> {
 
     // Fan-out step: map the prompt over a run collection (parallel) instead of a
     // single call.
-    if (step.fanOut) return this.executeFanOut(doc, state, index, provider, apiKey);
+    if (step.fanOut) return this.executeFanOut(doc, state, index, provider, apiKey, ledger);
 
     // Resolve the prompt at run time: first variables ({product}/{tone}/{date}…)
     // from the run snapshot, then chaining ({input}/{step:Name}). When a chaining
@@ -308,7 +312,7 @@ export class RunsService extends BaseRepository<Run> {
       }
     }
     const { output, servedBy } = await this.executeWithFallback(
-      provider, stepForRun, apiKey, priorResults, inputImages, doc.workspaceId,
+      provider, stepForRun, apiKey, priorResults, inputImages, doc.workspaceId, ledger,
     );
     // Cache only the PRIMARY's result — a transient fallback must not poison the
     // (provider+model)-keyed cache (cacheKey above was built from the primary).
@@ -346,6 +350,7 @@ export class RunsService extends BaseRepository<Run> {
     index: number,
     provider: Provider,
     apiKey: string,
+    ledger: RunLedger,
   ): Promise<StepRunOutput> {
     const step = state.steps[index];
     const cfg = step.fanOut as { over: string; itemVar?: string };
@@ -362,7 +367,7 @@ export class RunsService extends BaseRepository<Run> {
       // For a fan-out item, {input} is the item itself; {step:Name} still resolves.
       const withInput = filled.split('{input}').join(item);
       const { prompt } = resolveStepRefs(withInput, state.steps, index);
-      return impl.execute({ step: { ...step, prompt }, apiKey, priorResults: [], workspaceId: doc.workspaceId });
+      return impl.execute({ step: { ...step, prompt }, apiKey, priorResults: [], workspaceId: doc.workspaceId, ledger });
     };
 
     const settled = await mapPool(items, FANOUT_CONCURRENCY, (item) =>
@@ -394,11 +399,12 @@ export class RunsService extends BaseRepository<Run> {
     priorResults: PriorStepResult[],
     inputImages: StepInputImage[],
     workspaceId: string,
+    ledger: RunLedger,
   ): Promise<{ output: StepRunOutput; servedBy: Provider }> {
     try {
       const output = await this.registry
         .get(primary)
-        .execute({ step: stepForRun, apiKey, priorResults, inputImages, workspaceId });
+        .execute({ step: stepForRun, apiKey, priorResults, inputImages, workspaceId, ledger });
       return { output, servedBy: primary };
     } catch (primaryErr) {
       if (!isRetryableProviderError(primaryErr)) throw primaryErr;
@@ -412,7 +418,7 @@ export class RunsService extends BaseRepository<Run> {
         try {
           const output = await this.registry
             .get(alt)
-            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages, workspaceId });
+            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages, workspaceId, ledger });
           this.logger.warn(
             `step "${stepForRun.name ?? stepForRun.key ?? ''}": ${primary} failed (${errMessage(primaryErr)}) → served by ${alt}`,
           );

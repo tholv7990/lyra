@@ -1,4 +1,5 @@
 import type { Step, StepKey, EvidenceClaim, SourceRow } from '@lyra/shared';
+import type { RunLedger } from '../run-ledger';
 
 // A prior step's output, fed as context to the current step.
 export interface PriorStepResult {
@@ -24,6 +25,7 @@ export interface StepRunContext {
   priorResults: PriorStepResult[];
   inputImages?: StepInputImage[]; // present only for image steps that reference prior images
   workspaceId: string;
+  ledger: RunLedger;
 }
 
 // A media asset a step produced (pre-persistence). The run service turns these
@@ -45,6 +47,7 @@ export interface StepRunOutput {
   cached?: boolean;
   evidence?: EvidenceClaim[];
   sources?: SourceRow[];
+  data?: Record<string, unknown>;
 }
 
 // The single interface every step runs through. Implementations are registered

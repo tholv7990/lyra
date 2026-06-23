@@ -12,6 +12,7 @@ describe('GeminiImageStepProvider', () => {
     const out = await p.execute({
       step: { prompt: 'a cat', model: 'gemini-2.5-flash-image' } as never,
       apiKey: 'k', priorResults: [], inputImages: [], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     expect(client.generateImage).toHaveBeenCalledWith(
       expect.objectContaining({ apiKey: 'k', model: 'gemini-2.5-flash-image', prompt: 'a cat', inputImages: [] }),
@@ -25,6 +26,7 @@ describe('GeminiImageStepProvider', () => {
     const out = await p.execute({
       step: { prompt: 'add a logo' } as never, apiKey: 'k', priorResults: [],
       inputImages: [{ url: 'u', mime: 'image/png', b64: 'BBB' }], workspaceId: 'ws',
+      ledger: { evidence: [], sources: [], data: {}, variables: {} },
     });
     expect(client.generateImage).toHaveBeenCalledWith(
       expect.objectContaining({ inputImages: [{ url: 'u', mime: 'image/png', b64: 'BBB' }] }),
@@ -34,6 +36,6 @@ describe('GeminiImageStepProvider', () => {
 
   it('throws without an api key', async () => {
     const { p } = make();
-    await expect(p.execute({ step: { prompt: 'x' } as never, apiKey: '', priorResults: [], workspaceId: 'ws' })).rejects.toThrow(/Google key/i);
+    await expect(p.execute({ step: { prompt: 'x' } as never, apiKey: '', priorResults: [], workspaceId: 'ws', ledger: { evidence: [], sources: [], data: {}, variables: {} } })).rejects.toThrow(/Google key/i);
   });
 });
