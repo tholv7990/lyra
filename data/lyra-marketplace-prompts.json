@@ -1,0 +1,128 @@
+[
+  {
+    "title": "Winning Product Teardown",
+    "description": "Score a product for testing: demand, saturation, margin, and the sharpest angle.",
+    "category": "Product Research",
+    "tags": ["research", "validation", "dropshipping"],
+    "content": "Act as a dropshipping product analyst. Evaluate {product} in the {niche} niche for {audience}. Assess: demand signals (search trend, marketplace movers), saturation (how many sellers and ads are already running it), the problem intensity it solves, profit potential at a {price} price point, and the single sharpest angle to differentiate. Ground every claim in a stated source or mark it an assumption. End with a verdict — TEST / VALIDATE / PASS — and one sentence why."
+  },
+  {
+    "title": "Competitor Ad Teardown",
+    "description": "Reverse-engineer a competitor's winning ad and find your wedge.",
+    "category": "Product Research",
+    "tags": ["competitor", "ads", "research"],
+    "content": "Act as a paid-media analyst. Break down the competitor ad(s) for a {product}-style product in {niche}: the hook, the core angle, the offer, the proof they use, and the emotional driver. Then list what's working, what's weak, and 3 ways {product} could enter the same market with a sharper angle. Be specific, not generic."
+  },
+  {
+    "title": "Demand & Saturation Check",
+    "description": "Validate real demand and saturation before spending on a test.",
+    "category": "Product Research",
+    "tags": ["validation", "demand", "research"],
+    "content": "You are a dropshipping validator. For {product} in {niche}, assess whether real demand exists and how saturated it is. Cover: search and marketplace demand signals, how many sellers and ads are already running it, whether interest is rising or fading, and the risk of being late. Mark each finding verified or assumption. Conclude with green / yellow / red on testing it now, and why."
+  },
+  {
+    "title": "Customer Avatar & Pain Map",
+    "description": "Build a concrete buyer avatar and the pains that drive the purchase.",
+    "category": "Customer & Angles",
+    "tags": ["avatar", "audience", "copywriting"],
+    "content": "You are a direct-response strategist. Build the buyer avatar for {product} in {niche} targeting {audience}. Output: who they are, the painful moment that triggers the search, what they've already tried and why it failed, their top 3 objections, and the exact words they'd use to describe the problem (for ad copy). Keep it concrete — no demographics-only fluff."
+  },
+  {
+    "title": "Marketing Angle Generator",
+    "description": "6 distinct angles across different emotional drivers.",
+    "category": "Customer & Angles",
+    "tags": ["angles", "strategy", "positioning"],
+    "content": "Act as a direct-response strategist. Generate 6 distinct marketing angles for {product} in {niche} for {audience}. Span different drivers: problem/solution, identity, status, fear-of-missing-out, aspiration, and contrarian. For each: the angle in one line, who it hits hardest, and the hook it implies. No repeats."
+  },
+  {
+    "title": "Review Mining to Messaging",
+    "description": "Turn real reviews into angles, objections, and customer language.",
+    "category": "Customer & Angles",
+    "tags": ["reviews", "voice-of-customer", "copywriting"],
+    "content": "You are a customer-insight analyst. Given reviews and complaints for {product} or similar {niche} products, extract: the top recurring complaints (with how often), the most-wanted outcomes, the exact phrases customers use, and the objections that block purchase. Turn each into an ad angle or a line of copy. Ground every claim in the reviews — don't invent."
+  },
+  {
+    "title": "10 Scroll-Stopping Hooks",
+    "description": "10 first-3-second hooks across formats, ready to test.",
+    "category": "Ad Copy",
+    "tags": ["hooks", "ugc", "tiktok", "meta"],
+    "content": "Write 10 distinct first-3-second hooks for a UGC ad selling {product} to {audience}. Mix formats: a bold claim, a relatable problem, a question, a 'stop doing X', a result/before-after, and a curiosity gap. Each hook 12 words or fewer, spoken-aloud natural, no hype cliches. Label the format of each."
+  },
+  {
+    "title": "Meta Primary Text (Problem-Solution-Proof)",
+    "description": "3 Meta ad bodies: hook, problem, solution, proof, CTA.",
+    "category": "Ad Copy",
+    "tags": ["meta", "facebook", "copywriting", "ads"],
+    "content": "Write 3 Meta ad primary-text variations for {product} ({niche}, audience: {audience}). Structure each: hook, then problem, then how {product} solves it, then proof or credibility, then a clear CTA. Offer: {offer}. Keep it conversational, scannable, and mobile-first; lead with the customer's pain, not the product."
+  },
+  {
+    "title": "TikTok UGC Script Hooks",
+    "description": "8 organic-feeling TikTok hooks that don't read as ads.",
+    "category": "Ad Copy",
+    "tags": ["tiktok", "ugc", "hooks"],
+    "content": "Write 8 TikTok-native opening lines for a UGC ad selling {product} to {audience}. They should feel like organic content, not an ad: pattern-interrupts, 'POV', 'things I wish I knew', relatable rants, quick demos. Each 10 words or fewer, casual spoken tone. Avoid anything that screams advertisement."
+  },
+  {
+    "title": "Headline & CTA Variations",
+    "description": "10 headlines + 6 CTAs, labeled for A/B testing.",
+    "category": "Ad Copy",
+    "tags": ["headlines", "cta", "testing"],
+    "content": "Write 10 ad headlines and 6 CTAs for {product} ({niche}, {audience}). Headlines: mix benefit-led, curiosity, and problem-aware. CTAs: clear, low-friction, with varied but honest urgency. Use the offer where relevant: {offer}. Label each headline's angle so they're easy to A/B test."
+  },
+  {
+    "title": "UGC Video Ad Script + Shotlist",
+    "description": "A 15-20s UGC script with per-beat spoken lines and visual directions.",
+    "category": "Creative Brief",
+    "tags": ["ugc", "video", "script", "ads"],
+    "content": "Write a 15-20 second UGC ad script for {product} ({niche}, {audience}). Beat structure: visual hook (0-3s), problem (3-8s), product demo and proof (8-15s), CTA with {offer}. For each beat give the spoken line plus a one-line visual direction (what's on screen). Casual, authentic, looks user-filmed — not a commercial."
+  },
+  {
+    "title": "Product Image Creative Brief",
+    "description": "An art-directed brief that feeds your image generator.",
+    "category": "Creative Brief",
+    "tags": ["image", "art-direction", "brief"],
+    "content": "Act as an art director. Write an image-generation brief for a hero shot of {product} in {niche} aimed at {audience}. Specify the scene and context, lighting, camera angle and framing, mood, and what must stay accurate about the product. Output a single tight paragraph an image model can execute — describe the scene as prose, don't list keywords."
+  },
+  {
+    "title": "Ad Concept Board",
+    "description": "3 genuinely different ad concepts to produce and test.",
+    "category": "Creative Brief",
+    "tags": ["concepts", "strategy", "ads"],
+    "content": "You are a creative strategist. Propose 3 distinct ad concepts to test for {product} ({niche}, {audience}). For each: the big idea, the hook, the format (UGC / demo / before-after / founder story), the visual direction, and why it could win. Make the 3 genuinely different bets, not variations of one."
+  },
+  {
+    "title": "Product Page Copy",
+    "description": "Conversion product-page copy: headline, story, benefits, offer, FAQ.",
+    "category": "Store Copy",
+    "tags": ["landing-page", "product-description", "cro"],
+    "content": "Write conversion-focused product page copy for {product} in {niche} for {audience}. Sections: a benefit-led headline, a 60-word story hook, 5 benefit bullets (feature then what it means for them), an offer block for {offer}, and 4 objection-handling FAQ entries. Benefits over specs; honest, no fake scarcity."
+  },
+  {
+    "title": "Offer & Bundle Builder",
+    "description": "3 honest offer structures (single / bundle / value-stack).",
+    "category": "Store Copy",
+    "tags": ["offer", "pricing", "bundle"],
+    "content": "Act as an offer strategist. Design 3 offer options for {product} in {niche}: a single, a bundle, and a value-stacked offer. For each: the structure, the price framing versus {price}, an honest urgency or guarantee element, and the one-line pitch. No fake scarcity or invented discounts."
+  },
+  {
+    "title": "Benefit-Led Hero Headlines",
+    "description": "8 landing hero headlines + subheads, benefit-first.",
+    "category": "Store Copy",
+    "tags": ["landing-page", "headlines", "cro"],
+    "content": "Write 8 landing-page hero headlines for {product} ({niche}, {audience}). Lead with the transformation or benefit, not the product name. Mix emotional and concrete. Pair each headline with a one-line subhead. Keep them tight and scannable."
+  },
+  {
+    "title": "Abandoned Cart Email Sequence",
+    "description": "3-email cart-recovery sequence with subjects and bodies.",
+    "category": "Email & Retention",
+    "tags": ["email", "abandoned-cart", "retention"],
+    "content": "Write a 3-email abandoned-cart recovery sequence for {product} ({niche}, {audience}). Email 1: reminder plus reassurance. Email 2: handle the top objection plus social proof. Email 3: the offer ({offer}) plus honest urgency. For each: subject line, preview text, and a short body. Helpful tone, not pushy."
+  },
+  {
+    "title": "Post-Purchase Nurture Sequence",
+    "description": "3-email post-purchase sequence to cut returns and build LTV.",
+    "category": "Email & Retention",
+    "tags": ["email", "post-purchase", "ltv"],
+    "content": "Write a 3-email post-purchase sequence for {product} ({niche}): email 1 thank-you plus what to expect, email 2 how to get the best result (to reduce returns), email 3 review request plus a relevant cross-sell. Subjects plus short bodies. Build trust and repeat purchase — don't hard-sell."
+  }
+]
