@@ -6,6 +6,7 @@ import { CrawlStepProvider } from './crawl.provider';
 import { ImageStepProvider } from './image.provider';
 import { GeminiImageStepProvider } from './gemini-image.provider';
 import { VideoStepProvider } from './video.provider';
+import { ResearchStepProvider } from './research.provider';
 import type { StepProvider } from './step-provider.interface';
 
 // Provider -> StepProvider implementation. Combined with the step.key -> Provider
@@ -27,6 +28,7 @@ export class ProviderRegistry {
     image: ImageStepProvider,
     geminiImage: GeminiImageStepProvider,
     video: VideoStepProvider,
+    research: ResearchStepProvider,
   ) {
     this.impls = {
       [Provider.Anthropic]: anthropic,
@@ -36,6 +38,7 @@ export class ProviderRegistry {
       [Provider.Image]: image, // real: OpenAI gpt-image-1 (reuses the OpenAI key)
       [Provider.Google]: geminiImage, // real: Gemini gemini-2.5-flash-image (Google key)
       [Provider.Video]: video, // real: Replicate video (workspace 'video' key)
+      [Provider.Research]: research, // real: Tavily search + text LLM (multi-provider)
     };
   }
 

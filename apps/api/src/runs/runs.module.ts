@@ -8,6 +8,7 @@ import { PromptsModule } from '../prompts/prompts.module';
 import { PipelinesModule } from '../pipelines/pipelines.module';
 import { AssetsModule } from '../assets/assets.module';
 import { TasksModule } from '../tasks/tasks.module';
+import { ConnectorsModule } from '../connectors/connectors.module';
 import { Run, RunSchema } from './run.schema';
 import { StepResultCache, StepResultCacheSchema } from './step-cache.schema';
 import { RunsService } from './runs.service';
@@ -27,6 +28,8 @@ import { ProviderRegistry } from './providers/provider.registry';
 import { RenderClient } from './providers/render.client';
 import { BrandActionProvider } from './providers/brand.action';
 import { ActionRegistry } from './providers/action.registry';
+import { TavilyClient } from './providers/tavily.client';
+import { ResearchStepProvider } from './providers/research.provider';
 
 @Module({
   imports: [
@@ -38,6 +41,7 @@ import { ActionRegistry } from './providers/action.registry';
     PipelinesModule, // load a pipeline to run it
     AssetsModule, // persist media a step produces
     TasksModule, // TasksService — validate the task a run belongs to
+    ConnectorsModule, // ConnectorCredentialsService — Tavily key for ResearchStepProvider
     MongooseModule.forFeature([
       { name: Run.name, schema: RunSchema },
       { name: StepResultCache.name, schema: StepResultCacheSchema },
@@ -63,6 +67,9 @@ import { ActionRegistry } from './providers/action.registry';
     RenderClient,
     BrandActionProvider,
     ActionRegistry,
+    // Research step: Tavily search + multi-provider LLM agentic loop.
+    TavilyClient,
+    ResearchStepProvider,
   ],
   exports: [RunsService], // Lyra Copilot reads runs
 })
