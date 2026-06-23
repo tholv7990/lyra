@@ -315,6 +315,19 @@
 .pd-act { margin-left: auto; }
 .pd-act-label { /* hidden on mobile */ }
 
+/* The Tasks|Products toggle shares the section-head row with the tab-action
+   (New task) button. The shared .seg goes `width:100%` on mobile (≤820px), which
+   left no room for the button → horizontal overflow. Scope it back to flex so the
+   toggle fills the available space (full-width when alone on the Products tab) and
+   shrinks to make room for the action button on the Tasks tab. */
+@media (max-width: 820px) {
+  .pd-tasks-section .pd-section-head .seg {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+}
+
 /* ---- Channels ---- */
 /* Empty state: dashed border card with icon + copy + CTA */
 .pd-empty-card {
