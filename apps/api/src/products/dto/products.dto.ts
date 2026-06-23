@@ -2,8 +2,8 @@ import {
   IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, MinLength, ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ProductStatus } from '@lyra/shared';
-import type { CreateProductDto, UpdateProductDto, SelectProductDto, ProductSource, ProductEconInputs } from '@lyra/shared';
+import { ProductStatus, Provider } from '@lyra/shared';
+import type { CreateProductDto, UpdateProductDto, SelectProductDto, ProductSource, ProductEconInputs, SaveProductResultDto } from '@lyra/shared';
 
 class ProductSourceBody implements ProductSource {
   @IsOptional() @IsString() @MaxLength(60) platform?: string;
@@ -53,4 +53,14 @@ export class UpdateProductBody implements UpdateProductDto {
 
 export class SelectProductBody implements SelectProductDto {
   @IsString() @IsNotEmpty() poolProductId!: string;
+}
+
+export class SaveProductResultBody implements SaveProductResultDto {
+  @IsString() @IsNotEmpty() output!: string;
+  @IsEnum(Provider) provider!: Provider;
+  @IsString() @IsNotEmpty() model!: string;
+  @IsOptional() @IsString() assetUrl?: string;
+  @IsOptional() @IsString() assetType?: 'image' | 'video' | 'audio';
+  @IsOptional() @IsString() runId?: string;
+  @IsOptional() @IsNumber() stepIndex?: number;
 }

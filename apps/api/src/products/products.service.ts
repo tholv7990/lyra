@@ -1,14 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   ProductStatus,
   type CreateProductDto, type UpdateProductDto, type Product as ProductView,
   type EvidenceClaim, type SourceRow, type UnitEcon, type SubScores, type ConfidenceGrade, type Decision,
+  type SaveProductResultDto,
 } from '@lyra/shared';
 import { Product, ProductDocument } from './product.schema';
 import { UsersService } from '../users/users.service';
-import { toProductView } from './product.views';
+import { toProductView, productActorIds } from './product.views';
 
 const MAX_NAME = 160;
 const MAX_DESC = 4000;
@@ -151,6 +152,34 @@ export class ProductsService {
     return this.toView(doc);
   }
 
+  // ===== Saved results (branding / run outputs) =====
+
+  async addResult(productId: string, workspaceId: string, userId: string, dto: SaveProductResultDto): Promise<ProductView> {
+    const doc = await this.model.findOne({ _id: productId, workspaceId, active: { $ne: false } }).exec();
+    if (!doc) throw new NotFoundException('Product not found.');
+    doc.results.push({
+      output: dto.output, provider: dto.provider, model: dto.model,
+      assetUrl: dto.assetUrl, assetType: dto.assetType, runId: dto.runId, stepIndex: dto.stepIndex,
+      createdBy: userId, savedAt: new Date(),
+    } as never);
+    doc.updatedBy = userId;
+    await doc.save();
+    return this.toView(doc);
+  }
+
+  async removeResult(productId: string, workspaceId: string, userId: string, resultId: string): Promise<ProductView> {
+    const doc = await this.model.findOne({ _id: productId, workspaceId, active: { $ne: false } }).exec();
+    if (!doc) throw new NotFoundException('Product not found.');
+    const results = doc.results as unknown as Array<{ _id: { toString(): string }; createdBy: string }>;
+    const idx = results.findIndex((r) => r._id.toString() === resultId);
+    if (idx === -1) throw new NotFoundException('Result not found.');
+    if (results[idx].createdBy !== userId && doc.createdBy !== userId) throw new ForbiddenException('Cannot remove this result.');
+    doc.results.splice(idx, 1);
+    doc.updatedBy = userId;
+    await doc.save();
+    return this.toView(doc);
+  }
+
   async remove(id: string, workspaceId: string, actorId: string): Promise<void> {
     await this.model
       .findOneAndUpdate({ _id: id, workspaceId, active: { $ne: false } }, { $set: { active: false, updatedBy: actorId } })
@@ -158,12 +187,12 @@ export class ProductsService {
   }
 
   private async toView(doc: ProductDocument): Promise<ProductView> {
-    const refs = await this.users.refMap([doc.createdBy, doc.updatedBy]);
+    const refs = await this.users.refMap(productActorIds(doc));
     return toProductView(doc, refs);
   }
 
   private async toViews(docs: ProductDocument[]): Promise<ProductView[]> {
-    const refs = await this.users.refMap(docs.flatMap((d) => [d.createdBy, d.updatedBy]));
+    const refs = await this.users.refMap(docs.flatMap(productActorIds));
     return docs.map((d) => toProductView(d, refs));
   }
 }

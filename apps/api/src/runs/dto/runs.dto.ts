@@ -45,4 +45,9 @@ export class RunPipelineBody implements RunPipelineDto {
   @IsOptional()
   @IsObject()
   collections?: Record<string, string[]>;
+
+  // A project-scoped product copy to source branding variables from.
+  @IsOptional()
+  @IsString()
+  productId?: string;
 }

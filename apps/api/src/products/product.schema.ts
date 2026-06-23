@@ -9,6 +9,25 @@ import { AuditedEntity } from '../common/database/audited.entity';
 
 export type ProductDocument = HydratedDocument<Product>;
 
+// A saved AI result kept under a product (branding run output, image, etc.).
+// Keeps its own _id so individual results can be removed. `createdBy` records
+// who saved it; asset fields are optional (text outputs have none).
+@Schema({ _id: true })
+export class ProductResultItem {
+  @Prop({ required: true }) output!: string;
+  @Prop({ required: true }) provider!: string;
+  @Prop({ required: true }) model!: string;
+  @Prop() assetUrl?: string;
+  @Prop() assetType?: string;
+  @Prop() runId?: string;
+  @Prop() stepIndex?: number;
+  @Prop() rating?: number;
+  @Prop() note?: string;
+  @Prop({ required: true }) createdBy!: string;
+  @Prop({ type: Date, default: Date.now }) savedAt!: Date;
+}
+const ProductResultItemSchema = SchemaFactory.createForClass(ProductResultItem);
+
 // A durable researched opportunity, owned by ONE project (peer of Task). Holds the
 // evidence ledger + economics + score/grade/decision the research pipeline writes,
 // plus a manual lifecycle status and first-party outcome note.
@@ -96,6 +115,10 @@ export class Product extends AuditedEntity {
 
   @Prop({ type: [String], default: [] })
   tags!: string[];
+
+  // Saved AI results (branding outputs, images, etc.).
+  @Prop({ type: [ProductResultItemSchema], default: [] })
+  results!: ProductResultItem[];
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

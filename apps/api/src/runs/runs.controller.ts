@@ -73,24 +73,37 @@ export class RunsController {
 
   // Build the run-creation input for a pipeline in a project's context — shared by
   // the single-pipeline run and the "run all pipelines" composition endpoint.
+  // When `copy` is provided (a project-scoped product copy), its fields are merged
+  // into `projectVariables` to seed the branding pipeline.
   private projectRunInput(
     project: ProjectDocument,
     task: TaskDocument,
     pipeline: PipelineDocument,
     body: RunPipelineBody,
+    copy?: Product,
   ): PipelineRunInput {
+    const projectVariables: Record<string, string> = Object.fromEntries(
+      (project.variables ?? []).map((v) => [v.key, v.value]),
+    );
+    let collections = body.collections;
+    if (copy) {
+      projectVariables['product'] = copy.name;
+      if (copy.niche) projectVariables['niche'] = copy.niche;
+      if (copy.price != null) projectVariables['price'] = String(copy.price);
+      if (copy.offer) projectVariables['offer'] = copy.offer;
+      collections = { ...(body.collections ?? {}), productImages: copy.images ?? [] };
+    }
     return {
+      ...(copy ? { productId: copy.id } : {}),
       projectId: project._id.toString(),
       taskId: task._id.toString(),
       workspaceId: project.workspaceId,
       pipelineId: pipeline._id.toString(),
       pipelineName: pipeline.name,
-      projectVariables: Object.fromEntries(
-        (project.variables ?? []).map((v) => [v.key, v.value]),
-      ),
+      projectVariables,
       note: pipeline.description ?? '',
       variables: mergeCustomVars(pipeline.variables, body.variables),
-      collections: body.collections,
+      collections,
       steps: pipeline.steps.map((s) => ({
         name: s.name,
         promptId: s.promptId,
@@ -165,8 +178,15 @@ export class RunsController {
     if (!pipeline || pipeline.workspaceId !== project.workspaceId) {
       throw new NotFoundException('Pipeline not found');
     }
+    let copy: Product | undefined;
+    if (body.productId) {
+      copy = await this.products.get(body.productId, project.workspaceId);
+      if (copy.projectId !== project._id.toString()) {
+        throw new NotFoundException('Product not on this project');
+      }
+    }
     const run = await this.runs.createForPipeline(
-      this.projectRunInput(project, task, pipeline, body),
+      this.projectRunInput(project, task, pipeline, body, copy),
       user.id,
     );
     return this.runs.toView(run);
