@@ -28,6 +28,6 @@ import { PipelineAccessGuard } from './guards/pipeline-access.guard';
   ],
   controllers: [PipelinesController],
   providers: [PipelinesService, PipelineAiService, ResearchTemplateService, PipelineAccessGuard, AnthropicClient],
-  exports: [PipelinesService],
+  exports: [PipelinesService, ResearchTemplateService],
 })
 export class PipelinesModule {}

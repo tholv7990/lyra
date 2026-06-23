@@ -65,6 +65,7 @@ import {
 export interface PipelineRunInput {
   projectId?: string;
   taskId?: string;
+  productId?: string;
   workspaceId: string;
   pipelineId: string;
   pipelineName: string;
@@ -155,6 +156,7 @@ export class RunsService extends BaseRepository<Run> {
     return this.create({
       projectId: input.projectId,
       taskId: input.taskId,
+      productId: input.productId,
       workspaceId: input.workspaceId,
       pipelineId: input.pipelineId,
       pipelineName: input.pipelineName,
@@ -177,6 +179,10 @@ export class RunsService extends BaseRepository<Run> {
   // project run history.
   listForProject(projectId: string) {
     return this.find({ projectId }, { sort: { createdAt: -1 } });
+  }
+
+  listForProduct(productId: string) {
+    return this.find({ productId, active: { $ne: false } }, { sort: { createdAt: -1 } });
   }
 
   async toView(doc: RunDocument): Promise<RunModel> {

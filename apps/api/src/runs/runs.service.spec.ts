@@ -81,6 +81,13 @@ function doc(steps: { status: string }[], rating?: unknown): RunDocument {
 }
 
 describe('RunsService.createForPipeline', () => {
+  it('createForPipeline carries productId onto the run', async () => {
+    const ModelMock = jest.fn().mockImplementation((d) => ({ ...d, save: jest.fn().mockResolvedValue(d) }));
+    const svc = makeService({ model: ModelMock, prompts: { findActiveById: jest.fn().mockResolvedValue({ content: 'x' }) } });
+    const run = (await svc.createForPipeline({ workspaceId: 'w', productId: 'p1', pipelineId: 'pl', pipelineName: 'P', projectVariables: { niche: 'pets' }, steps: [] } as any, 'u')) as any;
+    expect(run.productId).toBe('p1');
+  });
+
   it('skips the prompt lookup for action steps (empty promptId) and carries kind/action into the run', async () => {
     const findActiveById = jest.fn().mockResolvedValue({ content: 'PROMPT BODY' });
     // BaseRepository.create does `new this.model(doc).save()`.

@@ -15,18 +15,20 @@ import type { Response } from 'express';
 import { Readable } from 'node:stream';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import { ZipArchive } from 'archiver';
-import type { ActionStep, Asset as AssetModel, Run as RunModel, StepCondition, User } from '@lyra/shared';
+import type { ActionStep, Asset as AssetModel, Product, Run as RunModel, StepCondition, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { CurrentProject } from '../projects/decorators/project.decorators';
 import type { ProjectDocument } from '../projects/project.schema';
 import { PipelinesService } from '../pipelines/pipelines.service';
 import type { PipelineDocument } from '../pipelines/pipeline.schema';
+import { ResearchTemplateService } from '../pipelines/research-template.service';
 import { TasksService } from '../tasks/tasks.service';
 import type { TaskDocument } from '../tasks/task.schema';
 import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { AssetsService } from '../assets/assets.service';
+import { ProductsService } from '../products/products.service';
 import { RunsService } from './runs.service';
 import type { PipelineRunInput } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
@@ -55,6 +57,8 @@ export class RunsController {
     private readonly pipelines: PipelinesService,
     private readonly assets: AssetsService,
     private readonly tasks: TasksService,
+    private readonly products: ProductsService,
+    private readonly research: ResearchTemplateService,
   ) {}
 
   // Load the task on this project, or 404. Ensures the :taskId belongs to the
@@ -85,6 +89,46 @@ export class RunsController {
         (project.variables ?? []).map((v) => [v.key, v.value]),
       ),
       note: pipeline.description ?? '',
+      variables: mergeCustomVars(pipeline.variables, body.variables),
+      collections: body.collections,
+      steps: pipeline.steps.map((s) => ({
+        name: s.name,
+        promptId: s.promptId,
+        provider: s.provider,
+        model: s.model,
+        mode: s.mode,
+        fanOut: s.fanOut,
+        condition: s.condition as StepCondition | undefined,
+        kind: s.kind as any,
+        action: s.action as ActionStep | undefined,
+      })),
+    };
+  }
+
+  // Build the run-creation input for a product research run — sources variable
+  // values from the product's fields and econInputs.
+  private productRunInput(
+    ws: string,
+    productId: string,
+    product: Product,
+    pipeline: PipelineDocument,
+    body: RunPipelineBody,
+  ): PipelineRunInput {
+    const e = product.econInputs ?? ({} as NonNullable<Product['econInputs']>);
+    const raw: Record<string, string> = {
+      niche: product.niche ?? '',
+      product: product.name ?? '',
+      // aov: use the product's listed price as the selling-price proxy
+      aov: product.price != null ? String(product.price) : (e.targetPrice != null ? String(e.targetPrice) : ''),
+      desiredPostAdCmPct: e.desiredPostAdCmPct != null ? String(e.desiredPostAdCmPct) : '',
+    };
+    return {
+      productId,
+      workspaceId: ws,
+      pipelineId: pipeline._id.toString(),
+      pipelineName: pipeline.name,
+      projectVariables: Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== '')),
+      note: product.name ?? pipeline.description ?? '',
       variables: mergeCustomVars(pipeline.variables, body.variables),
       collections: body.collections,
       steps: pipeline.steps.map((s) => ({
@@ -194,6 +238,27 @@ export class RunsController {
       user.id,
     );
     return this.runs.toView(run);
+  }
+
+  @Post('workspaces/:id/products/:productId/runs')
+  @UseGuards(WorkspaceGuard)
+  @RequireCreate()
+  async createProductRun(
+    @Param('id') ws: string,
+    @Param('productId') productId: string,
+    @Body() body: RunPipelineBody,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    const product = await this.products.get(productId);
+    const pipeline = await this.research.seedDoc(ws, user.id);
+    const run = await this.runs.createForPipeline(this.productRunInput(ws, productId, product, pipeline, body), user.id);
+    return this.runs.toView(run);
+  }
+
+  @Get('workspaces/:id/products/:productId/runs')
+  @UseGuards(WorkspaceGuard)
+  async listProductRuns(@Param('id') ws: string, @Param('productId') productId: string): Promise<RunModel[]> {
+    return this.runs.toViews(await this.runs.listForProduct(productId));
   }
 
   @Get('projects/:id/tasks/:taskId/runs')

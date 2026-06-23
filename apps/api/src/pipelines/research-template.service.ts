@@ -8,6 +8,7 @@ import {
   type Pipeline as PipelineView,
 } from '@lyra/shared';
 import { PipelinesService } from './pipelines.service';
+import type { PipelineDocument } from './pipeline.schema';
 import { PromptsService } from '../prompts/prompts.service';
 
 const TEMPLATE_NAME = 'Product research';
@@ -101,5 +102,14 @@ export class ResearchTemplateService {
     } as never);
 
     return this.pipelines.toView(created);
+  }
+
+  async seedDoc(workspaceId: string, actorId: string): Promise<PipelineDocument> {
+    await this.seed(workspaceId, actorId); // ensure it exists (idempotent)
+    const existing = (await this.pipelines.listForWorkspace(workspaceId)).find(
+      (p) => (p as unknown as { origin?: { source?: string } }).origin?.source === 'research-template',
+    );
+    if (!existing) throw new Error('research template missing after seed');
+    return existing;
   }
 }

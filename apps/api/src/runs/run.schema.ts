@@ -102,6 +102,9 @@ export class Run extends AuditedEntity {
   @Prop({ index: true })
   taskId?: string;
 
+  @Prop({ index: true })
+  productId?: string;
+
   @Prop({ required: true, index: true })
   workspaceId!: string;
 
