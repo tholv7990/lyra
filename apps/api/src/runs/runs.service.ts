@@ -308,7 +308,7 @@ export class RunsService extends BaseRepository<Run> {
     const cacheable = providerNeedsKey(provider);
     const context =
       (used ? '' : priorResults.map((r) => r.result).join(' ')) +
-      (inputImages.length ? ' img:' + inputImages.map((i) => i.url).join(',') : '');
+      (inputImages.length ? ' img:' + inputImages.map((i) => i.url).join(',') : '');
     const cacheKey = cacheable
       ? stepCacheKey({ workspaceId: doc.workspaceId, provider, model: stepForRun.model, prompt, context })
       : '';
