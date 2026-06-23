@@ -15,6 +15,7 @@ export default {
   noTags: 'No pipeline tags',
   createdBy: 'Created by',
   newPipeline: 'New pipeline',
+  createResearchPipeline: 'Create research pipeline',
   open: 'Open',
   next: 'Next',
   duplicateNamed: 'Duplicate {{name}}',

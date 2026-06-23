@@ -15,6 +15,7 @@ export default {
   noTags: 'Chưa có thẻ pipeline',
   createdBy: 'Người tạo',
   newPipeline: 'Pipeline mới',
+  createResearchPipeline: 'Tạo pipeline nghiên cứu',
   open: 'Mở',
   next: 'Sau',
   duplicateNamed: 'Nhân bản {{name}}',

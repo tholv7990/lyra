@@ -73,6 +73,7 @@ export function Pipelines() {
   const [deleting, setDeleting] = useState(false);
   const [toDuplicate, setToDuplicate] = useState<Pipeline | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  const [seedingResearch, setSeedingResearch] = useState(false);
 
   const wsId = current?.id;
   const tagVocab = useMemo(() => pipelineTagVocab(pipelines), [pipelines]);
@@ -117,6 +118,18 @@ export function Pipelines() {
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
   const canEdit = (p: Pipeline) => !!user && (p.createdBy.id === user.id || current?.role === 'owner');
+
+  async function seedResearch() {
+    if (!wsId) return;
+    setSeedingResearch(true);
+    try {
+      const pl = await api<Pipeline>(`/workspaces/${wsId}/pipelines/seed-research`, { method: 'POST' });
+      navigate(`/pipelines/${pl.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('pipelines.createError'));
+      setSeedingResearch(false);
+    }
+  }
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -232,10 +245,15 @@ export function Pipelines() {
               )}
         </FilterPopover>
         {mayCreate && (
-          <button className="btn-primary btn-inline btn-lg pl-new" onClick={() => navigate('/pipelines/new')}>
-            <PlusIcon width={15} height={15} />
-            {t('pipelines.newPipeline')}
-          </button>
+          <>
+            <button className="btn-ghost btn-inline pl-new" disabled={seedingResearch} onClick={() => void seedResearch()}>
+              {t('pipelines.createResearchPipeline')}
+            </button>
+            <button className="btn-primary btn-inline btn-lg pl-new" onClick={() => navigate('/pipelines/new')}>
+              <PlusIcon width={15} height={15} />
+              {t('pipelines.newPipeline')}
+            </button>
+          </>
         )}
       </div>
 
