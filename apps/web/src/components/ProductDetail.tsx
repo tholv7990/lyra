@@ -193,12 +193,12 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
 
   // Explainability: per-factor breakdown + the reason the decision landed where it did.
   const factorRows = product.subScores
-    ? (Object.keys(WEIGHTS) as ScoreKey[]).map((k) => ({
-        key: k,
-        sub: Math.max(0, Math.min(5, product.subScores![k] ?? 0)),
-        weight: WEIGHTS[k],
-        contribution: Math.round(WEIGHTS[k] * ((product.subScores![k] ?? 0) / 5) * 10) / 10,
-      }))
+    ? (Object.keys(WEIGHTS) as ScoreKey[]).map((k) => {
+        // Clamp once, then derive both points and bar width from the clamped value —
+        // matches weightedScore so a malformed sub-score can't print >weight or a >100% bar.
+        const sub = Math.max(0, Math.min(5, product.subScores![k] ?? 0));
+        return { key: k, sub, weight: WEIGHTS[k], contribution: Math.round(WEIGHTS[k] * (sub / 5) * 10) / 10 };
+      })
     : [];
   const decisionReason =
     product.score !== undefined && product.hardGates
@@ -536,7 +536,7 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
         {product.unitEcon && (
           <section className="pdtl-section">
             <h3 className="pdtl-section-label">{t('projects.unitEconTitle')}</h3>
-            {product.unitEconInputs && (
+            {product.unitEconInputs && typeof product.unitEconInputs.aov === 'number' && (
               <div className="pdtl-econ-formula">
                 <span className="pdtl-econ-formula-label">{t('projects.econFormula')}</span>
                 <p className="pdtl-econ-inputs">
