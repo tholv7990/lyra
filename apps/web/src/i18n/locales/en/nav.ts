@@ -18,4 +18,5 @@ export default {
   connections: 'Connections',
   members: 'Members',
   admin: 'Admin',
+  products: 'Products',
 } as const;

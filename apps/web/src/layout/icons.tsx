@@ -149,6 +149,14 @@ export const CopyIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Box / package — the workspace Products section.
+export const ProductsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...s(p)} className="icon" {...stroke}>
+    <path d="M2 5l6-3 6 3v6l-6 3-6-3V5z" />
+    <path d="M8 2v12M2 5l6 3 6-3" />
+  </svg>
+);
+
 // Two 4-point sparkles — the "AI" affordance.
 export const SparkleIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon">

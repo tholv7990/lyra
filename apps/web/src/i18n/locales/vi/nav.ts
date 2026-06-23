@@ -18,4 +18,5 @@ export default {
   connections: 'Kết nối',
   members: 'Thành viên',
   admin: 'Quản trị',
+  products: 'Sản phẩm',
 } as const;

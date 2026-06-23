@@ -1,0 +1,47 @@
+/* ── Products page ─────────────────────────────────────────────────────────── */
+
+.products-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Add-product modal overrides ─────────────────────────────────────────── */
+
+.add-product-modal {
+  width: min(480px, 94vw);
+  max-height: min(90vh, 680px);
+  overflow-y: auto;
+}
+
+/* Two-column field row */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.field-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.field-hint {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  margin-top: var(--space-1);
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .products-page {
+    padding: var(--space-3) var(--space-3);
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}

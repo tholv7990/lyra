@@ -33,6 +33,7 @@ import { TaskDetail } from './pages/TaskDetail';
 import { TaskEditor } from './pages/TaskEditor';
 import { Components } from './pages/Components';
 import { Monitor } from './pages/Monitor';
+import { Products } from './pages/Products';
 import { AppLayout } from './layout/AppLayout';
 
 function Loading() {
@@ -102,6 +103,7 @@ const router = createBrowserRouter([
       { path: 'import', element: <ImportMedia /> },
       { path: 'connections', element: <Connections /> },
       { path: 'monitor', element: <Monitor /> },
+      { path: 'products', element: <Products /> },
       { path: 'members', element: <Members /> },
       { path: 'settings', element: <Settings /> },
       { path: 'admin', element: <Admin /> },

@@ -15,6 +15,7 @@ import { BreadcrumbContext, AppNavContext, type BreadcrumbState } from './breadc
 import {
   HomeIcon,
   ProjectsIcon,
+  ProductsIcon,
   PromptsIcon,
   MarketplaceIcon,
   SparkleIcon,
@@ -38,6 +39,7 @@ const MODULES = [
   { path: '/marketplace', name: 'Marketplace' },
   { path: '/pipelines', name: 'Pipelines' },
   { path: '/projects', name: 'Projects' },
+  { path: '/products', name: 'Products' },
   { path: '/publish', name: 'Publish' },
   { path: '/import', name: 'Import media' },
   { path: '/connections', name: 'Connections' },
@@ -94,6 +96,7 @@ export function AppLayout() {
     '/import': 'nav.import',
     '/connections': 'nav.connections',
     '/monitor': 'monitor.title',
+    '/products': 'nav.products',
     '/components': 'nav.components',
     '/members': 'nav.members',
     '/settings': 'nav.settings',
@@ -158,6 +161,10 @@ export function AppLayout() {
             <NavLink to="/projects" title={t('nav.projects')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
               <ProjectsIcon />
               <span className="nav-txt">{t('nav.projects')}</span>
+            </NavLink>
+            <NavLink to="/products" title={t('nav.products')} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ProductsIcon />
+              <span className="nav-txt">{t('nav.products')}</span>
             </NavLink>
 
             {/* Publishing group: the core outbound flow — connect channels, then post. */}

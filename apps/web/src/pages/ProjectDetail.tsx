@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { canEditProject, type Channel, type Product, type Project, type PublishedPost } from '@lyra/shared';
+import { canEditProject, type Channel, type Project, type PublishedPost } from '@lyra/shared';
 import { api } from '../lib/api';
 import { channelsApi } from '../lib/channels';
 import { postsApi } from '../lib/posts';
-import { productsApi } from '../lib/products';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
 import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TaskList } from '../components/TaskList';
-import { ProductBoard } from '../components/ProductBoard';
-import { ProductDetail } from '../components/ProductDetail';
 import { StatusPill } from '../components/StatusPill';
 import { useLabels } from '../lib/useLabels';
 import { PencilIcon, PlusIcon, PublishIcon } from '../layout/icons';
@@ -36,9 +33,6 @@ export function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addTick, setAddTick] = useState(0); // header "New task" → open New column composer
-  const [tab, setTab] = useState<'tasks' | 'products'>('tasks');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useBreadcrumb(project?.name ?? null);
 
@@ -68,12 +62,6 @@ export function ProjectDetail() {
     if (!id) return;
     postsApi.list(id).then(setPosts).catch(() => setPosts([]));
   }, [id]);
-
-  // Lazily load products when the Products tab is first activated.
-  useEffect(() => {
-    if (tab !== 'products' || !id) return;
-    productsApi.list(id).then(setProducts).catch(() => setProducts([]));
-  }, [tab, id]);
 
   const canEdit = useMemo(
     () =>
@@ -247,33 +235,11 @@ export function ProjectDetail() {
           )}
         </section>
 
-        {/* Tasks / Products — segmented toggle + board */}
+        {/* Tasks */}
         <section className="pd-section pd-tasks-section">
           <div className="pd-section-head">
-            {/* Segmented tab toggle */}
-            <div className="seg" role="group" aria-label={t('projects.tabsAria')}>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={tab === 'tasks'}
-                className={`seg-btn${tab === 'tasks' ? ' active' : ''}`}
-                onClick={() => setTab('tasks')}
-              >
-                {t('projects.tabTasks')}
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={tab === 'products'}
-                className={`seg-btn${tab === 'products' ? ' active' : ''}`}
-                onClick={() => setTab('products')}
-              >
-                {t('projects.tabProducts')}
-              </button>
-            </div>
-
-            {/* Tab-contextual actions */}
-            {tab === 'tasks' && canEdit && (
+            <span className="pd-section-label">{t('projects.tabTasks')}</span>
+            {canEdit && (
               <button
                 type="button"
                 className="btn-ghost btn-inline btn-sm pd-act"
@@ -285,33 +251,13 @@ export function ProjectDetail() {
               </button>
             )}
           </div>
-
-          {tab === 'tasks' ? (
-            <TaskList
-              projectId={project.id}
-              projectName={project.name}
-              canEdit={canEdit}
-              labels={labels}
-              openAddTick={addTick}
-            />
-          ) : (
-            <ProductBoard
-              products={products}
-              onOpen={(p) => setSelectedProduct(p)}
-            />
-          )}
-
-          {selectedProduct && (
-            <ProductDetail
-              product={selectedProduct}
-              onClose={() => setSelectedProduct(null)}
-              onUpdate={async (patch) => {
-                const updated = await productsApi.update(id!, selectedProduct.id, patch);
-                setSelectedProduct(updated);
-                setProducts(await productsApi.list(id!));
-              }}
-            />
-          )}
+          <TaskList
+            projectId={project.id}
+            projectName={project.name}
+            canEdit={canEdit}
+            labels={labels}
+            openAddTick={addTick}
+          />
         </section>
 
       </div>

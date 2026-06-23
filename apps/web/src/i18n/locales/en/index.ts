@@ -17,5 +17,6 @@ import members from './members';
 import landing from './landing';
 import tasks from './tasks';
 import monitor from './monitor';
+import products from './products';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing, tasks, monitor };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing, tasks, monitor, products };
