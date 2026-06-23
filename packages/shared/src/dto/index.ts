@@ -1,5 +1,5 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind } from '../enums';
-import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition, ActionStep, ProjectBrandKit } from '../models';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind, ProductStatus } from '../enums';
+import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition, ActionStep, ProjectBrandKit, ProductSource, ProductEconInputs } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
 // The api implements each as a class-validator class that `implements`
@@ -421,3 +421,28 @@ export interface TransferPreview {
 }
 
 export interface DiscoverDto { keywords: string[] }
+
+export interface CreateProductDto {
+  name: string;
+  description?: string;
+  source?: ProductSource;
+  niche?: string;
+  category?: string;
+  status?: ProductStatus;
+  econInputs?: ProductEconInputs;
+  competitorIds?: string[];
+  outcome?: string;
+  tags?: string[];
+}
+export interface UpdateProductDto {
+  name?: string;
+  description?: string;
+  source?: ProductSource;
+  niche?: string;
+  category?: string;
+  status?: ProductStatus;
+  econInputs?: ProductEconInputs;
+  competitorIds?: string[];
+  outcome?: string;
+  tags?: string[];
+}

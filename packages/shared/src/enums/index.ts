@@ -141,3 +141,13 @@ export enum MonitorPlatform { Meta = 'meta' }
 export enum CompetitorStatus { Candidate = 'candidate', Watching = 'watching', Archived = 'archived' }
 export enum AdStatus { Active = 'active', Stopped = 'stopped' }
 export enum AdEventType { New = 'new', Stopped = 'stopped' }
+
+// Product lifecycle (manual board state, like TaskStatus — no metric auto-advances it).
+export enum ProductStatus {
+  Candidate = 'candidate',
+  Validating = 'validating',
+  Testing = 'testing',
+  Scaling = 'scaling',
+  Declining = 'declining',
+  Killed = 'killed',
+}

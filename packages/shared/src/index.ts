@@ -4,5 +4,6 @@ export * from './constants/steps';
 export * from './constants/tags';
 export * from './constants/media';
 export * from './constants/models';
+export * from './constants/research';
 export * from './utils';
 export * from './dto';

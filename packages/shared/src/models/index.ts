@@ -23,7 +23,9 @@ import {
   CompetitorStatus,
   AdStatus,
   AdEventType,
+  ProductStatus,
 } from '../enums';
+import type { SubScores } from '../constants/research';
 
 // A populated actor reference — what createdBy/updatedBy expand to in responses.
 export interface UserRef {
@@ -664,3 +666,101 @@ export interface AdEvent {
 }
 export interface MonitorStats { newToday: number; stoppedToday: number; watching: number }
 export interface CompetitorChangelog { competitorId: string; brand: string; newAds: MonitorAd[]; ongoing: MonitorAd[]; stopped: MonitorAd[] }
+
+// ── Product research: evidence ledger (spec §1B) ───────────────────────────
+export type ConfidenceKind = 'verified' | 'calculated' | 'estimate' | 'assumption';
+
+export interface EvidenceClaim {
+  id: string;
+  statement: string;
+  value?: number | string;
+  kind: ConfidenceKind;
+  sourceId: string;
+  geography?: string;
+  period?: string;
+  demandSignal?: boolean;
+  purchaseData?: boolean;     // direct sales signal (Amazon Movers, TikTok Shop) → grade A
+}
+
+export interface SourceRow {
+  id: string;
+  name: string;
+  url: string;
+  accessDate: string;
+  geography?: string;
+  metric?: string;
+  primary: boolean;
+  reliabilityNote?: string;
+  alive: boolean;
+}
+
+// ── Unit economics (spec §1D) ──────────────────────────────────────────────
+export interface UnitEconInputs {
+  aov: number;
+  landedCost: number;
+  paymentFeePct: number;
+  fulfillment: number;
+  shippingSubsidy: number;
+  expectedReturnLossPct: number;
+  warrantyReservePct: number;
+  desiredPostAdCmPct: number;
+}
+export interface UnitEcon {
+  cm1: number;
+  cm1Pct: number;
+  breakEvenRoas: number;
+  maxCac: number;
+  targetRoas: number;
+}
+
+// ── Scoring / grading / decision (spec §1E) ────────────────────────────────
+export type ConfidenceGrade = 'A' | 'B' | 'C' | 'D';
+export interface HardGates {
+  unresolvedSafety: boolean;
+  materialIpRisk: boolean;
+  negativeUnitEcon: boolean;
+  cpaExceedsMaxCac: boolean;
+  singleSourceDemand: boolean;
+  misleadingClaimsRequired: boolean;
+}
+export type Decision = 'TEST_NOW' | 'RESOLVE_GAPS' | 'LOW_COST_VALIDATION' | 'PARK' | 'REJECT';
+
+// ── Product (project-owned durable opportunity; spec §4) ───────────────────
+export interface ProductEconInputs {
+  targetPrice?: number;
+  testingBudget?: number;
+  inventoryBudget?: number;
+  minPreAdCmPct?: number;
+  desiredPostAdCmPct?: number;
+}
+export interface ProductSource {
+  platform?: string;
+  url?: string;
+}
+export interface Product {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  name: string;
+  description: string;
+  source?: ProductSource;
+  niche?: string;
+  category?: string;
+  status: ProductStatus;
+  evidence: EvidenceClaim[];
+  sources: SourceRow[];
+  unitEcon?: UnitEcon;
+  subScores?: SubScores;
+  score?: number;
+  grade?: ConfidenceGrade;
+  decision?: Decision;
+  econInputs?: ProductEconInputs;
+  competitorIds: string[];
+  outcome?: string;
+  tags: string[];
+  active: boolean;
+  createdBy: UserRef;
+  updatedBy: UserRef;
+  createdAt: string;
+  updatedAt: string;
+}
