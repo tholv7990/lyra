@@ -246,11 +246,13 @@ export function Products() {
 
       <ProductBoard products={products} onOpen={setSelected} />
 
-      {selected && (
+      {selected && ws && (
         <ProductDetail
           product={selected}
+          workspaceId={ws}
           onClose={() => setSelected(null)}
           onUpdate={handleUpdate}
+          onProductRefresh={refresh}
         />
       )}
 

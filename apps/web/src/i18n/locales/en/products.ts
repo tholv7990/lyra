@@ -16,4 +16,7 @@ export default {
   fieldImages: 'Image URLs',
   fieldImagesPlaceholder: 'One URL per line or comma-separated',
   fieldImagesHint: 'Separate multiple URLs with a newline or comma.',
+  runResearch: 'Run research',
+  running: 'Researching…',
+  runError: 'Could not start research run',
 } as const;

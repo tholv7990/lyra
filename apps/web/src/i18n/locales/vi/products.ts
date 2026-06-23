@@ -16,4 +16,7 @@ export default {
   fieldImages: 'URL hình ảnh',
   fieldImagesPlaceholder: 'Mỗi dòng một URL hoặc phân cách bằng dấu phẩy',
   fieldImagesHint: 'Phân cách nhiều URL bằng dòng mới hoặc dấu phẩy.',
+  runResearch: 'Chạy nghiên cứu',
+  running: 'Đang nghiên cứu…',
+  runError: 'Không thể bắt đầu chạy nghiên cứu',
 } as const;

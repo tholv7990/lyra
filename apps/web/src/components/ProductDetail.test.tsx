@@ -28,7 +28,7 @@ const product = {
 describe('ProductDetail', () => {
   it('renders the evidence ledger: claims, sources, unit-econ, score/grade/decision', () => {
     const html = renderToStaticMarkup(
-      <ProductDetailBody product={product} onClose={() => {}} onUpdate={async () => {}} />,
+      <ProductDetailBody product={product} workspaceId="w" onClose={() => {}} onUpdate={async () => {}} onProductRefresh={async () => {}} />,
     );
     expect(html).toContain('90-day search up 40%');
     expect(html).toContain('verified');
@@ -41,8 +41,10 @@ describe('ProductDetail', () => {
     const html = renderToStaticMarkup(
       <ProductDetailBody
         product={{ ...product, unitEcon: undefined, score: undefined }}
+        workspaceId="w"
         onClose={() => {}}
         onUpdate={async () => {}}
+        onProductRefresh={async () => {}}
       />,
     );
     expect(html).not.toMatch(/break-even/i);

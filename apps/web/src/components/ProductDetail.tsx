@@ -1,9 +1,14 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ProductStatus, type Product, type UpdateProductDto } from '@lyra/shared';
+import { ProductStatus, StepStatus, type Asset, type Product, type Run, type UpdateProductDto } from '@lyra/shared';
+import { api } from '../lib/api';
+import { productRunsApi } from '../lib/productRuns';
+import { useRunActions } from '../lib/useRunActions';
 import { Modal } from './Modal';
 import { MenuPicker, type MenuPickerOption } from './MenuPicker';
+import { RunTimeline } from './RunTimeline';
 import { PRODUCT_STATUS_COLOR } from './ProductBoard';
+import type { StepHistoryEntry } from './StepResultModal';
 import './product-detail.css';
 
 // ── Status picker options ───────────────────────────────────────────────────
@@ -30,18 +35,48 @@ const KIND_CLASS: Record<string, string> = {
 
 interface Props {
   product: Product;
+  workspaceId: string;
   onClose: () => void;
   onUpdate: (patch: UpdateProductDto) => Promise<void>;
+  onProductRefresh: () => Promise<void>;
 }
 
 // ── ProductDetailBody ───────────────────────────────────────────────────────
 // Presentational body — no portal/hooks that require a DOM. Exported so tests
 // can render it with renderToStaticMarkup; ProductDetail wraps it in <Modal>.
 
-export function ProductDetailBody({ product, onClose, onUpdate }: Props) {
+export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onProductRefresh }: Props) {
   const { t } = useTranslation();
   const [outcome, setOutcome] = useState(product.outcome ?? '');
   const [savingOutcome, setSavingOutcome] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [run, setRun] = useState<Run | null>(null);
+  const [runAssets, setRunAssets] = useState<Asset[]>([]);
+
+  const { busy, error: runError, runAll, runStep, approve, savePrompt, regenerate } = useRunActions(run, setRun);
+
+  // Fetch assets whenever the active run changes.
+  useEffect(() => {
+    if (!run) { setRunAssets([]); return; }
+    let cancelled = false;
+    api<Asset[]>(`/runs/${run.id}/assets`)
+      .then((a) => { if (!cancelled) setRunAssets(a); })
+      .catch(() => { if (!cancelled) setRunAssets([]); });
+    return () => { cancelled = true; };
+  }, [run]);
+
+  // When run reaches done, refresh the product so enriched research fields show.
+  const prevStatusRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (run?.status === 'done' && prevStatusRef.current !== 'done') {
+      void onProductRefresh();
+    }
+    prevStatusRef.current = run?.status;
+  }, [run?.status, onProductRefresh]);
+
+  // historyForStep: no-op for now (no multi-run history per product yet).
+  const historyForStep = (_i: number): StepHistoryEntry[] => [];
 
   // Build the status picker options with the i18n label + a colored dot icon.
   const statusOptions: MenuPickerOption<ProductStatus>[] = STATUS_ORDER.map((s) => ({
@@ -71,11 +106,28 @@ export function ProductDetailBody({ product, onClose, onUpdate }: Props) {
     }
   }
 
+  async function handleRunResearch() {
+    if (starting || busy) return;
+    setStarting(true);
+    setStartError(null);
+    try {
+      const r = await productRunsApi.start(workspaceId, product.id);
+      setRun(r);
+    } catch (err) {
+      setStartError(err instanceof Error ? err.message : t('products.runError'));
+    } finally {
+      setStarting(false);
+    }
+  }
+
   // Primary source URL (first primary, else first alive, else first)
   const primarySource =
     product.sources.find((s) => s.primary) ??
     product.sources.find((s) => s.alive) ??
     product.sources[0];
+
+  const isBusy = busy || starting;
+  const displayError = startError ?? runError;
 
   return (
     <div className="pdtl">
@@ -126,6 +178,15 @@ export function ProductDetailBody({ product, onClose, onUpdate }: Props) {
               onChange={handleStatusChange}
               ariaLabel={t('projects.statusAria')}
             />
+            {/* Run research */}
+            <button
+              type="button"
+              className="btn-primary btn-inline btn-sm"
+              disabled={isBusy}
+              onClick={() => void handleRunResearch()}
+            >
+              {starting ? t('products.running') : t('products.runResearch')}
+            </button>
             {/* Close */}
             <button
               type="button"
@@ -144,6 +205,44 @@ export function ProductDetailBody({ product, onClose, onUpdate }: Props) {
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
       <div className="pdtl-body">
+
+        {displayError && <p className="error">{displayError}</p>}
+
+        {/* Run timeline — shown once a research run has been started */}
+        {run && run.steps.length > 0 && (
+          <section className="pdtl-section">
+            <RunTimeline
+              run={run}
+              busy={isBusy}
+              hasKey={() => true}
+              onRunStep={runStep}
+              onApprove={(i) => {
+                approve(i);
+                // After approval, trigger a product refresh so research fields update
+                // if this was the save gate (run status will reach done shortly).
+                void onProductRefresh();
+              }}
+              onSavePrompt={savePrompt}
+              onRegenerate={regenerate}
+              assets={runAssets}
+              historyForStep={historyForStep}
+            />
+          </section>
+        )}
+
+        {/* Run-all shortcut when run is present but steps haven't started yet */}
+        {run && run.steps.length > 0 && run.steps.every((s) => s.status === StepStatus.Idle) && (
+          <div className="pdtl-run-start">
+            <button
+              type="button"
+              className="btn-primary btn-inline btn-sm"
+              disabled={isBusy}
+              onClick={runAll}
+            >
+              {t('run.runAll')}
+            </button>
+          </div>
+        )}
 
         {/* Evidence claims */}
         {product.evidence.length > 0 && (
