@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { Provider, StepKind, ActionType, StepMode, StepStatus } from '@lyra/shared';
+import { Provider, StepKind, ActionType, StepMode, StepStatus, ImageOp } from '@lyra/shared';
 import { RunsService } from './runs.service';
 import type { RunDocument } from './run.schema';
 
@@ -321,6 +321,67 @@ describe('RunsService step cache', () => {
     expect(providerExecute).toHaveBeenCalled();
     // Run was persisted.
     expect(runDoc.save).toHaveBeenCalled();
+  });
+});
+
+describe('RunsService.appendImageAction', () => {
+  function imgRunDoc() {
+    return {
+      _id: { toString: () => 'run-1' },
+      workspaceId: 'ws-1',
+      projectId: undefined,
+      variables: {},
+      collections: {},
+      status: 'done',
+      currentStep: 1,
+      updatedBy: '',
+      steps: [
+        { index: 0, name: 'Hero', provider: Provider.Google, model: 'gemini-2.5-flash-image', mode: StepMode.Auto, status: StepStatus.Done, prompt: 'a hero', assetIds: ['A'] },
+      ],
+      markModified: jest.fn(),
+      save: jest.fn().mockResolvedValue(undefined),
+    } as unknown as RunDocument;
+  }
+
+  it('rejects when the asset is not part of the source step', async () => {
+    const svc = makeService({});
+    const doc = imgRunDoc();
+    await expect(
+      svc.appendImageAction(doc, { sourceStepIndex: 0, assetId: 'NOPE', op: ImageOp.Variation }, 'u1'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(doc.save).not.toHaveBeenCalled();
+  });
+
+  it('appends a derived Google image step seeded by the asset and runs it WITHOUT advancing the run', async () => {
+    const providerExecute = jest.fn().mockResolvedValue({
+      result: 'Generated 1 image with gemini-2.5-flash-image.',
+      assets: [{ type: 'image', url: 'https://cdn/upscaled.png' }],
+      usage: { tokens: 0 },
+    });
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    const keys = { list: jest.fn().mockResolvedValue([{ provider: 'google' }]), getDecrypted: jest.fn().mockResolvedValue('goog-key') };
+    const assets = {
+      listForRun: jest.fn().mockResolvedValue([{ _id: { toString: () => 'A' }, stepIndex: 0, type: 'image', url: 'https://cdn/hero.png' }]),
+      createForStep: jest.fn().mockResolvedValue(['B']),
+    };
+    const cache = makeCacheMock(null);
+    const svc = makeService({ registry, keys, assets, cache });
+    const doc = imgRunDoc();
+
+    await svc.appendImageAction(doc, { sourceStepIndex: 0, assetId: 'A', op: ImageOp.Upscale }, 'u1');
+
+    // A new step was appended (provider Google, carrying the source asset id).
+    expect(doc.steps).toHaveLength(2);
+    expect(doc.steps[1].provider).toBe(Provider.Google);
+    expect(doc.steps[1].inputAssetIds).toEqual(['A']);
+    expect(doc.steps[1].status).toBe(StepStatus.Done);
+    // The parent run was NOT advanced/completed by the derived step.
+    expect(doc.status).toBe('done');
+    expect(doc.currentStep).toBe(1);
+    // The provider was invoked and the new asset persisted.
+    expect(providerExecute).toHaveBeenCalled();
+    expect(assets.createForStep).toHaveBeenCalled();
+    expect(doc.save).toHaveBeenCalled();
   });
 });
 

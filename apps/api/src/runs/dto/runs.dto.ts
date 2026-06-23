@@ -1,5 +1,6 @@
-import { IsBoolean, IsIn, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Min, ValidateIf } from 'class-validator';
 import type { RateRunDto, RunPipelineDto, RunStepDto, UpdateStepPromptDto } from '@lyra/shared';
+import { ImageOp, type ImageActionDto } from '@lyra/shared';
 
 export class UpdatePromptBody implements UpdateStepPromptDto {
   @IsString()
@@ -19,6 +20,19 @@ export class RunStepBody implements RunStepDto {
   @IsOptional()
   @IsBoolean()
   bypassCache?: boolean;
+}
+
+export class ImageActionBody implements ImageActionDto {
+  @IsInt()
+  @Min(0)
+  sourceStepIndex!: number;
+
+  @IsString()
+  @IsNotEmpty()
+  assetId!: string;
+
+  @IsEnum(ImageOp)
+  op!: ImageOp;
 }
 
 // Optional per-run variable values entered when starting a pipeline run.

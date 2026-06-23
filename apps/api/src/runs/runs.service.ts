@@ -12,11 +12,14 @@ import {
   STEP_DEFS,
   StepStatus,
   Provider,
+  ImageOp,
+  imageOpPrompt,
+  IMAGE_OP_PRESETS,
+  StepKind,
   type ActionStep,
   type Run as RunModel,
   type Step,
   type StepCondition,
-  type StepKind,
   type StepMode,
 } from '@lyra/shared';
 import { Run, RunDocument } from './run.schema';
@@ -49,6 +52,9 @@ import {
   resetRun,
   isLocked,
   providerOf,
+  beginDerivedStep,
+  completeDerivedStep,
+  failDerivedStep,
   StepLockedError,
   RunTransitionError,
   type RunState,
@@ -461,6 +467,57 @@ export class RunsService extends BaseRepository<Run> {
       await this.saveAssets(doc, state, index, output, actorId);
     } catch (err) {
       failStep(state, index, errMessage(err));
+    }
+    return this.persist(doc, state, actorId);
+  }
+
+  // Apply an image operation (upscale/variation/outpaint) to a result asset:
+  // append a derived Google image step seeded by that exact asset + the op's
+  // preset prompt, run only that step, and return the updated run. The parent
+  // run's progression (currentStep/status) is left untouched.
+  async appendImageAction(
+    doc: RunDocument,
+    body: { sourceStepIndex: number; assetId: string; op: ImageOp },
+    actorId: string,
+  ): Promise<RunModel> {
+    const state = toState(doc);
+    if (state.status === 'running') {
+      throw new BadRequestException('Wait for the run to finish before applying an image action.');
+    }
+    const source = state.steps[body.sourceStepIndex];
+    if (!source) throw new BadRequestException('No such source step.');
+    if (!source.assetIds?.includes(body.assetId)) {
+      throw new BadRequestException('That asset is not part of the selected step.');
+    }
+    const runAssets = await this.assets.listForRun(doc._id.toString());
+    const asset = runAssets.find((a) => a._id.toString() === body.assetId);
+    if (!asset || asset.type !== 'image') {
+      throw new BadRequestException('Image actions apply to image assets only.');
+    }
+
+    const index = state.steps.length;
+    const label = IMAGE_OP_PRESETS[body.op].label;
+    const sourceName = source.name ?? STEP_DEFS[source.index]?.title ?? `Step ${source.index + 1}`;
+    const newStep: Step = {
+      index,
+      name: `${label} · ${sourceName}`,
+      kind: StepKind.Prompt,
+      provider: Provider.Google,
+      model: 'gemini-2.5-flash-image',
+      mode: 'auto' as StepMode,
+      status: StepStatus.Idle,
+      prompt: imageOpPrompt(body.op),
+      inputAssetIds: [body.assetId],
+    };
+    state.steps.push(newStep);
+
+    beginDerivedStep(state, index);
+    try {
+      const output = await this.executeStep(doc, state, index, true); // bypassCache: always fresh
+      completeDerivedStep(state, index, output);
+      await this.saveAssets(doc, state, index, output, actorId);
+    } catch (err) {
+      failDerivedStep(state, index, errMessage(err));
     }
     return this.persist(doc, state, actorId);
   }
