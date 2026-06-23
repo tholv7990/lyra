@@ -289,6 +289,10 @@ export interface SavedResult {
   rating?: number;
   note?: string;
   sourceConversationId?: string;
+  assetUrl?: string;
+  assetType?: 'image' | 'video' | 'audio';
+  runId?: string;
+  stepIndex?: number;
   createdBy: UserRef;
   savedAt: string;
 }
@@ -774,6 +778,7 @@ export interface Product {
   competitorIds: string[];
   outcome?: string;
   tags: string[];
+  results?: SavedResult[];
   active: boolean;
   createdBy: UserRef;
   updatedBy: UserRef;

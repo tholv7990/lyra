@@ -150,6 +150,17 @@ export interface UpdateResultDto {
   note?: string;
 }
 
+// Save an AI result directly onto a Product (not from a chat/prompt flow).
+export interface SaveProductResultDto {
+  output: string;
+  provider: Provider;
+  model: string;
+  assetUrl?: string;
+  assetType?: 'image' | 'video' | 'audio';
+  runId?: string;
+  stepIndex?: number;
+}
+
 // ===== Pipelines =====
 export interface PipelineStepInput {
   id?: string;
