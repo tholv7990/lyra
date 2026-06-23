@@ -95,4 +95,15 @@ describe('ProductDetail', () => {
     expect(html).toContain('Acme');
     expect(html).toContain('dominated');
   });
+
+  it('shows risk flags + notes and the sensitivity table', () => {
+    const u = { cm1: 28, cm1Pct: 0.56, breakEvenRoas: 1.78, maxCac: 20.5, targetRoas: 2.4 };
+    const html = renderToStaticMarkup(
+      <ProductDetailBody
+        product={{ ...product, riskFlags: { unresolvedSafety: false, materialIpRisk: true, misleadingClaimsRequired: false }, riskNotes: ['Branded character — IP risk'], scenarios: { base: u, low: u, high: u, plus10Cac: u, plus10Landed: u, doubleReturns: u } } as any}
+        workspaceId="w" onClose={() => {}} onUpdate={async () => {}} onProductRefresh={async () => {}} />,
+    );
+    expect(html).toContain('Branded character');
+    expect(html).toContain('Sensitivity');
+  });
 });
