@@ -29,6 +29,8 @@ export function toProductView(d: ProductDocument, refs: Map<string, UserRef>): P
     decision: d.decision,
     hardGates: d.hardGates,
     unitEconInputs: d.unitEconInputs,
+    assumptions: d.assumptions,
+    competition: d.competition,
     econInputs: d.econInputs,
     competitorIds: d.competitorIds ?? [],
     outcome: d.outcome,

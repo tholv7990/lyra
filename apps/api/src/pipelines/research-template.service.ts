@@ -29,7 +29,45 @@ export class ResearchTemplateService {
     const existing = (await this.pipelines.listForWorkspace(workspaceId)).find(
       (p) => (p as unknown as { origin?: { source?: string } }).origin?.source === 'research-template',
     );
-    if (existing) return this.pipelines.toView(existing);
+
+    const act = (
+      type: ActionType,
+      name: string,
+      mode: StepMode = StepMode.Auto,
+      extra: Record<string, unknown> = {},
+    ) => ({
+      name,
+      promptId: '',
+      provider: Provider.Research,
+      model: 'auto',
+      mode,
+      kind: 'action',
+      action: { type, ...extra },
+    });
+
+    const buildSteps = (pid: string) => this.pipelines.normalizeSteps([
+      act(ActionType.ResolveInputs, 'Resolve inputs'),
+      { name: 'Research', promptId: pid, provider: Provider.Research, model: 'auto', mode: StepMode.Auto },
+      act(ActionType.DemandGate, 'Demand gate'),
+      act(ActionType.Competition, 'Competition'),
+      act(ActionType.Score, 'Score'),
+      act(ActionType.UnitEcon, 'Unit economics'),
+      act(ActionType.Evaluate, 'Evaluate'),
+      act(ActionType.SaveProduct, 'Save & review', StepMode.Gate),
+    ] as never);
+
+    if (existing) {
+      const hasCompetition = (existing.steps ?? []).some(
+        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.Competition,
+      );
+      if (!hasCompetition) {
+        const research = (existing.steps ?? []).find((s) => (s as { promptId?: string }).promptId);
+        const pid = (research as { promptId?: string } | undefined)?.promptId ?? '';
+        existing.steps = buildSteps(pid) as never;
+        await existing.save();
+      }
+      return this.pipelines.toView(existing);
+    }
 
     // Create the library prompt that the Research step is bound to.
     // PromptsService.create() comes from BaseRepository — it takes Partial<Prompt>
@@ -52,29 +90,7 @@ export class ResearchTemplateService {
       (promptDoc as unknown as { id?: string }).id ??
       (promptDoc as unknown as { _id: { toString(): string } })._id.toString();
 
-    const act = (
-      type: ActionType,
-      name: string,
-      mode: StepMode = StepMode.Auto,
-      extra: Record<string, unknown> = {},
-    ) => ({
-      name,
-      promptId: '',
-      provider: Provider.Research,
-      model: 'auto',
-      mode,
-      kind: 'action',
-      action: { type, ...extra },
-    });
-
-    const steps = this.pipelines.normalizeSteps([
-      { name: 'Research', promptId, provider: Provider.Research, model: 'auto', mode: StepMode.Auto },
-      act(ActionType.DemandGate, 'Demand gate'),
-      act(ActionType.Score, 'Score'),
-      act(ActionType.UnitEcon, 'Unit economics'),
-      act(ActionType.Evaluate, 'Evaluate'),
-      act(ActionType.SaveProduct, 'Save & review', StepMode.Gate),
-    ] as never);
+    const steps = buildSteps(promptId);
 
     const variables = this.pipelines.normalizeVariables([
       { key: 'niche', label: 'Niche', default: '' },
