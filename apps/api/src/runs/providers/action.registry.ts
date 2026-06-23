@@ -5,19 +5,21 @@ import { UnitEconAction } from './unit-econ.action';
 import { EvaluateAction } from './evaluate.action';
 import { SaveProductAction } from './save-product.action';
 import { DemandGateAction } from './demand-gate.action';
+import { ScoreAction } from './score.action';
 import type { ActionProvider } from './action-provider.interface';
 
 @Injectable()
 export class ActionRegistry {
   private readonly impls: Partial<Record<ActionType, ActionProvider>>;
 
-  constructor(brand: BrandActionProvider, unitEcon: UnitEconAction, evaluate: EvaluateAction, saveProduct: SaveProductAction, demandGate: DemandGateAction) {
+  constructor(brand: BrandActionProvider, unitEcon: UnitEconAction, evaluate: EvaluateAction, saveProduct: SaveProductAction, demandGate: DemandGateAction, score: ScoreAction) {
     this.impls = {
       [ActionType.Brand]: brand,
       [ActionType.UnitEcon]: unitEcon,
       [ActionType.Evaluate]: evaluate,
       [ActionType.SaveProduct]: saveProduct,
       [ActionType.DemandGate]: demandGate,
+      [ActionType.Score]: score,
     }; // Crawl/Publish added in later phases
   }
 

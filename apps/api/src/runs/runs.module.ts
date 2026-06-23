@@ -32,6 +32,7 @@ import { UnitEconAction } from './providers/unit-econ.action';
 import { EvaluateAction } from './providers/evaluate.action';
 import { SaveProductAction } from './providers/save-product.action';
 import { DemandGateAction } from './providers/demand-gate.action';
+import { ScoreAction } from './providers/score.action';
 import { ActionRegistry } from './providers/action.registry';
 import { TavilyClient } from './providers/tavily.client';
 import { ResearchStepProvider } from './providers/research.provider';
@@ -76,6 +77,7 @@ import { ResearchStepProvider } from './providers/research.provider';
     EvaluateAction,
     SaveProductAction,
     DemandGateAction,
+    ScoreAction,
     ActionRegistry,
     // Research step: Tavily search + multi-provider LLM agentic loop.
     TavilyClient,
