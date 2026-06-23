@@ -153,6 +153,16 @@ export default {
   brandClearLogo: 'Xóa logo',
   brandAccent: 'Màu nhấn',
 
+  // Project Products section
+  products: {
+    title: 'Sản phẩm',
+    select: 'Chọn sản phẩm…',
+    drift: 'Lỗi thời',
+    refresh: 'Làm mới',
+    unselect: 'Xóa',
+    empty: 'Chưa có sản phẩm nào được chọn.',
+  },
+
   // Move to team
   moveToTeamAction: 'Chuyển vào nhóm',
   moveToTeamTitle: 'Chuyển dự án vào nhóm',

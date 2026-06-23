@@ -11,6 +11,7 @@ import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TaskList } from '../components/TaskList';
+import { ProjectProducts } from '../components/ProjectProducts';
 import { StatusPill } from '../components/StatusPill';
 import { useLabels } from '../lib/useLabels';
 import { PencilIcon, PlusIcon, PublishIcon } from '../layout/icons';
@@ -233,6 +234,11 @@ export function ProjectDetail() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* Products */}
+        <section className="pd-section">
+          <ProjectProducts projectId={project.id} workspaceId={project.workspaceId} />
         </section>
 
         {/* Tasks */}

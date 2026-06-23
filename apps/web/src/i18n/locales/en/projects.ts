@@ -153,6 +153,16 @@ export default {
   brandClearLogo: 'Remove logo',
   brandAccent: 'Accent',
 
+  // Project Products section
+  products: {
+    title: 'Products',
+    select: 'Select a product…',
+    drift: 'Outdated',
+    refresh: 'Refresh',
+    unselect: 'Remove',
+    empty: 'No products selected yet.',
+  },
+
   // Move to team
   moveToTeamAction: 'Move to team',
   moveToTeamTitle: 'Move project to team',
