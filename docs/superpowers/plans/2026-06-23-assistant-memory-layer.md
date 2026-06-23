@@ -5,6 +5,11 @@
 > recency decay, provenance/confidence, and conflict-versioning — built on Lyra's own Mongo, no Moorcheh,
 > no new service, no vendor coupling.
 > **Date:** 2026-06-23. **Status:** plan, nothing built.
+>
+> **Updated 2026-06-23:** added **entity-linked memories** (a lightweight relational graph) — the one
+> takeaway worth keeping from evaluating [safishamsi/graphify](https://github.com/safishamsi/graphify)
+> (GraphRAG). A graphify *service* was rejected (wrong purpose — it graphs codebases for IDE agents — and
+> wrong stack); full GraphRAG is deferred (see non-goals).
 
 ## The idea (stolen + adapted)
 
@@ -27,6 +32,36 @@ A memory layer is the substrate for the **brand-consistency wedge** in the [rese
 | **Prompt / creative gen** | Recall brand voice, format prefs, hooks that the user kept → smarter defaults in generated prompts. |
 | **Research loop** | Remember tested products, **rejected angles**, and the "did it sell?" outcomes → don't re-surface rejects; ground next run in prior decisions. (Reuses the spec's `EvidenceClaim` provenance pattern.) |
 | **Run engine** | Remember preferred `provider·model` per step + gate decisions → smarter defaults on repeat runs. |
+
+## Integration map — one layer, every surface
+
+The memory layer is **one workspace service** (`remember`/`recall`) that *every* feature calls — **not**
+per-feature silos. The pattern is uniform: **recall-on-start** (read relevant context in) + **remember-on-decision**
+(write what was decided/learned/preferred out). Memories attach to a small set of **subjects**:
+Brand/Project · Product · Niche · Competitor · Pipeline.
+
+| Surface | Reads (recall) | Writes (remember) | Payoff |
+|---|---|---|---|
+| **Assistant / chat** | active product+project context, user prefs | explicit "remember this" + conservative inferred prefs/decisions | no re-explaining across sessions |
+| **Prompt / creative gen** | brand voice, format prefs (9:16, UGC tone), hooks kept vs rejected | which outputs the user kept/edited/rejected | on-brand output that improves with use (the brand-consistency wedge) |
+| **Run engine (pipelines)** | product facts, prior gate decisions, preferred `provider·model`; **recall relevant priors instead of append-all** within a run | gate approve/reject **reasons**, run ratings, model prefs | smarter defaults + the token win |
+| **Product-research loop** | known facts, **rejected candidates/angles**, "did it sell?" outcomes | research conclusions, decisions, outcomes (provenance = the `SourceRow`s) | research compounds — no re-work, no re-surfacing rejects |
+| **Products module** | **everything linked to the product** (relational recall via `relatedIds`) | lifecycle changes (Candidate→…→Killed), outcomes | the Product becomes a knowledge hub |
+| **Crawler / competitor monitor** | tracked competitors, niche notes | interpreted competitor insights (a 60-day ad = a winner) | competitor knowledge persists + feeds research/creative |
+| **Publishing** | channel prefs, what posted well | posting decisions/results | (lower priority) |
+
+**The flywheel (the point):** research → *remember* winners & losers → creative *recalls* brand + winners →
+publish → outcomes *remembered* → next research *recalls* them. That compounding loop is "Lyra learns your
+business" — the brand-consistency + grounded wedge from the v3 research-loop spec. Without the layer every
+feature is stateless; with it, they feed each other.
+
+**Boundaries (don't duplicate structured data):** memory is **not** a copy of the brandKit, project
+`variables`, the Product **evidence ledger**, or monitor `AdEvent`s — those stay where they are. Memory holds
+the **learned/preference/decision/outcome** knowledge + **links** to those entities. Phase 0 reads existing
+structured state directly; the `Memory` collection adds the learned layer on top.
+
+**Constraints:** one shared service (no per-feature memory) · `recall` stays **non-LLM** on every surface ·
+writes are cheap + provenance-tagged · workspace-scoped (inv. 5).
 
 ## Token economics (an explicit design goal)
 
@@ -70,6 +105,7 @@ interface Memory extends Audited {            // soft-delete + audit like every 
   text: string;                               // the memory itself
   subjectType?: 'project' | 'product' | 'brand' | 'pipeline' | 'global';
   subjectId?: string;                         // what it's about (links to a Lyra entity)
+  relatedIds?: string[];                      // links to related memories — a lightweight graph
   confidence: number;                         // 0..1
   provenance: 'explicit' | 'inferred';        // user said it vs assistant inferred
   source?: { conversationId?: string; runId?: string };
@@ -89,6 +125,12 @@ silently coexist, and you keep the history.
 
 **Provenance (gap #3):** every memory is tagged explicit vs inferred + its source — the assistant can say
 "you told me" vs "I noticed," and you can prune inferred noise.
+
+**Entity links (lightweight graph — the one idea worth taking from graphify):** memories link to entities
+(`subjectId`) and to each other (`relatedIds`), so `recall` can do **1-hop relational expansion** — "recall
+everything connected to product X" (its niche, tested angles, rejected reasons, decisions) — **without** a
+graph DB, Leiden clustering, or LLM entity-extraction. ~80% of the graph benefit at ~0% added cost; links
+are set explicitly at write, or inferred cheaply from `subjectId` co-occurrence — never via an LLM.
 
 ## Phased build (ponytail: each phase ships value alone)
 
@@ -119,7 +161,9 @@ silently coexist, and you keep the history.
     `subjectId + kind` that contradicts; if found set its `active=false` and the new one's `supersedes=oldId`
     (no silent overwrite, history kept).
   - `recall(workspaceId, { subjectId?, kinds?, query? })` — filter active + scope, score with
-    `scoreMemory`, return top-N within `MAX_RECALL_MEMORIES` / `MAX_RECALL_TOKENS`. **No LLM.**
+    `scoreMemory`, return top-N within `MAX_RECALL_MEMORIES` / `MAX_RECALL_TOKENS`. **No LLM.** Optional
+    **1-hop relational expansion** via `subjectId`/`relatedIds` (the entity's memories + directly-linked
+    ones), still within the token budget.
   - *(Phase 2)* `answer(...)` — recall + one provider call via the workspace BYO key.
 - `memory.controller.ts` — `POST /workspaces/:id/memory` (remember), `POST /workspaces/:id/memory/recall`.
   Guards: `JwtAuthGuard → WorkspaceGuard`.
@@ -141,6 +185,56 @@ silently coexist, and you keep the history.
 budget; the run-engine flag flips append-all → recall with a **measured token reduction**; the module boots
 (health 200) with the guard wired.
 
+## Benchmark & validation (do this before trusting — or upgrading — the design)
+
+> Grounded in a deep-research pass over the 2025–2026 memory-benchmark literature (LongMemEval,
+> MemoryAgentBench, BEAM, LoCoMo-Plus, Mem0; adversarially verified). **Headline: the lean non-LLM design
+> is a defensible default; the evidence does NOT justify pre-emptively building vector or graph memory.**
+> Numbers below are directional (recent preprints + vendor-self-reported; Mem0's ">90% savings / SOTA"
+> claims were refuted) — verify on our own data.
+
+**What the literature establishes:**
+- **No architecture wins everything.** A naive non-LLM lexical baseline (BM25-class) MATCHES OR BEATS
+  vector/graph/agentic systems on **factual retrieval** (MemoryAgentBench: BM25 ~60% vs Mem0 ~33%, Zep ~38%,
+  long-context GPT-4o ~58%), but loses on long-range/global understanding and "cognitive" memory.
+- **Selective retrieval is the token/latency win; a graph adds ~2% accuracy at ~2× tokens / ~3× latency** and
+  loses on single/multi-hop — so lean captures most of the value.
+- **Full long-context is not the ceiling** — it degrades ~30% as dialogues lengthen even with perfect
+  retrieval. Measure it as a baseline.
+- **The hard part is architecture-agnostic.** ALL systems collapse from factual → "cognitive"/implicit
+  memory (user goals/preferences/state). No retrieval upgrade fixes it — the lever is **explicit typed
+  schemas** (our `Preference`/`Goal`/`Decision` kinds). A graph would NOT help here.
+
+**The harness — per-competency, not one accuracy number.** Instrument the **indexing → retrieval → reading**
+stages separately (our split: `recall` = retrieval; the optional `answer` = reading):
+- **Indexing** → write/ingestion cost (must stay ~non-LLM for us).
+- **Retrieval** → precision/recall, latency, **retrieved-token count** per query.
+- **Reading** → answer accuracy + LLM token spend (only stage that calls the model).
+Run on **synthetic multi-session dropshipping conversations** (research → creative → posting, across sessions)
+with **golden-recall questions**, scored per competency: **factual recall · multi-session reasoning ·
+temporal reasoning · knowledge-update (overwrite stale) · abstention · preference/goal ("cognitive")** —
+each reported independently. A/B four backends behind the same reading interface: **lean (ours) ·
+full-context · vector RAG · graph** — same questions, same answer model — and report **accuracy AND
+tokens/latency/write-cost side by side**.
+
+**Evaluation hygiene (or the numbers lie):** prefer **objective golden-recall** (where LLM-as-judge is
+trustworthy); **do NOT use BLEU/ROUGE/exact-match/F1** and **do not disclose the task type in the judge
+prompt** (both systematically distort memory eval); treat any LLM-judge as bias-prone (12 documented biases)
+→ position-swap + reference answers + a small panel; **measure token savings on our own traffic** (mean + p95
+retrieved-tokens/query + per-session totals, with vs without memory, answer model fixed) — ignore vendor figures.
+
+**Upgrade-decision criteria (when lean is NOT enough → escalate):**
+- → **Vector recall (Phase 2)** only if factual/semantic recall on our data falls short of the lexical
+  baseline, OR the multi-session-reasoning gap vs full-context is large. (Lexical is often competitive — may never trigger.)
+- → **Graph / GraphRAG (deferred)** only if relational/multi-hop queries show a real gap that justifies
+  ~2× tokens / ~3× latency + write-time LLM extraction. High bar — the data says it rarely pays.
+- → If **preference/goal recall** is the gap, add explicit typed slots — **not** a retrieval upgrade.
+
+**Minimal credible benchmark for us:** ~5–10 synthetic dropshipping users × multi-session histories,
+~150–300 golden questions spread across the 6 competencies (avoid tiny per-competency subgroups —
+LongMemEval's ±40% error on ~6-question groups is the cautionary tale), lean vs full-context vs vector,
+reported per competency. Enough to decide, cheaply.
+
 ## Scope cuts / non-goals
 - **No separate memory service, no Moorcheh, no Ollama/Docker engine.** It's a Mongo collection + an api service.
 - **No vector DB until Phase 2, and only if recency+keyword falls short.**
@@ -148,6 +242,7 @@ budget; the run-engine flag flips append-all → recall with a **measured token 
 - **Workspace-scoped first**; per-user personal memory via optional `userId` only when asked.
 - **Conservative inference** — explicit `remember` + light inference with `provenance:'inferred'`; avoid memory spam.
 - Not a doc/knowledge-base RAG (separate concern); doesn't replace the research **evidence ledger** (complementary — shared provenance/confidence types).
+- **Full GraphRAG deferred** (entity-extraction + community detection, à la graphify): over-built for a small per-user memory set and reintroduces write-time LLM cost. Revisit only if entity-links + Atlas vector prove insufficient for relational recall.
 
 ## Invariants
 Workspace-scoped queries (inv. 5) · `@lyra/shared` zero runtime deps — `scoreMemory` is a pure fn (inv. 1) ·
