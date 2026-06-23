@@ -27,6 +27,8 @@ import { VideoStepProvider } from './providers/video.provider';
 import { ProviderRegistry } from './providers/provider.registry';
 import { RenderClient } from './providers/render.client';
 import { BrandActionProvider } from './providers/brand.action';
+import { UnitEconAction } from './providers/unit-econ.action';
+import { EvaluateAction } from './providers/evaluate.action';
 import { ActionRegistry } from './providers/action.registry';
 import { TavilyClient } from './providers/tavily.client';
 import { ResearchStepProvider } from './providers/research.provider';
@@ -66,6 +68,8 @@ import { ResearchStepProvider } from './providers/research.provider';
     // Action execution: one ActionProvider per ActionType, dispatched via ActionRegistry.
     RenderClient,
     BrandActionProvider,
+    UnitEconAction,
+    EvaluateAction,
     ActionRegistry,
     // Research step: Tavily search + multi-provider LLM agentic loop.
     TavilyClient,
