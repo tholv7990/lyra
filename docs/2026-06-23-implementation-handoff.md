@@ -61,6 +61,12 @@ Designed, no spec: image-first reviewer; **soft-gate** on fail (a failed review 
 `AwaitingGate` — no new run state); always-review + gate-on-by-default with a per-step off switch; inspection
 via a new `/review` endpoint on the render-service (:9200). Write a spec (brainstorming → writing-plans) first.
 
+### P7 — Robust fetch backend (products-import) ⛔
+The naive `crawl` fetch is **blocked on Amazon/Walmart/AliExpress** (empirically tested — IP-reputation + captcha, UA-independent). **Tavily** (research) and the **yt-dlp crawler** (TikTok/FB/YT) are fine — the gap is only the **products-import** marketplace fetch.
+- **Doc:** `docs/superpowers/plans/2026-06-23-robust-fetch-backend.md`.
+- **Decision:** a swappable `FetchBackend` — `direct → Firecrawl (DEFAULT) → Apify (FALLBACK) → manual entry`. Both **BYO-key (Lyra pays $0)**; Firecrawl's 1,000 free pages/mo covers low, human-reviewed volume.
+- **Build:** extend the connectors-service; cache results; **never hard-fail an import** (degrade to manual). Don't self-host a scraper (won't beat the IP/captcha wall) and don't add ScrapFly/Oxylabs (pricier; Firecrawl+Apify cover it).
+
 ---
 
 ## Already done — DO NOT rebuild (audit evidence)
