@@ -18,6 +18,7 @@ import {
 } from '../../models/provider-model.schema';
 import { Asset, AssetSchema } from '../../assets/asset.schema';
 import { Task, TaskSchema } from '../../tasks/task.schema';
+import { Product, ProductSchema } from '../../products/product.schema';
 import { CascadeService } from './cascade.service';
 
 // Standalone: depends only on schemas (not feature modules), so importing it
@@ -37,6 +38,7 @@ import { CascadeService } from './cascade.service';
       { name: ProviderModel.name, schema: ProviderModelSchema },
       { name: Asset.name, schema: AssetSchema },
       { name: Task.name, schema: TaskSchema },
+      { name: Product.name, schema: ProductSchema },
     ]),
   ],
   providers: [CascadeService],

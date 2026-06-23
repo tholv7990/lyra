@@ -13,6 +13,7 @@ import { Pipeline } from '../../pipelines/pipeline.schema';
 import { ProviderModel } from '../../models/provider-model.schema';
 import { Asset } from '../../assets/asset.schema';
 import { Task } from '../../tasks/task.schema';
+import { Product } from '../../products/product.schema';
 
 // Soft-delete cascades. Injects child models directly (not feature services)
 // so there are no circular module dependencies.
@@ -33,6 +34,7 @@ export class CascadeService {
     private readonly providerModels: Model<ProviderModel>,
     @InjectModel(Asset.name) private readonly assets: Model<Asset>,
     @InjectModel(Task.name) private readonly taskModel: Model<Task>,
+    @InjectModel(Product.name) private readonly products: Model<Product>,
   ) {}
 
   async deleteWorkspace(workspaceId: string, actorId: string) {
@@ -49,6 +51,7 @@ export class CascadeService {
       this.pipelines.updateMany({ workspaceId }, patch),
       this.providerModels.updateMany({ workspaceId }, patch),
       this.assets.updateMany({ workspaceId }, patch),
+      this.products.updateMany({ workspaceId }, patch),
     ]);
   }
 
@@ -62,6 +65,7 @@ export class CascadeService {
     await this.runs.updateMany({ projectId }, patch);
     const runIds = runs.map((r) => r._id.toString());
     if (runIds.length) await this.assets.updateMany({ runId: { $in: runIds } }, patch);
+    await this.products.updateMany({ projectId }, patch);
   }
 
   // Soft-delete a library pipeline and pull its id out of every task (and
