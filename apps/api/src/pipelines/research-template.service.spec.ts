@@ -13,19 +13,19 @@ function make(existing: any[] = []) {
 }
 
 describe('ResearchTemplateService.seed', () => {
-  it('creates the prompt + an 8-step pipeline marked origin.research-template', async () => {
+  it('creates the prompt + a 9-step pipeline marked origin.research-template', async () => {
     const { svc, pipelines, prompts } = make();
     const out = await svc.seed('ws', 'user1');
     expect(prompts.create).toHaveBeenCalled();
     const created = pipelines.create.mock.calls[0][0];
     expect(created.origin.source).toBe('research-template');
-    expect(created.steps).toHaveLength(8);
-    expect(created.steps[7].mode).toBe('gate');
+    expect(created.steps).toHaveLength(9);
+    expect(created.steps[8].mode).toBe('gate');
     expect(out.id).toBe('pl1');
   });
 
-  it('is idempotent — returns the existing template (with competition), no duplicate', async () => {
-    const existingDoc = { origin: { source: 'research-template' }, steps: [{ action: { type: 'competition' } }], save: jest.fn() };
+  it('is idempotent — returns the existing template (with risk-screen), no duplicate', async () => {
+    const existingDoc = { origin: { source: 'research-template' }, steps: [{ action: { type: 'risk-screen' } }], save: jest.fn() };
     const { svc, pipelines, prompts } = make([existingDoc]);
     await svc.seed('ws', 'user1');
     expect(pipelines.create).not.toHaveBeenCalled();
@@ -33,7 +33,7 @@ describe('ResearchTemplateService.seed', () => {
     expect(existingDoc.save).not.toHaveBeenCalled();
   });
 
-  it('re-seeds existing pipeline without competition step', async () => {
+  it('re-seeds existing pipeline without risk-screen step', async () => {
     const existingDoc = { origin: { source: 'research-template' }, steps: [{ promptId: 'pr1' }], save: jest.fn() };
     const { svc, pipelines, prompts } = make([existingDoc]);
     await svc.seed('ws', 'user1');
