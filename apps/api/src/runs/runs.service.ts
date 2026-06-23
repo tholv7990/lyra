@@ -31,7 +31,7 @@ import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
 import { ActionRegistry } from './providers/action.registry';
 import type { StepRunOutput, PriorStepResult, StepInputImage } from './providers/step-provider.interface';
-import { gatherInputImages } from './providers/image-inputs';
+import { gatherInputImages, fetchImagesByUrl } from './providers/image-inputs';
 import { isRetryableProviderError } from './providers/retryable';
 import { assembleLedger } from './run-ledger';
 import type { RunLedger } from './run-ledger';
@@ -284,12 +284,21 @@ export class RunsService extends BaseRepository<Run> {
     let inputImages: Awaited<ReturnType<typeof gatherInputImages>> = [];
     if (VISUAL_PROVIDERS.has(provider)) {
       const runAssets = await this.assets.listForRun(doc._id.toString());
-      inputImages = await gatherInputImages(
-        filled,
-        state.steps,
-        index,
-        (i) => runAssets.filter((a) => a.stepIndex === i).map((a) => ({ type: a.type, url: a.url })),
-      );
+      if (step.inputAssetIds?.length) {
+        // Image action: operate on the exact source asset(s) — resolve them from
+        // THIS run's assets only (server-authoritative; no client-supplied URL).
+        const urls = runAssets
+          .filter((a) => step.inputAssetIds!.includes(a._id.toString()) && a.type === 'image')
+          .map((a) => a.url);
+        inputImages = await fetchImagesByUrl(urls);
+      } else {
+        inputImages = await gatherInputImages(
+          filled,
+          state.steps,
+          index,
+          (i) => runAssets.filter((a) => a.stepIndex === i).map((a) => ({ type: a.type, url: a.url })),
+        );
+      }
     }
 
     // Per-step cache: reuse an identical prior execution to avoid re-spending. Only

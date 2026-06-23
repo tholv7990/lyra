@@ -186,6 +186,39 @@ export function failStep(state: RunState, index: number, message: string): void 
   state.status = RunStatus.Error;
 }
 
+// --- Derived (out-of-band) step transitions -------------------------------
+// An image-action step is appended to the run and run on its own, NOT as part
+// of the linear progression. These mutate ONLY the step — never state.status or
+// state.currentStep — so deriving a new image from a result never advances,
+// completes, or errors the parent run.
+
+export function beginDerivedStep(state: RunState, index: number): void {
+  const step = state.steps[index];
+  step.status = StepStatus.Running;
+  step.startedAt = now();
+  step.error = undefined;
+}
+
+export function completeDerivedStep(
+  state: RunState,
+  index: number,
+  out: { result: string; usage?: Step['usage']; cached?: boolean },
+): void {
+  const step = state.steps[index];
+  step.result = out.result;
+  step.usage = out.usage ?? { tokens: 0 };
+  step.cached = out.cached;
+  step.status = StepStatus.Done;
+  step.finishedAt = now();
+}
+
+export function failDerivedStep(state: RunState, index: number, message: string): void {
+  const step = state.steps[index];
+  step.status = StepStatus.Error;
+  step.error = message;
+  step.finishedAt = now();
+}
+
 export function approveGateAt(state: RunState, index: number): void {
   if (state.status !== RunStatus.AwaitingGate) {
     throw new RunTransitionError('No gate is awaiting approval');

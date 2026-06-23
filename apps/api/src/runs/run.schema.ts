@@ -69,6 +69,9 @@ export class RunStep {
   @Prop({ type: [String] })
   assetIds?: string[];
 
+  @Prop({ type: [String] })
+  inputAssetIds?: string[];
+
   @Prop({ type: Object })
   usage?: { tokens?: number; costUsd?: number };
 

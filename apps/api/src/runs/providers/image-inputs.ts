@@ -72,6 +72,14 @@ export async function fetchImageAsBase64(url: string): Promise<StepInputImage | 
   }
 }
 
+// Fetch specific image URLs to base64 input images (image actions: the engine
+// resolves a step's inputAssetIds → asset URLs, then calls this). Failures are
+// dropped, same as gatherInputImages.
+export async function fetchImagesByUrl(urls: string[]): Promise<StepInputImage[]> {
+  const fetched = await Promise.all(urls.map(fetchImageAsBase64));
+  return fetched.filter((x): x is StepInputImage => x !== null);
+}
+
 // Resolve a step's {input}/{step:Name} references to prior steps' IMAGE assets and
 // fetch them to base64. {input} = the most recent earlier step that has an image;
 // {step:Name} = each named earlier step. Capped (default 4). Failures are skipped.

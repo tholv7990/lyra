@@ -1,4 +1,4 @@
-import { RunStatus, StepStatus, Provider, StepKind, ActionType, type Step } from '@lyra/shared';
+import { RunStatus, StepStatus, Provider, StepKind, ActionType, StepMode, type Step } from '@lyra/shared';
 import {
   buildSteps,
   assertRunnable,
@@ -9,6 +9,9 @@ import {
   approveGateAt,
   rejectGateAt,
   resetRun,
+  beginDerivedStep,
+  completeDerivedStep,
+  failDerivedStep,
   StepLockedError,
   RunTransitionError,
   type RunState,
@@ -142,5 +145,46 @@ describe('run engine', () => {
     expect(s.currentStep).toBe(0);
     expect(s.status).toBe(RunStatus.Idle);
     expect(s.steps.every((st) => st.status === StepStatus.Idle && !st.result)).toBe(true);
+  });
+});
+
+function doneRun(): RunState {
+  return {
+    status: RunStatus.Done,
+    currentStep: 2,
+    steps: [
+      { index: 0, mode: StepMode.Auto, status: StepStatus.Done, model: 'm', prompt: '' },
+      { index: 1, mode: StepMode.Auto, status: StepStatus.Done, model: 'm', prompt: '' },
+      { index: 2, mode: StepMode.Auto, status: StepStatus.Idle, model: 'gemini-2.5-flash-image', prompt: 'op' },
+    ],
+  };
+}
+
+describe('derived (out-of-band) step transitions', () => {
+  it('beginDerivedStep marks only the step running — run.status/currentStep untouched', () => {
+    const s = doneRun();
+    beginDerivedStep(s, 2);
+    expect(s.steps[2].status).toBe(StepStatus.Running);
+    expect(s.status).toBe(RunStatus.Done);
+    expect(s.currentStep).toBe(2);
+  });
+
+  it('completeDerivedStep finishes only the step — does not advance the run', () => {
+    const s = doneRun();
+    beginDerivedStep(s, 2);
+    completeDerivedStep(s, 2, { result: 'ok' });
+    expect(s.steps[2].status).toBe(StepStatus.Done);
+    expect(s.steps[2].result).toBe('ok');
+    expect(s.status).toBe(RunStatus.Done);
+    expect(s.currentStep).toBe(2);
+  });
+
+  it('failDerivedStep errors only the step — the run does not go to error', () => {
+    const s = doneRun();
+    beginDerivedStep(s, 2);
+    failDerivedStep(s, 2, 'boom');
+    expect(s.steps[2].status).toBe(StepStatus.Error);
+    expect(s.steps[2].error).toBe('boom');
+    expect(s.status).toBe(RunStatus.Done);
   });
 });
