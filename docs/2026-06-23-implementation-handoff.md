@@ -1,77 +1,91 @@
-# Implementation handoff — 2026-06-23
+# Implementation handoff — 2026-06-23 (AUDITED & CORRECTED)
 
-> Output of a research + design session. This is the **prioritized backlog** for an implementing session.
-> Branch: `codex-dev`. Everything below is design/docs — **no feature code written yet.**
-> Legend: ✅ committed · 📄 doc written (uncommitted) · 🟡 staged (ready to run) · ⛔ blocked on a decision
+> **Updated after a live audit of `codex-dev`** (code + git log + DB). Several items the first draft listed
+> as "to build" are **already done** — built by the concurrent June-23 Codex session and/or run since.
+> This version is reoriented around **what is NOT finished.**
+> **Re-verify before building** — a Codex agent shares this tree; state changes. (See the audit method at the bottom.)
+> Legend: ⛔ not built · ⚠️ built but unproven/partial · ✅ done (do not rebuild)
 
-## How to use this
-Pick an item from **Ready to implement**, top-down. Each lists what, why, the design doc, files to touch,
-scope cuts, and invariants. Items under **Blocked** need a human answer first. Build thin slices, verify,
-then expand. Respect the invariants at the bottom.
+## Verified status
 
----
-
-## Ready to implement
-
-### 1. Marketplace prompt swap 🟡 (smallest, operational)
-Replace the 138 low-quality `prompts.chat` marketplace docs with 18 curated Lyra text prompts.
-- **Files:** `data/lyra-marketplace-prompts.json` (the 18), `scripts/swap-marketplace-prompts.cjs` (dry-run passed).
-- **Run:** `node scripts/swap-marketplace-prompts.cjs --commit` — backs up first, dev DB only, reversible from `data/prompts_2026-06-19.csv`.
-- **After:** eyeball the Marketplace page renders (Lyra uses `{var}`, not `${var}` — chips come from the stored `variables` array). **Do NOT run the admin "Catalog sync"** (re-pulls prompts.chat, would wipe it).
-
-### 2. Seed the prompt library starter kit (Path A) 📄
-18 image/video **CC0** templates + a "how to write a prompt" guide, grounded in Google Gemini/Veo + TikTok/Meta best practice.
-- **Doc:** `docs/prompt-library-starter-kit.md`.
-- **Implement:** seed the 18 as workspace library `Prompt` docs (`type: image|video` — already supported, **no schema change**). Decide delivery: default-on-workspace-create vs a one-off import. The guide section → in-app "How to write a prompt" helper.
-- **Note:** these belong in the per-workspace **library**, not the marketplace (marketplace `type` is `text|structured` only — can't hold image/video without a code change we chose to skip).
-
-### 3. Gen-UX upgrades 📄 (from the MJ-proxy research, MIT)
-- **Doc:** `docs/superpowers/plans/2026-06-23-gen-ux-upgrades-from-mj-proxy.md`.
-- **Upgrade A — async submit→poll job model** for slow gen (video). Reuse the crawler `DownloadJobStore` + the planned BullMQ queue. Files: `step-provider.interface.ts` (async result shape), `run.schema.ts` (`jobId`,`progress`), `run.engine.ts` (Running+progress), `runs.service.ts` (sync vs async dispatch), a poll worker, `video.provider.ts`, web `RunFlow.tsx` (progress bar). Scope: **slow providers only**.
-- **Upgrade B — action-based image editing** (Upscale / Variation / Outpaint on a result asset). Extend `gemini-image.provider.ts` with an `operation`, reuse `image-inputs.ts`, add a result action bar + a "create follow-up step from action" hook in `useRunActions.ts`. Scope: **no mask editor** (defer inpaint/partial-redraw).
-- **Order:** A (video async) first, then B.
-
-### 4. Storyboard artifact for the video pipeline 📄 (from the Pixelle research, Apache-2.0)
-- **Doc:** `docs/lyra-video-assembly.md` §5b.
-- Define `Storyboard` / `StoryboardFrame` in `@lyra/shared` (typed, schema-valid). The LLM step emits a Storyboard; per-frame visual gen writes back `frame.assetId`; HyperFrames renders from it via brand templates. **This is the data model behind #3** (per-frame addressability for async gen + action editing).
-
-### 5. Product-research v1 (research → creative loop) ✅ spec committed (`1e3a2b8e`)
-- **Spec:** `docs/specs/2026-06-22-lyra-v3-research-creative-loop.md` (§1C.1 is the **v1 thin slice**).
-- **Build order (spec §6):** (a) Product entity + `EvidenceClaim`/`SourceRow` types + money-math/scoring/grading/decision **pure functions in `@lyra/shared`** (with Vitest) → (b) grounded **web-research provider** (search→fetch→reflect on top of `crawl` — the biggest, riskiest build; grounding is make-or-break) → (c) v1 pipeline template (steps 1,2,3,5,6,7,10,13,14,15) surfaced as the **4-phase user view** → (d) monitor trim → (e) creative loop.
-- **Decision-support, not an oracle:** all math/scoring in code; the LLM only grounds + extracts; every claim cites a fetched source. No fake numbers.
-- ⚠️ **Blocked sub-item:** the Product **entity shape** — see decision A.
-
-### 6. Assistant memory layer (memanto-inspired) 📄
-Make Lyra remember what the user is doing across sessions, and feed it to the assistant, prompt gen, research loop, and run defaults. Steals memanto's design (remember/recall/answer, typed memory, recency, provenance, conflict-versioning) — built on Mongo, **no Moorcheh, no new service**.
-- **Doc:** `docs/superpowers/plans/2026-06-23-assistant-memory-layer.md`.
-- **Phase 0 (ready, no new system):** feed the assistant the user's current structured state (active Project/Product, recent Runs + decisions, last Conversation). Covers most of "don't forget."
-- **Phase 1:** typed `Memory` collection (workspace-scoped, 6 kinds) + `remember`/`recall` (recency+keyword, **non-LLM**) + conflict-versioning; wire into the assistant. Module `apps/api/src/memory`; `scoreMemory` pure fn in `@lyra/shared`.
-- **Phase 2 (only if needed):** `answer` (LLM-grounded, BYO key) + MongoDB Atlas vector recall.
-- **Rule:** `recall` is non-LLM (no key spend); only `answer` uses the workspace key.
-- **Token-saving is an explicit design goal** — cross-session no-re-explain · derive-once-strong→reuse-cheap (multi-model) · run-engine recall-vs-append-all · budgeted top-N recall. The plan now has a **Token-economics section + Phase-1 build steps + DoD** — build-ready.
+| # | Item | Status |
+|---|------|--------|
+| 1 | Marketplace prompt swap | ✅ done |
+| 2 | Starter-kit prompts → workspace library | ✅ done |
+| 3B | Image action editing (Upscale/Variation/Outpaint) | ✅ done |
+| 5 | Product-research v1 spine | ⚠️ built + unit-tested — **never run against live Tavily** |
+| A | Product entity shape | ✅ resolved → **project-owned** |
+| 3A | Async video job model (submit→poll) | ⛔ not built |
+| 4 | Storyboard artifact | ⛔ not built |
+| 6 | Assistant memory layer | ⛔ not built (plan only) |
+| B | Self-review / post-render asset QA | ⛔ no spec |
 
 ---
 
-## Blocked — needs a decision first
+## NOT finished — the real backlog (build these, in priority order)
 
-### A. Product entity shape ⛔ (gates #5 and the Products module)
-**Project-owned** (the spec's leaner model: `projectId` on Product) **vs workspace-pool many-to-many with per-project copies** (the Products-module discussion: lean fields `title/images/category/price/compareAtPrice/offer/source`, copy-on-select + frozen + opt-in refresh + drift badge, Crawler-based AliExpress/Amazon import).
-**Recommendation:** project-owned (leaner; drop the copies/drift machinery unless "sell the same product across multiple brands" is a real workflow). Decide before building the Product entity.
+### P1 — Prove item 5: live Tavily smoke ⚠️ (highest value — it's built but unproven)
+The "Product research" pipeline is built + unit-tested but **has never run against real Tavily** — "the
+make-or-break grounding proof" (per the June-23 SESSION-HANDOFF).
+- Add a **Tavily key + an AI key** to a workspace (Settings) → run the seeded **"Product research"** pipeline
+  against a task → approve the save-gate → confirm a **real graded Product** with grounded evidence, live
+  `SourceRow`s, `accessDate` stamps, and the dead-link sweep working.
+- Fix whatever the first real run breaks. This is the gate before any more research depth.
 
-### B. Self-review feature ⛔ (no spec written yet)
-**Decided:** image-first generic reviewer; **soft-gate** on fail (a failed review forces the existing `AwaitingGate` — reuses gate machinery, no new run state); always-review + gate-on-by-default with a **per-step off switch**; inspection via a new **`/review` endpoint on the render-service (:9200)**.
-**Next:** write a spec (brainstorming → writing-plans) before implementing.
+### P2 — Research depth + 4-phase UI (deferred from item 5)
+- **§1C.1 fidelity:** add `resolve-inputs`, richer `demand-gate`, `competition` (fan-out), `ground&dedupe`,
+  `runScenarios`; `Run.productId?` / `Task.productId?` / `PublishedPost.productId?` + monitor `productId` back-refs.
+- **3c-2 UI:** group the run's steps into the **4-phase view** (Find · Validate · Economics · Decide) in
+  `RunFlow` + a tailored research-run form. Spec: `docs/specs/2026-06-22-lyra-v3-research-creative-loop.md` (§1C.1).
+
+### P3 — Storyboard artifact ⛔ (#4)
+Define `Storyboard` / `StoryboardFrame` in `@lyra/shared` (typed, schema-valid). LLM step emits a Storyboard;
+per-frame visual gen writes back `frame.assetId`; HyperFrames renders from it via brand templates. It's the
+**data model behind async video gen (P4)**. Doc: `docs/lyra-video-assembly.md` §5b.
+
+### P4 — Async video job model ⛔ (#3A; image-action Upgrade B is already done)
+Submit→poll for slow generation (video). Provider returns a `jobId`; a **BullMQ worker** polls + writes
+`step.progress`; `completeStep` on done. Files: `step-provider.interface.ts` (async result shape),
+`run.schema.ts` (`jobId`/`progress`), `runs.service.ts` (sync vs async dispatch), poll worker,
+`video.provider.ts`, web `RunFlow.tsx`. Reuse the crawler `DownloadJobStore`. Scope: **slow providers only**.
+Doc: `docs/superpowers/plans/2026-06-23-gen-ux-upgrades-from-mj-proxy.md` (Upgrade A).
+
+### P5 — Assistant memory layer ⛔ (#6)
+Build-ready plan with **token-saving as an explicit goal**: `docs/superpowers/plans/2026-06-23-assistant-memory-layer.md`.
+Phase 0 (feed current structured state — no new system) → Phase 1 (typed `Memory` collection + `remember`/`recall`,
+**non-LLM**, conflict-versioning; module `apps/api/src/memory`; `scoreMemory` pure fn in shared) → Phase 2
+(`answer` + Atlas vector, only if needed). Rule: `recall` spends no key; only `answer` does.
+
+### P6 — Self-review / post-render asset QA ⛔ (Decision B)
+Designed, no spec: image-first reviewer; **soft-gate** on fail (a failed review forces the existing
+`AwaitingGate` — no new run state); always-review + gate-on-by-default with a per-step off switch; inspection
+via a new `/review` endpoint on the render-service (:9200). Write a spec (brainstorming → writing-plans) first.
 
 ---
 
-## Invariants (bind all work)
-Swapping a model = one-line registry change (inv. 9) · BYO per-workspace **encrypted** keys, no metering (inv. 7) · workspace-scoped queries (inv. 5) · `@lyra/shared` **zero runtime deps** (inv. 1) · DTOs = class-validator classes that `implements` shared interfaces (inv. 2) · server-only fields never leave the api (inv. 3) · soft-delete + audited collections · TypeScript strict.
+## Already done — DO NOT rebuild (audit evidence)
 
-## Files produced this session
-- `docs/specs/2026-06-22-lyra-v3-research-creative-loop.md` — committed (`1e3a2b8e`), §1C revised (4-phase view + trimmed recipe + v1/v2).
-- `docs/prompt-library-starter-kit.md` — guide + 18 image/video CC0 templates.
-- `docs/superpowers/plans/2026-06-23-gen-ux-upgrades-from-mj-proxy.md` — gen-UX plan.
-- `docs/superpowers/plans/2026-06-23-assistant-memory-layer.md` — memory layer plan.
-- `docs/lyra-video-assembly.md` — §5b Storyboard added.
-- `data/lyra-marketplace-prompts.json` + `scripts/swap-marketplace-prompts.cjs` — the marketplace swap.
-- `docs/2026-06-23-implementation-handoff.md` — this file.
+- **#1 marketplace swap** — `lyra.marketplaceprompts` = **18 `source:'Lyra'`, 0 `prompts.chat'`**. Script + data: `scripts/swap-marketplace-prompts.cjs`, `data/lyra-marketplace-prompts.json`.
+- **#2 starter kit → library** — `lyra.prompts` holds the exact 18 titles (12 image + 6 video): "White-background catalog hero" … "Ad: why I switched". Source: `docs/prompt-library-starter-kit.md`.
+- **#3B image action editing** — `ImageOp` enum + presets + `Step.inputAssetIds` + `ImageActionDto` (`726bc5f0`); `POST runs/:id/actions/image` (`c823651a`); web Upscale/Variation/Outpaint bar (`2cb1f9c7`).
+- **#5 product-research spine** — `apps/api/src/products` (project-owned), `@lyra/shared` `research.ts` (`EvidenceClaim`/`SourceRow`/`UnitEcon`/`weightedScore`/`gradeConfidence`/`decide`/`WEIGHTS`), `ResearchStepProvider` + Tavily, evidence ledger (`assembleLedger`/`RunLedger`), `seed-research` pipeline, Products board + evidence-ledger modal UI. Commits `5990ddd1` `7bf71cf4` `47f816d7` `02520fe2` `d4d5a46a`.
+- **Decision A** — Product is **project-owned** (`projectId`, peer of `Task`); the workspace-pool/copy/drift model was **not** built.
+
+---
+
+## Deploy / verify (from the June-23 SESSION-HANDOFF — read it for full detail)
+- **Deploy** = ff `codex-dev` ← feature branch → for **shared/api** changes `pnpm --filter @lyra/shared build && --filter @lyra/api build` + `pm2 restart lyra-api` + **boot-verify** ("Nest application successfully started") → `git push origin codex-dev:dev` (live = `origin/dev`). Web-only → vite HMR, no restart.
+- **Never `git add -A`** (shared tree — a Codex agent works here too); stage explicit files.
+- **Commit/push only when the user asks.** A guarded api module must import the module exporting its guard's deps — only a real boot/health-200 catches a miss, not a green build.
+- Worktree e2e needs `ENCRYPTION_KEY` (64-hex) set or it fails. Verify mobile at 390px **and** 440px.
+- Design = Notion (`docs/notion-design.md`), accent `#0075de`; every dropdown = shared `MenuPicker`.
+
+## How this was audited (re-run before building)
+- `git log --oneline` since the handoff; `ls apps/api/src` for modules; grep `@lyra/shared` for the type/enum/fn names per item; grep `runs/` for `jobId`/`progress`/`operation`; query `lyra.marketplaceprompts` (by source) and `lyra.prompts` (by type/title); for item 5 confirm `products` module + `research.ts` + `Provider.Research`.
+
+## Session docs (all committed at `6dc866e4`, on `origin/codex-dev` — NOT on `origin/dev`)
+`docs/2026-06-23-implementation-handoff.md` (this file) · `docs/prompt-library-starter-kit.md` ·
+`docs/superpowers/plans/2026-06-23-gen-ux-upgrades-from-mj-proxy.md` ·
+`docs/superpowers/plans/2026-06-23-assistant-memory-layer.md` · `docs/lyra-video-assembly.md` (§5b) ·
+`data/lyra-marketplace-prompts.json` · `scripts/swap-marketplace-prompts.cjs`.
+Research-loop spec committed at `1e3a2b8e`.
