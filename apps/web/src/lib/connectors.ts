@@ -13,6 +13,9 @@ export const connectorsApi = {
   credentialStatus: (ws: string) =>
     api<ConnectorCredentialInfo>(`${base(ws)}/credentials`),
 
+  tavilyStatus: (ws: string) =>
+    api<ConnectorCredentialInfo>(`${base(ws)}/credentials/tavily`),
+
   connectLink: (ws: string, connector: string) =>
     api<{ url: string }>(`${base(ws)}/connect-link?connector=${encodeURIComponent(connector)}`),
 

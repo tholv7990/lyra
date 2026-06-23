@@ -46,6 +46,11 @@ export class ConnectorsController {
     return this.credentials.status(ws, 'apify');
   }
 
+  @Get('credentials/tavily')
+  tavilyStatus(@Param('id') ws: string): Promise<ConnectorCredentialInfo> {
+    return this.credentials.status(ws, 'tavily');
+  }
+
   @Get('connect-link')
   @RequireManageKeys()
   connectLink(@Param('id') ws: string, @CurrentUser() u: User, @Query('connector') connector: string) {
