@@ -5,12 +5,12 @@ function make(over: { tavilyKey?: string | null; aiKeys?: Provider[]; hits?: any
   const tavily = { search: jest.fn().mockResolvedValue(over.hits ?? [{ title: 'A', url: 'https://a.com', content: 'dog toys trending up' }]) };
   const anthropic = { complete: jest.fn().mockImplementation(async ({ system }: { system: string }) => ({
     text: system.includes('PLAN') ? '{"queries":["q"]}'
-      : system.includes('EXTRACT') ? '{"claims":[{"statement":"demand up","kind":"estimate","sourceId":"s1","demandSignal":true}]}'
+      : system.includes('EXTRACT') ? '{"claims":[{"statement":"demand up","kind":"estimate","sourceId":"s1","quote":"dog toys trending up","demandSignal":true}]}'
       : '{"enough":true,"followupQueries":[]}',
   })) };
   const openai = { complete: jest.fn().mockImplementation(async ({ system }: { system: string }) => ({
     text: system.includes('PLAN') ? '{"queries":["q"]}'
-      : system.includes('EXTRACT') ? '{"claims":[{"statement":"demand up","kind":"estimate","sourceId":"s1","demandSignal":true}]}'
+      : system.includes('EXTRACT') ? '{"claims":[{"statement":"demand up","kind":"estimate","sourceId":"s1","quote":"dog toys trending up","demandSignal":true}]}'
       : '{"enough":true,"followupQueries":[]}',
   })) };
   const creds = { getDecrypted: jest.fn().mockResolvedValue(over.tavilyKey === undefined ? 'tvly-k' : over.tavilyKey) };

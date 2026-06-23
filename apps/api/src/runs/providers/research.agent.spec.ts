@@ -19,7 +19,7 @@ it('drops a claim that cites an unknown sourceId (anti-hallucination)', async ()
     search: async () => [hit('https://a.com')],
     llm: makeLlm({
       plan: '{"queries":["q1"]}',
-      extract: ['{"claims":[{"statement":"real","kind":"estimate","sourceId":"s1"},{"statement":"fake","kind":"estimate","sourceId":"s999"}]}'],
+      extract: ['{"claims":[{"statement":"real","kind":"estimate","sourceId":"s1","quote":"c"},{"statement":"fake","kind":"estimate","sourceId":"s999","quote":"c"}]}'],
       reflect: ['{"enough":true,"followupQueries":[]}'],
     }),
     checkAlive: async () => true,
@@ -85,4 +85,37 @@ it('caps total sources at maxSources', async () => {
   };
   const r = await runResearch('q', deps);
   expect(r.sources.length).toBe(5); // 50 hits available, hard-capped to maxSources
+});
+
+it('drops a claim whose quote is not in the cited source (grounding)', async () => {
+  const deps: ResearchDeps = {
+    search: async () => [hit('https://a.com', 'Sales of dog toys rose 40% in 2025.')],
+    llm: makeLlm({
+      plan: '{"queries":["q1"]}',
+      extract: ['{"claims":[{"statement":"supported","kind":"verified","sourceId":"s1","quote":"rose 40% in 2025"},{"statement":"unsupported","kind":"verified","sourceId":"s1","quote":"fell 90% overnight"}]}'],
+      reflect: ['{"enough":true,"followupQueries":[]}'],
+    }),
+    checkAlive: async () => true,
+    caps,
+  };
+  const r = await runResearch('q', deps);
+  expect(r.claims.map((c) => c.statement)).toEqual(['supported']);
+  expect(r.claims[0].quote).toBe('rose 40% in 2025');
+  expect(r.droppedUnsupported).toBe(1);
+});
+
+it('matches the quote case/whitespace-insensitively', async () => {
+  const deps: ResearchDeps = {
+    search: async () => [hit('https://a.com', 'Search interest   GREW  sharply.')],
+    llm: makeLlm({
+      plan: '{"queries":["q1"]}',
+      extract: ['{"claims":[{"statement":"ok","kind":"estimate","sourceId":"s1","quote":"grew sharply"}]}'],
+      reflect: ['{"enough":true,"followupQueries":[]}'],
+    }),
+    checkAlive: async () => true,
+    caps,
+  };
+  const r = await runResearch('q', deps);
+  expect(r.claims).toHaveLength(1);
+  expect(r.droppedUnsupported).toBe(0);
 });
