@@ -42,6 +42,7 @@ describe('AnthropicStepProvider', () => {
       priorResults: [
         { key: StepKey.Crawl, title: 'Crawl & extract', result: 'crawled data' },
       ],
+      workspaceId: 'ws',
     });
 
     expect(out.result).toBe('winning angles…');
@@ -60,14 +61,14 @@ describe('AnthropicStepProvider', () => {
       captured = params;
       return { text: 'ok' };
     }, 'claude-opus-4-8');
-    await p.execute({ step: step(), apiKey: 'k', priorResults: [] });
+    await p.execute({ step: step(), apiKey: 'k', priorResults: [], workspaceId: 'ws' });
     expect(captured?.model).toBe('claude-opus-4-8');
   });
 
   it('throws when Claude returns an empty response', async () => {
     const p = provider(async () => ({ text: '' }));
     await expect(
-      p.execute({ step: step(), apiKey: 'k', priorResults: [] }),
+      p.execute({ step: step(), apiKey: 'k', priorResults: [], workspaceId: 'ws' }),
     ).rejects.toThrow('empty');
   });
 });

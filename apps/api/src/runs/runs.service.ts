@@ -362,7 +362,7 @@ export class RunsService extends BaseRepository<Run> {
       // For a fan-out item, {input} is the item itself; {step:Name} still resolves.
       const withInput = filled.split('{input}').join(item);
       const { prompt } = resolveStepRefs(withInput, state.steps, index);
-      return impl.execute({ step: { ...step, prompt }, apiKey, priorResults: [] });
+      return impl.execute({ step: { ...step, prompt }, apiKey, priorResults: [], workspaceId: doc.workspaceId });
     };
 
     const settled = await mapPool(items, FANOUT_CONCURRENCY, (item) =>
@@ -398,7 +398,7 @@ export class RunsService extends BaseRepository<Run> {
     try {
       const output = await this.registry
         .get(primary)
-        .execute({ step: stepForRun, apiKey, priorResults, inputImages });
+        .execute({ step: stepForRun, apiKey, priorResults, inputImages, workspaceId });
       return { output, servedBy: primary };
     } catch (primaryErr) {
       if (!isRetryableProviderError(primaryErr)) throw primaryErr;
@@ -412,7 +412,7 @@ export class RunsService extends BaseRepository<Run> {
         try {
           const output = await this.registry
             .get(alt)
-            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages });
+            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages, workspaceId });
           this.logger.warn(
             `step "${stepForRun.name ?? stepForRun.key ?? ''}": ${primary} failed (${errMessage(primaryErr)}) → served by ${alt}`,
           );

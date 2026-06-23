@@ -11,7 +11,7 @@ describe('VideoStepProvider', () => {
   it('renders, re-hosts the mp4 to storage, and returns a video asset', async () => {
     const { p, replicate, storage } = make();
     jest.spyOn(global, 'fetch' as never).mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) } as never);
-    const out = await p.execute({ step: { prompt: 'a cat', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [] });
+    const out = await p.execute({ step: { prompt: 'a cat', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [], workspaceId: 'ws' });
     expect(replicate.run).toHaveBeenCalledWith('minimax/video-01', { prompt: 'a cat' }, 'tok', expect.anything());
     expect(storage.store).toHaveBeenCalledWith(expect.any(Buffer), 'video/mp4', expect.stringContaining('generated/'));
     expect(out.assets).toEqual([{ type: 'video', url: 'https://r2/generated/x.mp4', meta: expect.objectContaining({ role: 'generated', model: 'minimax/video-01' }) }]);
@@ -19,20 +19,20 @@ describe('VideoStepProvider', () => {
 
   it('throws without a key', async () => {
     const { p } = make();
-    await expect(p.execute({ step: { prompt: 'x' } as never, apiKey: '', priorResults: [] })).rejects.toThrow(/Replicate key/i);
+    await expect(p.execute({ step: { prompt: 'x' } as never, apiKey: '', priorResults: [], workspaceId: 'ws' })).rejects.toThrow(/Replicate key/i);
   });
 
   it('throws if the rendered video can not be fetched for re-hosting', async () => {
     const { p } = make();
     jest.spyOn(global, 'fetch' as never).mockResolvedValue({ ok: false, status: 404 } as never);
-    await expect(p.execute({ step: { prompt: 'x', model: 'm/n' } as never, apiKey: 'tok', priorResults: [] })).rejects.toThrow(/video/i);
+    await expect(p.execute({ step: { prompt: 'x', model: 'm/n' } as never, apiKey: 'tok', priorResults: [], workspaceId: 'ws' })).rejects.toThrow(/video/i);
   });
 
   it('rejects if storage is not enabled and does not call replicate.run', async () => {
     const { p, replicate, storage } = make();
     // Override storage.enabled to false
     Object.defineProperty(storage, 'enabled', { value: false });
-    await expect(p.execute({ step: { prompt: 'test', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [] }))
+    await expect(p.execute({ step: { prompt: 'test', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [], workspaceId: 'ws' }))
       .rejects.toThrow(/durable object storage|R2/i);
     expect(replicate.run).not.toHaveBeenCalled();
   });
@@ -43,7 +43,7 @@ describe('VideoStepProvider', () => {
     await p.execute({
       step: { prompt: 'animate it', model: 'minimax/video-01' } as never,
       apiKey: 'tok', priorResults: [],
-      inputImages: [{ url: 'https://r2/logo.png', mime: 'image/png', b64: 'x' }],
+      inputImages: [{ url: 'https://r2/logo.png', mime: 'image/png', b64: 'x' }], workspaceId: 'ws',
     });
     expect(replicate.run).toHaveBeenCalledWith(
       'minimax/video-01',
@@ -59,7 +59,7 @@ describe('VideoStepProvider', () => {
     const out = await p.execute({
       step: { prompt: 'a cat', model: 'luma/ray' } as never,
       apiKey: 'tok', priorResults: [],
-      inputImages: [{ url: 'https://r2/logo.png', mime: 'image/png', b64: 'x' }],
+      inputImages: [{ url: 'https://r2/logo.png', mime: 'image/png', b64: 'x' }], workspaceId: 'ws',
     });
     expect(replicate.run).toHaveBeenCalledWith('luma/ray', { prompt: 'a cat' }, 'tok', expect.anything());
     expect(out.result).toMatch(/no image-to-video input/i);
@@ -68,7 +68,7 @@ describe('VideoStepProvider', () => {
   it('no input images -> plain prompt (unchanged)', async () => {
     const { p, replicate } = make();
     jest.spyOn(global, 'fetch' as never).mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) } as never);
-    await p.execute({ step: { prompt: 'a cat', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [] });
+    await p.execute({ step: { prompt: 'a cat', model: 'minimax/video-01' } as never, apiKey: 'tok', priorResults: [], workspaceId: 'ws' });
     expect(replicate.run).toHaveBeenCalledWith('minimax/video-01', { prompt: 'a cat' }, 'tok', expect.anything());
   });
 });

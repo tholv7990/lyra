@@ -1,4 +1,4 @@
-import type { Step, StepKey } from '@lyra/shared';
+import type { Step, StepKey, EvidenceClaim, SourceRow } from '@lyra/shared';
 
 // A prior step's output, fed as context to the current step.
 export interface PriorStepResult {
@@ -23,6 +23,7 @@ export interface StepRunContext {
   apiKey: string;
   priorResults: PriorStepResult[];
   inputImages?: StepInputImage[]; // present only for image steps that reference prior images
+  workspaceId: string;
 }
 
 // A media asset a step produced (pre-persistence). The run service turns these
@@ -42,6 +43,8 @@ export interface StepRunOutput {
   usage?: { tokens?: number; costUsd?: number };
   // true when this output was served from the step cache (no provider call).
   cached?: boolean;
+  evidence?: EvidenceClaim[];
+  sources?: SourceRow[];
 }
 
 // The single interface every step runs through. Implementations are registered
