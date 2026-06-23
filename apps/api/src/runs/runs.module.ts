@@ -36,6 +36,10 @@ import { ScoreAction } from './providers/score.action';
 import { ResolveInputsAction } from './providers/resolve-inputs.action';
 import { CompetitionAction } from './providers/competition.action';
 import { RiskScreenAction } from './providers/risk-screen.action';
+import { CustomerJobAction } from './providers/customer-job.action';
+import { ReviewMiningAction } from './providers/review-mining.action';
+import { CreativePotentialAction } from './providers/creative-potential.action';
+import { SupplyChainAction } from './providers/supply-chain.action';
 import { ActionRegistry } from './providers/action.registry';
 import { TavilyClient } from './providers/tavily.client';
 import { FirecrawlClient } from './providers/firecrawl.client';
@@ -85,6 +89,10 @@ import { ResearchStepProvider } from './providers/research.provider';
     ResolveInputsAction,
     CompetitionAction,
     RiskScreenAction,
+    CustomerJobAction,
+    ReviewMiningAction,
+    CreativePotentialAction,
+    SupplyChainAction,
     ActionRegistry,
     // Research step: Tavily search + multi-provider LLM agentic loop.
     TavilyClient,
