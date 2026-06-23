@@ -9,6 +9,7 @@ import { PipelinesModule } from '../pipelines/pipelines.module';
 import { AssetsModule } from '../assets/assets.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { ConnectorsModule } from '../connectors/connectors.module';
+import { ProductsModule } from '../products/products.module';
 import { Run, RunSchema } from './run.schema';
 import { StepResultCache, StepResultCacheSchema } from './step-cache.schema';
 import { RunsService } from './runs.service';
@@ -29,6 +30,7 @@ import { RenderClient } from './providers/render.client';
 import { BrandActionProvider } from './providers/brand.action';
 import { UnitEconAction } from './providers/unit-econ.action';
 import { EvaluateAction } from './providers/evaluate.action';
+import { SaveProductAction } from './providers/save-product.action';
 import { ActionRegistry } from './providers/action.registry';
 import { TavilyClient } from './providers/tavily.client';
 import { ResearchStepProvider } from './providers/research.provider';
@@ -44,6 +46,7 @@ import { ResearchStepProvider } from './providers/research.provider';
     AssetsModule, // persist media a step produces
     TasksModule, // TasksService — validate the task a run belongs to
     ConnectorsModule, // ConnectorCredentialsService — Tavily key for ResearchStepProvider
+    ProductsModule, // ProductsService — SaveProductAction persists researched products
     MongooseModule.forFeature([
       { name: Run.name, schema: RunSchema },
       { name: StepResultCache.name, schema: StepResultCacheSchema },
@@ -70,6 +73,7 @@ import { ResearchStepProvider } from './providers/research.provider';
     BrandActionProvider,
     UnitEconAction,
     EvaluateAction,
+    SaveProductAction,
     ActionRegistry,
     // Research step: Tavily search + multi-provider LLM agentic loop.
     TavilyClient,

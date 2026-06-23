@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import {
   ProductStatus,
   type CreateProductDto, type UpdateProductDto, type Product as ProductView,
+  type EvidenceClaim, type SourceRow, type UnitEcon, type SubScores, type ConfidenceGrade, type Decision,
 } from '@lyra/shared';
 import { Product, ProductDocument } from './product.schema';
 import { UsersService } from '../users/users.service';
@@ -47,6 +48,31 @@ export class ProductsService {
       updatedBy: actorId,
     });
     return this.toView(doc);
+  }
+
+  async saveResearch(projectId: string, workspaceId: string, actorId: string, p: {
+    name: string;
+    evidence?: EvidenceClaim[];
+    sources?: SourceRow[];
+    unitEcon?: UnitEcon;
+    subScores?: SubScores;
+    score?: number;
+    grade?: ConfidenceGrade;
+    decision?: Decision;
+  }): Promise<string> {
+    const doc = await this.model.create({
+      workspaceId, projectId,
+      name: (p.name || 'Researched product').slice(0, MAX_NAME),
+      status: ProductStatus.Candidate,
+      evidence: p.evidence ?? [], sources: p.sources ?? [],
+      ...(p.unitEcon ? { unitEcon: p.unitEcon } : {}),
+      ...(p.subScores ? { subScores: p.subScores } : {}),
+      ...(p.score !== undefined ? { score: p.score } : {}),
+      ...(p.grade ? { grade: p.grade } : {}),
+      ...(p.decision ? { decision: p.decision } : {}),
+      competitorIds: [], tags: [], createdBy: actorId, updatedBy: actorId,
+    });
+    return doc._id.toString();
   }
 
   async get(id: string): Promise<ProductView> {
