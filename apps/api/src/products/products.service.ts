@@ -53,20 +53,6 @@ export class ProductsService {
     return this.toView(doc);
   }
 
-  /** @deprecated use applyResearch — Task 4 will remove this stub */
-  async saveResearch(projectId: string, workspaceId: string, actorId: string, p: {
-    name: string;
-    evidence?: EvidenceClaim[];
-    sources?: SourceRow[];
-    unitEcon?: UnitEcon;
-    subScores?: SubScores;
-    score?: number;
-    grade?: ConfidenceGrade;
-    decision?: Decision;
-  }): Promise<string> {
-    throw new Error('use applyResearch');
-  }
-
   async applyResearch(productId: string, actorId: string, p: {
     evidence?: EvidenceClaim[]; sources?: SourceRow[]; unitEcon?: UnitEcon;
     subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;

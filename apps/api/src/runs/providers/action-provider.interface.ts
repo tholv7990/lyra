@@ -6,6 +6,7 @@ export interface ActionRunContext {
   action: ActionStep;
   step: Step; // resolved prompt holds the chained input (e.g. image URL from {input})
   projectId?: string;
+  productId?: string; // a research run targets a product; SaveProduct enriches it
   workspaceId: string;
   priorResults: PriorStepResult[];
   brandKit?: ProjectBrandKit; // resolved by the service for brand actions

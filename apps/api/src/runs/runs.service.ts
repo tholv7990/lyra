@@ -254,6 +254,7 @@ export class RunsService extends BaseRepository<Run> {
         action: step.action,
         step: { ...step, prompt },
         projectId: doc.projectId,
+        productId: doc.productId,
         workspaceId: doc.workspaceId,
         priorResults: [],
         brandKit,

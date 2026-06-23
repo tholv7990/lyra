@@ -392,6 +392,17 @@ describe('RunsService.appendImageAction', () => {
   });
 });
 
+describe('SaveProductAction', () => {
+  it('SaveProduct enriches the run\'s target product via applyResearch', async () => {
+    const applyResearch = jest.fn().mockResolvedValue({ id: 'p1' });
+    const { SaveProductAction } = require('./providers/save-product.action');
+    const action = new SaveProductAction({ applyResearch } as any);
+    const ctx = { action: { type: 'save-product' }, productId: 'p1', workspaceId: 'ws', ledger: { data: { score: 80, decision: 'TEST_NOW' }, evidence: [], sources: [], variables: { note: 'X' } } } as any;
+    await action.execute(ctx);
+    expect(applyResearch).toHaveBeenCalledWith('p1', 'system', expect.objectContaining({ score: 80, decision: 'TEST_NOW' }));
+  });
+});
+
 describe('RunsService.executeStep', () => {
   it('routes action steps to ActionRegistry without decrypting keys', async () => {
     const keys = { getDecrypted: jest.fn() };

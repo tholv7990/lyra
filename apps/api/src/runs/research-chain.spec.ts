@@ -27,7 +27,7 @@ describe('research pipeline chain', () => {
       { id: 's3', name: 'S3', url: 'u3', accessDate: 'd', primary: false, alive: true },
     ] })];
     // each step's run context, with the ledger assembled from PRIOR steps (engine-style):
-    const run = (i: number) => ({ action: steps[i].action, step: steps[i], workspaceId: 'ws', projectId: 'p1', priorResults: [], ledger: assembleLedger(steps.slice(0, i), econVars) }) as any;
+    const run = (i: number) => ({ action: steps[i].action, step: steps[i], workspaceId: 'ws', projectId: 'p1', productId: 'prod-1', priorResults: [], ledger: assembleLedger(steps.slice(0, i), econVars) }) as any;
 
     steps.push(step({ index: 1, kind: StepKind.Action, action: { type: 'demand-gate' } as never }));
     steps[1].data = (await new DemandGateAction().execute(run(1))).data;
@@ -38,10 +38,10 @@ describe('research pipeline chain', () => {
     steps.push(step({ index: 4, kind: StepKind.Action, action: { type: 'evaluate' } as never }));
     steps[4].data = (await new EvaluateAction().execute(run(4))).data;
     steps.push(step({ index: 5, kind: StepKind.Action, action: { type: 'save-product' } as never }));
-    const products = { saveResearch: jest.fn().mockResolvedValue('prod-1') };
+    const products = { applyResearch: jest.fn().mockResolvedValue({ id: 'prod-1' }) };
     const out = await new SaveProductAction(products as never).execute(run(5));
 
-    const saved = products.saveResearch.mock.calls[0][3];
+    const saved = products.applyResearch.mock.calls[0][2];
     expect(saved.score).toBeGreaterThan(0);
     expect(saved.grade).toBeDefined();
     expect(saved.decision).toBeDefined();

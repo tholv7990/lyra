@@ -10,27 +10,14 @@ export class SaveProductAction implements ActionProvider {
 
   async execute(ctx: ActionRunContext): Promise<StepRunOutput> {
     const d = ctx.ledger.data as { unitEcon?: UnitEcon; subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision };
-    const name = (ctx.action as { productName?: string }).productName || ctx.ledger.variables.note || 'Researched product';
-
-    if (!ctx.projectId) {
-      return { result: '[save] no project on this run (builder test run) — not persisted.', data: {}, usage: { tokens: 0 } };
+    if (!ctx.productId) {
+      return { result: '[save] no product on this run — not persisted (builder/test run).', data: {}, usage: { tokens: 0 } };
     }
-
-    const productId = await this.products.saveResearch(ctx.projectId, ctx.workspaceId, 'system', {
-      name,
+    await this.products.applyResearch(ctx.productId, 'system', {
       evidence: ctx.ledger.evidence as EvidenceClaim[],
       sources: ctx.ledger.sources as SourceRow[],
-      unitEcon: d.unitEcon,
-      subScores: d.subScores,
-      score: d.score,
-      grade: d.grade,
-      decision: d.decision,
+      unitEcon: d.unitEcon, subScores: d.subScores, score: d.score, grade: d.grade, decision: d.decision,
     });
-
-    return {
-      result: `# Saved product\n${name} → ${productId} (${d.decision ?? 'no decision'})`,
-      data: { productId },
-      usage: { tokens: 0 },
-    };
+    return { result: `# Research saved to product\n${ctx.productId} (${d.decision ?? 'no decision'})`, data: { productId: ctx.productId }, usage: { tokens: 0 } };
   }
 }
