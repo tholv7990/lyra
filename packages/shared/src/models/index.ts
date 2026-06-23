@@ -696,6 +696,7 @@ export interface EvidenceClaim {
   period?: string;
   demandSignal?: boolean;
   purchaseData?: boolean;     // direct sales signal (Amazon Movers, TikTok Shop) → grade A
+  quote?: string;            // verbatim supporting span copied from the cited source
 }
 
 export interface SourceRow {
@@ -774,6 +775,8 @@ export interface Product {
   score?: number;
   grade?: ConfidenceGrade;
   decision?: Decision;
+  hardGates?: HardGates;          // which dealbreaker gates were evaluated (explains the decision)
+  unitEconInputs?: UnitEconInputs; // the cost inputs CM1 was computed from (explains the economics)
   econInputs?: ProductEconInputs;
   competitorIds: string[];
   outcome?: string;

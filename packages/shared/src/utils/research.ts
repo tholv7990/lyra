@@ -1,7 +1,7 @@
 import type {
   UnitEconInputs, UnitEcon, EvidenceClaim, ConfidenceGrade, HardGates, Decision,
 } from '../models';
-import { WEIGHTS, type SubScores } from '../constants/research';
+import { WEIGHTS, type SubScores, type ScoreKey } from '../constants/research';
 
 // CM1 and the derived ad-efficiency thresholds (spec §1D). The LLM supplies the
 // tagged cost inputs; ALL arithmetic is here. Percentages are fractions of AOV.
@@ -45,16 +45,47 @@ export function gradeConfidence(evidence: EvidenceClaim[]): ConfidenceGrade {
   return 'D';
 }
 
-// Final decision (spec §1E). Hard gates override the score bands: legal/ethical/
-// economics dealbreakers fail outright; thin-but-fixable issues route to a cheaper
-// path. With no gates, the weighted score picks the band.
-export function decide(score: number, gates: HardGates): Decision {
-  if (gates.unresolvedSafety || gates.materialIpRisk || gates.misleadingClaimsRequired) return 'REJECT';
-  if (gates.negativeUnitEcon) return 'REJECT';
-  if (gates.cpaExceedsMaxCac) return 'RESOLVE_GAPS';
-  if (gates.singleSourceDemand) return 'LOW_COST_VALIDATION';
-  if (score >= 75) return 'TEST_NOW';
-  if (score >= 60) return 'RESOLVE_GAPS';
-  if (score >= 45) return 'LOW_COST_VALIDATION';
-  return 'PARK';
+// Decision severity — higher = worse. Gates and floors can only push DOWN (toward worse).
+const SEVERITY: Record<Decision, number> = {
+  TEST_NOW: 0, RESOLVE_GAPS: 1, LOW_COST_VALIDATION: 2, PARK: 3, REJECT: 4,
+};
+
+// Factors where a near-zero rating is a dealbreaker the weighted sum must not mask
+// (no economics / legal-safety risk / no demand). The other 7 stay compensatory.
+export const CRITICAL_FACTORS: ScoreKey[] = ['unitEconomics', 'riskCompliance', 'demandIntent'];
+
+export interface DecisionExplained { decision: Decision; reason: string; }
+
+// Final decision + a one-line reason (spec §1E + deep-research C3). Hard gates first
+// (legal/ethical/economics dealbreakers, thin-but-fixable routes), then the score band,
+// then NON-COMPENSATORY floors pull the result DOWN when a critical factor is near-zero.
+// Floors never raise a decision.
+export function decideWithReason(score: number, gates: HardGates, subScores?: SubScores): DecisionExplained {
+  let base: DecisionExplained;
+  if (gates.unresolvedSafety) base = { decision: 'REJECT', reason: 'gate: unresolved safety' };
+  else if (gates.materialIpRisk) base = { decision: 'REJECT', reason: 'gate: material IP risk' };
+  else if (gates.misleadingClaimsRequired) base = { decision: 'REJECT', reason: 'gate: misleading claims required' };
+  else if (gates.negativeUnitEcon) base = { decision: 'REJECT', reason: 'gate: negative unit economics' };
+  else if (gates.cpaExceedsMaxCac) base = { decision: 'RESOLVE_GAPS', reason: 'gate: CPA exceeds max CAC' };
+  else if (gates.singleSourceDemand) base = { decision: 'LOW_COST_VALIDATION', reason: 'gate: single-source demand' };
+  else if (score >= 75) base = { decision: 'TEST_NOW', reason: 'band: score >=75' };
+  else if (score >= 60) base = { decision: 'RESOLVE_GAPS', reason: 'band: score >=60' };
+  else if (score >= 45) base = { decision: 'LOW_COST_VALIDATION', reason: 'band: score >=45' };
+  else base = { decision: 'PARK', reason: 'band: score <45' };
+
+  if (!subScores) return base;
+
+  // Most-severe cap implied by any critical factor (0 → LOW_COST_VALIDATION, <=1 → RESOLVE_GAPS).
+  let cap: DecisionExplained | null = null;
+  for (const f of CRITICAL_FACTORS) {
+    const s = Math.max(0, Math.min(5, subScores[f] ?? 0));
+    const c: Decision | null = s === 0 ? 'LOW_COST_VALIDATION' : s <= 1 ? 'RESOLVE_GAPS' : null;
+    if (c && (!cap || SEVERITY[c] > SEVERITY[cap.decision])) cap = { decision: c, reason: `floor: ${f} ${s}/5` };
+  }
+  // Result = the worse of base and cap; reason follows whichever bound it.
+  return cap && SEVERITY[cap.decision] > SEVERITY[base.decision] ? cap : base;
+}
+
+export function decide(score: number, gates: HardGates, subScores?: SubScores): Decision {
+  return decideWithReason(score, gates, subScores).decision;
 }
