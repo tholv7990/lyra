@@ -5,7 +5,7 @@ describe('SaveProductAction', () => {
   it('saves the ledger to a Product via applyResearch', async () => {
     const products = { applyResearch: jest.fn().mockResolvedValue({ id: 'p1' }) };
     const out = await new SaveProductAction(products as any).execute(ctx());
-    expect(products.applyResearch).toHaveBeenCalledWith('p1', 'system', expect.objectContaining({ score: 80, decision: 'TEST_NOW' }));
+    expect(products.applyResearch).toHaveBeenCalledWith('p1', 'ws', 'system', expect.objectContaining({ score: 80, decision: 'TEST_NOW' }));
     expect((out.data as any).productId).toBe('p1');
   });
   it('skips persist on a builder test run (no productId)', async () => {

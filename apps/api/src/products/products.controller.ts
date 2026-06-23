@@ -21,18 +21,18 @@ export class ProductsController {
   }
 
   @Get('workspaces/:id/products/:productId')
-  get(@Param('productId') productId: string): Promise<Product> { return this.products.get(productId); }
+  get(@Param('id') ws: string, @Param('productId') productId: string): Promise<Product> { return this.products.get(productId, ws); }
 
   @Patch('workspaces/:id/products/:productId')
   @RequireCreate()
-  update(@Param('productId') productId: string, @Body() body: UpdateProductBody, @CurrentUser() user: User): Promise<Product> {
-    return this.products.update(productId, user.id, body);
+  update(@Param('id') ws: string, @Param('productId') productId: string, @Body() body: UpdateProductBody, @CurrentUser() user: User): Promise<Product> {
+    return this.products.update(productId, ws, user.id, body);
   }
 
   @Delete('workspaces/:id/products/:productId')
   @RequireCreate()
   @HttpCode(204)
-  async remove(@Param('productId') productId: string, @CurrentUser() user: User): Promise<void> {
-    await this.products.remove(productId, user.id);
+  async remove(@Param('id') ws: string, @Param('productId') productId: string, @CurrentUser() user: User): Promise<void> {
+    await this.products.remove(productId, ws, user.id);
   }
 }

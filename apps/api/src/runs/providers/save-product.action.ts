@@ -13,7 +13,7 @@ export class SaveProductAction implements ActionProvider {
     if (!ctx.productId) {
       return { result: '[save] no product on this run — not persisted (builder/test run).', data: {}, usage: { tokens: 0 } };
     }
-    await this.products.applyResearch(ctx.productId, 'system', {
+    await this.products.applyResearch(ctx.productId, ctx.workspaceId, 'system', {
       evidence: ctx.ledger.evidence as EvidenceClaim[],
       sources: ctx.ledger.sources as SourceRow[],
       unitEcon: d.unitEcon, subScores: d.subScores, score: d.score, grade: d.grade, decision: d.decision,

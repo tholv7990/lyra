@@ -41,7 +41,7 @@ describe('research pipeline chain', () => {
     const products = { applyResearch: jest.fn().mockResolvedValue({ id: 'prod-1' }) };
     const out = await new SaveProductAction(products as never).execute(run(5));
 
-    const saved = products.applyResearch.mock.calls[0][2];
+    const saved = products.applyResearch.mock.calls[0][3];
     expect(saved.score).toBeGreaterThan(0);
     expect(saved.grade).toBeDefined();
     expect(saved.decision).toBeDefined();

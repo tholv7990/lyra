@@ -399,7 +399,7 @@ describe('SaveProductAction', () => {
     const action = new SaveProductAction({ applyResearch } as any);
     const ctx = { action: { type: 'save-product' }, productId: 'p1', workspaceId: 'ws', ledger: { data: { score: 80, decision: 'TEST_NOW' }, evidence: [], sources: [], variables: { note: 'X' } } } as any;
     await action.execute(ctx);
-    expect(applyResearch).toHaveBeenCalledWith('p1', 'system', expect.objectContaining({ score: 80, decision: 'TEST_NOW' }));
+    expect(applyResearch).toHaveBeenCalledWith('p1', 'ws', 'system', expect.objectContaining({ score: 80, decision: 'TEST_NOW' }));
   });
 });
 

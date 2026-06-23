@@ -249,7 +249,7 @@ export class RunsController {
     @Body() body: RunPipelineBody,
     @CurrentUser() user: User,
   ): Promise<RunModel> {
-    const product = await this.products.get(productId);
+    const product = await this.products.get(productId, ws);
     const pipeline = await this.research.seedDoc(ws, user.id);
     const run = await this.runs.createForPipeline(this.productRunInput(ws, productId, product, pipeline, body), user.id);
     return this.runs.toView(run);
@@ -258,7 +258,7 @@ export class RunsController {
   @Get('workspaces/:id/products/:productId/runs')
   @UseGuards(WorkspaceGuard)
   async listProductRuns(@Param('id') ws: string, @Param('productId') productId: string): Promise<RunModel[]> {
-    return this.runs.toViews(await this.runs.listForProduct(productId));
+    return this.runs.toViews(await this.runs.listForProduct(productId, ws));
   }
 
   @Get('projects/:id/tasks/:taskId/runs')

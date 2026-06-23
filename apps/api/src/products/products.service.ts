@@ -53,7 +53,7 @@ export class ProductsService {
     return this.toView(doc);
   }
 
-  async applyResearch(productId: string, actorId: string, p: {
+  async applyResearch(productId: string, workspaceId: string, actorId: string, p: {
     evidence?: EvidenceClaim[]; sources?: SourceRow[]; unitEcon?: UnitEcon;
     subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;
   }): Promise<ProductView> {
@@ -66,19 +66,19 @@ export class ProductsService {
     if (p.grade !== undefined) set.grade = p.grade;
     if (p.decision !== undefined) set.decision = p.decision;
     const doc = await this.model
-      .findOneAndUpdate({ _id: productId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
+      .findOneAndUpdate({ _id: productId, workspaceId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
       .exec();
     if (!doc) throw new NotFoundException('Product not found.');
     return this.toView(doc);
   }
 
-  async get(id: string): Promise<ProductView> {
-    const doc = await this.model.findOne({ _id: id, active: { $ne: false } }).exec();
+  async get(id: string, workspaceId: string): Promise<ProductView> {
+    const doc = await this.model.findOne({ _id: id, workspaceId, active: { $ne: false } }).exec();
     if (!doc) throw new NotFoundException('Product not found.');
     return this.toView(doc);
   }
 
-  async update(id: string, actorId: string, dto: UpdateProductDto): Promise<ProductView> {
+  async update(id: string, workspaceId: string, actorId: string, dto: UpdateProductDto): Promise<ProductView> {
     const set: Record<string, unknown> = { updatedBy: actorId };
     if (dto.name !== undefined) set.name = dto.name.trim().slice(0, MAX_NAME);
     if (dto.description !== undefined) set.description = dto.description.trim().slice(0, MAX_DESC);
@@ -96,15 +96,15 @@ export class ProductsService {
     if (dto.offer !== undefined) set.offer = dto.offer;
 
     const doc = await this.model
-      .findOneAndUpdate({ _id: id, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
+      .findOneAndUpdate({ _id: id, workspaceId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
       .exec();
     if (!doc) throw new NotFoundException('Product not found.');
     return this.toView(doc);
   }
 
-  async remove(id: string, actorId: string): Promise<void> {
+  async remove(id: string, workspaceId: string, actorId: string): Promise<void> {
     await this.model
-      .findOneAndUpdate({ _id: id, active: { $ne: false } }, { $set: { active: false, updatedBy: actorId } })
+      .findOneAndUpdate({ _id: id, workspaceId, active: { $ne: false } }, { $set: { active: false, updatedBy: actorId } })
       .exec();
   }
 

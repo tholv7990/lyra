@@ -181,8 +181,8 @@ export class RunsService extends BaseRepository<Run> {
     return this.find({ projectId }, { sort: { createdAt: -1 } });
   }
 
-  listForProduct(productId: string) {
-    return this.find({ productId, active: { $ne: false } }, { sort: { createdAt: -1 } });
+  listForProduct(productId: string, workspaceId: string) {
+    return this.find({ productId, workspaceId, active: { $ne: false } }, { sort: { createdAt: -1 } });
   }
 
   async toView(doc: RunDocument): Promise<RunModel> {
