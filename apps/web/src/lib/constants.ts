@@ -11,6 +11,7 @@ export const PROVIDER_LABELS: Record<Provider, string> = {
   [Provider.Image]: 'Image',
   [Provider.Video]: 'Video',
   [Provider.Crawl]: 'Crawl',
+  [Provider.Research]: 'Research',
 };
 
 // Display names for workspace roles. One place so the bell, the future Members
