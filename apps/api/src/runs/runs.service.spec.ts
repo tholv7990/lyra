@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Provider, StepKind, ActionType, StepMode, StepStatus, ImageOp } from '@lyra/shared';
 import { RunsService } from './runs.service';
+import { SaveProductAction } from './providers/save-product.action';
 import type { RunDocument } from './run.schema';
 
 function makeService(deps?: {
@@ -395,7 +396,6 @@ describe('RunsService.appendImageAction', () => {
 describe('SaveProductAction', () => {
   it('SaveProduct enriches the run\'s target product via applyResearch', async () => {
     const applyResearch = jest.fn().mockResolvedValue({ id: 'p1' });
-    const { SaveProductAction } = require('./providers/save-product.action');
     const action = new SaveProductAction({ applyResearch } as any);
     const ctx = { action: { type: 'save-product' }, productId: 'p1', workspaceId: 'ws', ledger: { data: { score: 80, decision: 'TEST_NOW' }, evidence: [], sources: [], variables: { note: 'X' } } } as any;
     await action.execute(ctx);
