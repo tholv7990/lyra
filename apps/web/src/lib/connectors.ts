@@ -16,6 +16,9 @@ export const connectorsApi = {
   tavilyStatus: (ws: string) =>
     api<ConnectorCredentialInfo>(`${base(ws)}/credentials/tavily`),
 
+  firecrawlStatus: (ws: string) =>
+    api<ConnectorCredentialInfo>(`${base(ws)}/credentials/firecrawl`),
+
   connectLink: (ws: string, connector: string) =>
     api<{ url: string }>(`${base(ws)}/connect-link?connector=${encodeURIComponent(connector)}`),
 
