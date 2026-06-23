@@ -140,9 +140,16 @@ export class RunsController {
       workspaceId: ws,
       pipelineId: pipeline._id.toString(),
       pipelineName: pipeline.name,
-      projectVariables: Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== '')),
+      projectVariables: {},
       note: product.name ?? pipeline.description ?? '',
-      variables: mergeCustomVars(pipeline.variables, body.variables),
+      // Product values must WIN over the research template's empty custom-var
+      // defaults (niche/product default ''), so apply them in the custom-variable
+      // layer — createForPipeline applies `variables` AFTER projectVariables.
+      // Run-time body.variables still override the product's values.
+      variables: mergeCustomVars(pipeline.variables, {
+        ...Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== '')),
+        ...(body.variables ?? {}),
+      }),
       collections: body.collections,
       steps: pipeline.steps.map((s) => ({
         name: s.name,

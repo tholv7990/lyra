@@ -26,7 +26,10 @@ export class UsersService extends BaseRepository<User> {
 
   /** Batch-resolve user ids to populated { id, name } refs for responses. */
   async refMap(ids: (string | undefined)[]): Promise<Map<string, UserRef>> {
-    const unique = [...new Set(ids.filter((x): x is string => !!x))];
+    // Only query ObjectId-shaped ids — synthetic actors (e.g. 'system' from the
+    // research SaveProduct action) aren't real users; they resolve via userRef's
+    // fallback. Querying a non-ObjectId throws a Mongoose CastError.
+    const unique = [...new Set(ids.filter((x): x is string => !!x))].filter((id) => /^[a-fA-F0-9]{24}$/.test(id));
     if (unique.length === 0) return new Map();
     const users = await this.findByIds(unique);
     return new Map(

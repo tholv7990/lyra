@@ -43,11 +43,14 @@ export class ResearchStepProvider implements StepProvider {
     const result = await runResearch(ctx.step.prompt, {
       search: (q) => this.tavily.search(q, { apiKey: tavilyKey, maxResults: RESULTS_PER_SEARCH }),
       llm: async (system, prompt) => {
+        // 2048 truncated the EXTRACT JSON (many claims across sources) → invalid
+        // JSON → silently 0 claims. The extraction needs room to list claims for
+        // up to maxSources sources; 8192 fits a full multi-source extraction.
         if (aiProvider === Provider.Anthropic) {
-          return (await (client as AnthropicClient).complete({ apiKey: aiKey, model, system, prompt, maxTokens: 2048 })).text;
+          return (await (client as AnthropicClient).complete({ apiKey: aiKey, model, system, prompt, maxTokens: 8192 })).text;
         }
         const baseUrl = compatBaseUrl(aiProvider) ?? '';
-        return (await (client as OpenAiCompatClient).complete({ baseUrl, provider: aiProvider, apiKey: aiKey, model, system, prompt, maxTokens: 2048 })).text;
+        return (await (client as OpenAiCompatClient).complete({ baseUrl, provider: aiProvider, apiKey: aiKey, model, system, prompt, maxTokens: 8192 })).text;
       },
       checkAlive: async (url) => { try { return (await safeFetch(url)).ok; } catch { return false; } },
       caps: CAPS,
