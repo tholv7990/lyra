@@ -361,7 +361,7 @@ describe('RunsService.appendImageAction', () => {
     const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
     const keys = { list: jest.fn().mockResolvedValue([{ provider: 'google' }]), getDecrypted: jest.fn().mockResolvedValue('goog-key') };
     const assets = {
-      listForRun: jest.fn().mockResolvedValue([{ _id: { toString: () => 'A' }, stepIndex: 0, type: 'image', url: 'https://cdn/hero.png' }]),
+      listForRun: jest.fn().mockResolvedValue([{ _id: { toString: () => 'A' }, stepIndex: 0, type: 'image', url: `data:image/png;base64,${Buffer.from('hero').toString('base64')}` }]),
       createForStep: jest.fn().mockResolvedValue(['B']),
     };
     const cache = makeCacheMock(null);
