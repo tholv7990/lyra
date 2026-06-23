@@ -767,6 +767,27 @@ export interface ProductSource {
   platform?: string;
   url?: string;
 }
+// ── Storyboard (P3 artifact — per-task video creative plan) ──────────────────
+export interface StoryboardFrame {
+  index: number;
+  narration: string;            // VO / on-screen text for this beat
+  imagePrompt: string;          // prompt for the frame's visual
+  mediaType: 'image' | 'video';
+  assetId?: string;             // generated visual (Lyra Asset) — per-frame addressable (set in P4)
+  durationSec: number;          // derived from narration audio / clip (estimated until P4)
+  templateParams?: Record<string, unknown>;
+}
+
+export interface Storyboard {
+  title: string;
+  aspect: '9:16' | '1:1' | '16:9';
+  template: string;             // brand template id, e.g. 'ugc-9x16'
+  templateParams: Record<string, unknown>; // brand-kit-derived
+  audio?: { voiceId?: string; speed?: number; bgmId?: string };
+  frames: StoryboardFrame[];
+  totalDurationSec?: number;
+}
+
 export interface Product {
   id: string;
   workspaceId: string;
