@@ -202,7 +202,8 @@ export type ActionStep =
   | { type: ActionType.Score }
   | { type: ActionType.DemandGate }
   | { type: ActionType.ResolveInputs }
-  | { type: ActionType.Competition };
+  | { type: ActionType.Competition }
+  | { type: ActionType.RiskScreen };
 
 export interface ProjectBrandKit {
   logoUrl?: string;
@@ -739,6 +740,9 @@ export interface CompetitionData {
   marketType: 'healthy' | 'dominated' | 'commodity' | 'emerging' | 'underserved';
 }
 
+export interface RiskFlags { unresolvedSafety: boolean; materialIpRisk: boolean; misleadingClaimsRequired: boolean; }
+export interface Scenarios { low: UnitEcon; base: UnitEcon; high: UnitEcon; plus10Cac: UnitEcon; plus10Landed: UnitEcon; doubleReturns: UnitEcon; }
+
 // ── Scoring / grading / decision (spec §1E) ────────────────────────────────
 export type ConfidenceGrade = 'A' | 'B' | 'C' | 'D';
 export interface HardGates {
@@ -788,6 +792,9 @@ export interface Product {
   unitEconInputs?: UnitEconInputs; // the cost inputs CM1 was computed from (explains the economics)
   assumptions?: string[];        // econ defaults the run had to assume (resolve-inputs)
   competition?: CompetitionData; // competitor scan + market type
+  riskFlags?: RiskFlags;   // dealbreaker screen (drives the REJECT gates)
+  riskNotes?: string[];    // why each risk flag was raised
+  scenarios?: Scenarios;   // unit-econ sensitivities
   econInputs?: ProductEconInputs;
   competitorIds: string[];
   outcome?: string;

@@ -119,7 +119,20 @@ describe('decideWithReason + non-compensatory floors', () => {
   });
 });
 
-import { resolveInputs } from './research';
+import { resolveInputs, runScenarios } from './research';
+
+describe('runScenarios', () => {
+  const base = { aov: 50, landedCost: 12, paymentFeePct: 0.03, fulfillment: 4, shippingSubsidy: 2, expectedReturnLossPct: 0.05, warrantyReservePct: 0, desiredPostAdCmPct: 0.15 };
+  it('perturbs each case in the expected direction', () => {
+    const s = runScenarios(base);
+    expect(s.low.cm1).toBeLessThan(s.base.cm1);
+    expect(s.high.cm1).toBeGreaterThan(s.base.cm1);
+    expect(s.plus10Landed.cm1).toBeLessThan(s.base.cm1);
+    expect(s.doubleReturns.cm1).toBeLessThan(s.base.cm1);
+    expect(s.plus10Cac.cm1).toBeCloseTo(s.base.cm1, 6);
+    expect(s.plus10Cac.maxCac).toBeLessThan(s.base.maxCac);
+  });
+});
 
 describe('resolveInputs', () => {
   const full = { aov: 50, landedCost: 12, paymentFeePct: 0.03, fulfillment: 4, shippingSubsidy: 2, expectedReturnLossPct: 0.05, warrantyReservePct: 0, desiredPostAdCmPct: 0.15 };
