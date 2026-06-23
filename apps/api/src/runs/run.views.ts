@@ -40,6 +40,14 @@ function toStep(s: RunStep): Step {
     startedAt: s.startedAt,
     finishedAt: s.finishedAt,
     cached: s.cached,
+    // kind/action must survive reload so an action step (incl. the research CODE
+    // actions) is dispatched correctly in the gated step-by-step flow; the
+    // structured ledger fields must survive so prior steps feed the RunLedger.
+    kind: s.kind as Step['kind'],
+    action: s.action as Step['action'],
+    evidence: s.evidence as Step['evidence'],
+    sources: s.sources as Step['sources'],
+    data: s.data,
   };
 }
 
