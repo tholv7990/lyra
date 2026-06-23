@@ -47,8 +47,9 @@ export function canCreate(ctx: MemberCtx): boolean {
 }
 
 // Providers that make no external AI call and therefore need no BYOK key — a
-// step on one is never "locked" by a missing key. Crawl just fetches a URL.
-const NO_KEY_PROVIDERS: Provider[] = [Provider.Crawl];
+// step on one is never "locked" by a missing key. Crawl just fetches a URL;
+// Research resolves internally (no user-supplied key).
+const NO_KEY_PROVIDERS: Provider[] = [Provider.Crawl, Provider.Research];
 
 export function providerNeedsKey(provider: Provider): boolean {
   return !NO_KEY_PROVIDERS.includes(provider);

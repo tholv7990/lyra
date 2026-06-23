@@ -477,3 +477,12 @@ describe('fallbackChain', () => {
     expect(fallbackChain(Provider.Crawl, all)).toEqual([Provider.Crawl]);
   });
 });
+
+describe('Provider.Research wiring', () => {
+  it('needs no AI key (resolved internally)', () => {
+    expect(providerNeedsKey(Provider.Research)).toBe(false);
+  });
+  it('has a catalog placeholder (Record stays exhaustive)', () => {
+    expect(MODEL_CATALOG[Provider.Research]?.length).toBeGreaterThan(0);
+  });
+});

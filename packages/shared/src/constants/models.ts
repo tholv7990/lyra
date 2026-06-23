@@ -40,6 +40,7 @@ export const MODEL_CATALOG: Record<Provider, ModelOption[]> = {
   // required model non-empty.
   [Provider.Crawl]: [{ id: 'fetch', label: 'Fetch page' }],
   [Provider.Google]: [{ id: 'gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image' }],
+  [Provider.Research]: [{ id: 'auto', label: 'Auto (best available)' }],
 };
 
 export function isModelAllowed(provider: Provider, model: string): boolean {

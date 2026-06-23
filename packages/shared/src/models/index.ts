@@ -195,7 +195,10 @@ export interface StepCondition {
 export type ActionStep =
   | { type: ActionType.Brand; position: Corner; size: 'sm' | 'md' | 'lg' }
   | { type: ActionType.Crawl; source: 'input' | 'homepage'; quality?: string }
-  | { type: ActionType.Publish; channelIds?: string[]; captionFrom?: string };
+  | { type: ActionType.Publish; channelIds?: string[]; captionFrom?: string }
+  | { type: ActionType.UnitEcon }
+  | { type: ActionType.Evaluate }
+  | { type: ActionType.SaveProduct; productName?: string };
 
 export interface ProjectBrandKit {
   logoUrl?: string;
@@ -222,6 +225,9 @@ export interface Step {
   startedAt?: string;
   finishedAt?: string;
   cached?: boolean;
+  evidence?: EvidenceClaim[];
+  sources?: SourceRow[];
+  data?: Record<string, unknown>;
   kind?: StepKind;
   action?: ActionStep;
 }

@@ -60,6 +60,7 @@ export enum Provider {
   Video = 'video',
   Crawl = 'crawl', // Source step: fetch a URL → product images + text (no API key)
   Google = 'google', // Gemini image provider (gemini-2.5-flash-image)
+  Research = 'research', // Research pipeline: resolved internally (no API key)
 }
 
 export enum PromptStatus {
@@ -85,7 +86,7 @@ export enum PromptType {
 }
 
 export enum StepKind { Prompt = 'prompt', Action = 'action' }
-export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish' }
+export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish', UnitEcon = 'unit-econ', Evaluate = 'evaluate', SaveProduct = 'save-product' }
 export enum Corner { TL = 'tl', TR = 'tr', BL = 'bl', BR = 'br', Center = 'center' }
 
 // Workspace kind: Personal workspaces are created automatically on sign-up;
