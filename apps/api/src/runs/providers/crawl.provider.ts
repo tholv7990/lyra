@@ -5,14 +5,21 @@ import type {
   StepRunContext,
   StepRunOutput,
 } from './step-provider.interface';
+import { ConnectorCredentialsService } from '../../connectors/connector-credentials.service';
+import { FirecrawlClient } from './firecrawl.client';
+import { fetchPage } from './fetch-page';
 
-// Source step: fetch a URL (taken from the step's prompt) and extract the page's
-// product images + title/description. No API key. The primary image is returned
-// as an asset; a markdown summary (title · description · image URLs) is the
-// result, so a downstream step (e.g. a ChatGPT branding step) consumes it via
-// {input}. This is the first "Source" connector of the dropshipping autopilot.
+// Source step: fetch a URL (from the step's prompt) and extract product images +
+// title/description. Direct fetch first (free); if the page is bot-blocked/thin and the
+// workspace has a Firecrawl key, escalate to Firecrawl. The primary image is returned as
+// an asset; a markdown summary is the result for a downstream {input}.
 @Injectable()
 export class CrawlStepProvider implements StepProvider {
+  constructor(
+    private readonly creds: ConnectorCredentialsService,
+    private readonly firecrawl: FirecrawlClient,
+  ) {}
+
   async execute(ctx: StepRunContext): Promise<StepRunOutput> {
     const url = firstUrl(ctx.step.prompt);
     if (!url) {
@@ -21,14 +28,26 @@ export class CrawlStepProvider implements StepProvider {
       );
     }
 
-    let html: string;
-    try {
-      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (LyraCrawler)' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      html = await res.text();
-    } catch (e) {
-      throw new Error(`Crawl failed for ${url}: ${e instanceof Error ? e.message : 'unknown error'}`);
+    const firecrawlKey = await this.creds.getDecrypted(ctx.workspaceId, 'firecrawl');
+    const page = await fetchPage(url, {
+      firecrawlKey,
+      // Existing direct-fetch behavior preserved (UA + follow redirects). A non-2xx or a
+      // network error returns an empty body so fetchPage escalates instead of hard-failing.
+      directFetch: async (u) => {
+        try {
+          const res = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0 (LyraCrawler)' } });
+          return { ok: res.ok, status: res.status, body: res.ok ? await res.text() : '' };
+        } catch {
+          return { ok: false, status: 0, body: '' };
+        }
+      },
+      firecrawlScrape: (u, k) => this.firecrawl.scrape(u, k),
+    });
+
+    if (!page.html) {
+      throw new Error(`Crawl failed for ${url}: no content (the page may be bot-blocked — add a Firecrawl key in Connections).`);
     }
+    const html = page.html;
 
     const title = metaProp(html, 'og:title') ?? tag(html, /<title[^>]*>([^<]+)<\/title>/i) ?? url;
     const description = metaProp(html, 'og:description') ?? metaName(html, 'description') ?? '';
@@ -39,7 +58,7 @@ export class CrawlStepProvider implements StepProvider {
     const result = [
       `# Crawled: ${decode(title)}`,
       '',
-      `**Source:** ${url}`,
+      `**Source:** ${url}${page.source === 'firecrawl' ? ' (via Firecrawl)' : ''}`,
       ...(description ? ['', `**Description:** ${decode(description)}`] : []),
       '',
       `**Images found (${images.length}):**`,
