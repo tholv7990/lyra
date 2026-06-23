@@ -35,6 +35,7 @@ function toStep(s: RunStep): Step {
       : undefined,
     result: s.result,
     assetIds: s.assetIds,
+    inputAssetIds: s.inputAssetIds,
     usage: s.usage,
     error: s.error,
     startedAt: s.startedAt,
