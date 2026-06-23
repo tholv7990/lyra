@@ -105,4 +105,12 @@ export default {
   imageOp_upscale: 'Upscale',
   imageOp_variation: 'Variation',
   imageOp_outpaint: 'Outpaint',
+  phaseFind: 'Find candidates',
+  phaseFindSub: 'harvest + ground the evidence',
+  phaseValidate: 'Validate demand',
+  phaseValidateSub: '≥3 independent demand signals',
+  phaseEconomics: 'Economics & risk',
+  phaseEconomicsSub: 'score the factors + unit economics',
+  phaseDecide: 'Score & decide',
+  phaseDecideSub: 'weighted score → grade → decision → save',
 } as const;

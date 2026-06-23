@@ -104,4 +104,12 @@ export default {
   imageOp_upscale: 'Nâng cấp',
   imageOp_variation: 'Biến thể',
   imageOp_outpaint: 'Mở rộng',
+  phaseFind: 'Tìm ứng viên',
+  phaseFindSub: 'thu thập + kiểm chứng bằng chứng',
+  phaseValidate: 'Kiểm chứng nhu cầu',
+  phaseValidateSub: '≥3 tín hiệu nhu cầu độc lập',
+  phaseEconomics: 'Kinh tế & rủi ro',
+  phaseEconomicsSub: 'chấm các yếu tố + kinh tế đơn vị',
+  phaseDecide: 'Chấm điểm & quyết định',
+  phaseDecideSub: 'điểm có trọng số → hạng → quyết định → lưu',
 } as const;

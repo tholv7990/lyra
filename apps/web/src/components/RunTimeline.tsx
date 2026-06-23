@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ImageOp, MediaType, StepMode, StepStatus, type Asset, type Run, type Step } from '@lyra/shared';
+import { ImageOp, MediaType, StepMode, StepStatus, type Asset, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
@@ -92,164 +92,197 @@ export function RunTimeline({
     });
   const startEdit = (step: Step) => { setDraft(step.prompt); setEditing(step.index); };
 
-  return (
-    <div className="rt">
-      {run.steps.map((step, i) => {
-        const isGate = step.mode === StepMode.Gate;
-        const provider = providerOf(step);
-        const locked = !hasKey(provider);
-        const isCurrent = step.index === run.currentStep && run.status !== 'done';
-        const runnable = isCurrent && step.status !== StepStatus.Done && step.status !== StepStatus.Waiting;
-        const queued = step.status === StepStatus.Idle || step.status === StepStatus.Queued;
-        const stepAssets = assets.filter((a) => a.stepIndex === step.index);
-        const history = historyForStep?.(step.index) ?? [];
-        const hasResult = !!step.result || !!step.error || stepAssets.length > 0 || history.length > 0;
-        const exp = open.has(step.index);
-        const last = i === run.steps.length - 1;
+  const renderStep = (step: Step) => {
+    const isGate = step.mode === StepMode.Gate;
+    const provider = providerOf(step);
+    const locked = !hasKey(provider);
+    const isCurrent = step.index === run.currentStep && run.status !== 'done';
+    const runnable = isCurrent && step.status !== StepStatus.Done && step.status !== StepStatus.Waiting;
+    const queued = step.status === StepStatus.Idle || step.status === StepStatus.Queued;
+    const stepAssets = assets.filter((a) => a.stepIndex === step.index);
+    const history = historyForStep?.(step.index) ?? [];
+    const hasResult = !!step.result || !!step.error || stepAssets.length > 0 || history.length > 0;
+    const exp = open.has(step.index);
+    const last = step.index === run.steps.length - 1;
 
-        return (
-          <div className={`rt-step status-${step.status}`} key={step.index}>
-            <div className="rt-rail">
-              <span className="rt-ico"><StatusGlyph status={step.status} /></span>
-              {!last && <span className="rt-line" />}
-            </div>
+    return (
+      <div className={`rt-step status-${step.status}`} key={step.index}>
+        <div className="rt-rail">
+          <span className="rt-ico"><StatusGlyph status={step.status} /></span>
+          {!last && <span className="rt-line" />}
+        </div>
 
-            <div className="rt-content">
-              <div className="rt-head">
-                <span className={`rt-name${queued ? ' muted' : ''}`}>{stepTitle(step)}</span>
-                {step.provider && (
-                  <span className="rt-model">
-                    <ProviderIcon provider={step.provider} size={14} /> {step.model}
+        <div className="rt-content">
+          <div className="rt-head">
+            <span className={`rt-name${queued ? ' muted' : ''}`}>{stepTitle(step)}</span>
+            {step.provider && (
+              <span className="rt-model">
+                <ProviderIcon provider={step.provider} size={14} /> {step.model}
+              </span>
+            )}
+            {isGate && <span className="rt-gated">{t('run.gated')}</span>}
+            {step.cached && <span className="rt-cached">{t('run.cached')}</span>}
+            <span className="rt-flex" />
+            {hasResult && (
+              <button type="button" className="rt-toggle" onClick={() => toggle(step.index)}>
+                {exp ? t('run.hideOutput') : t('run.viewOutput')}
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ transform: exp ? 'rotate(180deg)' : 'none' }} aria-hidden><path d="m4.5 6.5 3.5 3 3.5-3" /></svg>
+              </button>
+            )}
+          </div>
+
+          {hasResult && exp && (
+            <div className="rt-out">
+              {step.error ? (
+                <div className="rt-out-text err">{step.error}</div>
+              ) : step.result ? (
+                <div className="rt-out-text">{step.result}</div>
+              ) : null}
+              {stepAssets.length > 0 && (
+                <div className="rt-assets">
+                  {stepAssets.map((a) =>
+                    a.type === 'image' ? (
+                      <div key={a.id} className="rn-asset-wrap">
+                        <a className="rt-asset" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><img src={a.thumbUrl || a.url} alt="" loading="lazy" /></a>
+                        {onImageAction && !locked && step.status === StepStatus.Done && (
+                          <div className="rn-asset-ops" role="group" aria-label={t('run.imageOps')}>
+                            {Object.values(ImageOp).map((op) => (
+                              <button
+                                key={op}
+                                type="button"
+                                className="rn-op-btn"
+                                disabled={busy}
+                                title={t(`run.imageOp_${op}`)}
+                                onClick={(e) => { e.stopPropagation(); onImageAction(step.index, a.id, op); }}
+                              >
+                                {t(`run.imageOp_${op}`)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <a key={a.id} className="rt-asset glyph" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><span aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span></a>
+                    ),
+                  )}
+                </div>
+              )}
+              <div className="rt-out-foot">
+                {history.length > 0 && (
+                  <span className="rt-across">
+                    <span className="rt-across-label">{t('run.acrossRuns')}</span>
+                    {history.slice(0, 4).map((h, j) => (
+                      <span key={h.runId} className={`rt-across-item status-${h.status}`} title={new Date(h.createdAt).toLocaleString()}>
+                        <span className="rt-across-dot" />#{history.length - j}
+                      </span>
+                    ))}
                   </span>
                 )}
-                {isGate && <span className="rt-gated">{t('run.gated')}</span>}
-                {step.cached && <span className="rt-cached">{t('run.cached')}</span>}
-                <span className="rt-flex" />
-                {hasResult && (
-                  <button type="button" className="rt-toggle" onClick={() => toggle(step.index)}>
-                    {exp ? t('run.hideOutput') : t('run.viewOutput')}
-                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ transform: exp ? 'rotate(180deg)' : 'none' }} aria-hidden><path d="m4.5 6.5 3.5 3 3.5-3" /></svg>
+                <button type="button" className="txt-btn rt-full" onClick={() => setResultFor(step.index)}>{t('run.viewFull')}</button>
+              </div>
+            </div>
+          )}
+
+          {step.status === StepStatus.Waiting && !locked && editing !== step.index && (
+            <div className="rt-gate">
+              <div className="rt-gate-top">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M8 1.6 14 4.4v3.8c0 3.4-2.5 5.6-6 6.6-3.5-1-6-3.2-6-6.6V4.4Z" /><path d="M8 6v2.6M8 10.8h.01" /></svg>
+                <div>
+                  <div className="rt-gate-title">{t('run.gatedTitle')}</div>
+                  <div className="rt-gate-sub">{t('run.gatedSub')}</div>
+                </div>
+              </div>
+              <div className="rt-gate-actions">
+                <button type="button" className="btn-primary btn-inline btn-sm" disabled={busy} onClick={() => onApprove(step.index)}>
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M6.16 11.1 3.3 8.24a.9.9 0 0 1 1.27-1.27l2.18 2.18 4.65-4.66a.9.9 0 1 1 1.28 1.28l-5.3 5.3a.9.9 0 0 1-1.27 0Z" /></svg>
+                  {t('run.approveContinue')}
+                </button>
+                {onReject && (
+                  <button type="button" className="btn-ghost btn-inline btn-sm rt-reject" disabled={busy} onClick={() => onReject(step.index)}>
+                    {t('run.reject')}
                   </button>
                 )}
+                <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => startEdit(step)}>
+                  {t('run.editRerun')}
+                </button>
               </div>
-
-              {hasResult && exp && (
-                <div className="rt-out">
-                  {step.error ? (
-                    <div className="rt-out-text err">{step.error}</div>
-                  ) : step.result ? (
-                    <div className="rt-out-text">{step.result}</div>
-                  ) : null}
-                  {stepAssets.length > 0 && (
-                    <div className="rt-assets">
-                      {stepAssets.map((a) =>
-                        a.type === 'image' ? (
-                          <div key={a.id} className="rn-asset-wrap">
-                            <a className="rt-asset" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><img src={a.thumbUrl || a.url} alt="" loading="lazy" /></a>
-                            {onImageAction && !locked && step.status === StepStatus.Done && (
-                              <div className="rn-asset-ops" role="group" aria-label={t('run.imageOps')}>
-                                {Object.values(ImageOp).map((op) => (
-                                  <button
-                                    key={op}
-                                    type="button"
-                                    className="rn-op-btn"
-                                    disabled={busy}
-                                    title={t(`run.imageOp_${op}`)}
-                                    onClick={(e) => { e.stopPropagation(); onImageAction(step.index, a.id, op); }}
-                                  >
-                                    {t(`run.imageOp_${op}`)}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <a key={a.id} className="rt-asset glyph" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><span aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span></a>
-                        ),
-                      )}
-                    </div>
-                  )}
-                  <div className="rt-out-foot">
-                    {history.length > 0 && (
-                      <span className="rt-across">
-                        <span className="rt-across-label">{t('run.acrossRuns')}</span>
-                        {history.slice(0, 4).map((h, j) => (
-                          <span key={h.runId} className={`rt-across-item status-${h.status}`} title={new Date(h.createdAt).toLocaleString()}>
-                            <span className="rt-across-dot" />#{history.length - j}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                    <button type="button" className="txt-btn rt-full" onClick={() => setResultFor(step.index)}>{t('run.viewFull')}</button>
-                  </div>
-                </div>
-              )}
-
-              {step.status === StepStatus.Waiting && !locked && editing !== step.index && (
-                <div className="rt-gate">
-                  <div className="rt-gate-top">
-                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M8 1.6 14 4.4v3.8c0 3.4-2.5 5.6-6 6.6-3.5-1-6-3.2-6-6.6V4.4Z" /><path d="M8 6v2.6M8 10.8h.01" /></svg>
-                    <div>
-                      <div className="rt-gate-title">{t('run.gatedTitle')}</div>
-                      <div className="rt-gate-sub">{t('run.gatedSub')}</div>
-                    </div>
-                  </div>
-                  <div className="rt-gate-actions">
-                    <button type="button" className="btn-primary btn-inline btn-sm" disabled={busy} onClick={() => onApprove(step.index)}>
-                      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M6.16 11.1 3.3 8.24a.9.9 0 0 1 1.27-1.27l2.18 2.18 4.65-4.66a.9.9 0 1 1 1.28 1.28l-5.3 5.3a.9.9 0 0 1-1.27 0Z" /></svg>
-                      {t('run.approveContinue')}
-                    </button>
-                    {onReject && (
-                      <button type="button" className="btn-ghost btn-inline btn-sm rt-reject" disabled={busy} onClick={() => onReject(step.index)}>
-                        {t('run.reject')}
-                      </button>
-                    )}
-                    <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => startEdit(step)}>
-                      {t('run.editRerun')}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {editing === step.index && (
-                <div className="rt-edit">
-                  <textarea className="text-input" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} />
-                  <div className="rt-edit-actions">
-                    <button type="button" className="btn-primary btn-inline btn-sm" disabled={busy} onClick={() => { onSavePrompt(step.index, draft); onRunStep(step.index); setEditing(null); }}>
-                      {t('run.saveRerun')}
-                    </button>
-                    <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => setEditing(null)}>{t('common.cancel')}</button>
-                  </div>
-                </div>
-              )}
-
-              {runnable && !locked && editing !== step.index && (
-                <button type="button" className="btn-primary btn-inline btn-sm rt-run" disabled={busy} onClick={() => onRunStep(step.index)}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>
-                  {t('common.run')}
-                </button>
-              )}
-
-              {step.status === StepStatus.Done && !locked && onRegenerate && editing !== step.index && (
-                <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => onRegenerate(step.index)}>
-                  {t('run.regenerate')}
-                </button>
-              )}
-
-              {queued && !runnable && (
-                <div className="rt-queued">{t('run.queuedNote')}</div>
-              )}
-
-              {locked && (
-                <span className="muted rt-locked">
-                  {t('run.lockedHint', { provider })}{' '}
-                  <Link to="/settings" style={{ color: 'var(--primary)' }}>{t('nav.settings')}</Link>
-                </span>
-              )}
             </div>
-          </div>
-        );
-      })}
+          )}
+
+          {editing === step.index && (
+            <div className="rt-edit">
+              <textarea className="text-input" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} />
+              <div className="rt-edit-actions">
+                <button type="button" className="btn-primary btn-inline btn-sm" disabled={busy} onClick={() => { onSavePrompt(step.index, draft); onRunStep(step.index); setEditing(null); }}>
+                  {t('run.saveRerun')}
+                </button>
+                <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => setEditing(null)}>{t('common.cancel')}</button>
+              </div>
+            </div>
+          )}
+
+          {runnable && !locked && editing !== step.index && (
+            <button type="button" className="btn-primary btn-inline btn-sm rt-run" disabled={busy} onClick={() => onRunStep(step.index)}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>
+              {t('common.run')}
+            </button>
+          )}
+
+          {step.status === StepStatus.Done && !locked && onRegenerate && editing !== step.index && (
+            <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => onRegenerate(step.index)}>
+              {t('run.regenerate')}
+            </button>
+          )}
+
+          {queued && !runnable && (
+            <div className="rt-queued">{t('run.queuedNote')}</div>
+          )}
+
+          {locked && (
+            <span className="muted rt-locked">
+              {t('run.lockedHint', { provider })}{' '}
+              <Link to="/settings" style={{ color: 'var(--primary)' }}>{t('nav.settings')}</Link>
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const phaseGlyphStatus = (steps: Step[]): StepStatus => {
+    if (steps.some((s) => s.status === StepStatus.Error)) return StepStatus.Error;
+    if (steps.every((s) => s.status === StepStatus.Done || s.status === StepStatus.Skipped)) return StepStatus.Done;
+    if (run.status !== 'done' && steps.some((s) => s.index === run.currentStep || s.status === StepStatus.Running || s.status === StepStatus.Waiting)) return StepStatus.Running;
+    return StepStatus.Idle;
+  };
+  const phaseLabel: Record<ResearchPhaseGroup['key'], { name: string; sub: string }> = {
+    find: { name: t('run.phaseFind'), sub: t('run.phaseFindSub') },
+    validate: { name: t('run.phaseValidate'), sub: t('run.phaseValidateSub') },
+    economics: { name: t('run.phaseEconomics'), sub: t('run.phaseEconomicsSub') },
+    decide: { name: t('run.phaseDecide'), sub: t('run.phaseDecideSub') },
+  };
+
+  const research = isResearchRun(run.steps);
+  return (
+    <div className="rt">
+      {research
+        ? groupByResearchPhase(run.steps).map((group) => {
+            const done = group.steps.filter((s) => s.status === StepStatus.Done || s.status === StepStatus.Skipped).length;
+            const gs = phaseGlyphStatus(group.steps);
+            return (
+              <div className="rt-phase" key={group.key}>
+                <div className={`rt-phase-head status-${gs}`}>
+                  <span className="rt-phase-ico"><StatusGlyph status={gs} /></span>
+                  <span className="rt-phase-num">{group.phase}</span>
+                  <span className="rt-phase-name">{phaseLabel[group.key].name}</span>
+                  <span className="rt-phase-sub">{phaseLabel[group.key].sub}</span>
+                  <span className="rt-phase-count">{done}/{group.steps.length}</span>
+                </div>
+                {group.steps.map(renderStep)}
+              </div>
+            );
+          })
+        : run.steps.map(renderStep)}
 
       {resultFor !== null && run.steps[resultFor] && (
         <StepResultModal
