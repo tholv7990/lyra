@@ -77,7 +77,7 @@ export class ProductsService {
   async listForProject(workspaceId: string, projectId: string): Promise<ProductView[]> {
     const copies = await this.model.find({ workspaceId, projectId, active: { $ne: false } }).sort({ createdAt: -1 }).exec();
     const poolIds = copies.map((c) => c.poolProductId).filter((x): x is string => !!x);
-    const pools = poolIds.length ? await this.model.find({ _id: { $in: poolIds } }).exec() : [];
+    const pools = poolIds.length ? await this.model.find({ _id: { $in: poolIds }, workspaceId }).exec() : [];
     const poolById = new Map(pools.map((p) => [p._id.toString(), p]));
     const refs = await this.users.refMap(copies.flatMap((d) => [d.createdBy, d.updatedBy]));
     return copies.map((c) => {
@@ -91,9 +91,10 @@ export class ProductsService {
   async refreshCopy(copyId: string, workspaceId: string, projectId: string, actorId: string): Promise<ProductView> {
     const copy = await this.model.findOne({ _id: copyId, workspaceId, projectId, active: { $ne: false } }).exec();
     if (!copy?.poolProductId) throw new NotFoundException('Product copy not found.');
-    const pool = await this.model.findOne({ _id: copy.poolProductId }).exec();
+    const pool = await this.model.findOne({ _id: copy.poolProductId, workspaceId, projectId: { $exists: false } }).exec();
     if (!pool) throw new NotFoundException('Pool product not found.');
     copy.name = pool.name; copy.images = pool.images ?? []; copy.category = pool.category; copy.source = pool.source;
+    copy.niche = pool.niche; copy.description = pool.description ?? '';
     copy.poolSnapshotAt = new Date().toISOString(); copy.updatedBy = actorId;
     await copy.save();
     return this.toView(copy);
@@ -198,11 +199,13 @@ export class ProductsService {
 }
 
 function driftsFrom(
-  copy: { name: string; category?: string; images: string[]; source?: { url?: string; platform?: string } },
-  pool: { name: string; category?: string; images: string[]; source?: { url?: string; platform?: string } },
+  copy: { name: string; category?: string; images: string[]; source?: { url?: string; platform?: string }; niche?: string; description?: string },
+  pool: { name: string; category?: string; images: string[]; source?: { url?: string; platform?: string }; niche?: string; description?: string },
 ): boolean {
   return copy.name !== pool.name
     || (copy.category ?? '') !== (pool.category ?? '')
     || JSON.stringify(copy.images ?? []) !== JSON.stringify(pool.images ?? [])
-    || JSON.stringify(copy.source ?? {}) !== JSON.stringify(pool.source ?? {});
+    || JSON.stringify(copy.source ?? {}) !== JSON.stringify(pool.source ?? {})
+    || (copy.niche ?? '') !== (pool.niche ?? '')
+    || (copy.description ?? '') !== (pool.description ?? '');
 }

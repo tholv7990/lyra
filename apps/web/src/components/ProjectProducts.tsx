@@ -92,8 +92,11 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
   }
 
   // ── picker options: pool products not already selected ────────────────────
+  // Only true pool products (no poolProductId and no projectId) may appear in the picker.
+  // Copies returned by productsApi.list() would otherwise surface as selectable entries.
+  const truePool = pool.filter((p) => !p.poolProductId && !p.projectId);
   const selectedPoolIds = new Set(copies.map((c) => c.poolProductId).filter(Boolean));
-  const availablePool = pool.filter((p) => !selectedPoolIds.has(p.id));
+  const availablePool = truePool.filter((p) => !selectedPoolIds.has(p.id));
 
   const placeholderOption: MenuPickerOption<string> = {
     value: '',
