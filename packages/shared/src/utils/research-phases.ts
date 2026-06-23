@@ -19,11 +19,15 @@ export function researchPhaseOf(step: Step): ResearchPhase | null {
     case ActionType.DemandGate: return 2;
     case ActionType.Score:
     case ActionType.UnitEcon:
-    case ActionType.RiskScreen: return 3;
+    case ActionType.RiskScreen:
+    case ActionType.CreativePotential:
+    case ActionType.SupplyChain: return 3;
     case ActionType.Evaluate:
     case ActionType.SaveProduct: return 4;
     case ActionType.ResolveInputs: return 1;
-    case ActionType.Competition: return 2;
+    case ActionType.Competition:
+    case ActionType.CustomerJob:
+    case ActionType.ReviewMining: return 2;
     default:
       return step.provider === Provider.Research ? 1 : null;
   }

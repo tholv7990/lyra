@@ -28,6 +28,12 @@ describe('researchPhaseOf', () => {
   it('maps risk-screen to phase 3', () => {
     expect(researchPhaseOf(step({ action: { type: ActionType.RiskScreen } as never }))).toBe(3);
   });
+  it('maps the v2 evidence steps to their phases', () => {
+    expect(researchPhaseOf(step({ action: { type: ActionType.CustomerJob } as never }))).toBe(2);
+    expect(researchPhaseOf(step({ action: { type: ActionType.ReviewMining } as never }))).toBe(2);
+    expect(researchPhaseOf(step({ action: { type: ActionType.CreativePotential } as never }))).toBe(3);
+    expect(researchPhaseOf(step({ action: { type: ActionType.SupplyChain } as never }))).toBe(3);
+  });
 });
 
 describe('isResearchRun', () => {

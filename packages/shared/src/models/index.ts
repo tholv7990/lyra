@@ -203,7 +203,11 @@ export type ActionStep =
   | { type: ActionType.DemandGate }
   | { type: ActionType.ResolveInputs }
   | { type: ActionType.Competition }
-  | { type: ActionType.RiskScreen };
+  | { type: ActionType.RiskScreen }
+  | { type: ActionType.CustomerJob }
+  | { type: ActionType.ReviewMining }
+  | { type: ActionType.CreativePotential }
+  | { type: ActionType.SupplyChain };
 
 export interface ProjectBrandKit {
   logoUrl?: string;
@@ -743,6 +747,11 @@ export interface CompetitionData {
 export interface RiskFlags { unresolvedSafety: boolean; materialIpRisk: boolean; misleadingClaimsRequired: boolean; }
 export interface Scenarios { low: UnitEcon; base: UnitEcon; high: UnitEcon; plus10Cac: UnitEcon; plus10Landed: UnitEcon; doubleReturns: UnitEcon; }
 
+export interface CustomerJob { customer: string; job: string; problem: string; alternative: string; trigger: string; }
+export interface ReviewMining { complaints: string[]; desiredFeatures: string[]; objections: string[]; }
+export interface CreativeConcept { hook: string; angle: string; }
+export interface SupplyChainInfo { suppliers: string[]; moq?: string; leadTime?: string; certs: string[]; notes: string[]; }
+
 // ── Scoring / grading / decision (spec §1E) ────────────────────────────────
 export type ConfidenceGrade = 'A' | 'B' | 'C' | 'D';
 export interface HardGates {
@@ -816,6 +825,10 @@ export interface Product {
   riskFlags?: RiskFlags;   // dealbreaker screen (drives the REJECT gates)
   riskNotes?: string[];    // why each risk flag was raised
   scenarios?: Scenarios;   // unit-econ sensitivities
+  customerJob?: CustomerJob;
+  reviewMining?: ReviewMining;
+  creativeConcepts?: CreativeConcept[];
+  supplyChain?: SupplyChainInfo;
   econInputs?: ProductEconInputs;
   competitorIds: string[];
   outcome?: string;
