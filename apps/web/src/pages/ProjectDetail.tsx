@@ -13,6 +13,7 @@ import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TaskList } from '../components/TaskList';
 import { ProductBoard } from '../components/ProductBoard';
+import { ProductDetail } from '../components/ProductDetail';
 import { StatusPill } from '../components/StatusPill';
 import { useLabels } from '../lib/useLabels';
 import { PencilIcon, PlusIcon, PublishIcon } from '../layout/icons';
@@ -300,8 +301,17 @@ export function ProjectDetail() {
             />
           )}
 
-          {/* selectedProduct stored for the detail modal wired in the next task */}
-          {selectedProduct && null}
+          {selectedProduct && (
+            <ProductDetail
+              product={selectedProduct}
+              onClose={() => setSelectedProduct(null)}
+              onUpdate={async (patch) => {
+                const updated = await productsApi.update(id!, selectedProduct.id, patch);
+                setSelectedProduct(updated);
+                setProducts(await productsApi.list(id!));
+              }}
+            />
+          )}
         </section>
 
       </div>
