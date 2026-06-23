@@ -53,6 +53,55 @@ export class ProductsService {
     return this.toView(doc);
   }
 
+  async selectIntoProject(workspaceId: string, projectId: string, poolProductId: string, actorId: string): Promise<ProductView> {
+    const pool = await this.model.findOne({ _id: poolProductId, workspaceId, projectId: { $exists: false }, active: { $ne: false } }).exec();
+    if (!pool) throw new NotFoundException('Pool product not found.');
+    const doc = await this.model.create({
+      workspaceId, projectId, poolProductId,
+      name: pool.name, description: pool.description ?? '',
+      ...(pool.source ? { source: pool.source } : {}),
+      ...(pool.niche ? { niche: pool.niche } : {}),
+      ...(pool.category ? { category: pool.category } : {}),
+      images: pool.images ?? [],
+      ...(pool.price !== undefined ? { price: pool.price } : {}),
+      ...(pool.compareAtPrice !== undefined ? { compareAtPrice: pool.compareAtPrice } : {}),
+      ...(pool.offer ? { offer: pool.offer } : {}),
+      status: ProductStatus.Candidate,
+      poolSnapshotAt: new Date().toISOString(),
+      competitorIds: [], tags: [], createdBy: actorId, updatedBy: actorId,
+    });
+    return this.toView(doc);
+  }
+
+  async listForProject(workspaceId: string, projectId: string): Promise<ProductView[]> {
+    const copies = await this.model.find({ workspaceId, projectId, active: { $ne: false } }).sort({ createdAt: -1 }).exec();
+    const poolIds = copies.map((c) => c.poolProductId).filter((x): x is string => !!x);
+    const pools = poolIds.length ? await this.model.find({ _id: { $in: poolIds } }).exec() : [];
+    const poolById = new Map(pools.map((p) => [p._id.toString(), p]));
+    const refs = await this.users.refMap(copies.flatMap((d) => [d.createdBy, d.updatedBy]));
+    return copies.map((c) => {
+      const view = toProductView(c, refs);
+      const pool = c.poolProductId ? poolById.get(c.poolProductId) : undefined;
+      view.drift = !!pool && driftsFrom(c, pool);
+      return view;
+    });
+  }
+
+  async refreshCopy(copyId: string, workspaceId: string, projectId: string, actorId: string): Promise<ProductView> {
+    const copy = await this.model.findOne({ _id: copyId, workspaceId, projectId, active: { $ne: false } }).exec();
+    if (!copy?.poolProductId) throw new NotFoundException('Product copy not found.');
+    const pool = await this.model.findOne({ _id: copy.poolProductId }).exec();
+    if (!pool) throw new NotFoundException('Pool product not found.');
+    copy.name = pool.name; copy.images = pool.images ?? []; copy.category = pool.category; copy.source = pool.source;
+    copy.poolSnapshotAt = new Date().toISOString(); copy.updatedBy = actorId;
+    await copy.save();
+    return this.toView(copy);
+  }
+
+  async unselect(copyId: string, workspaceId: string, projectId: string, actorId: string): Promise<void> {
+    await this.model.findOneAndUpdate({ _id: copyId, workspaceId, projectId, active: { $ne: false } }, { $set: { active: false, updatedBy: actorId } }).exec();
+  }
+
   async applyResearch(productId: string, workspaceId: string, actorId: string, p: {
     evidence?: EvidenceClaim[]; sources?: SourceRow[]; unitEcon?: UnitEcon;
     subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;
@@ -117,4 +166,14 @@ export class ProductsService {
     const refs = await this.users.refMap(docs.flatMap((d) => [d.createdBy, d.updatedBy]));
     return docs.map((d) => toProductView(d, refs));
   }
+}
+
+function driftsFrom(
+  copy: { name: string; category?: string; images: string[]; source?: { url?: string; platform?: string } },
+  pool: { name: string; category?: string; images: string[]; source?: { url?: string; platform?: string } },
+): boolean {
+  return copy.name !== pool.name
+    || (copy.category ?? '') !== (pool.category ?? '')
+    || JSON.stringify(copy.images ?? []) !== JSON.stringify(pool.images ?? [])
+    || JSON.stringify(copy.source ?? {}) !== JSON.stringify(pool.source ?? {});
 }

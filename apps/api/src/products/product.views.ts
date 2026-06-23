@@ -9,6 +9,8 @@ export function toProductView(d: ProductDocument, refs: Map<string, UserRef>): P
     workspaceId: d.workspaceId,
     projectId: d.projectId,
     originatingProjectId: d.originatingProjectId,
+    poolProductId: d.poolProductId,
+    poolSnapshotAt: d.poolSnapshotAt,
     name: d.name,
     description: d.description ?? '',
     source: d.source,

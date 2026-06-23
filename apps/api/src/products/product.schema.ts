@@ -23,6 +23,12 @@ export class Product extends AuditedEntity {
   @Prop()
   originatingProjectId?: string;
 
+  @Prop({ index: true })
+  poolProductId?: string;
+
+  @Prop()
+  poolSnapshotAt?: string;
+
   @Prop({ required: true })
   name!: string;
 
