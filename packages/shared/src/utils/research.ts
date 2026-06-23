@@ -89,3 +89,38 @@ export function decideWithReason(score: number, gates: HardGates, subScores?: Su
 export function decide(score: number, gates: HardGates, subScores?: SubScores): Decision {
   return decideWithReason(score, gates, subScores).decision;
 }
+
+export type EconRaw = Partial<Record<keyof UnitEconInputs, number>> & { targetPrice?: number };
+
+// §1A missing-input rule: fill conservative defaults for any absent/non-finite econ
+// input and record an explicit assumption for each. Never silently fabricates.
+export function resolveInputs(raw: EconRaw): { inputs: UnitEconInputs; assumptions: string[] } {
+  const assumptions: string[] = [];
+  const has = (v: number | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
+
+  let aov: number;
+  if (has(raw.aov)) aov = raw.aov;
+  else if (has(raw.targetPrice)) { aov = raw.targetPrice; assumptions.push(`Used target price $${aov} as AOV — no AOV provided`); }
+  else { aov = 30; assumptions.push('Assumed AOV $30 — no product price set; set it for real economics'); }
+
+  const def = (v: number | undefined, fallback: number, label: string): number => {
+    if (has(v)) return v;
+    assumptions.push(label);
+    return fallback;
+  };
+  const landedCost = has(raw.landedCost) ? raw.landedCost : (assumptions.push(`Assumed landed cost ≈30% of AOV ($${Math.round(aov * 0.3)}) — none provided`), Math.round(aov * 0.3));
+
+  return {
+    inputs: {
+      aov,
+      landedCost,
+      paymentFeePct: def(raw.paymentFeePct, 0.029, 'Assumed payment fee 2.9% — none provided'),
+      fulfillment: def(raw.fulfillment, 5, 'Assumed fulfillment $5/order — none provided'),
+      shippingSubsidy: def(raw.shippingSubsidy, 0, 'Assumed no shipping subsidy — none provided'),
+      expectedReturnLossPct: def(raw.expectedReturnLossPct, 0.05, 'Assumed 5% return loss — none provided'),
+      warrantyReservePct: def(raw.warrantyReservePct, 0, 'Assumed no warranty reserve — none provided'),
+      desiredPostAdCmPct: def(raw.desiredPostAdCmPct, 0.15, 'Assumed 15% desired post-ad margin — none provided'),
+    },
+    assumptions,
+  };
+}

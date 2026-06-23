@@ -5,7 +5,7 @@ import {
   ProductStatus,
   type CreateProductDto, type UpdateProductDto, type Product as ProductView,
   type EvidenceClaim, type SourceRow, type UnitEcon, type SubScores, type ConfidenceGrade, type Decision,
-  type HardGates, type UnitEconInputs,
+  type HardGates, type UnitEconInputs, type CompetitionData,
   type SaveProductResultDto,
 } from '@lyra/shared';
 import { Product, ProductDocument } from './product.schema';
@@ -108,7 +108,7 @@ export class ProductsService {
   async applyResearch(productId: string, workspaceId: string, actorId: string, p: {
     evidence?: EvidenceClaim[]; sources?: SourceRow[]; unitEcon?: UnitEcon;
     subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;
-    hardGates?: HardGates; unitEconInputs?: UnitEconInputs;
+    hardGates?: HardGates; unitEconInputs?: UnitEconInputs; assumptions?: string[]; competition?: CompetitionData;
   }): Promise<ProductView> {
     const set: Record<string, unknown> = { updatedBy: actorId };
     if (p.evidence !== undefined) set.evidence = p.evidence;
@@ -120,6 +120,8 @@ export class ProductsService {
     if (p.decision !== undefined) set.decision = p.decision;
     if (p.hardGates !== undefined) set.hardGates = p.hardGates;
     if (p.unitEconInputs !== undefined) set.unitEconInputs = p.unitEconInputs;
+    if (p.assumptions !== undefined) set.assumptions = p.assumptions;
+    if (p.competition !== undefined) set.competition = p.competition;
     const doc = await this.model
       .findOneAndUpdate({ _id: productId, workspaceId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
       .exec();

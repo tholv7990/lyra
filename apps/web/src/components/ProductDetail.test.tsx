@@ -84,4 +84,15 @@ describe('ProductDetail', () => {
     );
     expect(html).toContain('Not scored');
   });
+
+  it('shows assumptions and competition when present', () => {
+    const html = renderToStaticMarkup(
+      <ProductDetailBody
+        product={{ ...product, assumptions: ['Assumed AOV $30 — no price set'], competition: { competitors: [{ name: 'Acme', price: '$39' }], marketType: 'dominated' } } as any}
+        workspaceId="w" onClose={() => {}} onUpdate={async () => {}} onProductRefresh={async () => {}} />,
+    );
+    expect(html).toContain('Assumed AOV $30');
+    expect(html).toContain('Acme');
+    expect(html).toContain('dominated');
+  });
 });

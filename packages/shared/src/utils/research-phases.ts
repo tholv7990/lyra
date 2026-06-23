@@ -21,6 +21,8 @@ export function researchPhaseOf(step: Step): ResearchPhase | null {
     case ActionType.UnitEcon: return 3;
     case ActionType.Evaluate:
     case ActionType.SaveProduct: return 4;
+    case ActionType.ResolveInputs: return 1;
+    case ActionType.Competition: return 2;
     default:
       return step.provider === Provider.Research ? 1 : null;
   }
