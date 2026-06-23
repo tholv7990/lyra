@@ -2,7 +2,7 @@ import { ArrayMinSize, IsArray, IsIn, IsOptional, IsString, MaxLength, MinLength
 import type { DownloadDto, PublishDto, ResolveDto, SaveCredentialDto, SetCrawlerCookiesDto } from '@lyra/shared';
 
 export class SaveCredentialBody implements SaveCredentialDto {
-  @IsString() @MinLength(1) @IsIn(['postiz', 'apify', 'tavily']) connector!: string;
+  @IsString() @MinLength(1) @IsIn(['postiz', 'apify', 'tavily', 'firecrawl']) connector!: string;
   @IsString() @MinLength(1) apiKey!: string;
 }
 

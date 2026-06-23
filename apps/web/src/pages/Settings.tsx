@@ -20,6 +20,7 @@ import { LanguageToggleButton, ThemeToggleButton } from '../components/PrefContr
 import { MenuPicker } from '../components/MenuPicker';
 import { PostizKeySection } from '../components/PostizKeySection';
 import { TavilyKeySection } from '../components/TavilyKeySection';
+import { FirecrawlKeySection } from '../components/FirecrawlKeySection';
 import { PlusIcon } from '../layout/icons';
 
 export function Settings() {
@@ -280,6 +281,9 @@ export function Settings() {
 
       {/* ===== Research (Tavily search key) ===== */}
       <TavilyKeySection />
+
+      {/* ===== Robust fetch (Firecrawl key) ===== */}
+      <FirecrawlKeySection />
 
       {/* ===== Password ===== */}
       <section className="set-section">

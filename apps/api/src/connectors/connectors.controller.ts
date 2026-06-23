@@ -51,6 +51,11 @@ export class ConnectorsController {
     return this.credentials.status(ws, 'tavily');
   }
 
+  @Get('credentials/firecrawl')
+  firecrawlStatus(@Param('id') ws: string): Promise<ConnectorCredentialInfo> {
+    return this.credentials.status(ws, 'firecrawl');
+  }
+
   @Get('connect-link')
   @RequireManageKeys()
   connectLink(@Param('id') ws: string, @CurrentUser() u: User, @Query('connector') connector: string) {
