@@ -6,7 +6,11 @@ import { ProductStatus } from '@lyra/shared';
 
 vi.stubGlobal('window', { matchMedia: () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
 vi.mock('../workspace/useWorkspace', () => ({ useWorkspace: () => ({ current: { id: 'ws-1' } }) }));
-vi.mock('../lib/products', () => ({ productsApi: { list: () => Promise.resolve([]), create: vi.fn(), update: vi.fn(), get: vi.fn(), remove: vi.fn() } }));
+vi.mock('../lib/products', () => ({
+  productsApi: { list: () => Promise.resolve([]), create: vi.fn(), update: vi.fn(), get: vi.fn(), remove: vi.fn() },
+  productResultsApi: { save: vi.fn(), remove: vi.fn() },
+  projectProductsApi: { list: vi.fn(), select: vi.fn(), refresh: vi.fn(), unselect: vi.fn() },
+}));
 vi.mock('../lib/productRuns', () => ({ productRunsApi: { start: vi.fn(), list: vi.fn() } }));
 
 import { Products } from './Products';
@@ -40,6 +44,13 @@ const STUB_PRODUCT: Product = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+const COPY_PRODUCT: Product = {
+  ...STUB_PRODUCT,
+  id: 'p-copy-1',
+  poolProductId: 'pool-1',
+  results: [],
+};
+
 describe('Products page', () => {
   it('renders the Products area with an Add product control', () => {
     const html = renderToStaticMarkup(<MemoryRouter><Products /></MemoryRouter>);
@@ -61,5 +72,21 @@ describe('ProductDetailBody', () => {
       </MemoryRouter>,
     );
     expect(html).toContain('Run research');
+  });
+
+  it('shows "Saved results" and "Branding runs" sections for a copy product', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <ProductDetailBody
+          product={COPY_PRODUCT}
+          workspaceId="ws-1"
+          onClose={() => {}}
+          onUpdate={async () => {}}
+          onProductRefresh={async () => {}}
+        />
+      </MemoryRouter>,
+    );
+    expect(html).toContain('Saved results');
+    expect(html).toContain('Branding runs');
   });
 });

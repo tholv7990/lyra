@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ProductStatus, StepStatus, type Asset, type Product, type Run, type UpdateProductDto } from '@lyra/shared';
+import { ProductStatus, Provider, StepStatus, type Asset, type Product, type Run, type SavedResult, type UpdateProductDto } from '@lyra/shared';
 import { api } from '../lib/api';
+import { productsApi, productResultsApi } from '../lib/products';
 import { productRunsApi } from '../lib/productRuns';
 import { useRunActions } from '../lib/useRunActions';
 import { Modal } from './Modal';
@@ -54,6 +55,11 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
   const [run, setRun] = useState<Run | null>(null);
   const [runAssets, setRunAssets] = useState<Asset[]>([]);
 
+  // Copy-product extras
+  const [brandingRuns, setBrandingRuns] = useState<Run[]>([]);
+  const [poolProduct, setPoolProduct] = useState<Product | null>(null);
+  const [savingResult, setSavingResult] = useState<string | null>(null); // step key being saved
+
   const { busy, error: runError, runAll, runStep, approve, savePrompt, regenerate } = useRunActions(run, setRun);
 
   // Fetch assets whenever the active run changes.
@@ -74,6 +80,22 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
     }
     prevStatusRef.current = run?.status;
   }, [run?.status, onProductRefresh]);
+
+  // For a copy product: load branding runs + pool product research.
+  useEffect(() => {
+    if (!product.poolProductId) return;
+    let cancelled = false;
+
+    productRunsApi.list(workspaceId, product.id)
+      .then((rs) => { if (!cancelled) setBrandingRuns(rs); })
+      .catch(() => { if (!cancelled) setBrandingRuns([]); });
+
+    productsApi.get(workspaceId, product.poolProductId)
+      .then((p) => { if (!cancelled) setPoolProduct(p); })
+      .catch(() => { if (!cancelled) setPoolProduct(null); });
+
+    return () => { cancelled = true; };
+  }, [product.id, product.poolProductId, workspaceId]);
 
   // historyForStep: no-op for now (no multi-run history per product yet).
   const historyForStep = (_i: number): StepHistoryEntry[] => [];
@@ -120,6 +142,37 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
     }
   }
 
+  // Save a specific run step result to this product's results array.
+  async function handleSaveToProduct(stepIndex: number) {
+    if (!run) return;
+    const step = run.steps[stepIndex];
+    if (!step) return;
+    const key = `${run.id}-${stepIndex}`;
+    setSavingResult(key);
+    try {
+      // Find first asset for this step (image/video).
+      const stepAssets = runAssets.filter((a) => a.stepIndex === stepIndex);
+      const firstAsset = stepAssets[0];
+      await productResultsApi.save(workspaceId, product.id, {
+        output: step.result ?? '',
+        provider: (step.provider ?? Provider.Anthropic) as Provider,
+        model: step.model ?? '',
+        assetUrl: firstAsset?.url,
+        assetType: firstAsset ? (firstAsset.type as 'image' | 'video' | 'audio') : undefined,
+        runId: run.id,
+        stepIndex,
+      });
+      await onProductRefresh();
+    } finally {
+      setSavingResult(null);
+    }
+  }
+
+  async function handleRemoveResult(resultId: string) {
+    await productResultsApi.remove(workspaceId, product.id, resultId);
+    await onProductRefresh();
+  }
+
   // Primary source URL (first primary, else first alive, else first)
   const primarySource =
     product.sources.find((s) => s.primary) ??
@@ -128,6 +181,15 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
 
   const isBusy = busy || starting;
   const displayError = startError ?? runError;
+
+  // Steps with results that can be saved (done + has result or asset).
+  const saveableSteps = run
+    ? run.steps
+        .map((s, i) => ({ s, i }))
+        .filter(({ s, i }) => s.status === StepStatus.Done && (s.result || runAssets.some((a) => a.stepIndex === i)))
+    : [];
+
+  const isCopy = !!product.poolProductId;
 
   return (
     <div className="pdtl">
@@ -178,15 +240,17 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
               onChange={handleStatusChange}
               ariaLabel={t('projects.statusAria')}
             />
-            {/* Run research */}
-            <button
-              type="button"
-              className="btn-primary btn-inline btn-sm"
-              disabled={isBusy}
-              onClick={() => void handleRunResearch()}
-            >
-              {starting ? t('products.running') : t('products.runResearch')}
-            </button>
+            {/* Run research — only for pool products (not copies) */}
+            {!isCopy && (
+              <button
+                type="button"
+                className="btn-primary btn-inline btn-sm"
+                disabled={isBusy}
+                onClick={() => void handleRunResearch()}
+              >
+                {starting ? t('products.running') : t('products.runResearch')}
+              </button>
+            )}
             {/* Close */}
             <button
               type="button"
@@ -227,6 +291,25 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
               assets={runAssets}
               historyForStep={historyForStep}
             />
+            {/* Save-to-product actions for done steps */}
+            {isCopy && saveableSteps.length > 0 && (
+              <div className="pdtl-save-actions">
+                {saveableSteps.map(({ s, i }) => {
+                  const key = `${run.id}-${i}`;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className="btn-ghost btn-inline btn-sm"
+                      disabled={savingResult === key}
+                      onClick={() => void handleSaveToProduct(i)}
+                    >
+                      {t('products.saveToProduct')} — {s.name ?? `Step ${i + 1}`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 
@@ -242,6 +325,102 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
               {t('run.runAll')}
             </button>
           </div>
+        )}
+
+        {/* ── Copy-product sections ───────────────────────────────────── */}
+        {isCopy && (
+          <>
+            {/* Linked branding runs */}
+            <section className="pdtl-section">
+              <h3 className="pdtl-section-label">{t('products.linkedRuns')}</h3>
+              {brandingRuns.length === 0 ? (
+                <p className="muted" style={{ fontSize: 13 }}>{t('run.noRunsForPipeline')}</p>
+              ) : (
+                <ul className="pdtl-runs-list">
+                  {brandingRuns.map((r) => (
+                    <li key={r.id} className="pdtl-run-row">
+                      <span className={`badge status-${r.status}`}>{r.status}</span>
+                      <span className="pdtl-run-date">{r.createdAt.slice(0, 10)}</span>
+                      <span className="pdtl-run-steps">{r.steps.length} steps</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Saved results gallery */}
+            <section className="pdtl-section">
+              <h3 className="pdtl-section-label">{t('products.savedResults')}</h3>
+              {!product.results || product.results.length === 0 ? (
+                <p className="muted" style={{ fontSize: 13 }}>—</p>
+              ) : (
+                <ul className="pdtl-results-list">
+                  {product.results.map((r: SavedResult) => (
+                    <li key={r.id} className="pdtl-result-item">
+                      {r.assetUrl && r.assetType === 'image' && (
+                        <img
+                          src={r.assetUrl}
+                          alt=""
+                          className="pdtl-result-thumb"
+                        />
+                      )}
+                      {r.assetUrl && r.assetType === 'video' && (
+                        <video
+                          src={r.assetUrl}
+                          className="pdtl-result-thumb"
+                          muted
+                          playsInline
+                        />
+                      )}
+                      {r.output && (
+                        <p className="pdtl-result-output">{r.output.slice(0, 120)}{r.output.length > 120 ? '…' : ''}</p>
+                      )}
+                      <button
+                        type="button"
+                        className="pdtl-result-remove mkd-close"
+                        aria-label={t('common.close')}
+                        onClick={() => void handleRemoveResult(r.id)}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+                          <path d="M4 4l8 8M12 4l-8 8" />
+                        </svg>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Pool research read-only */}
+            {poolProduct && (poolProduct.score !== undefined || poolProduct.decision || poolProduct.evidence.length > 0) && (
+              <section className="pdtl-section">
+                <h3 className="pdtl-section-label">{t('products.poolResearch')}</h3>
+                <div className="pdtl-pool-research">
+                  {poolProduct.score !== undefined && (
+                    <span className="pdtl-score">{poolProduct.score}/100</span>
+                  )}
+                  {poolProduct.grade && (
+                    <span className="pdtl-grade">{poolProduct.grade}</span>
+                  )}
+                  {poolProduct.decision && (
+                    <span className="pdtl-decision">{poolProduct.decision}</span>
+                  )}
+                  {poolProduct.evidence.length > 0 && (
+                    <ul className="pdtl-evidence-list" style={{ marginTop: 8 }}>
+                      {poolProduct.evidence.slice(0, 5).map((claim) => (
+                        <li key={claim.id} className="pdtl-claim">
+                          <div className="pdtl-claim-top">
+                            <span className="pdtl-claim-stmt">{claim.statement}</span>
+                            <span className={KIND_CLASS[claim.kind] ?? 'pdtl-kind'}>{claim.kind}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </section>
+            )}
+          </>
         )}
 
         {/* Evidence claims */}

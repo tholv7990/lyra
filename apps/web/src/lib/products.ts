@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Product, CreateProductDto, UpdateProductDto } from '@lyra/shared';
+import type { Product, CreateProductDto, UpdateProductDto, SaveProductResultDto } from '@lyra/shared';
 
 const base = (ws: string) => `/workspaces/${ws}/products`;
 
@@ -9,6 +9,13 @@ export const productsApi = {
   create: (ws: string, dto: CreateProductDto) => api<Product>(base(ws), { method: 'POST', body: JSON.stringify(dto) }),
   update: (ws: string, id: string, patch: UpdateProductDto) => api<Product>(`${base(ws)}/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   remove: (ws: string, id: string) => api<void>(`${base(ws)}/${id}`, { method: 'DELETE' }),
+};
+
+export const productResultsApi = {
+  save: (ws: string, productId: string, dto: SaveProductResultDto) =>
+    api<Product>(`/workspaces/${ws}/products/${productId}/results`, { method: 'POST', body: JSON.stringify(dto) }),
+  remove: (ws: string, productId: string, resultId: string) =>
+    api<Product>(`/workspaces/${ws}/products/${productId}/results/${resultId}`, { method: 'DELETE' }),
 };
 
 export const projectProductsApi = {

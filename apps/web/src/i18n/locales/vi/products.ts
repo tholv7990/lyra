@@ -19,4 +19,8 @@ export default {
   runResearch: 'Chạy nghiên cứu',
   running: 'Đang nghiên cứu…',
   runError: 'Không thể bắt đầu chạy nghiên cứu',
+  saveToProduct: 'Lưu vào sản phẩm',
+  savedResults: 'Kết quả đã lưu',
+  linkedRuns: 'Lượt chạy thương hiệu',
+  poolResearch: 'Nghiên cứu (từ pool)',
 } as const;

@@ -15,18 +15,21 @@ import {
   type Asset,
   type MemberView,
   type Pipeline,
+  type Product,
   type Project,
   type Provider,
   type Run,
   type Task,
 } from '@lyra/shared';
 import { api } from '../lib/api';
+import { projectProductsApi } from '../lib/products';
 import { RUN_STATUS_LABEL_KEY } from '../lib/constants';
 import { fmtDate, initial, avatarStyle } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { previewRunProgress } from '../lib/useRunActions';
 import { EditorShell } from '../components/EditorShell';
+import { MenuPicker, type MenuPickerOption } from '../components/MenuPicker';
 import { TagChip } from '../components/TagChip';
 import { RunTimeline } from '../components/RunTimeline';
 import { RunRating } from '../components/RunRating';
@@ -76,6 +79,8 @@ export function TaskDetail() {
   const [askVarsFor, setAskVarsFor] = useState<Pipeline | null>(null);
   const [adding, setAdding] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
+  const [projectCopies, setProjectCopies] = useState<Product[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,16 +103,18 @@ export function TaskDetail() {
       setTitleDraft(tsk.name);
       setDescDraft(tsk.description ?? '');
       const effectiveWsId = tsk.workspaceId;
-      const [lib, rs, keys, mems] = await Promise.all([
+      const [lib, rs, keys, mems, copies] = await Promise.all([
         api<Pipeline[]>(`/workspaces/${effectiveWsId}/pipelines`),
         api<Run[]>(`/projects/${projectId}/tasks/${taskId}/runs`),
         api<ApiKeyInfo[]>(`/workspaces/${effectiveWsId}/keys`),
         api<MemberView[]>(`/workspaces/${effectiveWsId}/members`),
+        projectProductsApi.list(projectId).catch(() => [] as Product[]),
       ]);
       setLibrary(lib);
       setRuns(rs);
       setKeysSet(new Set(keys.map((k) => k.provider)));
       setMembers(mems);
+      setProjectCopies(copies);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('projects.loadFailed'));
     } finally {
@@ -268,11 +275,14 @@ export function TaskDetail() {
     pipelineId: string,
     values: Record<string, string>,
     collections: Record<string, string[]> = {},
+    productId?: string,
   ) =>
     act(async () => {
+      const body: Record<string, unknown> = { variables: values, collections };
+      if (productId) body.productId = productId;
       const created = await api<Run>(`/projects/${projectId}/tasks/${taskId}/pipelines/${pipelineId}/runs`, {
         method: 'POST',
-        body: JSON.stringify({ variables: values, collections }),
+        body: JSON.stringify(body),
       });
       setRun(created);
       setRuns((r) => [created, ...r]);
@@ -282,7 +292,7 @@ export function TaskDetail() {
 
   const runPipeline = (pipeline: Pipeline) => {
     if (pipeline.variables.length > 0 || fanOutNames(pipeline).length > 0) setAskVarsFor(pipeline);
-    else void startRun(pipeline.id, {});
+    else void startRun(pipeline.id, {}, {}, selectedProductId || undefined);
   };
 
   const openRun = (r: Run) => { setRun(r); setActivePipeId(r.pipelineId ?? null); };
@@ -376,7 +386,7 @@ export function TaskDetail() {
           prefill={projectVars}
           busy={busy}
           onCancel={() => setAskVarsFor(null)}
-          onRun={(values, collections) => void startRun(askVarsFor.id, values, collections)}
+          onRun={(values, collections) => void startRun(askVarsFor.id, values, collections, selectedProductId || undefined)}
         />
       )}
 
@@ -562,6 +572,23 @@ export function TaskDetail() {
                 ) : (
                   <div className="tw-norun">
                     <p className="muted">{t('run.noRunsForPipeline')}</p>
+                    {canEdit && activePipeline && projectCopies.length > 0 && (() => {
+                      const productOptions: MenuPickerOption<string>[] = [
+                        { value: '', label: t('tasks.noProduct') },
+                        ...projectCopies.map((p) => ({ value: p.id, label: p.name })),
+                      ];
+                      return (
+                        <div className="tw-product-pick">
+                          <span className="muted" style={{ fontSize: 13 }}>{t('tasks.pickProduct')}</span>
+                          <MenuPicker<string>
+                            value={selectedProductId}
+                            options={productOptions}
+                            onChange={setSelectedProductId}
+                            ariaLabel={t('tasks.pickProduct')}
+                          />
+                        </div>
+                      );
+                    })()}
                     {canEdit && activePipeline && (
                       <button className="btn-primary btn-inline" disabled={busy || activePipeline.steps.length === 0} onClick={() => runPipeline(activePipeline)}>
                         <PlayIcon width={13} height={13} /> {t('projects.runPipeline')}

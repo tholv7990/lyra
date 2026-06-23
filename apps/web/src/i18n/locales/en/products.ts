@@ -19,4 +19,8 @@ export default {
   runResearch: 'Run research',
   running: 'Researching…',
   runError: 'Could not start research run',
+  saveToProduct: 'Save to product',
+  savedResults: 'Saved results',
+  linkedRuns: 'Branding runs',
+  poolResearch: 'Research (from pool)',
 } as const;

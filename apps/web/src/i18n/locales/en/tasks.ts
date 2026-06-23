@@ -35,6 +35,8 @@ export default {
     on_hold: 'On hold',
     complete: 'Complete',
   },
+  pickProduct: 'Product (optional)',
+  noProduct: 'No product',
   priorityLabel: 'Priority',
   priority: {
     none: 'No priority',

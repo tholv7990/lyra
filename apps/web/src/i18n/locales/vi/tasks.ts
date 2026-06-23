@@ -35,6 +35,8 @@ export default {
     on_hold: 'Tạm dừng',
     complete: 'Hoàn thành',
   },
+  pickProduct: 'Sản phẩm (tùy chọn)',
+  noProduct: 'Không có sản phẩm',
   priorityLabel: 'Mức ưu tiên',
   priority: {
     none: 'Không ưu tiên',
