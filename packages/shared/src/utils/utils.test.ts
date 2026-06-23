@@ -494,6 +494,6 @@ describe('demandSignalCount', () => {
     expect(demandSignalCount([c('s1'), c('s1'), c('s2'), c('s3')])).toBe(3);
   });
   it('ignores non-signal and source-less claims', () => {
-    expect(demandSignalCount([c('s1', false), { id: 'x', statement: 's', kind: 'estimate', sourceId: '', demandSignal: true }])).toBe(0);
+    expect(demandSignalCount([c('s1', false), c('', true)])).toBe(0);
   });
 });
