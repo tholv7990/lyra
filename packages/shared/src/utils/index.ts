@@ -371,7 +371,9 @@ export function isNetscapeCookies(text: string): boolean {
     const line = l.startsWith('#HttpOnly_') ? l.slice('#HttpOnly_'.length) : l;
     if (line.trim().startsWith('#')) return false; // a real comment, not a record
     const f = line.split('\t');
-    // domain, flag(TRUE/FALSE), path, secure(TRUE/FALSE), expiry(digits), name, value
+    // domain, flag(TRUE|FALSE), path, secure(TRUE/FALSE), expiry(digits), name, value
     return f.length === 7 && /^(TRUE|FALSE)$/i.test(f[1]) && /^(TRUE|FALSE)$/i.test(f[3]) && /^\d+$/.test(f[4]);
   });
 }
+
+export * from './research';
