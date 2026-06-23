@@ -21,6 +21,10 @@ describe('researchPhaseOf', () => {
     expect(researchPhaseOf(step({ provider: Provider.OpenAI, action: { type: ActionType.Crawl, source: 'input' } as never }))).toBeNull();
     expect(researchPhaseOf(step({ provider: Provider.OpenAI }))).toBeNull();
   });
+  it('maps resolve-inputs to phase 1 and competition to phase 2', () => {
+    expect(researchPhaseOf(step({ action: { type: ActionType.ResolveInputs } as never }))).toBe(1);
+    expect(researchPhaseOf(step({ action: { type: ActionType.Competition } as never }))).toBe(2);
+  });
 });
 
 describe('isResearchRun', () => {

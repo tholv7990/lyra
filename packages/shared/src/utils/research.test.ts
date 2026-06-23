@@ -118,3 +118,28 @@ describe('decideWithReason + non-compensatory floors', () => {
     expect(decideWithReason(80, noGates).reason).toMatch(/band/);
   });
 });
+
+import { resolveInputs } from './research';
+
+describe('resolveInputs', () => {
+  const full = { aov: 50, landedCost: 12, paymentFeePct: 0.03, fulfillment: 4, shippingSubsidy: 2, expectedReturnLossPct: 0.05, warrantyReservePct: 0, desiredPostAdCmPct: 0.15 };
+  it('a complete input set produces no assumptions', () => {
+    const r = resolveInputs(full);
+    expect(r.inputs).toEqual(full);
+    expect(r.assumptions).toEqual([]);
+  });
+  it('fills each missing field with a default and records an assumption', () => {
+    const r = resolveInputs({ aov: 40 });
+    expect(r.inputs.aov).toBe(40);
+    expect(r.inputs.paymentFeePct).toBeCloseTo(0.029, 6);
+    expect(r.inputs.landedCost).toBe(12); // round(40 * 0.30)
+    expect(r.inputs.desiredPostAdCmPct).toBeCloseTo(0.15, 6);
+    expect(r.assumptions.length).toBe(7); // all but aov
+    expect(r.assumptions.some((a) => /payment fee/i.test(a))).toBe(true);
+  });
+  it('falls back AOV to targetPrice, then to 30', () => {
+    expect(resolveInputs({ targetPrice: 55 }).inputs.aov).toBe(55);
+    expect(resolveInputs({}).inputs.aov).toBe(30);
+    expect(resolveInputs({}).assumptions.some((a) => /AOV/i.test(a))).toBe(true);
+  });
+});

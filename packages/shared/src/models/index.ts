@@ -200,7 +200,9 @@ export type ActionStep =
   | { type: ActionType.Evaluate }
   | { type: ActionType.SaveProduct; productName?: string }
   | { type: ActionType.Score }
-  | { type: ActionType.DemandGate };
+  | { type: ActionType.DemandGate }
+  | { type: ActionType.ResolveInputs }
+  | { type: ActionType.Competition };
 
 export interface ProjectBrandKit {
   logoUrl?: string;
@@ -730,6 +732,13 @@ export interface UnitEcon {
   targetRoas: number;
 }
 
+// ── Competition scan (resolve-inputs + competition actions) ───────────────
+export interface ResearchCompetitor { name: string; price?: string; offer?: string; reviews?: string; strengths?: string; }
+export interface CompetitionData {
+  competitors: ResearchCompetitor[];
+  marketType: 'healthy' | 'dominated' | 'commodity' | 'emerging' | 'underserved';
+}
+
 // ── Scoring / grading / decision (spec §1E) ────────────────────────────────
 export type ConfidenceGrade = 'A' | 'B' | 'C' | 'D';
 export interface HardGates {
@@ -777,6 +786,8 @@ export interface Product {
   decision?: Decision;
   hardGates?: HardGates;          // which dealbreaker gates were evaluated (explains the decision)
   unitEconInputs?: UnitEconInputs; // the cost inputs CM1 was computed from (explains the economics)
+  assumptions?: string[];        // econ defaults the run had to assume (resolve-inputs)
+  competition?: CompetitionData; // competitor scan + market type
   econInputs?: ProductEconInputs;
   competitorIds: string[];
   outcome?: string;

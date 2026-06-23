@@ -86,7 +86,7 @@ export enum PromptType {
 }
 
 export enum StepKind { Prompt = 'prompt', Action = 'action' }
-export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish', UnitEcon = 'unit-econ', Evaluate = 'evaluate', SaveProduct = 'save-product', Score = 'score', DemandGate = 'demand-gate' }
+export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish', UnitEcon = 'unit-econ', Evaluate = 'evaluate', SaveProduct = 'save-product', Score = 'score', DemandGate = 'demand-gate', ResolveInputs = 'resolve-inputs', Competition = 'competition' }
 
 // Iterative image-edit operations applied to an existing result asset (gen-UX
 // upgrade B). Each maps to a preset instruction fed to the Google/Gemini image
