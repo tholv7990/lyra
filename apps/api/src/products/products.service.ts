@@ -20,20 +20,19 @@ export class ProductsService {
     private readonly users: UsersService,
   ) {}
 
-  async list(projectId: string): Promise<ProductView[]> {
+  async list(workspaceId: string): Promise<ProductView[]> {
     const docs = await this.model
-      .find({ projectId, active: { $ne: false } })
+      .find({ workspaceId, active: { $ne: false } })
       .sort({ createdAt: -1 })
       .exec();
     return this.toViews(docs);
   }
 
-  async create(projectId: string, workspaceId: string, actorId: string, dto: CreateProductDto): Promise<ProductView> {
+  async create(workspaceId: string, actorId: string, dto: CreateProductDto): Promise<ProductView> {
     const name = dto.name?.trim();
     if (!name) throw new BadRequestException('A product name is required.');
     const doc = await this.model.create({
       workspaceId,
-      projectId,
       name: name.slice(0, MAX_NAME),
       description: (dto.description ?? '').trim().slice(0, MAX_DESC),
       status: dto.status ?? ProductStatus.Candidate,
@@ -42,6 +41,10 @@ export class ProductsService {
       ...(dto.category ? { category: dto.category } : {}),
       ...(dto.econInputs ? { econInputs: dto.econInputs } : {}),
       ...(dto.outcome ? { outcome: dto.outcome } : {}),
+      images: dto.images ?? [],
+      ...(dto.price !== undefined ? { price: dto.price } : {}),
+      ...(dto.compareAtPrice !== undefined ? { compareAtPrice: dto.compareAtPrice } : {}),
+      ...(dto.offer ? { offer: dto.offer } : {}),
       competitorIds: dto.competitorIds ?? [],
       tags: dto.tags ?? [],
       createdBy: actorId,
@@ -50,6 +53,7 @@ export class ProductsService {
     return this.toView(doc);
   }
 
+  /** @deprecated use applyResearch — Task 4 will remove this stub */
   async saveResearch(projectId: string, workspaceId: string, actorId: string, p: {
     name: string;
     evidence?: EvidenceClaim[];
@@ -60,19 +64,26 @@ export class ProductsService {
     grade?: ConfidenceGrade;
     decision?: Decision;
   }): Promise<string> {
-    const doc = await this.model.create({
-      workspaceId, projectId,
-      name: (p.name || 'Researched product').slice(0, MAX_NAME),
-      status: ProductStatus.Candidate,
-      evidence: p.evidence ?? [], sources: p.sources ?? [],
-      ...(p.unitEcon ? { unitEcon: p.unitEcon } : {}),
-      ...(p.subScores ? { subScores: p.subScores } : {}),
-      ...(p.score !== undefined ? { score: p.score } : {}),
-      ...(p.grade ? { grade: p.grade } : {}),
-      ...(p.decision ? { decision: p.decision } : {}),
-      competitorIds: [], tags: [], createdBy: actorId, updatedBy: actorId,
-    });
-    return doc._id.toString();
+    throw new Error('use applyResearch');
+  }
+
+  async applyResearch(productId: string, actorId: string, p: {
+    evidence?: EvidenceClaim[]; sources?: SourceRow[]; unitEcon?: UnitEcon;
+    subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;
+  }): Promise<ProductView> {
+    const set: Record<string, unknown> = { updatedBy: actorId };
+    if (p.evidence !== undefined) set.evidence = p.evidence;
+    if (p.sources !== undefined) set.sources = p.sources;
+    if (p.unitEcon !== undefined) set.unitEcon = p.unitEcon;
+    if (p.subScores !== undefined) set.subScores = p.subScores;
+    if (p.score !== undefined) set.score = p.score;
+    if (p.grade !== undefined) set.grade = p.grade;
+    if (p.decision !== undefined) set.decision = p.decision;
+    const doc = await this.model
+      .findOneAndUpdate({ _id: productId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
+      .exec();
+    if (!doc) throw new NotFoundException('Product not found.');
+    return this.toView(doc);
   }
 
   async get(id: string): Promise<ProductView> {
@@ -93,6 +104,10 @@ export class ProductsService {
     if (dto.competitorIds !== undefined) set.competitorIds = dto.competitorIds;
     if (dto.outcome !== undefined) set.outcome = dto.outcome;
     if (dto.tags !== undefined) set.tags = dto.tags;
+    if (dto.images !== undefined) set.images = dto.images;
+    if (dto.price !== undefined) set.price = dto.price;
+    if (dto.compareAtPrice !== undefined) set.compareAtPrice = dto.compareAtPrice;
+    if (dto.offer !== undefined) set.offer = dto.offer;
 
     const doc = await this.model
       .findOneAndUpdate({ _id: id, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })

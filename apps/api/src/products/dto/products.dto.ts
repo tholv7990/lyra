@@ -28,6 +28,10 @@ export class CreateProductBody implements CreateProductDto {
   @IsOptional() @IsArray() @IsString({ each: true }) competitorIds?: string[];
   @IsOptional() @IsString() @MaxLength(2000) outcome?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+  @IsOptional() @IsNumber() price?: number;
+  @IsOptional() @IsNumber() compareAtPrice?: number;
+  @IsOptional() @IsString() offer?: string;
 }
 
 export class UpdateProductBody implements UpdateProductDto {
@@ -41,4 +45,8 @@ export class UpdateProductBody implements UpdateProductDto {
   @IsOptional() @IsArray() @IsString({ each: true }) competitorIds?: string[];
   @IsOptional() @IsString() @MaxLength(2000) outcome?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+  @IsOptional() @IsNumber() price?: number;
+  @IsOptional() @IsNumber() compareAtPrice?: number;
+  @IsOptional() @IsString() offer?: string;
 }

@@ -1,49 +1,35 @@
-import {
-  Body, Controller, Delete, Get, HttpCode, NotFoundException, Param, Patch, Post, UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import type { Product, User } from '@lyra/shared';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
-import { ProjectsService } from '../projects/projects.service';
+import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';
 import { RequireCreate } from '../workspaces/decorators/require-create.decorator';
 import { ProductsService } from './products.service';
 import { CreateProductBody, UpdateProductBody } from './dto/products.dto';
 
-// Products live under a project (peer of Task). ProjectAccessGuard enforces view;
-// mutations add @RequireCreate (not Viewer + verified email).
 @Controller()
-@UseGuards(ProjectAccessGuard)
+@UseGuards(WorkspaceGuard)
 export class ProductsController {
-  constructor(
-    private readonly products: ProductsService,
-    private readonly projects: ProjectsService,
-  ) {}
+  constructor(private readonly products: ProductsService) {}
 
-  @Get('projects/:id/products')
-  list(@Param('id') projectId: string): Promise<Product[]> {
-    return this.products.list(projectId);
-  }
+  @Get('workspaces/:id/products')
+  list(@Param('id') ws: string): Promise<Product[]> { return this.products.list(ws); }
 
-  @Post('projects/:id/products')
+  @Post('workspaces/:id/products')
   @RequireCreate()
-  async create(@Param('id') projectId: string, @Body() body: CreateProductBody, @CurrentUser() user: User): Promise<Product> {
-    const project = await this.projects.findActiveById(projectId);
-    if (!project) throw new NotFoundException('Project not found');
-    return this.products.create(projectId, project.workspaceId, user.id, body);
+  create(@Param('id') ws: string, @Body() body: CreateProductBody, @CurrentUser() user: User): Promise<Product> {
+    return this.products.create(ws, user.id, body);
   }
 
-  @Get('projects/:id/products/:productId')
-  get(@Param('productId') productId: string): Promise<Product> {
-    return this.products.get(productId);
-  }
+  @Get('workspaces/:id/products/:productId')
+  get(@Param('productId') productId: string): Promise<Product> { return this.products.get(productId); }
 
-  @Patch('projects/:id/products/:productId')
+  @Patch('workspaces/:id/products/:productId')
   @RequireCreate()
   update(@Param('productId') productId: string, @Body() body: UpdateProductBody, @CurrentUser() user: User): Promise<Product> {
     return this.products.update(productId, user.id, body);
   }
 
-  @Delete('projects/:id/products/:productId')
+  @Delete('workspaces/:id/products/:productId')
   @RequireCreate()
   @HttpCode(204)
   async remove(@Param('productId') productId: string, @CurrentUser() user: User): Promise<void> {

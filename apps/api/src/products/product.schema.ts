@@ -17,8 +17,11 @@ export class Product extends AuditedEntity {
   @Prop({ required: true, index: true })
   workspaceId!: string;
 
-  @Prop({ required: true, index: true })
-  projectId!: string;
+  @Prop({ index: true })
+  projectId?: string;
+
+  @Prop()
+  originatingProjectId?: string;
 
   @Prop({ required: true })
   name!: string;
@@ -68,6 +71,18 @@ export class Product extends AuditedEntity {
   econInputs?: ProductEconInputs;
 
   @Prop({ type: [String], default: [] })
+  images!: string[];
+
+  @Prop()
+  price?: number;
+
+  @Prop()
+  compareAtPrice?: number;
+
+  @Prop()
+  offer?: string;
+
+  @Prop({ type: [String], default: [] })
   competitorIds!: string[];
 
   @Prop()
@@ -78,4 +93,4 @@ export class Product extends AuditedEntity {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
-ProductSchema.index({ projectId: 1, createdAt: -1 });
+ProductSchema.index({ workspaceId: 1, status: 1, createdAt: -1 });
