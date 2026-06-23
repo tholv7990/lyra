@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ProductStatus, Provider, StepStatus, type Asset, type Product, type Run, type SavedResult, type UpdateProductDto } from '@lyra/shared';
+import { ProductStatus, Provider, StepStatus, WEIGHTS, decideWithReason, type Asset, type Product, type Run, type SavedResult, type ScoreKey, type UpdateProductDto } from '@lyra/shared';
 import { api } from '../lib/api';
 import { productsApi, productResultsApi } from '../lib/products';
 import { productRunsApi } from '../lib/productRuns';
@@ -191,6 +191,20 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
 
   const isCopy = !!product.poolProductId;
 
+  // Explainability: per-factor breakdown + the reason the decision landed where it did.
+  const factorRows = product.subScores
+    ? (Object.keys(WEIGHTS) as ScoreKey[]).map((k) => {
+        // Clamp once, then derive both points and bar width from the clamped value —
+        // matches weightedScore so a malformed sub-score can't print >weight or a >100% bar.
+        const sub = Math.max(0, Math.min(5, product.subScores![k] ?? 0));
+        return { key: k, sub, weight: WEIGHTS[k], contribution: Math.round(WEIGHTS[k] * (sub / 5) * 10) / 10 };
+      })
+    : [];
+  const decisionReason =
+    product.score !== undefined && product.hardGates
+      ? decideWithReason(product.score, product.hardGates, product.subScores).reason
+      : null;
+
   return (
     <div className="pdtl">
       {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -233,6 +247,11 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
                 {product.decision}
               </span>
             )}
+            {decisionReason && (
+              <span className="pdtl-decision-reason" title={t('projects.decisionReason', { reason: decisionReason })}>
+                {t('projects.decisionReason', { reason: decisionReason })}
+              </span>
+            )}
             {/* Status picker */}
             <MenuPicker<ProductStatus>
               value={product.status}
@@ -271,6 +290,27 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
       <div className="pdtl-body">
 
         {displayError && <p className="error">{displayError}</p>}
+
+        {/* Score breakdown — explains the /100 with real per-factor numbers */}
+        {factorRows.length > 0 ? (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.scoreBreakdownTitle')}</h3>
+            <ul className="pdtl-factors">
+              {factorRows.map((f) => (
+                <li key={f.key} className="pdtl-factor">
+                  <span className="pdtl-factor-name">{t(`projects.factorLabels.${f.key}`)}</span>
+                  <span className="pdtl-factor-sub">{f.sub}/5</span>
+                  <span className="pdtl-factor-bar" aria-hidden="true">
+                    <span className="pdtl-factor-fill" style={{ width: `${(f.contribution / f.weight) * 100}%` }} />
+                  </span>
+                  <span className="pdtl-factor-pts">{f.contribution}/{f.weight}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : product.score === undefined ? (
+          <p className="muted" style={{ fontSize: 13 }}>{t('projects.notScored')}</p>
+        ) : null}
 
         {/* Run timeline — shown once a research run has been started */}
         {run && run.steps.length > 0 && (
@@ -424,7 +464,7 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
         )}
 
         {/* Evidence claims */}
-        {product.evidence.length > 0 && (
+        {product.evidence.length > 0 ? (
           <section className="pdtl-section">
             <h3 className="pdtl-section-label">{t('projects.evidenceTitle')}</h3>
             <ul className="pdtl-evidence-list">
@@ -434,34 +474,35 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
                   <li key={claim.id} className="pdtl-claim">
                     <div className="pdtl-claim-top">
                       <span className="pdtl-claim-stmt">{claim.statement}</span>
-                      <span className={KIND_CLASS[claim.kind] ?? 'pdtl-kind'}>
-                        {claim.kind}
-                      </span>
+                      <span className={KIND_CLASS[claim.kind] ?? 'pdtl-kind'}>{claim.kind}</span>
+                      {(claim.kind === 'estimate' || claim.kind === 'assumption') && (
+                        <span className="pdtl-claim-unverified">{t('projects.notVerified')}</span>
+                      )}
                     </div>
                     <div className="pdtl-claim-meta">
-                      {claim.geography && (
-                        <span className="pdtl-claim-geo">{claim.geography}</span>
-                      )}
-                      {claim.period && (
-                        <span className="pdtl-claim-period">{claim.period}</span>
-                      )}
+                      {claim.geography && <span className="pdtl-claim-geo">{claim.geography}</span>}
+                      {claim.period && <span className="pdtl-claim-period">{claim.period}</span>}
                       {src?.url && (
-                        <a
-                          href={src.url}
-                          className="pdtl-claim-src"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {src.name}
-                        </a>
+                        <a href={src.url} className="pdtl-claim-src" target="_blank" rel="noreferrer">{src.name}</a>
                       )}
                     </div>
+                    {claim.value !== undefined && claim.value !== '' && (
+                      <span className="pdtl-claim-value">{String(claim.value)}</span>
+                    )}
+                    {claim.quote && (
+                      <blockquote className="pdtl-claim-quote" title={t('projects.sourceSpan')}>"{claim.quote}"</blockquote>
+                    )}
                   </li>
                 );
               })}
             </ul>
           </section>
-        )}
+        ) : product.score !== undefined ? (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.evidenceTitle')}</h3>
+            <p className="muted" style={{ fontSize: 13 }}>{t('projects.insufficientEvidence')}</p>
+          </section>
+        ) : null}
 
         {/* Sources */}
         {product.sources.length > 0 && (
@@ -495,6 +536,22 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
         {product.unitEcon && (
           <section className="pdtl-section">
             <h3 className="pdtl-section-label">{t('projects.unitEconTitle')}</h3>
+            {product.unitEconInputs && typeof product.unitEconInputs.aov === 'number' && (
+              <div className="pdtl-econ-formula">
+                <span className="pdtl-econ-formula-label">{t('projects.econFormula')}</span>
+                <p className="pdtl-econ-inputs">
+                  {t('projects.aov')} ${product.unitEconInputs.aov}
+                  {' − ('}
+                  {t('projects.landedCost')} ${product.unitEconInputs.landedCost}
+                  {' + '}{t('projects.paymentFee')} ${Math.round(product.unitEconInputs.aov * product.unitEconInputs.paymentFeePct * 100) / 100}
+                  {' + '}{t('projects.fulfillment')} ${product.unitEconInputs.fulfillment}
+                  {' + '}{t('projects.shippingSubsidy')} ${product.unitEconInputs.shippingSubsidy}
+                  {' + '}{t('projects.returnLoss')} ${Math.round(product.unitEconInputs.aov * product.unitEconInputs.expectedReturnLossPct * 100) / 100}
+                  {' + '}{t('projects.warrantyReserve')} ${Math.round(product.unitEconInputs.aov * product.unitEconInputs.warrantyReservePct * 100) / 100}
+                  {') = '}{t('projects.cm1Label')}
+                </p>
+              </div>
+            )}
             <dl className="pdtl-econ">
               <div className="pdtl-econ-row">
                 <dt>CM1</dt>

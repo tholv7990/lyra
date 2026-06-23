@@ -80,3 +80,41 @@ describe('decide', () => {
     expect(decide(20, noGates)).toBe('PARK');
   });
 });
+
+import { decideWithReason } from './research';
+
+describe('decideWithReason + non-compensatory floors', () => {
+  const mid: SubScores = Object.fromEntries(Object.keys(WEIGHTS).map((k) => [k, 4])) as SubScores;
+
+  it('a critical factor at 1 caps TEST_NOW down to RESOLVE_GAPS', () => {
+    const subs = { ...mid, riskCompliance: 1 };
+    const r = decideWithReason(90, noGates, subs);
+    expect(r.decision).toBe('RESOLVE_GAPS');
+    expect(r.reason).toMatch(/floor: riskCompliance 1\/5/);
+  });
+
+  it('a critical factor at 0 caps down to LOW_COST_VALIDATION', () => {
+    const subs = { ...mid, unitEconomics: 0 };
+    expect(decideWithReason(90, noGates, subs).decision).toBe('LOW_COST_VALIDATION');
+  });
+
+  it('a non-critical factor at 0 does NOT cap', () => {
+    const subs = { ...mid, creativePotential: 0 };
+    expect(decideWithReason(90, noGates, subs).decision).toBe('TEST_NOW');
+  });
+
+  it('a REJECT gate is never raised by a clean floor', () => {
+    const r = decideWithReason(90, { ...noGates, unresolvedSafety: true }, mid);
+    expect(r.decision).toBe('REJECT');
+    expect(r.reason).toMatch(/gate/);
+  });
+
+  it('floor never raises a decision (LOW_COST band stays LOW_COST)', () => {
+    expect(decideWithReason(50, noGates, { ...mid, demandIntent: 1 }).decision).toBe('LOW_COST_VALIDATION');
+  });
+
+  it('decide() with no subScores is unchanged', () => {
+    expect(decideWithReason(80, noGates).decision).toBe('TEST_NOW');
+    expect(decideWithReason(80, noGates).reason).toMatch(/band/);
+  });
+});

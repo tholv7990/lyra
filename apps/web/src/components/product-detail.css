@@ -331,3 +331,20 @@
   .pdtl-econ { grid-template-columns: 1fr; }
   .pdtl-head-actions { flex-wrap: wrap; }
 }
+
+/* ── Score factor breakdown ─────────────────────────────────────────────── */
+
+.pdtl-factors { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pdtl-factor { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1.4fr) 48px; align-items: center; gap: 8px; font-size: 13px; }
+.pdtl-factor-name { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdtl-factor-sub { color: var(--ink-muted); text-align: right; font-variant-numeric: tabular-nums; }
+.pdtl-factor-bar { background: var(--surface-2); border-radius: 999px; height: 6px; overflow: hidden; }
+.pdtl-factor-fill { display: block; height: 100%; background: var(--primary); }
+.pdtl-factor-pts { color: var(--ink-muted); text-align: right; font-variant-numeric: tabular-nums; }
+.pdtl-decision-reason { color: var(--ink-muted); font-size: 12px; }
+.pdtl-claim-unverified { color: var(--ink-muted); font-size: 11px; font-style: italic; margin-left: 6px; }
+.pdtl-claim-value { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.pdtl-claim-quote { margin: 4px 0 0; padding-left: 8px; border-left: 2px solid var(--hairline); color: var(--ink-muted); font-size: 12px; }
+.pdtl-econ-formula { margin-bottom: 8px; }
+.pdtl-econ-formula-label { font-size: 12px; color: var(--ink-muted); }
+.pdtl-econ-inputs { margin: 2px 0 0; font-size: 12px; color: var(--ink); line-height: 1.5; }
