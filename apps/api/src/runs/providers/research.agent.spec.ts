@@ -81,8 +81,8 @@ it('caps total sources at maxSources', async () => {
     search: async () => many,
     llm: makeLlm({ plan: '{"queries":["q1"]}', extract: ['{"claims":[]}'], reflect: ['{"enough":true,"followupQueries":[]}'] }),
     checkAlive: async () => true,
-    caps: { ...caps, maxSources: 12 },
+    caps: { ...caps, maxSources: 5 },
   };
   const r = await runResearch('q', deps);
-  expect(r.sources.length).toBeLessThanOrEqual(12);
+  expect(r.sources.length).toBe(5); // 50 hits available, hard-capped to maxSources
 });

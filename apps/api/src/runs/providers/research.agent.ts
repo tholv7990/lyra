@@ -75,7 +75,7 @@ export async function runResearch(question: string, deps: ResearchDeps): Promise
       if (sources.length >= caps.maxSources) break;
     }
     const newRows = ingest(roundHits);
-    if (newRows.length === 0 && round > 0) break; // dry round → stop
+    if (newRows.length === 0) break; // dry round (no new sources) → stop, don't burn a reflect call
 
     if (!capHit() && newRows.length) {
       const corpus = newRows.map((n) => `[${n.row.id}] ${n.row.name} (${n.row.url})\n${n.content}`).join('\n\n');
