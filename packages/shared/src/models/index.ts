@@ -198,7 +198,9 @@ export type ActionStep =
   | { type: ActionType.Publish; channelIds?: string[]; captionFrom?: string }
   | { type: ActionType.UnitEcon }
   | { type: ActionType.Evaluate }
-  | { type: ActionType.SaveProduct; productName?: string };
+  | { type: ActionType.SaveProduct; productName?: string }
+  | { type: ActionType.Score }
+  | { type: ActionType.DemandGate };
 
 export interface ProjectBrandKit {
   logoUrl?: string;

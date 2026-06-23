@@ -358,6 +358,12 @@ export function parseImageRefs(prompt: string): { input: boolean; names: string[
   return { input, names };
 }
 
+// Distinct independent demand signals (the >=3 gate). Counts unique sourceId among
+// claims flagged demandSignal — the spec's "independent signals" rule.
+export function demandSignalCount(evidence: { sourceId?: string; demandSignal?: boolean }[]): number {
+  return new Set(evidence.filter((c) => c.demandSignal && c.sourceId).map((c) => c.sourceId)).size;
+}
+
 // True when `text` looks like a Netscape cookies.txt (the format yt-dlp's --cookies
 // expects): either the well-known header comment, or at least one 7-tab-field cookie
 // record (domain<TAB>flag<TAB>path<TAB>secure<TAB>expiry<TAB>name<TAB>value). Pure —

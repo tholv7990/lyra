@@ -86,7 +86,7 @@ export enum PromptType {
 }
 
 export enum StepKind { Prompt = 'prompt', Action = 'action' }
-export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish', UnitEcon = 'unit-econ', Evaluate = 'evaluate', SaveProduct = 'save-product' }
+export enum ActionType { Brand = 'brand', Crawl = 'crawl', Publish = 'publish', UnitEcon = 'unit-econ', Evaluate = 'evaluate', SaveProduct = 'save-product', Score = 'score', DemandGate = 'demand-gate' }
 export enum Corner { TL = 'tl', TR = 'tr', BL = 'bl', BR = 'br', Center = 'center' }
 
 // Workspace kind: Personal workspaces are created automatically on sign-up;

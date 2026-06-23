@@ -25,6 +25,7 @@ import {
   providerNeedsKey,
   isNetscapeCookies,
   fallbackChain,
+  demandSignalCount,
   type MemberCtx,
 } from './index';
 import { MediaType, Provider, StepKind } from '../enums';
@@ -484,5 +485,15 @@ describe('Provider.Research wiring', () => {
   });
   it('has a catalog placeholder (Record stays exhaustive)', () => {
     expect(MODEL_CATALOG[Provider.Research]?.length).toBeGreaterThan(0);
+  });
+});
+
+describe('demandSignalCount', () => {
+  const c = (sourceId: string, demandSignal = true) => ({ id: sourceId, statement: 's', kind: 'estimate' as const, sourceId, demandSignal });
+  it('counts distinct sources among demand-signal claims', () => {
+    expect(demandSignalCount([c('s1'), c('s1'), c('s2'), c('s3')])).toBe(3);
+  });
+  it('ignores non-signal and source-less claims', () => {
+    expect(demandSignalCount([c('s1', false), { id: 'x', statement: 's', kind: 'estimate', sourceId: '', demandSignal: true }])).toBe(0);
   });
 });
