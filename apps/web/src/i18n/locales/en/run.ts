@@ -101,4 +101,8 @@ export default {
   moveLater: 'Move later',
   cached: 'Cached',
   regenerate: 'Regenerate',
+  imageOps: 'Image actions',
+  imageOp_upscale: 'Upscale',
+  imageOp_variation: 'Variation',
+  imageOp_outpaint: 'Outpaint',
 } as const;

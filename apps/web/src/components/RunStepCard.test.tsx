@@ -1,7 +1,29 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { RunStepCard } from './RunStepCard';
-import { StepKey, StepMode, StepStatus } from '@lyra/shared';
+import { StepKey, StepMode, StepStatus, type Step, type Asset } from '@lyra/shared';
+
+// RunStepCard children may read window.matchMedia at render; stub like RunFlow.test.
+vi.stubGlobal('window', {
+  matchMedia: () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+});
+
+const imgStep: Step = { index: 0, name: 'Hero', mode: StepMode.Auto, status: StepStatus.Done, model: 'gemini-2.5-flash-image', prompt: 'x' };
+const imgAsset = { id: 'A', type: 'image', url: 'https://x/i.png', stepIndex: 0 } as Asset;
+
+function renderWithRouter(props: Partial<React.ComponentProps<typeof RunStepCard>> = {}) {
+  return renderToStaticMarkup(
+    <MemoryRouter>
+      <RunStepCard
+        step={imgStep} input="" inputLabel="" locked={false} isCurrent={false} busy={false}
+        onRun={() => {}} onApprove={() => {}} onSavePrompt={() => {}} runId="r1"
+        assets={[imgAsset]} onImageAction={() => {}}
+        {...props}
+      />
+    </MemoryRouter>,
+  );
+}
 
 describe('RunStepCard', () => {
   it('shows the cached badge only when step.cached is true', () => {
@@ -125,5 +147,19 @@ describe('RunStepCard', () => {
 
     const html = renderToStaticMarkup(<RunStepCard {...props} />);
     expect(html).not.toContain('Regenerate');
+  });
+});
+
+describe('RunStepCard image actions', () => {
+  it('renders the action bar on a done image asset when onImageAction is set', () => {
+    const html = renderWithRouter();
+    expect(html).toContain('Upscale');
+    expect(html).toContain('Variation');
+    expect(html).toContain('Outpaint');
+  });
+
+  it('omits the action bar when onImageAction is not provided', () => {
+    const html = renderWithRouter({ onImageAction: undefined });
+    expect(html).not.toContain('Upscale');
   });
 });

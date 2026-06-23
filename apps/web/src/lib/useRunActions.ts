@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from './api';
-import { RunStatus, StepStatus, type Run } from '@lyra/shared';
+import { ImageOp, RunStatus, StepStatus, type Run } from '@lyra/shared';
 
 export function previewRunProgress(run: Run, stepIndex = run.currentStep): Run {
   return {
@@ -55,5 +55,7 @@ export function useRunActions(run: Run | null, setRun: (r: Run) => void) {
     savePrompt: (i: number, prompt: string) => {
       if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/prompt`, { method: 'PATCH', body: JSON.stringify({ prompt }) }));
     },
+    imageAction: (sourceStepIndex: number, assetId: string, op: ImageOp) =>
+      post(`/runs/${run!.id}/actions/image`, { sourceStepIndex, assetId, op }),
   };
 }

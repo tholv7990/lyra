@@ -100,4 +100,8 @@ export default {
   moveLater: 'Di chuyển xuống sau',
   cached: 'Đã lưu',
   regenerate: 'Tạo lại',
+  imageOps: 'Thao tác ảnh',
+  imageOp_upscale: 'Nâng cấp',
+  imageOp_variation: 'Biến thể',
+  imageOp_outpaint: 'Mở rộng',
 } as const;

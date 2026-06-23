@@ -566,6 +566,7 @@ export function PipelineBuilder() {
           onRunStep={runActions.runStep}
           onApprove={runActions.approve}
           onSavePrompt={runActions.savePrompt}
+          onImageAction={runActions.imageAction}
           mobileLayout="flow"
         />
       ) : (

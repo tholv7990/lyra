@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MediaType, StepMode, StepStatus, type Asset, type Run, type Step } from '@lyra/shared';
+import { ImageOp, MediaType, StepMode, StepStatus, type Asset, type Run, type Step } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
@@ -17,6 +17,7 @@ interface RunTimelineProps {
   onReject?: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
   onRegenerate?: (index: number) => void;
+  onImageAction?: (index: number, assetId: string, op: ImageOp) => void;
   assets?: Asset[];
   historyForStep?: (index: number) => StepHistoryEntry[];
 }
@@ -67,6 +68,7 @@ export function RunTimeline({
   onRegenerate,
   assets = [],
   historyForStep,
+  onImageAction,
 }: RunTimelineProps) {
   const { t } = useTranslation();
   // Steps auto-open when they need attention (current / waiting / error).
@@ -142,7 +144,25 @@ export function RunTimeline({
                     <div className="rt-assets">
                       {stepAssets.map((a) =>
                         a.type === 'image' ? (
-                          <a key={a.id} className="rt-asset" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><img src={a.thumbUrl || a.url} alt="" loading="lazy" /></a>
+                          <div key={a.id} className="rn-asset-wrap">
+                            <a className="rt-asset" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><img src={a.thumbUrl || a.url} alt="" loading="lazy" /></a>
+                            {onImageAction && !locked && step.status === StepStatus.Done && (
+                              <div className="rn-asset-ops" role="group" aria-label={t('run.imageOps')}>
+                                {Object.values(ImageOp).map((op) => (
+                                  <button
+                                    key={op}
+                                    type="button"
+                                    className="rn-op-btn"
+                                    disabled={busy}
+                                    title={t(`run.imageOp_${op}`)}
+                                    onClick={(e) => { e.stopPropagation(); onImageAction(step.index, a.id, op); }}
+                                  >
+                                    {t(`run.imageOp_${op}`)}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <a key={a.id} className="rt-asset glyph" href={a.url} target="_blank" rel="noreferrer" onClick={openMedia({ url: a.url, type: a.type as MediaType })}><span aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span></a>
                         ),

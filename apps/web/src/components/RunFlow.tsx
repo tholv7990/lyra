@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { promptVarsForStep, BUILTIN_VAR_LABELS, type Asset, type Run, type Step } from '@lyra/shared';
+import { ImageOp, promptVarsForStep, BUILTIN_VAR_LABELS, type Asset, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
 import { RunStepCard, providerOf } from './RunStepCard';
 import type { StepHistoryEntry } from './StepResultModal';
@@ -16,6 +16,7 @@ interface RunFlowProps {
   onApprove: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
   onRegenerate?: (index: number) => void;
+  onImageAction?: (index: number, assetId: string, op: ImageOp) => void;
   mobileLayout?: 'pager' | 'flow';
   // Media produced by the run's steps (from GET /runs/:id/assets), shown per step.
   assets?: Asset[];
@@ -36,6 +37,7 @@ export function RunFlow({
   onApprove,
   onSavePrompt,
   onRegenerate,
+  onImageAction,
   mobileLayout = 'pager',
   assets = [],
   historyForStep,
@@ -67,6 +69,7 @@ export function RunFlow({
       onApprove={() => onApprove(step.index)}
       onSavePrompt={(p) => onSavePrompt(step.index, p)}
       onRegenerate={onRegenerate ? () => onRegenerate(step.index) : undefined}
+      onImageAction={onImageAction ? (assetId, op) => onImageAction(step.index, assetId, op) : undefined}
       runId={run.id}
       vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
       stepNames={stepNames}
@@ -107,7 +110,7 @@ export function RunFlow({
   const graph = buildRunGraph({ run, hasKey, assets, historyForStep });
   return (
     <Suspense fallback={<div className="flow-canvas loading">{t('common.loadingCanvas')}</div>}>
-      <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt, onRegenerate }} />
+      <FlowCanvas graph={graph} callbacks={{ busy, onRunStep, onApprove, onSavePrompt, onRegenerate, onImageAction }} />
     </Suspense>
   );
 }

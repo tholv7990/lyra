@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  ImageOp,
   MediaType,
   STEP_DEFS,
   STEP_PROVIDERS,
@@ -57,11 +58,14 @@ export interface RunStepCardProps {
   assets?: Asset[];
   // Prior runs of the same pipeline for this step (per-run result history).
   history?: StepHistoryEntry[];
+  // Apply an image op (upscale/variation/outpaint) to one of this step's image
+  // assets. Spawns a derived image step on the run. Omit to hide the action bar.
+  onImageAction?: (assetId: string, op: ImageOp) => void;
 }
 
 export function RunStepCard(props: RunStepCardProps) {
   const { t } = useTranslation();
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, runId, vars, stepNames, assets, history } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, runId, vars, stepNames, assets, history, onImageAction } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
@@ -167,9 +171,27 @@ export function RunStepCard(props: RunStepCardProps) {
         <div className="rn-assets" aria-label={t('run.generatedAssets', { count: assets.length })}>
           {assets.map((a) =>
             a.type === 'image' ? (
-              <a key={a.id} className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')} onClick={openMedia({ url: a.url, type: a.type as MediaType })}>
-                <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
-              </a>
+              <div key={a.id} className="rn-asset-wrap">
+                <a className="rn-asset" href={a.url} target="_blank" rel="noreferrer" title={t('run.openFullSize')} onClick={openMedia({ url: a.url, type: a.type as MediaType })}>
+                  <img src={a.thumbUrl || a.url} alt="" loading="lazy" />
+                </a>
+                {onImageAction && !locked && step.status === StepStatus.Done && (
+                  <div className="rn-asset-ops" role="group" aria-label={t('run.imageOps')}>
+                    {Object.values(ImageOp).map((op) => (
+                      <button
+                        key={op}
+                        type="button"
+                        className="rn-op-btn"
+                        disabled={busy}
+                        title={t(`run.imageOp_${op}`)}
+                        onClick={(e) => { e.stopPropagation(); onImageAction(a.id, op); }}
+                      >
+                        {t(`run.imageOp_${op}`)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <a key={a.id} className={`rn-asset rn-asset-${a.type}`} href={a.url} target="_blank" rel="noreferrer" title={t('run.openAsset', { type: a.type })} onClick={openMedia({ url: a.url, type: a.type as MediaType })}>
                 <span className="rn-asset-glyph" aria-hidden>{a.type === 'video' ? '▶' : '♪'}</span>

@@ -5,6 +5,7 @@ import {
   canEditProject,
   providerNeedsKey,
   keyProviderFor,
+  ImageOp,
   ProjectStatus,
   StepStatus,
   TaskStatus,
@@ -340,6 +341,8 @@ export function TaskDetail() {
         }),
       ),
     );
+  const imageAction = (sourceStepIndex: number, assetId: string, op: ImageOp) =>
+    run && act(async () => setRun(await api<Run>(`/runs/${run.id}/actions/image`, { method: 'POST', body: JSON.stringify({ sourceStepIndex, assetId, op }) })));
   const rate = (value: 'up' | 'down' | null) =>
     run &&
     act(async () => {
@@ -548,6 +551,7 @@ export function TaskDetail() {
                           onReject={reject}
                           onSavePrompt={savePrompt}
                           onRegenerate={regenerate}
+                          onImageAction={imageAction}
                           assets={runAssets}
                           historyForStep={historyForStep}
                         />

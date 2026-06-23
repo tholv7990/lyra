@@ -8,6 +8,7 @@ export interface FlowCallbacks {
   onApprove?: (index: number) => void;
   onSavePrompt?: (index: number, prompt: string) => void;
   onRegenerate?: (index: number) => void;
+  onImageAction?: (index: number, assetId: string, op: import('@lyra/shared').ImageOp) => void;
   // edit mode
   onEdit?: (index: number) => void;
   onToggleMode?: (index: number) => void;
