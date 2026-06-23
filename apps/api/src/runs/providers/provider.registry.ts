@@ -16,7 +16,9 @@ import type { StepProvider } from './step-provider.interface';
 // mock until phases 5 and 6.
 @Injectable()
 export class ProviderRegistry {
-  private readonly impls: Record<Provider, StepProvider>;
+  // Partial like ActionRegistry — a Provider can exist in the enum before it's
+  // wired here (e.g. Research, registered in slice 3a). get() guards the gap.
+  private readonly impls: Partial<Record<Provider, StepProvider>>;
 
   constructor(
     anthropic: AnthropicStepProvider,
@@ -38,6 +40,8 @@ export class ProviderRegistry {
   }
 
   get(provider: Provider): StepProvider {
-    return this.impls[provider];
+    const impl = this.impls[provider];
+    if (!impl) throw new Error(`No step provider for '${provider}'`);
+    return impl;
   }
 }
