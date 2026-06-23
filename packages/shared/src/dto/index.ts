@@ -441,6 +441,10 @@ export interface CreateProductDto {
   competitorIds?: string[];
   outcome?: string;
   tags?: string[];
+  images?: string[];
+  price?: number;
+  compareAtPrice?: number;
+  offer?: string;
 }
 export interface UpdateProductDto {
   name?: string;
@@ -453,4 +457,8 @@ export interface UpdateProductDto {
   competitorIds?: string[];
   outcome?: string;
   tags?: string[];
+  images?: string[];
+  price?: number;
+  compareAtPrice?: number;
+  offer?: string;
 }

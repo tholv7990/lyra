@@ -249,6 +249,7 @@ export interface Run extends Audited {
   id: string;
   projectId?: string; // absent for a builder "test run" (no project)
   taskId?: string; // the task this run belongs to (absent for a builder test run)
+  productId?: string; // a research run targets a product (mutually exclusive with projectId/taskId)
   workspaceId: string;
   pipelineId?: string; // set when the run came from a composable pipeline
   pipelineName?: string;
@@ -751,7 +752,8 @@ export interface ProductSource {
 export interface Product {
   id: string;
   workspaceId: string;
-  projectId: string;
+  projectId?: string;            // legacy/back-compat only; pool products have none
+  originatingProjectId?: string; // provenance: the project a product first came from
   name: string;
   description: string;
   source?: ProductSource;
@@ -774,4 +776,8 @@ export interface Product {
   updatedBy: UserRef;
   createdAt: string;
   updatedAt: string;
+  images?: string[];
+  price?: number;
+  compareAtPrice?: number;
+  offer?: string;
 }
