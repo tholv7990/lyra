@@ -8,13 +8,14 @@ import { DemandGateAction } from './demand-gate.action';
 import { ScoreAction } from './score.action';
 import { ResolveInputsAction } from './resolve-inputs.action';
 import { CompetitionAction } from './competition.action';
+import { RiskScreenAction } from './risk-screen.action';
 import type { ActionProvider } from './action-provider.interface';
 
 @Injectable()
 export class ActionRegistry {
   private readonly impls: Partial<Record<ActionType, ActionProvider>>;
 
-  constructor(brand: BrandActionProvider, unitEcon: UnitEconAction, evaluate: EvaluateAction, saveProduct: SaveProductAction, demandGate: DemandGateAction, score: ScoreAction, resolveInputs: ResolveInputsAction, competition: CompetitionAction) {
+  constructor(brand: BrandActionProvider, unitEcon: UnitEconAction, evaluate: EvaluateAction, saveProduct: SaveProductAction, demandGate: DemandGateAction, score: ScoreAction, resolveInputs: ResolveInputsAction, competition: CompetitionAction, riskScreen: RiskScreenAction) {
     this.impls = {
       [ActionType.Brand]: brand,
       [ActionType.UnitEcon]: unitEcon,
@@ -24,6 +25,7 @@ export class ActionRegistry {
       [ActionType.Score]: score,
       [ActionType.ResolveInputs]: resolveInputs,
       [ActionType.Competition]: competition,
+      [ActionType.RiskScreen]: riskScreen,
     }; // Crawl/Publish added in later phases
   }
 
