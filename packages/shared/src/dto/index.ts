@@ -462,3 +462,4 @@ export interface UpdateProductDto {
   compareAtPrice?: number;
   offer?: string;
 }
+export interface SelectProductDto { poolProductId: string }

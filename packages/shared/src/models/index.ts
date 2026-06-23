@@ -754,6 +754,9 @@ export interface Product {
   workspaceId: string;
   projectId?: string;            // legacy/back-compat only; pool products have none
   originatingProjectId?: string; // provenance: the project a product first came from
+  poolProductId?: string;   // a project copy points to its pool product
+  poolSnapshotAt?: string;  // ISO; when the copy's info/images were last snapshotted
+  drift?: boolean;          // view-only: copy's frozen info differs from the pool product now
   name: string;
   description: string;
   source?: ProductSource;
