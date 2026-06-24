@@ -11,6 +11,7 @@ import {
   tagColor,
   type Asset,
   type PromptMedia,
+  type PromptVar,
   type Provider,
   type Step,
 } from '@lyra/shared';
@@ -65,11 +66,15 @@ export interface RunStepCardProps {
   wsId?: string;
   onSaveModel?: (provider: Provider, model: string) => Promise<unknown> | void;
   onSaveMedia?: (media: PromptMedia[]) => Promise<unknown> | void;
+  // Composer authoring aids passed to StepEditModal: insertable variable chips
+  // and the every-step-name list for dangling {step:X} warnings.
+  vars?: PromptVar[];
+  stepNames?: string[];
 }
 
 export function RunStepCard(props: RunStepCardProps) {
   const { t } = useTranslation();
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, onSaveToPipeline, runId, assets, history, onImageAction, wsId, onSaveModel, onSaveMedia } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, onSaveToPipeline, runId, assets, history, onImageAction, wsId, onSaveModel, onSaveMedia, vars, stepNames } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
@@ -224,6 +229,8 @@ export function RunStepCard(props: RunStepCardProps) {
             : undefined}
           onRerun={() => { onRun(); }}
           canPromote={!!step.pipelineStepId && !!onSaveToPipeline}
+          vars={vars}
+          stepNames={stepNames}
         />
       )}
       {showResult && (

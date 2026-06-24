@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MODEL_CATALOG, type PromptMedia, type Provider } from '@lyra/shared';
+import { MODEL_CATALOG, type PromptMedia, type PromptVar, type Provider } from '@lyra/shared';
 import { api } from '../lib/api';
 import { Composer } from './Composer';
 import { Modal } from './Modal';
@@ -19,6 +19,9 @@ export interface StepEditModalProps {
   onSaveToPipeline?: (i: number) => Promise<unknown>;
   onRerun?: (i: number) => void;
   canPromote?: boolean;
+  // Composer authoring aids: insertable variable chips + dangling {step:X} warning.
+  vars?: PromptVar[];
+  stepNames?: string[];
 }
 
 export function StepEditModal({
@@ -35,6 +38,8 @@ export function StepEditModal({
   onSaveToPipeline,
   onRerun,
   canPromote,
+  vars,
+  stepNames,
 }: StepEditModalProps) {
   const { t } = useTranslation();
 
@@ -142,6 +147,8 @@ export function StepEditModal({
           model={draftModel}
           onModelChange={handleModelChange}
           placeholder={t('run.testPromptPlaceholder')}
+          vars={vars}
+          stepNames={stepNames}
         />
       </div>
 

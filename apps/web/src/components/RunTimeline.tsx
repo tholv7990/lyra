@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ImageOp, MediaType, StepMode, StepStatus, type Asset, type PromptMedia, type Provider, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
+import { BUILTIN_VAR_LABELS, ImageOp, MediaType, StepMode, StepStatus, promptVarsForStep, type Asset, type PromptMedia, type Provider, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
@@ -341,6 +341,8 @@ export function RunTimeline({
           } : undefined}
           onRerun={onRunStep}
           canPromote={!!editingStep.pipelineStepId && !!onSaveToPipeline}
+          vars={promptVarsForStep(run.steps, editingIndex, run.variables ?? {}, BUILTIN_VAR_LABELS)}
+          stepNames={run.steps.map((s) => s.name ?? '')}
         />
       )}
       {viewer}

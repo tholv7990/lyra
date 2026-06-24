@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageOp, type Asset, type PromptMedia, type Provider, type Run, type Step } from '@lyra/shared';
+import { BUILTIN_VAR_LABELS, ImageOp, promptVarsForStep, type Asset, type PromptMedia, type Provider, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
 import { RunStepCard, providerOf } from './RunStepCard';
 import type { StepHistoryEntry } from './StepResultModal';
@@ -53,6 +53,7 @@ export function RunFlow({
   const pager = useFlowPager(run.steps.length);
   const { isMobile, setPage } = pager;
   const assetsFor = (index: number) => assets.filter((a) => a.stepIndex === index);
+  const stepNames = run.steps.map((s) => s.name ?? '');
 
   // On mobile, follow the active step as the run progresses.
   useEffect(() => {
@@ -82,6 +83,8 @@ export function RunFlow({
       wsId={wsId}
       onSaveModel={onSaveModel ? (p, m) => onSaveModel(step.index, p, m) : undefined}
       onSaveMedia={onSaveMedia ? (med) => onSaveMedia(step.index, med) : undefined}
+      vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
+      stepNames={stepNames}
     />
   );
 
