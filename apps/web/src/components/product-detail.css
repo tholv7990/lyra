@@ -18,17 +18,25 @@
 .pd-actions-src { margin-left: auto; font-size: 13px; }
 .pd-resync-note { margin: 0; font-size: 12.5px; color: var(--success); }
 
+/* Flat sections — the detail uses the SAME flat style as the create/edit form
+   (bold heading + content, no boxed cards, tight spacing) instead of padded panels.
+   Scoped to .pd-detail so the shared .panel class is untouched elsewhere. */
+.pd-detail .panel { background: none; border: none; box-shadow: none; border-radius: 0; }
+.pd-detail .panel-head { padding: 0; border-bottom: none; margin-bottom: 10px; }
+.pd-detail .panel-head h2 { font-size: 15px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.pd-detail .panel-pad { padding: 0; }
+
 /* ── Body grid ────────────────────────────────────────────────────────────── */
 
 .pd-body {
-  display: grid; grid-template-columns: 1fr 340px; gap: 18px; align-items: start;
+  display: grid; grid-template-columns: 1fr 320px; gap: 28px; align-items: start;
 }
-.pd-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.pd-aside { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pd-main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.pd-aside { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 
 /* ── Score hero ───────────────────────────────────────────────────────────── */
 
-.score-hero { display: flex; align-items: center; gap: 20px; padding: 16px 20px; flex-wrap: wrap; }
+.score-hero { display: flex; align-items: center; gap: 20px; padding: 0; flex-wrap: wrap; }
 .score-ring { position: relative; width: 96px; height: 96px; flex: none; display: grid; place-items: center; }
 .score-ring svg { position: absolute; inset: 0; width: 96px; height: 96px; transform: rotate(-90deg); }
 .score-ring .rnum { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
