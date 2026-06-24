@@ -12,7 +12,7 @@ export class MemoryController {
   constructor(private readonly memory: MemoryService) {}
 
   @Get()
-  list(@Param('id') ws: string): Promise<Memory[]> { return this.memory.list(ws); }
+  list(@Param('id') ws: string, @CurrentUser() user: User): Promise<Memory[]> { return this.memory.list(ws, user.id); }
 
   @Post()
   @RequireCreate()
@@ -22,8 +22,8 @@ export class MemoryController {
 
   @Post('recall')
   @HttpCode(200)
-  recall(@Param('id') ws: string, @Body() body: RecallBody): Promise<Memory[]> {
-    return this.memory.recall(ws, body);
+  recall(@Param('id') ws: string, @Body() body: RecallBody, @CurrentUser() user: User): Promise<Memory[]> {
+    return this.memory.recall(ws, body, user.id);
   }
 
   @Delete(':memoryId')
