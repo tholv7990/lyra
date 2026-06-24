@@ -49,7 +49,11 @@ export class ResearchTemplateService {
       act(ActionType.ResolveInputs, 'Resolve inputs'),
       { name: 'Research', promptId: pid, provider: Provider.Research, model: 'auto', mode: StepMode.Auto },
       act(ActionType.DemandGate, 'Demand gate'),
+      act(ActionType.CustomerJob, 'Customer job'),
+      act(ActionType.ReviewMining, 'Review mining'),
       act(ActionType.Competition, 'Competition'),
+      act(ActionType.CreativePotential, 'Creative potential'),
+      act(ActionType.SupplyChain, 'Supply chain'),
       act(ActionType.Score, 'Score'),
       act(ActionType.UnitEcon, 'Unit economics'),
       act(ActionType.RiskScreen, 'Risk screen'),
@@ -59,7 +63,7 @@ export class ResearchTemplateService {
 
     if (existing) {
       const upToDate = (existing.steps ?? []).some(
-        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.RiskScreen,
+        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.SupplyChain,
       );
       if (!upToDate) {
         const research = (existing.steps ?? []).find((s) => (s as { promptId?: string }).promptId);

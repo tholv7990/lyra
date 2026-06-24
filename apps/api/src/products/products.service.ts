@@ -6,6 +6,7 @@ import {
   type CreateProductDto, type UpdateProductDto, type Product as ProductView,
   type EvidenceClaim, type SourceRow, type UnitEcon, type SubScores, type ConfidenceGrade, type Decision,
   type HardGates, type UnitEconInputs, type CompetitionData, type RiskFlags, type Scenarios,
+  type CustomerJob, type ReviewMining, type CreativeConcept, type SupplyChainInfo,
   type SaveProductResultDto,
 } from '@lyra/shared';
 import { Product, ProductDocument } from './product.schema';
@@ -110,6 +111,7 @@ export class ProductsService {
     subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision;
     hardGates?: HardGates; unitEconInputs?: UnitEconInputs; assumptions?: string[]; competition?: CompetitionData;
     riskFlags?: RiskFlags; riskNotes?: string[]; scenarios?: Scenarios;
+    customerJob?: CustomerJob; reviewMining?: ReviewMining; creativeConcepts?: CreativeConcept[]; supplyChain?: SupplyChainInfo;
   }): Promise<ProductView> {
     const set: Record<string, unknown> = { updatedBy: actorId };
     if (p.evidence !== undefined) set.evidence = p.evidence;
@@ -126,6 +128,10 @@ export class ProductsService {
     if (p.riskFlags !== undefined) set.riskFlags = p.riskFlags;
     if (p.riskNotes !== undefined) set.riskNotes = p.riskNotes;
     if (p.scenarios !== undefined) set.scenarios = p.scenarios;
+    if (p.customerJob !== undefined) set.customerJob = p.customerJob;
+    if (p.reviewMining !== undefined) set.reviewMining = p.reviewMining;
+    if (p.creativeConcepts !== undefined) set.creativeConcepts = p.creativeConcepts;
+    if (p.supplyChain !== undefined) set.supplyChain = p.supplyChain;
     const doc = await this.model
       .findOneAndUpdate({ _id: productId, workspaceId, active: { $ne: false } }, { $set: set }, { returnDocument: 'after' })
       .exec();
