@@ -25,6 +25,8 @@ export function RunStepNode({ data }: NodeProps) {
         runId={d.runId}
         assets={d.assets}
         history={d.history}
+        vars={d.vars}
+        stepNames={d.stepNames}
       />
       <Handle type="source" position={Position.Right} isConnectable={false} />
     </div>

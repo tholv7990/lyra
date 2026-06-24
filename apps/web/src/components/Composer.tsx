@@ -1,6 +1,6 @@
 import { useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MEDIA_ACCEPT, type PromptMedia, type Provider } from '@lyra/shared';
+import { MEDIA_ACCEPT, unknownStepRefs, type PromptMedia, type PromptVar, type Provider } from '@lyra/shared';
 import { AttachmentPreviews } from './AttachmentPreviews';
 import { ModelPicker } from './ModelPicker';
 import { useAutoResize } from '../lib/useAutoResize';
@@ -36,6 +36,10 @@ interface ComposerProps {
   trailing?: ReactNode;
   /** Extra class on the box (e.g. `pe-composer`). */
   className?: string;
+  /** Insertable variable chips for the run/builder step editors. Omit to hide the row. */
+  vars?: PromptVar[];
+  /** Every step name in the run — flags dangling {step:X} refs. Omit to skip the check. */
+  stepNames?: string[];
 }
 
 // The one composer used by the prompt editor (Create/Edit) and the Try page:
@@ -61,6 +65,8 @@ export function Composer({
   hideSend = false,
   trailing,
   className,
+  vars,
+  stepNames,
 }: ComposerProps) {
   const { t } = useTranslation();
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -74,9 +80,44 @@ export function Composer({
     }
   }
 
+  // Insert a variable token at the cursor (append if the textarea isn't focused).
+  function insertToken(token: string) {
+    const ta = taRef.current;
+    if (!ta) {
+      onChange(value + token);
+      return;
+    }
+    const start = ta.selectionStart ?? value.length;
+    const end = ta.selectionEnd ?? value.length;
+    onChange(value.slice(0, start) + token + value.slice(end));
+    requestAnimationFrame(() => {
+      ta.focus();
+      const pos = start + token.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  }
+
+  const dangling = stepNames ? unknownStepRefs(value, stepNames) : [];
+
   return (
     <div className={`composer-box${className ? ` ${className}` : ''}`}>
       <AttachmentPreviews media={media} uploading={uploading} onRemove={onRemoveMedia} />
+      {vars && vars.length > 0 && (
+        <div className="rn-vars">
+          <span className="rn-vars-label">{t('run.insert')}</span>
+          {vars.map((v) => (
+            <button
+              key={v.token}
+              type="button"
+              className={`var-chip kind-${v.kind}`}
+              title={`Insert ${v.token}`}
+              onClick={() => insertToken(v.token)}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      )}
       <textarea
         ref={taRef}
         className="composer-input"
@@ -87,6 +128,11 @@ export function Composer({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
       />
+      {dangling.length > 0 && (
+        <p className="rn-var-warn">
+          {t('run.unknownStepRef')}: {dangling.map((n) => `{step:${n}}`).join(', ')}
+        </p>
+      )}
       <div className="composer-bar">
         <button
           type="button"
