@@ -40,6 +40,7 @@ import { CustomerJobAction } from './providers/customer-job.action';
 import { ReviewMiningAction } from './providers/review-mining.action';
 import { CreativePotentialAction } from './providers/creative-potential.action';
 import { SupplyChainAction } from './providers/supply-chain.action';
+import { ValidationPlanAction } from './providers/validation-plan.action';
 import { ActionRegistry } from './providers/action.registry';
 import { TavilyClient } from './providers/tavily.client';
 import { FirecrawlClient } from './providers/firecrawl.client';
@@ -93,6 +94,7 @@ import { ResearchStepProvider } from './providers/research.provider';
     ReviewMiningAction,
     CreativePotentialAction,
     SupplyChainAction,
+    ValidationPlanAction,
     ActionRegistry,
     // Research step: Tavily search + multi-provider LLM agentic loop.
     TavilyClient,
