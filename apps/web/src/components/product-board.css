@@ -12,6 +12,38 @@
   flex: none;
 }
 
+/* Card thumbnail (first image) + image-count badge — opens the lightbox. */
+.pcard-thumb {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: var(--surface-2);
+  cursor: zoom-in;
+  display: block;
+}
+.pcard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pcard-thumb:hover { border-color: var(--hairline-strong); }
+.pcard-thumb:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--primary); }
+.pcard-img-count {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  /* fixed dark overlay so the count reads on any thumbnail in light + dark */
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Grade chip A/B/C — compact, token-colored. */
 .pcard-grade {
   flex: none;

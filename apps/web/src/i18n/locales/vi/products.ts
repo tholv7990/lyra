@@ -2,6 +2,7 @@ export default {
   title: 'Sản phẩm',
   addProduct: 'Thêm sản phẩm',
   saveFailed: 'Không thể lưu sản phẩm',
+  viewImages: 'Xem hình ảnh',
   importTitle: 'Nhập từ liên kết sản phẩm',
   importPlaceholder: 'Dán URL sản phẩm AliExpress / Amazon / Walmart…',
   importBtn: 'Đồng bộ',

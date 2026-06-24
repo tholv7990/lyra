@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductStatus, type Product } from '@lyra/shared';
+import { ImageLightbox } from './ImageLightbox';
 import './tasks.css';        // shared kanban chrome (.tboard/.tcol/.tcard) — same as the project task board
 import './product-board.css'; // product-specific card extras layered on .tcard
 
@@ -50,6 +52,8 @@ export function ProductBoard({
   onOpen: (p: Product) => void;
 }) {
   const { t } = useTranslation();
+  // Image lightbox: the gallery of one product's images (opened from its card thumb).
+  const [lightbox, setLightbox] = useState<string[] | null>(null);
 
   if (products.length === 0) {
     return (
@@ -68,61 +72,81 @@ export function ProductBoard({
   const grouped = groupByStatus(products);
 
   return (
-    <div className="tboard">
-      <div className="tboard-cols">
-        {PRODUCT_STATUS_ORDER.map((status) => {
-          const col = grouped[status];
-          return (
-            <div className="tcol" key={status}>
-              <div className="tcol-head">
-                <span
-                  className="pboard-status-dot"
-                  style={{ background: PRODUCT_STATUS_COLOR[status] }}
-                  aria-hidden="true"
-                />
-                <span className="tcol-name">{t(`projects.productStatus.${status}`)}</span>
-                <span className="tcol-count">{col.length}</span>
-              </div>
-              <div className="tcol-body">
-                {col.map((product) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    className="tcard pcard"
-                    onClick={() => onOpen(product)}
-                  >
-                    <div className="tcard-top">
-                      <span className="tcard-name">{product.name}</span>
-                      {product.grade && (
-                        <span className={`pcard-grade ${gradeClass(product.grade)}`} aria-label={t('projects.productGrade')}>
-                          {product.grade}
-                        </span>
-                      )}
-                    </div>
+    <>
+      <div className="tboard">
+        <div className="tboard-cols">
+          {PRODUCT_STATUS_ORDER.map((status) => {
+            const col = grouped[status];
+            return (
+              <div className="tcol" key={status}>
+                <div className="tcol-head">
+                  <span
+                    className="pboard-status-dot"
+                    style={{ background: PRODUCT_STATUS_COLOR[status] }}
+                    aria-hidden="true"
+                  />
+                  <span className="tcol-name">{t(`projects.productStatus.${status}`)}</span>
+                  <span className="tcol-count">{col.length}</span>
+                </div>
+                <div className="tcol-body">
+                  {col.map((product) => {
+                    const imgs = product.images ?? [];
+                    return (
+                      <div
+                        key={product.id}
+                        className="tcard pcard"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onOpen(product)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(product); } }}
+                      >
+                        <div className="tcard-top">
+                          {imgs.length > 0 && (
+                            <button
+                              type="button"
+                              className="pcard-thumb"
+                              title={t('products.viewImages')}
+                              aria-label={t('products.viewImages')}
+                              onClick={(e) => { e.stopPropagation(); setLightbox(imgs); }}
+                            >
+                              <img src={imgs[0]} alt="" loading="lazy" />
+                              {imgs.length > 1 && <span className="pcard-img-count">{imgs.length}</span>}
+                            </button>
+                          )}
+                          <span className="tcard-name">{product.name}</span>
+                          {product.grade && (
+                            <span className={`pcard-grade ${gradeClass(product.grade)}`} aria-label={t('projects.productGrade')}>
+                              {product.grade}
+                            </span>
+                          )}
+                        </div>
 
-                    {(product.niche ?? product.source?.platform) && (
-                      <div className="pcard-sub">{product.niche ?? product.source?.platform}</div>
-                    )}
+                        {(product.niche ?? product.source?.platform) && (
+                          <div className="pcard-sub">{product.niche ?? product.source?.platform}</div>
+                        )}
 
-                    <div className="tcard-foot">
-                      <div className="tcard-foot-l">
-                        {product.decision && (
-                          <span className="pcard-decision">{product.decision}</span>
-                        )}
+                        <div className="tcard-foot">
+                          <div className="tcard-foot-l">
+                            {product.decision && (
+                              <span className="pcard-decision">{product.decision}</span>
+                            )}
+                          </div>
+                          <div className="tcard-foot-r">
+                            {product.score !== undefined && (
+                              <span className="pcard-score">{product.score}/100</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="tcard-foot-r">
-                        {product.score !== undefined && (
-                          <span className="pcard-score">{product.score}/100</span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+      {lightbox && <ImageLightbox images={lightbox} onClose={() => setLightbox(null)} />}
+    </>
   );
 }

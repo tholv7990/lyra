@@ -2,6 +2,7 @@ export default {
   title: 'Products',
   addProduct: 'Add product',
   saveFailed: 'Could not save product',
+  viewImages: 'View images',
   importTitle: 'Import from a product link',
   importPlaceholder: 'Paste an AliExpress / Amazon / Walmart product URL…',
   importBtn: 'Sync',
