@@ -546,6 +546,36 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
           </section>
         )}
 
+        {product.customerJob && (product.customerJob.customer || product.customerJob.job) && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.customerJobTitle')}</h3>
+            <dl className="pdtl-cj">
+              {([['cjCustomer','customer'],['cjJob','job'],['cjProblem','problem'],['cjAlternative','alternative'],['cjTrigger','trigger']] as const).map(([label, key]) => product.customerJob![key] ? (<div key={key}><dt>{t(`projects.${label}`)}</dt><dd>{product.customerJob![key]}</dd></div>) : null)}
+            </dl>
+          </section>
+        )}
+        {product.reviewMining && (product.reviewMining.complaints.length > 0 || product.reviewMining.desiredFeatures.length > 0) && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.reviewMiningTitle')}</h3>
+            {product.reviewMining.complaints.length > 0 && (<><p className="pdtl-sub">{t('projects.rmComplaints')}</p><ul className="pdtl-list">{product.reviewMining.complaints.map((c, i) => <li key={i}>{c}</li>)}</ul></>)}
+            {product.reviewMining.desiredFeatures.length > 0 && (<><p className="pdtl-sub">{t('projects.rmFeatures')}</p><ul className="pdtl-list">{product.reviewMining.desiredFeatures.map((c, i) => <li key={i}>{c}</li>)}</ul></>)}
+          </section>
+        )}
+        {product.creativeConcepts && product.creativeConcepts.length > 0 && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.creativeTitle')}</h3>
+            <ul className="pdtl-list">{product.creativeConcepts.map((c, i) => <li key={i}><strong>{c.hook}</strong>{c.angle ? ` — ${c.angle}` : ''}</li>)}</ul>
+          </section>
+        )}
+        {product.supplyChain && (product.supplyChain.suppliers.length > 0 || (product.supplyChain.notes && product.supplyChain.notes.length > 0)) && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.supplyTitle')}</h3>
+            {product.supplyChain.suppliers.length > 0 && <p className="pdtl-sub">{product.supplyChain.suppliers.join(', ')}</p>}
+            <p className="pdtl-meta">{product.supplyChain.moq ? `${t('projects.scMoq')}: ${product.supplyChain.moq} · ` : ''}{product.supplyChain.leadTime ? `${t('projects.scLeadTime')}: ${product.supplyChain.leadTime} · ` : ''}{product.supplyChain.certs.length ? `${t('projects.scCerts')}: ${product.supplyChain.certs.join(', ')}` : ''}</p>
+            {product.supplyChain.notes && product.supplyChain.notes.length > 0 && (<ul className="pdtl-assumptions">{product.supplyChain.notes.map((n, i) => <li key={i} className="pdtl-assumption">{n}</li>)}</ul>)}
+          </section>
+        )}
+
         {/* Sources */}
         {product.sources.length > 0 && (
           <section className="pdtl-section">
