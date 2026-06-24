@@ -117,6 +117,7 @@ export class RunsController {
         condition: s.condition as StepCondition | undefined,
         kind: s.kind as any,
         action: s.action as ActionStep | undefined,
+        media: s.media,
       })),
     };
   }
@@ -167,6 +168,7 @@ export class RunsController {
         condition: s.condition as StepCondition | undefined,
         kind: s.kind as any,
         action: s.action as ActionStep | undefined,
+        media: s.media,
       })),
     };
   }
@@ -269,6 +271,7 @@ export class RunsController {
           condition: s.condition as StepCondition | undefined,
           kind: s.kind as any,
           action: s.action as ActionStep | undefined,
+          media: s.media,
         })),
       },
       user.id,

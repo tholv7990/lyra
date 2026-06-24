@@ -58,6 +58,7 @@ function toStep(s: RunStep): Step {
     // post-render QA fields must round-trip (persist assigns state.steps wholesale).
     review: s.review,
     reviewIssues: s.reviewIssues,
+    media: s.media as Step['media'],
   };
 }
 

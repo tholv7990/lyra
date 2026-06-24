@@ -14,6 +14,7 @@ function makeService(deps?: {
   assets?: any;
   cache?: any;
   pipelines?: any;
+  files?: any;
 }): RunsService {
   const users = { refMap: jest.fn().mockResolvedValue(new Map()) };
   // rate() only touches doc + users (via toView, which we stub); other deps unused.
@@ -29,6 +30,7 @@ function makeService(deps?: {
     deps?.cache ?? ({} as never), // cache (StepResultCache model)
     deps?.pipelines ?? ({} as never), // pipelines
     { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
+    deps?.files ?? ({} as never), // files (FilesService — step-media attachments)
   );
   jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
   return svc;
@@ -654,6 +656,7 @@ describe('RunsService.executeStep', () => {
       makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
       {} as never, // pipelines
       { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
+      {} as never, // files (FilesService — step-media attachments)
     );
     jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
 
@@ -710,6 +713,7 @@ describe('RunsService.executeStep', () => {
       makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
       {} as never, // pipelines
       { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
+      {} as never, // files (FilesService — step-media attachments)
     );
     jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
 
@@ -767,5 +771,181 @@ describe('reviewAssets (post-render QA seam)', () => {
     const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(undefined), 0, dataOut);
     expect(out).toEqual([]);
     expect(review).not.toHaveBeenCalled();
+  });
+});
+
+describe('RunsService step-media (multimodal)', () => {
+  it('createForPipeline snapshots media from pipeline steps onto run steps', async () => {
+    const ModelMock = jest.fn().mockImplementation((d: Record<string, unknown>) => ({
+      ...d,
+      save: jest.fn().mockResolvedValue(d),
+    }));
+    const svc = makeService({ model: ModelMock, prompts: { findActiveById: jest.fn().mockResolvedValue({ content: 'body' }) } });
+
+    const media = [{ type: 'image' as const, url: '/files/abc123', mime: 'image/png', name: 'hero.png', size: 1024 }];
+    const run = (await svc.createForPipeline(
+      {
+        workspaceId: 'w1',
+        pipelineId: 'pl1',
+        pipelineName: 'P',
+        projectVariables: {},
+        steps: [
+          { id: 's1', name: 'Write', promptId: 'pid', provider: 'anthropic', model: 'm', mode: 'auto', media },
+          { id: 's2', name: 'Improve', promptId: 'pid2', provider: 'anthropic', model: 'm', mode: 'auto' },
+        ],
+      } as never,
+      'actor-1',
+    )) as unknown as { steps: { media?: typeof media }[] };
+
+    expect(run.steps[0].media).toEqual(media);
+    expect(run.steps[1].media).toBeUndefined();
+  });
+
+  it('executeStep builds attachments from step.media and passes them to the provider', async () => {
+    const keys = { list: jest.fn().mockResolvedValue([{ provider: 'anthropic' }]), getDecrypted: jest.fn().mockResolvedValue('sk-test') };
+    const providerExecute = jest.fn().mockResolvedValue({ result: 'ok', assets: [], usage: { tokens: 5 } });
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    const assets = { createForStep: jest.fn().mockResolvedValue([]) };
+    const cache = makeCacheMock(null);
+    const readBuffer = jest.fn().mockResolvedValue(Buffer.from('imgbytes'));
+    const files = { readBuffer };
+
+    const svc = makeService({ cache, registry, keys, assets, files });
+    const runDoc: RunDocument = {
+      _id: { toString: () => 'run-m1' },
+      workspaceId: 'ws-1',
+      projectId: undefined,
+      variables: {},
+      collections: {},
+      status: 'idle',
+      currentStep: 0,
+      updatedBy: '',
+      steps: [
+        {
+          index: 0,
+          name: 'Write',
+          provider: Provider.Anthropic,
+          model: 'claude-3-haiku',
+          mode: StepMode.Auto,
+          status: StepStatus.Idle,
+          prompt: 'Describe this image',
+          kind: undefined,
+          action: undefined,
+          media: [{ type: 'image' as any, url: '/files/img1', mime: 'image/png', name: 'a.png', size: 100 }],
+        },
+      ],
+      markModified: jest.fn(),
+      save: jest.fn().mockResolvedValue(undefined),
+    } as unknown as RunDocument;
+
+    await svc.runStep(runDoc, 0, 'actor-1');
+
+    // readBuffer must have been called with the file id from the url
+    expect(readBuffer).toHaveBeenCalledWith('img1');
+    // The provider must have been called with attachments
+    const ctx = providerExecute.mock.calls[0][0];
+    expect(ctx.attachments).toHaveLength(1);
+    expect(ctx.attachments[0].kind).toBe('image');
+    expect(ctx.attachments[0].mediaType).toBe('image/png');
+    expect(ctx.attachments[0].dataBase64).toBe(Buffer.from('imgbytes').toString('base64'));
+  });
+
+  it('cache key differs when step.media changes (media cache invalidation)', async () => {
+    const keys = { list: jest.fn().mockResolvedValue([{ provider: 'anthropic' }]), getDecrypted: jest.fn().mockResolvedValue('sk-test') };
+    const providerExecute = jest.fn().mockResolvedValue({ result: 'ok', assets: [], usage: { tokens: 2 } });
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    const assets = { createForStep: jest.fn().mockResolvedValue([]) };
+    const files = { readBuffer: jest.fn().mockResolvedValue(Buffer.from('bytes')) };
+
+    const cache1 = makeCacheMock(null);
+    const cache2 = makeCacheMock(null);
+
+    const svc1 = makeService({ cache: cache1, registry, keys, assets, files });
+    const svc2 = makeService({ cache: cache2, registry, keys, assets, files });
+
+    function makeDocWithMedia(mediaUrl?: string): RunDocument {
+      return {
+        _id: { toString: () => 'run-ck' },
+        workspaceId: 'ws-1',
+        projectId: undefined,
+        variables: {},
+        collections: {},
+        status: 'idle',
+        currentStep: 0,
+        updatedBy: '',
+        steps: [
+          {
+            index: 0,
+            name: 'Write',
+            provider: Provider.Anthropic,
+            model: 'claude-3-haiku',
+            mode: StepMode.Auto,
+            status: StepStatus.Idle,
+            prompt: 'Describe the image',
+            kind: undefined,
+            action: undefined,
+            media: mediaUrl ? [{ type: 'image', url: mediaUrl, mime: 'image/png', name: 'x.png', size: 100 }] : undefined,
+          },
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(undefined),
+      } as unknown as RunDocument;
+    }
+
+    await svc1.runStep(makeDocWithMedia('/files/img-a'), 0, 'actor-1');
+    await svc2.runStep(makeDocWithMedia('/files/img-b'), 0, 'actor-1');
+
+    const key1 = cache1.findOne.mock.calls[0]?.[0]?.cacheKey as string;
+    const key2 = cache2.findOne.mock.calls[0]?.[0]?.cacheKey as string;
+    expect(typeof key1).toBe('string');
+    expect(typeof key2).toBe('string');
+    expect(key1).not.toBe(key2);
+  });
+
+  it('non-image/pdf attachments (e.g. audio) are skipped', async () => {
+    const keys = { list: jest.fn().mockResolvedValue([{ provider: 'anthropic' }]), getDecrypted: jest.fn().mockResolvedValue('sk-test') };
+    const providerExecute = jest.fn().mockResolvedValue({ result: 'ok', assets: [], usage: { tokens: 1 } });
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    const assets = { createForStep: jest.fn().mockResolvedValue([]) };
+    const cache = makeCacheMock(null);
+    const readBuffer = jest.fn().mockResolvedValue(Buffer.from('bytes'));
+    const files = { readBuffer };
+
+    const svc = makeService({ cache, registry, keys, assets, files });
+    const runDoc: RunDocument = {
+      _id: { toString: () => 'run-m2' },
+      workspaceId: 'ws-1',
+      projectId: undefined,
+      variables: {},
+      collections: {},
+      status: 'idle',
+      currentStep: 0,
+      updatedBy: '',
+      steps: [
+        {
+          index: 0,
+          name: 'Write',
+          provider: Provider.Anthropic,
+          model: 'claude-3-haiku',
+          mode: StepMode.Auto,
+          status: StepStatus.Idle,
+          prompt: 'Step',
+          kind: undefined,
+          action: undefined,
+          // audio/video are not forwarded as LLM attachments
+          media: [{ type: 'audio' as any, url: '/files/aud1', mime: 'audio/mp3', name: 'a.mp3', size: 50 }],
+        },
+      ],
+      markModified: jest.fn(),
+      save: jest.fn().mockResolvedValue(undefined),
+    } as unknown as RunDocument;
+
+    await svc.runStep(runDoc, 0, 'actor-1');
+
+    // readBuffer should NOT be called for audio
+    expect(readBuffer).not.toHaveBeenCalled();
+    // Provider must be called but with no attachments
+    const ctx = providerExecute.mock.calls[0][0];
+    expect(ctx.attachments).toEqual([]);
   });
 });

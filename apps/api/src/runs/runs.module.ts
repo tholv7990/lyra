@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
+import { FilesModule } from '../files/files.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { KeysModule } from '../keys/keys.module';
 import { UsersModule } from '../users/users.module';
@@ -50,6 +51,7 @@ import { VideoJobPoller } from './video-job.poller';
 @Module({
   imports: [
     WorkspacesModule, // MembershipsService
+    FilesModule, // FilesService — read step-media attachments
     ProjectsModule, // ProjectsService + ProjectAccessGuard
     KeysModule, // KeysService (per-step key gating + decryption)
     UsersModule, // UsersService (ref expansion)

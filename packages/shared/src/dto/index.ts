@@ -177,6 +177,7 @@ export interface PipelineStepInput {
   kind?: StepKind;
   action?: ActionStep;
   review?: boolean; // post-render asset QA toggle (undefined/true = on)
+  media?: PromptMedia[]; // media files attached to this step's prompt
 }
 
 export interface PipelineVariableInput {

@@ -255,6 +255,8 @@ export interface Step {
   // findings when a review gate fires (shown in the run view).
   review?: boolean;
   reviewIssues?: string[];
+  // Media files attached to this step's prompt (sent to the model at run time).
+  media?: PromptMedia[];
 }
 
 // Result of the render-service technical QA on a produced asset (post-render
@@ -455,6 +457,8 @@ export interface PipelineStep {
   // Post-render asset QA toggle for this step (undefined/true = on, false = off).
   // Snapshotted onto the run step at creation.
   review?: boolean;
+  // Media files attached to this step's prompt (sent to the model at run time).
+  media?: PromptMedia[];
 }
 
 // A user-defined variable for a pipeline. Any step prompt can reference it as

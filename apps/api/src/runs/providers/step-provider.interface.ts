@@ -1,4 +1,5 @@
 import type { Step, StepKey, EvidenceClaim, SourceRow } from '@lyra/shared';
+import type { LlmAttachment } from './anthropic.client';
 import type { RunLedger } from '../run-ledger';
 
 // A prior step's output, fed as context to the current step.
@@ -24,6 +25,7 @@ export interface StepRunContext {
   apiKey: string;
   priorResults: PriorStepResult[];
   inputImages?: StepInputImage[]; // present only for image steps that reference prior images
+  attachments?: LlmAttachment[]; // media files attached to this step's prompt (images + PDFs)
   workspaceId: string;
   ledger: RunLedger;
 }
