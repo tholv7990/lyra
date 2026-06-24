@@ -24,6 +24,7 @@ import {
   AdStatus,
   AdEventType,
   ProductStatus,
+  MemoryKind,
 } from '../enums';
 import type { SubScores } from '../constants/research';
 
@@ -856,4 +857,25 @@ export interface Product {
   price?: number;
   compareAtPrice?: number;
   offer?: string;
+}
+
+export interface Memory {
+  id: string;
+  workspaceId: string;
+  userId?: string;
+  kind: MemoryKind;
+  text: string;
+  subjectType?: 'project' | 'product' | 'brand' | 'pipeline' | 'global';
+  subjectId?: string;
+  relatedIds?: string[];
+  dedupeKey?: string;
+  confidence: number;
+  provenance: 'explicit' | 'inferred';
+  source?: { conversationId?: string; runId?: string };
+  supersedes?: string;
+  active: boolean;
+  createdBy: UserRef;
+  updatedBy: UserRef;
+  createdAt: string;
+  updatedAt: string;
 }
