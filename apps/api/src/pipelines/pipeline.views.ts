@@ -1,4 +1,4 @@
-import { type ActionStep, type Pipeline as PipelineModel, type PipelineOrigin, type PipelineStep, type PipelineVariable, type StepCondition, type UserRef } from '@lyra/shared';
+import { type Pipeline as PipelineModel, type PipelineOrigin, type PipelineStep, type PipelineVariable, type StepCondition, type UserRef } from '@lyra/shared';
 import type { PipelineDocument } from './pipeline.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';

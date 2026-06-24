@@ -11,6 +11,8 @@ export const productsApi = {
   remove: (ws: string, id: string) => api<void>(`${base(ws)}/${id}`, { method: 'DELETE' }),
   // One-time crawl + LLM map of an e-commerce URL → unsaved ImportedProduct (prefill only).
   importUrl: (ws: string, url: string) => api<ImportedProduct>(`${base(ws)}/import-url`, { method: 'POST', body: JSON.stringify({ url }) }),
+  // Re-crawl the product's stored source URL → refresh commercial fields; returns the updated product.
+  resync: (ws: string, id: string) => api<Product>(`${base(ws)}/${id}/resync`, { method: 'POST' }),
 };
 
 export const productResultsApi = {
