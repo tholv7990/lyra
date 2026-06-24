@@ -188,6 +188,16 @@ export function RunTimeline({
 
           {step.status === StepStatus.Waiting && !locked && editing !== step.index && (
             <div className="rt-gate">
+              {step.reviewIssues && step.reviewIssues.length > 0 && (
+                <div className="rt-review-issues">
+                  <div className="rt-review-issues-title">{t('run.reviewIssuesTitle')}</div>
+                  <ul className="rt-review-issues-list">
+                    {step.reviewIssues.map((issue, idx) => (
+                      <li key={idx}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="rt-gate-top">
                 <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M8 1.6 14 4.4v3.8c0 3.4-2.5 5.6-6 6.6-3.5-1-6-3.2-6-6.6V4.4Z" /><path d="M8 6v2.6M8 10.8h.01" /></svg>
                 <div>

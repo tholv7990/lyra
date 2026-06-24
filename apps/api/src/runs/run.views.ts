@@ -55,6 +55,9 @@ function toStep(s: RunStep): Step {
     evidence: s.evidence as Step['evidence'],
     sources: s.sources as Step['sources'],
     data: s.data,
+    // post-render QA fields must round-trip (persist assigns state.steps wholesale).
+    review: s.review,
+    reviewIssues: s.reviewIssues,
   };
 }
 

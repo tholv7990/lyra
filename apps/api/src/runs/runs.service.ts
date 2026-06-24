@@ -39,6 +39,7 @@ import { ActionRegistry } from './providers/action.registry';
 import type { StepRunOutput, PriorStepResult, StepInputImage } from './providers/step-provider.interface';
 import { gatherInputImages, fetchImagesByUrl } from './providers/image-inputs';
 import { isRetryableProviderError } from './providers/retryable';
+import { RenderClient } from './providers/render.client';
 import { assembleLedger } from './run-ledger';
 import type { RunLedger } from './run-ledger';
 import {
@@ -46,6 +47,7 @@ import {
   assertStepPosition,
   beginStep,
   completeStep,
+  gateForReview,
   failStep,
   skipStep,
   shouldSkip,
@@ -94,6 +96,7 @@ export interface PipelineRunInput {
     condition?: StepCondition;
     kind?: StepKind;
     action?: ActionStep;
+    review?: boolean;
   }[];
 }
 
@@ -127,6 +130,7 @@ export class RunsService extends BaseRepository<Run> {
     private readonly projects: ProjectsService,
     @InjectModel(StepResultCache.name) private readonly cache: Model<StepResultCache>,
     private readonly pipelines: PipelinesService,
+    private readonly renderClient: RenderClient,
   ) {
     super(model);
   }
@@ -164,6 +168,8 @@ export class RunsService extends BaseRepository<Run> {
         condition: ps.condition,
         kind: ps.kind,
         action: ps.action,
+        // Post-render QA toggle snapshotted onto the run step (undefined = on).
+        review: ps.review,
         status: StepStatus.Idle,
         // Store the raw template — project/custom/system vars and {input}/{step:Name}
         // resolve at run time from the run's variable snapshot + prior outputs.
@@ -567,6 +573,8 @@ export class RunsService extends BaseRepository<Run> {
       } else {
         completeStep(state, index, output);
         await this.saveAssets(doc, state, index, output, actorId);
+        const issues = await this.reviewAssets(state, index, output);
+        if (issues.length) gateForReview(state, index, issues);
       }
     } catch (err) {
       failStep(state, index, errMessage(err));
@@ -649,6 +657,21 @@ export class RunsService extends BaseRepository<Run> {
     state.steps[index].assetIds = ids;
   }
 
+  // Post-render asset QA (self-review). When enabled (step.review !== false) and the
+  // step produced an http(s) IMAGE asset, run the render-service technical check and
+  // return the issue strings (empty = pass). RenderClient.review FAILS OPEN on an
+  // outage, so a QA-service problem never gates. Image-only for v1.
+  // ponytail: sharp can't decode video; video QA deferred. Non-http urls (e.g. data:)
+  // are skipped rather than gated, to avoid false positives.
+  private async reviewAssets(state: RunState, index: number, output: StepRunOutput): Promise<string[]> {
+    const step = state.steps[index];
+    if (step.review === false) return [];
+    const image = (output.assets ?? []).find((a) => a.type === 'image' && /^https?:\/\//.test(a.url));
+    if (!image) return [];
+    const res = await this.renderClient.review({ assetUrl: image.url });
+    return res.pass ? [] : res.issues;
+  }
+
   // Advance the run loop: run consecutive steps until a gate pauses, a step is
   // locked (missing key), a step errors, a step submits an async job, or the run
   // completes. Extracted so resumeAfterAsync can reuse the same loop.
@@ -663,6 +686,8 @@ export class RunsService extends BaseRepository<Run> {
         if (output.async) { submitAsyncStep(state, index, output.async.jobId); break; }
         completeStep(state, index, output);
         await this.saveAssets(doc, state, index, output, actorId);
+        const issues = await this.reviewAssets(state, index, output);
+        if (issues.length) { gateForReview(state, index, issues); break; }
       } catch (err) { failStep(state, index, errMessage(err)); break; }
     }
   }
@@ -685,7 +710,9 @@ export class RunsService extends BaseRepository<Run> {
     if (state.steps[index]?.status !== StepStatus.Running) return this.persistOrDrop(doc, state, actorId);
     completeStep(state, index, output);
     await this.saveAssets(doc, state, index, output, actorId);
-    await this.advance(doc, state, present, actorId);
+    const issues = await this.reviewAssets(state, index, output);
+    if (issues.length) gateForReview(state, index, issues);
+    else await this.advance(doc, state, present, actorId);
     return this.persistOrDrop(doc, state, actorId);
   }
 

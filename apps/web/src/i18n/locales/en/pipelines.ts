@@ -153,4 +153,7 @@ export default {
   condOpGt: 'greater than',
   condOpLt: 'less than',
   overrideLabel: 'Prompt override (run-time edit)',
+  // Auto-QA toggle in step drawer
+  qaToggleLabel: 'QA generated media',
+  qaToggleHint: 'After the step produces an image, run a technical quality check and pause for review if issues are found.',
 } as const;

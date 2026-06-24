@@ -176,6 +176,7 @@ export interface PipelineStepInput {
   condition?: StepCondition;
   kind?: StepKind;
   action?: ActionStep;
+  review?: boolean; // post-render asset QA toggle (undefined/true = on)
 }
 
 export interface PipelineVariableInput {

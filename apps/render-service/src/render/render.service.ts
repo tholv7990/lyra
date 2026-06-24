@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import sharp from 'sharp';
+import sharp, { type Metadata as SharpMetadata } from 'sharp';
 import { RenderStore } from './render.store';
+import { ReviewDto } from './dto';
 
 export interface RenderImageReq {
   imageUrl: string;
@@ -51,6 +52,66 @@ export class RenderService {
     const out = await base.composite([{ input: logoBuf, gravity }]).png().toBuffer();
     const url = await this.store.save(out);
     return { url, width: meta.width ?? 0, height: meta.height ?? 0 };
+  }
+
+  async review(dto: ReviewDto): Promise<{ pass: boolean; issues: string[] }> {
+    const issues: string[] = [];
+
+    let buf: Buffer;
+    try {
+      buf = await this.fetchBuffer(dto.assetUrl);
+    } catch {
+      return { pass: false, issues: ['could not fetch asset'] };
+    }
+
+    let meta: SharpMetadata;
+    try {
+      meta = await sharp(buf).metadata();
+    } catch {
+      return { pass: false, issues: ['could not decode image'] };
+    }
+
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+
+    if (!meta.width || !meta.height) {
+      issues.push('image is missing dimensions');
+    } else {
+      if (w < 256) issues.push(`width ${w} < 256`);
+      if (h < 256) issues.push(`height ${h} < 256`);
+    }
+
+    // Blankness check
+    try {
+      const stats = await sharp(buf).stats();
+      const allFlat = stats.channels.every((ch) => ch.stdev < 1);
+      if (allFlat) issues.push('image is blank or solid color');
+    } catch {
+      // stats failure is non-fatal; skip blank check
+    }
+
+    // Aspect ratio check
+    if (dto.expect?.aspect && meta.width && meta.height) {
+      const RATIOS: Record<string, number> = {
+        '9:16': 9 / 16,
+        '1:1': 1,
+        '16:9': 16 / 9,
+      };
+      const target = RATIOS[dto.expect.aspect];
+      const actual = w / h;
+      if (Math.abs(actual - target) / target > 0.05) {
+        issues.push(
+          `aspect ratio ${actual.toFixed(4)} does not match expected ${dto.expect.aspect} (${target.toFixed(4)}) within 5%`,
+        );
+      }
+    }
+
+    // Min-width check
+    if (dto.expect?.minWidth !== undefined && meta.width && w < dto.expect.minWidth) {
+      issues.push(`width ${w} < minWidth ${dto.expect.minWidth}`);
+    }
+
+    return { pass: issues.length === 0, issues };
   }
 
   private async fetchBuffer(url: string): Promise<Buffer> {

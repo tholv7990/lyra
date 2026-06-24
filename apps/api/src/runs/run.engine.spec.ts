@@ -5,6 +5,7 @@ import {
   isLocked,
   beginStep,
   completeStep,
+  gateForReview,
   failStep,
   submitAsyncStep,
   approveGateAt,
@@ -174,6 +175,35 @@ function doneRun(): RunState {
     ],
   };
 }
+
+describe('gateForReview (post-render QA gate)', () => {
+  it('pulls an auto-completed step back into an approvable review gate', () => {
+    const s = freshState();
+    runStep(s, 0); // auto step → Done, currentStep advanced to 1, status Idle
+    expect(s.currentStep).toBe(1);
+    gateForReview(s, 0, ['image is blank']);
+    expect(s.status).toBe(RunStatus.AwaitingGate);
+    expect(s.currentStep).toBe(0); // pulled back so approveGateAt(0) is valid
+    expect(s.steps[0].status).toBe(StepStatus.Waiting);
+    expect(s.steps[0].reviewIssues).toEqual(['image is blank']);
+    // the existing gate approval works on a review gate unchanged
+    approveGateAt(s, 0);
+    expect(s.steps[0].status).toBe(StepStatus.Done);
+    expect(s.currentStep).toBe(1);
+  });
+
+  it('clears stale reviewIssues on a re-run (beginStep) and on reset', () => {
+    const s = freshState();
+    runStep(s, 0);
+    gateForReview(s, 0, ['image is blank']);
+    rejectGateAt(s, 0); // user rejects → step back to Idle, run Idle
+    beginStep(s, 0); // re-run the step
+    expect(s.steps[0].reviewIssues).toBeUndefined();
+    gateForReview(s, 0, ['still blank']);
+    resetRun(s);
+    expect(s.steps[0].reviewIssues).toBeUndefined();
+  });
+});
 
 describe('derived (out-of-band) step transitions', () => {
   it('beginDerivedStep marks only the step running — run.status/currentStep untouched', () => {

@@ -98,6 +98,12 @@ export class RunStep {
 
   @Prop()
   progress?: number;
+
+  @Prop()
+  review?: boolean;
+
+  @Prop({ type: [String], default: undefined })
+  reviewIssues?: string[];
 }
 const RunStepSchema = SchemaFactory.createForClass(RunStep);
 

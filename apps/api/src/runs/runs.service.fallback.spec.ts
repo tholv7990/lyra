@@ -13,6 +13,7 @@ function makeSvc(execMap: ExecMap, keyedProviders: Provider[]) {
     {} as never, keys as never, {} as never, registry as never,
     {} as never, {} as never, {} as never, {} as never, {} as never,
     {} as never, // pipelines
+    { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
   );
   return { svc, keys };
 }

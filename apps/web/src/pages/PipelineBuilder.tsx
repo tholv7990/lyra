@@ -55,6 +55,7 @@ import { PromptDetails } from '../components/PromptDetails';
 import { RunVariablesModal } from '../components/RunVariablesModal';
 import { EditorActions } from '../components/EditorActions';
 import { StepCard } from '../components/StepCard';
+import { Toggle } from '../components/Toggle';
 import { CheckIcon, PlayIcon, SparkleIcon } from '../layout/icons';
 import { MenuPicker } from '../components/MenuPicker';
 import { FlowCallbacksProvider, type FlowCallbacks } from '../components/flow/flowCallbacks';
@@ -287,6 +288,8 @@ export function PipelineBuilder() {
         : undefined,
       kind: isAction ? StepKind.Action : undefined,
       action: isAction ? s.action : undefined,
+      // review: undefined = on (default), false = off. Only persist false explicitly.
+      review: s.review === false ? false : undefined,
     };
     setSteps((list) => {
       if (editing.isNew) {
@@ -785,6 +788,16 @@ export function PipelineBuilder() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* QA toggle: run a technical quality check after the step produces an image. */}
+            <div className="addstep-qa">
+              <Toggle
+                checked={ed.review !== false}
+                onChange={(v) => setEditing({ ...editing!, step: { ...ed, review: v ? undefined : false } })}
+                label={t('pipelines.qaToggleLabel')}
+                title={t('pipelines.qaToggleHint')}
+              />
             </div>
 
             {/* Condition: run this step only when a run variable matches; else skip. */}

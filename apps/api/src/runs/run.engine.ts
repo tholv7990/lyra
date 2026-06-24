@@ -134,6 +134,7 @@ export function beginStep(state: RunState, index: number): void {
   step.status = StepStatus.Running;
   step.startedAt = now();
   step.error = undefined;
+  step.reviewIssues = undefined; // clear any prior QA findings — this is a fresh attempt
   state.status = RunStatus.Running;
 }
 
@@ -162,6 +163,19 @@ export function completeStep(
     state.status =
       state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
   }
+}
+
+// Post-render asset QA failed: hold the just-completed step for human review,
+// reusing the existing AwaitingGate pause (so approve/reject already work). Pulls
+// `currentStep` back to this index — completeStep may have advanced it for an auto
+// step; approveGateAt/rejectGateAt require `index === currentStep`. Idempotent for a
+// step already gated (Gate mode): it just annotates `reviewIssues`.
+export function gateForReview(state: RunState, index: number, issues: string[]): void {
+  const step = state.steps[index];
+  step.status = StepStatus.Waiting;
+  step.reviewIssues = issues;
+  state.currentStep = index;
+  state.status = RunStatus.AwaitingGate;
 }
 
 // A guard condition failed — bypass the step (no provider call) and advance, like
@@ -277,6 +291,7 @@ export function resetRun(state: RunState): void {
     step.evidence = undefined;
     step.sources = undefined;
     step.data = undefined;
+    step.reviewIssues = undefined;
   }
   state.currentStep = 0;
   state.status = RunStatus.Idle;
