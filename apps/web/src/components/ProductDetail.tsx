@@ -576,6 +576,20 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
           </section>
         )}
 
+        {product.validationPlan && (product.validationPlan.offer || product.validationPlan.creatives.length > 0) && (
+          <section className="pdtl-section">
+            <h3 className="pdtl-section-label">{t('projects.validationTitle')}</h3>
+            <dl className="pdtl-cj">
+              {product.validationPlan.offer && (<div><dt>{t('projects.vpOffer')}</dt><dd>{product.validationPlan.offer}</dd></div>)}
+              {product.validationPlan.landingPageHypothesis && (<div><dt>{t('projects.vpLp')}</dt><dd>{product.validationPlan.landingPageHypothesis}</dd></div>)}
+              {product.validationPlan.channel && (<div><dt>{t('projects.vpChannel')}</dt><dd>{product.validationPlan.channel}</dd></div>)}
+              {typeof product.validationPlan.testBudget === 'number' && (<div><dt>{t('projects.vpBudget')}</dt><dd>${product.validationPlan.testBudget} <span className="pdtl-meta">{t('projects.vpBudgetNote')}</span></dd></div>)}
+              {product.validationPlan.decisionRule && (<div><dt>{t('projects.vpRule')}</dt><dd>{product.validationPlan.decisionRule}</dd></div>)}
+            </dl>
+            {product.validationPlan.creatives.length > 0 && (<><p className="pdtl-sub">{t('projects.vpCreatives')}</p><ul className="pdtl-list">{product.validationPlan.creatives.map((c, i) => <li key={i}>{c}</li>)}</ul></>)}
+          </section>
+        )}
+
         {/* Sources */}
         {product.sources.length > 0 && (
           <section className="pdtl-section">

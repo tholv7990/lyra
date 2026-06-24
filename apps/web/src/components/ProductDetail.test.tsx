@@ -121,4 +121,14 @@ describe('ProductDetail', () => {
     expect(html).toContain('Never bored again');
     expect(html).toContain('Acme Co');
   });
+
+  it('shows the validation plan when present', () => {
+    const html = renderToStaticMarkup(
+      <ProductDetailBody product={{ ...product, validationPlan: { offer: 'BOGO', landingPageHypothesis: 'speed sells', creatives: ['hook A'], channel: 'TikTok', testBudget: 500, decisionRule: 'kill if CPA>maxCAC' } } as any}
+        workspaceId="w" onClose={() => {}} onUpdate={async () => {}} onProductRefresh={async () => {}} />,
+    );
+    expect(html).toContain('BOGO');
+    expect(html).toContain('TikTok');
+    expect(html).toContain('hook A');
+  });
 });

@@ -178,6 +178,15 @@ export default {
   scenarioLanded: 'Landed +10%',
   scenarioReturns: 'Returns ×2',
 
+  validationTitle: 'Validation plan',
+  vpOffer: 'Offer',
+  vpLp: 'Landing page',
+  vpChannel: 'Channel',
+  vpBudget: 'Suggested test budget',
+  vpBudgetNote: '(≈ 25× max CAC)',
+  vpCreatives: 'Creatives',
+  vpRule: 'Decision rule',
+
   noPosts: 'No posts published yet.',
   noCaption: '(no caption)',
   variablesLabel: 'Variables',

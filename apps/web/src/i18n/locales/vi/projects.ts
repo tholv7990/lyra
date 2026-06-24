@@ -178,6 +178,15 @@ export default {
   scenarioLanded: 'Giá nhập +10%',
   scenarioReturns: 'Hoàn trả ×2',
 
+  validationTitle: 'Kế hoạch kiểm chứng',
+  vpOffer: 'Ưu đãi',
+  vpLp: 'Trang đích',
+  vpChannel: 'Kênh',
+  vpBudget: 'Ngân sách test đề xuất',
+  vpBudgetNote: '(≈ 25× CAC tối đa)',
+  vpCreatives: 'Mẫu quảng cáo',
+  vpRule: 'Quy tắc quyết định',
+
   noPosts: 'Chưa có bài đăng nào.',
   noCaption: '(không có chú thích)',
   variablesLabel: 'Biến',
