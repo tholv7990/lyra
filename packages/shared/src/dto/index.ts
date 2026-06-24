@@ -491,6 +491,10 @@ export interface UpdateProductDto {
 }
 export interface SelectProductDto { poolProductId: string }
 
+// Import a product's fields from an e-commerce URL (crawl + LLM map). Returns an
+// unsaved ImportedProduct for the Add-product form to prefill — nothing persisted.
+export interface ImportUrlDto { url: string }
+
 export interface RememberDto {
   kind: MemoryKind;
   text: string;

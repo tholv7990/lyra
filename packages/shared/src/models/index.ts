@@ -816,6 +816,21 @@ export interface ProductSource {
   platform?: string;
   url?: string;
 }
+// Unsaved product fields extracted from an e-commerce URL (crawl + LLM map). A
+// subset of CreateProductDto plus `warnings` — used to prefill the Add-product
+// form for the user to review before saving. Persisted only on an explicit save.
+export interface ImportedProduct {
+  name?: string;
+  description?: string;
+  price?: number;
+  compareAtPrice?: number;
+  offer?: string;
+  niche?: string;
+  category?: string;
+  images?: string[];
+  source?: ProductSource;
+  warnings?: string[];
+}
 // ── Storyboard (P3 artifact — per-task video creative plan) ──────────────────
 export interface StoryboardFrame {
   index: number;

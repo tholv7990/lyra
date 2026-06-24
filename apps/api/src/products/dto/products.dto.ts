@@ -1,9 +1,9 @@
 import {
-  IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, MinLength, ValidateNested,
+  IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, MaxLength, MinLength, ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus, Provider } from '@lyra/shared';
-import type { CreateProductDto, UpdateProductDto, SelectProductDto, ProductSource, ProductEconInputs, SaveProductResultDto } from '@lyra/shared';
+import type { CreateProductDto, UpdateProductDto, SelectProductDto, ProductSource, ProductEconInputs, SaveProductResultDto, ImportUrlDto } from '@lyra/shared';
 
 class ProductSourceBody implements ProductSource {
   @IsOptional() @IsString() @MaxLength(60) platform?: string;
@@ -53,6 +53,10 @@ export class UpdateProductBody implements UpdateProductDto {
 
 export class SelectProductBody implements SelectProductDto {
   @IsString() @IsNotEmpty() poolProductId!: string;
+}
+
+export class ImportUrlBody implements ImportUrlDto {
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true }) @MaxLength(2000) url!: string;
 }
 
 export class SaveProductResultBody implements SaveProductResultDto {
