@@ -45,6 +45,10 @@ export interface StepRunOutput {
   usage?: { tokens?: number; costUsd?: number };
   // true when this output was served from the step cache (no provider call).
   cached?: boolean;
+  // Present only when the provider SUBMITTED a long job instead of finishing
+  // synchronously (video). The run records the jobId, leaves the step Running,
+  // and a poller completes it later.
+  async?: { jobId: string };
   evidence?: EvidenceClaim[];
   sources?: SourceRow[];
   data?: Record<string, unknown>;
