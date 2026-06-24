@@ -1,6 +1,7 @@
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsIn,
   IsObject,
@@ -92,6 +93,11 @@ export class PipelineStepBody implements PipelineStepInput {
   @IsString()
   @MaxLength(8000)
   promptOverride?: string;
+
+  // Post-render asset QA toggle for this step (undefined/true = on, false = off).
+  @IsOptional()
+  @IsBoolean()
+  review?: boolean;
 
   @IsEnum(Provider)
   provider!: Provider;

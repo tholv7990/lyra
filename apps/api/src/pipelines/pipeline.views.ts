@@ -32,6 +32,7 @@ export function toPipeline(
           : undefined,
         kind: s.kind as PipelineStep['kind'],
         action: s.action as PipelineStep['action'],
+        review: s.review,
       }),
     ),
     variables: (p.variables ?? []).map(

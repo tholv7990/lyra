@@ -250,6 +250,18 @@ export interface Step {
   data?: Record<string, unknown>;
   kind?: StepKind;
   action?: ActionStep;
+  // Post-render asset QA (self-review). `review` toggles it per step
+  // (undefined/true = on, false = off); `reviewIssues` holds the technical-QA
+  // findings when a review gate fires (shown in the run view).
+  review?: boolean;
+  reviewIssues?: string[];
+}
+
+// Result of the render-service technical QA on a produced asset (post-render
+// self-review). pass=false + human-readable issues gates the step for review.
+export interface ReviewResult {
+  pass: boolean;
+  issues: string[];
 }
 
 // A per-run 👍/👎 verdict on the run's overall output. One per run (last-writer-
@@ -440,6 +452,9 @@ export interface PipelineStep {
   condition?: StepCondition; // guard — skip this step when it fails
   kind?: StepKind;
   action?: ActionStep;
+  // Post-render asset QA toggle for this step (undefined/true = on, false = off).
+  // Snapshotted onto the run step at creation.
+  review?: boolean;
 }
 
 // A user-defined variable for a pipeline. Any step prompt can reference it as

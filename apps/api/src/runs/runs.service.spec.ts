@@ -28,6 +28,7 @@ function makeService(deps?: {
     deps?.projects ?? ({} as never), // projects
     deps?.cache ?? ({} as never), // cache (StepResultCache model)
     deps?.pipelines ?? ({} as never), // pipelines
+    { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
   );
   jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
   return svc;
@@ -652,6 +653,7 @@ describe('RunsService.executeStep', () => {
       {} as never, // projects
       makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
       {} as never, // pipelines
+      { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
     );
     jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
 
@@ -707,6 +709,7 @@ describe('RunsService.executeStep', () => {
       {} as never, // projects
       makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
       {} as never, // pipelines
+      { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
     );
     jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
 
@@ -732,5 +735,37 @@ describe('RunsService.executeStep', () => {
     const ctx = providerExecute.mock.calls[0][0];
     expect(ctx.inputImages).toHaveLength(1);
     expect(ctx.inputImages[0].b64).toBe(Buffer.from('logodata').toString('base64'));
+  });
+});
+
+describe('reviewAssets (post-render QA seam)', () => {
+  function svcWith(reviewMock: jest.Mock) {
+    const s = Object.create(RunsService.prototype) as RunsService;
+    (s as unknown as { renderClient: unknown }).renderClient = { review: reviewMock };
+    return s;
+  }
+  const imgOutput = { result: '', assets: [{ type: 'image', url: 'https://x/a.png' }] } as never;
+  const stateWith = (review?: boolean) => ({ steps: [{ index: 0, review }] }) as never;
+
+  it('returns issues when the QA verdict is pass:false (so the caller gates)', async () => {
+    const review = jest.fn().mockResolvedValue({ pass: false, issues: ['image is blank'] });
+    const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(undefined), 0, imgOutput);
+    expect(out).toEqual(['image is blank']);
+    expect(review).toHaveBeenCalledWith({ assetUrl: 'https://x/a.png' });
+  });
+
+  it('skips QA (no call) when the step has review === false', async () => {
+    const review = jest.fn();
+    const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(false), 0, imgOutput);
+    expect(out).toEqual([]);
+    expect(review).not.toHaveBeenCalled();
+  });
+
+  it('skips a non-http asset url (e.g. data:) rather than false-gating', async () => {
+    const review = jest.fn();
+    const dataOut = { assets: [{ type: 'image', url: 'data:image/png;base64,xx' }] } as never;
+    const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(undefined), 0, dataOut);
+    expect(out).toEqual([]);
+    expect(review).not.toHaveBeenCalled();
   });
 });

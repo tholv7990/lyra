@@ -77,6 +77,8 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         condition,
         kind: s.kind,
         action: s.action,
+        // Preserve the per-step QA toggle across builder saves.
+        review: s.review,
       };
     });
   }

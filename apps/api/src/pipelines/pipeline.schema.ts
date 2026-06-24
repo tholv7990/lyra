@@ -21,6 +21,10 @@ export class PipelineStepItem {
   @Prop()
   promptOverride?: string;
 
+  // Post-render asset QA toggle (undefined/true = on, false = off).
+  @Prop()
+  review?: boolean;
+
   // When set, this step maps its prompt over a named run collection (parallel).
   @Prop({ type: Object })
   fanOut?: { over: string; itemVar?: string };
