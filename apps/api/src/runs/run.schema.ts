@@ -97,7 +97,7 @@ const RunStepSchema = SchemaFactory.createForClass(RunStep);
 
 export type RunDocument = HydratedDocument<Run>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, optimisticConcurrency: true })
 export class Run extends AuditedEntity {
   // Absent for a builder "test run" (no project — just typed/blank context).
   @Prop({ index: true })
