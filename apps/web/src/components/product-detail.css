@@ -46,18 +46,26 @@
 @media (min-width: 1024px) {
   .eshell:has(.pd-detail) { max-width: 1080px; }
   .pdtl-body { display: grid; grid-template-columns: minmax(0, 1fr) 328px; gap: 30px; align-items: start; }
+  /* No aside content → single full-width column (no empty right rail). */
+  .pdtl-body--single { display: flex; }
 }
 
 /* ── Hero — product-page style (gallery left, info right) ──────────────────────
    Stacked on mobile, 2-column on wide desktop. Mirrors a real PDP: image beside
    description · pricing · unit-econ summary · score. The product name lives in
    the EditorShell header (not repeated here). All text uses the system scale. */
+/* Mobile: flat hero (keeps the tight edge gutter). Desktop: one subtle elevated
+   surface card — the single deliberate surface on the page, for focal hierarchy. */
 .pdtl-hero { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .pdtl-hero-media { min-width: 0; }
-.pdtl-hero-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pdtl-hero-info { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 @media (min-width: 1024px) {
-  .pdtl-hero { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 32px; align-items: start; }
+  .pdtl-hero {
+    display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 30px; align-items: start;
+    background: var(--card); border: 1px solid var(--hairline); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs); padding: 24px;
+  }
 }
 
 .pdtl-hero-meta { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -66,16 +74,47 @@
 
 .pdtl-hero-desc { margin: 0; font-size: 13.5px; line-height: var(--lh-body); color: var(--ink-muted); max-width: 62ch; }
 
+/* Verdict leads the info column — separated from the commercial detail below. */
+.pdtl-hero-info .score-hero { padding-bottom: 16px; border-bottom: 1px solid var(--hairline); }
+
+/* Pricing */
 .pdtl-pricing { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
 .pdtl-price { font-size: 20px; font-weight: var(--weight-semibold); letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
-.pdtl-compare { font-size: 14px; color: var(--ink-tertiary); text-decoration: line-through; }
+.pdtl-compare { font-size: 14px; color: var(--ink-muted); text-decoration: line-through; }
 .pdtl-offer { font-size: 12px; font-weight: var(--weight-medium); color: var(--primary); background: var(--primary-tint); border-radius: var(--radius-sm); padding: 2px 8px; }
 
-.pdtl-econ-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--ink); }
-.pdtl-econ-summary > span { white-space: nowrap; }
-.pdtl-econ-summary b { font-weight: var(--weight-semibold); color: var(--ink-tertiary); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 5px; }
+/* Unit-econ headline stats (CM1 · break-even · max CAC · target ROAS).
+   2×2 on mobile, single 4-up row on desktop; AA-readable labels. */
+.pdtl-stats { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; border-top: 1px solid var(--hairline); padding-top: 14px; }
+.pdtl-stat { display: flex; flex-direction: column; gap: 3px; padding-left: 14px; border-left: 1px solid var(--hairline); min-width: 0; }
+.pdtl-stat:nth-child(odd) { padding-left: 0; border-left: 0; }   /* left column on mobile */
+.pdtl-stat-k { font-size: 11px; font-weight: var(--weight-medium); color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdtl-stat-v { margin: 0; font-size: 15px; font-weight: var(--weight-semibold); color: var(--ink); font-variant-numeric: tabular-nums; }
+.pdtl-stat-v small { font-size: 11px; font-weight: 400; color: var(--ink-muted); }
+@media (min-width: 1024px) {
+  .pdtl-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 0; }
+  .pdtl-stat:nth-child(odd) { padding-left: 14px; border-left: 1px solid var(--hairline); }
+  .pdtl-stat:first-child { padding-left: 0; border-left: 0; }
+}
 
-.pdtl-hero-info .score-hero { margin-top: 2px; }
+/* Empty gallery — a useful state, not a dead grey box */
+.pdtl-shot-empty {
+  aspect-ratio: 4 / 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  border: 1px dashed var(--hairline-strong); border-radius: var(--radius-md);
+  background: var(--surface-1); color: var(--ink-tertiary);
+}
+.pdtl-shot-empty-label { font-size: 13px; color: var(--ink-muted); }
+.pdtl-shot-empty-add { font-size: 13px; color: var(--primary); text-decoration: none; }
+.pdtl-shot-empty-add:hover { text-decoration: underline; }
+
+/* Skeleton (loading) — shimmer with a reduced-motion fallback */
+.skel { position: relative; overflow: hidden; background: var(--surface-2); border-radius: var(--radius-md); }
+.skel::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--card) 70%, transparent), transparent); animation: pdtl-shimmer 1.3s ease-in-out infinite; }
+@keyframes pdtl-shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skel::after { animation: none; } }
+.pdtl-skel-media { aspect-ratio: 4 / 3; }
+.pdtl-skel-line { height: 13px; }
+.pdtl-skel-verdict { height: 96px; }
 
 /* ── Evidence as FAQ (collapsible on every viewport, unlike .pd-sec) ──────────
    Each claim is a "question"; expanding reveals its detail + the source as a
@@ -90,40 +129,62 @@
 .pdtl-faq > summary::-webkit-details-marker { display: none; }
 .pdtl-faq-q { flex: 1; min-width: 0; font-size: 13.5px; line-height: var(--lh-body); color: var(--ink); }
 .pdtl-faq > summary .pdtl-kind { margin-top: 1px; }
-.pdtl-faq-chev { flex: none; margin-top: 3px; color: var(--ink-tertiary); transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
-.pdtl-faq[open] > summary .pdtl-faq-chev { transform: rotate(90deg); }
+.pdtl-faq-plus { flex: none; margin-top: 3px; color: var(--ink-muted); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.pdtl-faq[open] > summary .pdtl-faq-plus { transform: rotate(45deg); }
 .pdtl-faq[open] > summary .pdtl-faq-q { font-weight: var(--weight-medium); }
 .pdtl-faq-body { display: flex; flex-direction: column; gap: 6px; padding: 0 0 12px; }
 .pdtl-faq-ref { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
 .pdtl-faq-ref-label { color: var(--ink-tertiary); }
 .pdtl-faq-ref-name { color: var(--ink-muted); }
 @media (hover: hover) { .pdtl-faq > summary:hover .pdtl-faq-q { color: var(--primary); } }
-@media (prefers-reduced-motion: reduce) { .pdtl-faq-chev { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .pdtl-faq-plus { transition: none; } }
 
 /* ── Collapsible research sections (native <details>) ──────────────────────────
    The detail is a long research read. Mobile shows it as a scannable list of
    collapsible sections (progressive disclosure) so the page isn't an endless
    scroll; desktop forces every section open and hides the toggle, so the desktop
    layout is identical to a plain stacked column. No JS, no library. */
-.pd-sec { min-width: 0; }
-.pd-sec > summary {
-  display: flex; align-items: center; gap: 8px;
-  cursor: pointer; user-select: none; list-style: none; margin-bottom: 0;
+/* Each section is a bordered card (FAQ reference style). Uses .pd-detail .pd-sec
+   to override the flat .pd-detail .panel reset above. */
+.pd-detail .pd-sec,
+.pd-detail .pd-timeline {
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+.pd-detail .pd-sec > summary {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; margin: 0;
+  cursor: pointer; user-select: none; list-style: none;
 }
 .pd-sec > summary::-webkit-details-marker { display: none; }
-.pd-sec > summary h2 { flex: 1; min-width: 0; }
-.pd-sec-chev { color: var(--ink-tertiary); flex: none; transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
-.pd-sec[open] > summary { margin-bottom: 10px; }
-.pd-sec[open] > summary .pd-sec-chev { transform: rotate(90deg); }
-@media (hover: hover) { .pd-sec > summary:hover h2 { color: var(--primary); } }
-@media (prefers-reduced-motion: reduce) { .pd-sec-chev { transition: none; } }
+.pd-detail .pd-sec > summary h2 { flex: 1; min-width: 0; }
+.pd-detail .pd-sec > .panel-pad,
+.pd-detail .pd-timeline > .panel-pad { padding: 0 16px 16px; }
+.pd-detail .pd-timeline > .panel-pad { padding-top: 16px; }
 
-/* Desktop: behave like a normal stacked section — always shown, no toggle. */
+/* + / × toggle in a soft tinted button (+ collapsed, × expanded). */
+.pd-sec-toggle {
+  flex: none; width: 28px; height: 28px; border-radius: var(--radius-md);
+  background: var(--primary-tint); color: var(--primary);
+  display: grid; place-items: center;
+}
+.pd-sec-plus { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.pd-sec[open] > summary .pd-sec-plus { transform: rotate(45deg); }
+@media (hover: hover) {
+  .pd-sec > summary:hover h2 { color: var(--primary); }
+  .pd-sec > summary:hover .pd-sec-toggle { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .pd-sec-plus { transition: none; } }
+
+/* Desktop: sections stay always-open cards, no toggle (force-open). */
 @media (min-width: 768px) {
   .pd-sec::details-content { content-visibility: visible; }   /* defeat new <details> hiding */
   .pd-sec > .panel-pad { display: block; }                    /* defeat legacy <details> hiding */
-  .pd-sec > summary { cursor: default; pointer-events: none; margin-bottom: 10px; }
-  .pd-sec-chev { display: none; }
+  .pd-detail .pd-sec > summary { cursor: default; pointer-events: none; }
+  .pd-sec-toggle { display: none; }
 }
 
 /* ── Score hero ───────────────────────────────────────────────────────────── */
@@ -146,7 +207,11 @@
 .grade-big.g-c { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 32%, transparent); background: color-mix(in srgb, var(--warning) 10%, transparent); }
 .score-info .grade-txt { min-width: 0; }
 .score-info .grade-txt .g1 { font-size: 15px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); }
-.score-info .grade-txt .g2 { font-size: 12.5px; color: var(--ink-tertiary); margin-top: 2px; }
+.score-info .grade-txt .g2 { font-size: 12.5px; color: var(--ink-muted); margin-top: 2px; }
+
+/* Visible keyboard focus on the collapsible summaries (FAQ + sections). */
+.pd-sec > summary:focus-visible,
+.pdtl-faq > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-sm); }
 
 /* ── Meter (score breakdown rows) ─────────────────────────────────────────── */
 
@@ -360,12 +425,11 @@
      second one here (that was the "super big" edge spacing). */
   .pd-detail { gap: 12px; padding: 0 0 6px; }
 
-  /* Collapsed accordions read as a tidy list: tighter gaps + a hairline divider
-     between sections, comfortable 44px tap targets on the summaries. */
-  .pdtl-body { gap: 0; }
-  .pd-sec { border-top: 1px solid var(--hairline); }
-  .pd-sec > summary { min-height: 44px; }
-  .pd-timeline { border-top: 1px solid var(--hairline); padding-top: 12px; }
+  /* Sections are bordered cards; stack them with a comfortable gap and keep a
+     44px+ tap target on each summary. */
+  .pdtl-body { gap: 12px; }
+  .pd-main, .pd-aside { gap: 12px; }
+  .pd-detail .pd-sec > summary { min-height: 44px; }
 
   .pdtl-econ { grid-template-columns: 1fr; }
   .break-row { grid-template-columns: 110px 1fr 34px 48px; gap: 8px; }

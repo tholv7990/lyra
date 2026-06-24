@@ -9,7 +9,6 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import { useRunActions } from '../lib/useRunActions';
 import { EditorShell } from './EditorShell';
-import { ConfirmDialog } from './ConfirmDialog';
 import { MenuPicker, type MenuPickerOption } from './MenuPicker';
 import { RunTimeline } from './RunTimeline';
 import { PRODUCT_STATUS_COLOR } from './ProductBoard';
@@ -74,9 +73,11 @@ function Section({ title, children }: { title: ReactNode; children: ReactNode })
     <details className="panel pd-sec">
       <summary className="panel-head">
         <h2>{title}</h2>
-        <svg className="pd-sec-chev" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M6 4l4 4-4 4" />
-        </svg>
+        <span className="pd-sec-toggle" aria-hidden="true">
+          <svg className="pd-sec-plus" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M8 3.25v9.5M3.25 8h9.5" />
+          </svg>
+        </span>
       </summary>
       <div className="panel-pad">{children}</div>
     </details>
@@ -289,6 +290,11 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
 
   const hasRisk = !!product.riskFlags && (product.riskFlags.unresolvedSafety || product.riskFlags.materialIpRisk || product.riskFlags.misleadingClaimsRequired || (!!product.riskNotes && product.riskNotes.length > 0));
   const hasPricing = product.price !== undefined || product.compareAtPrice !== undefined || !!product.offer;
+  // The hero carries the headline econ stats; the aside only shows the genuinely
+  // deeper view (the CM1 formula + the sensitivity table) when those exist.
+  const hasEconFormula = !!product.unitEconInputs && typeof product.unitEconInputs.aov === 'number';
+  const hasDeepEcon = !!product.unitEcon && (hasEconFormula || !!product.scenarios);
+  const hasAside = hasDeepEcon || isCopy;
 
   return (
     <div className="pd-detail">
@@ -338,26 +344,37 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
       {resyncNote && <p className="pd-resync-note">{resyncNote}</p>}
 
       {/* ── Hero ──────────────────────────────────────────────────────────────
-          Product-page style: gallery left, info right (description · pricing ·
-          unit-econ summary · score). Mobile stacks them. The name lives in the
-          EditorShell header (not repeated here). */}
+          Verdict-forward product hero on one subtle surface: gallery left; right
+          column leads with the decision verdict, then pricing, a 3-up econ stat
+          row, and the description. Mobile stacks media over info. The name lives
+          in the EditorShell header (not repeated here). */}
       <div className="pdtl-hero">
         <div className="pdtl-hero-media">
           <div className="gallery">
-            <div className="main-shot">
-              {galleryImages[0] ? (
-                <img src={galleryImages[0]} alt="" />
-              ) : (
-                <span className="ph" aria-hidden="true">{t('products.noImages')}</span>
-              )}
-            </div>
-            {galleryImages.length > 1 && (
-              <div className="strip">
-                {galleryImages.slice(0, 6).map((src, i) => (
-                  <div key={i} className={`t${i === 0 ? ' active' : ''}`}>
-                    <img src={src} alt="" />
+            {galleryImages[0] ? (
+              <>
+                <div className="main-shot">
+                  <img src={galleryImages[0]} alt="" />
+                </div>
+                {galleryImages.length > 1 && (
+                  <div className="strip">
+                    {galleryImages.slice(0, 6).map((src, i) => (
+                      <div key={i} className={`t${i === 0 ? ' active' : ''}`}>
+                        <img src={src} alt="" />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+              </>
+            ) : (
+              <div className="pdtl-shot-empty">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
+                </svg>
+                <span className="pdtl-shot-empty-label">{t('products.noImages')}</span>
+                <a className="pdtl-shot-empty-add" href={`/products/${product.id}/edit`}>{t('products.addImagesLink')}</a>
               </div>
             )}
           </div>
@@ -371,25 +388,7 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
             </div>
           )}
 
-          {product.description && <p className="pdtl-hero-desc">{product.description}</p>}
-
-          {hasPricing && (
-            <div className="pdtl-pricing">
-              {product.price !== undefined && <span className="pdtl-price">${product.price}</span>}
-              {product.compareAtPrice !== undefined && <span className="pdtl-compare">${product.compareAtPrice}</span>}
-              {product.offer && <span className="pdtl-offer">{product.offer}</span>}
-            </div>
-          )}
-
-          {product.unitEcon && (
-            <div className="pdtl-econ-summary">
-              <span><b>{t('products.factCm1')}</b> ${product.unitEcon.cm1.toFixed(2)} ({Math.round(product.unitEcon.cm1Pct * 100)}%)</span>
-              <span><b>{t('products.factBreakEven')}</b> {product.unitEcon.breakEvenRoas.toFixed(2)}×</span>
-              <span><b>{t('products.factMaxCac')}</b> ${product.unitEcon.maxCac.toFixed(2)}</span>
-            </div>
-          )}
-
-          {/* Score — the research verdict */}
+          {/* Verdict — the research answer, leading the column */}
           {scorePct !== null ? (
             <div className="score-hero">
               <div className="score-ring">
@@ -430,11 +429,43 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
           ) : (
             <p className="muted" style={{ fontSize: 13 }}>{t('projects.notScored')}</p>
           )}
+
+          {hasPricing && (
+            <div className="pdtl-pricing">
+              {product.price !== undefined && <span className="pdtl-price">${product.price}</span>}
+              {product.compareAtPrice !== undefined && <span className="pdtl-compare">${product.compareAtPrice}</span>}
+              {product.offer && <span className="pdtl-offer">{product.offer}</span>}
+            </div>
+          )}
+
+          {product.unitEcon && (
+            <dl className="pdtl-stats">
+              <div className="pdtl-stat">
+                <dt className="pdtl-stat-k">{t('products.factCm1')}</dt>
+                <dd className="pdtl-stat-v">${product.unitEcon.cm1.toFixed(2)} <small>({Math.round(product.unitEcon.cm1Pct * 100)}%)</small></dd>
+              </div>
+              <div className="pdtl-stat">
+                <dt className="pdtl-stat-k">{t('products.factBreakEven')}</dt>
+                <dd className="pdtl-stat-v">{product.unitEcon.breakEvenRoas.toFixed(2)}×</dd>
+              </div>
+              <div className="pdtl-stat">
+                <dt className="pdtl-stat-k">{t('products.factMaxCac')}</dt>
+                <dd className="pdtl-stat-v">${product.unitEcon.maxCac.toFixed(2)}</dd>
+              </div>
+              <div className="pdtl-stat">
+                <dt className="pdtl-stat-k">{t('projects.targetRoas')}</dt>
+                <dd className="pdtl-stat-v">{product.unitEcon.targetRoas.toFixed(2)}×</dd>
+              </div>
+            </dl>
+          )}
+
+          {product.description && <p className="pdtl-hero-desc">{product.description}</p>}
         </div>
       </div>
 
-      {/* ── Body — 2-column on desktop (narrative + aside), stacked on mobile ─── */}
-      <div className="pdtl-body">
+      {/* ── Body — 2-column on desktop when there's aside content, else a single
+          centered column; stacked on mobile. ─────────────────────────────────── */}
+      <div className={`pdtl-body${hasAside ? '' : ' pdtl-body--single'}`}>
         {/* ── Narrative column ─────────────────────────────────────────────── */}
         <div className="pd-main">
           {displayError && <p className="error">{displayError}</p>}
@@ -524,8 +555,8 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
                       <summary>
                         <span className="pdtl-faq-q">{claim.statement}</span>
                         <span className={KIND_CLASS[claim.kind] ?? 'pdtl-kind'}>{claim.kind}</span>
-                        <svg className="pdtl-faq-chev" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M6 4l4 4-4 4" />
+                        <svg className="pdtl-faq-plus" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
+                          <path d="M8 3.5v9M3.5 8h9" />
                         </svg>
                       </summary>
                       <div className="pdtl-faq-body">
@@ -675,10 +706,14 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
           </Section>
         </div>
 
-        {/* ── Reference column (deep economics · copy-product data) ─────────── */}
+        {/* ── Reference column — only when there's genuinely deeper content;
+            otherwise the body is a single centered column (no empty aside). ───── */}
+        {hasAside && (
         <div className="pd-aside">
-          {/* Unit economics — full breakdown + sensitivity (summary is in the hero) */}
-          {product.unitEcon && (
+          {/* Unit economics — the CM1 formula + sensitivity table. Headline stats
+              (CM1 · break-even · max CAC · target ROAS) live in the hero, so they
+              are not repeated here. */}
+          {hasDeepEcon && (
             <Section title={t('projects.unitEconTitle')}>
               {product.unitEconInputs && typeof product.unitEconInputs.aov === 'number' && (
                 <div className="pdtl-econ-formula">
@@ -696,24 +731,6 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
                   </p>
                 </div>
               )}
-              <dl className="pdtl-econ">
-                <div className="pdtl-econ-row">
-                  <dt>CM1</dt>
-                  <dd>${product.unitEcon.cm1.toFixed(2)} ({Math.round(product.unitEcon.cm1Pct * 100)}%)</dd>
-                </div>
-                <div className="pdtl-econ-row">
-                  <dt>{t('projects.breakEvenRoas')}</dt>
-                  <dd>{product.unitEcon.breakEvenRoas.toFixed(2)}×</dd>
-                </div>
-                <div className="pdtl-econ-row">
-                  <dt>{t('projects.maxCac')}</dt>
-                  <dd>${product.unitEcon.maxCac.toFixed(2)}</dd>
-                </div>
-                <div className="pdtl-econ-row">
-                  <dt>{t('projects.targetRoas')}</dt>
-                  <dd>{product.unitEcon.targetRoas.toFixed(2)}×</dd>
-                </div>
-              </dl>
               {product.scenarios && (
                 <table className="pdtl-sensitivity">
                   <thead><tr><th>{t('projects.sensitivityTitle')}</th><th>CM1</th><th>ROAS</th></tr></thead>
@@ -824,6 +841,7 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   );
@@ -843,8 +861,6 @@ export function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   useBreadcrumb(product?.name ?? null);
 
@@ -876,24 +892,23 @@ export function ProductDetailPage() {
     setProduct(updated);
   }
 
-  async function handleDelete() {
-    if (!ws || !id || deleting) return;
-    setDeleting(true);
-    try {
-      await productsApi.remove(ws, id);
-      navigate('/products');
-    } catch {
-      setDeleting(false);
-    }
-  }
-
   const productsCrumb = { label: t('nav.products'), to: '/products' };
   const back = () => navigate('/products');
 
   if (loading) {
     return (
       <EditorShell crumb={productsCrumb} onClose={back} title={<h2 className="eshell-name">{t('common.loading')}</h2>}>
-        <div className="pd-state center muted">{t('common.loading')}</div>
+        <div className="pd-detail" aria-busy="true" aria-label={t('common.loading')}>
+          <div className="pdtl-hero">
+            <div className="pdtl-hero-media"><div className="skel pdtl-skel-media" /></div>
+            <div className="pdtl-hero-info">
+              <div className="skel pdtl-skel-line" style={{ width: '38%' }} />
+              <div className="skel pdtl-skel-verdict" />
+              <div className="skel pdtl-skel-line" style={{ width: '32%', height: 24 }} />
+              <div className="skel pdtl-skel-line" style={{ width: '88%' }} />
+            </div>
+          </div>
+        </div>
       </EditorShell>
     );
   }
@@ -910,41 +925,12 @@ export function ProductDetailPage() {
       crumb={productsCrumb}
       onClose={back}
       title={<h2 className="eshell-name">{product.name}</h2>}
-      actions={
-        <>
-          <button
-            type="button"
-            className="btn-ghost btn-inline btn-sm"
-            onClick={() => navigate(`/products/${id}/edit`)}
-          >
-            {t('products.edit')}
-          </button>
-          <button
-            type="button"
-            className="btn-ghost btn-inline btn-sm"
-            style={{ color: 'var(--danger)' }}
-            onClick={() => setConfirmDelete(true)}
-          >
-            {t('common.delete')}
-          </button>
-        </>
-      }
     >
       <ProductDetailBody
         product={product}
         workspaceId={ws}
         onUpdate={handleUpdate}
         onProductRefresh={handleProductRefresh}
-      />
-      <ConfirmDialog
-        open={confirmDelete}
-        title={t('products.deleteTitle')}
-        message={<><strong>{product.name}</strong>{t('products.deleteMessage')}</>}
-        confirmLabel={t('common.delete')}
-        danger
-        busy={deleting}
-        onConfirm={() => void handleDelete()}
-        onCancel={() => setConfirmDelete(false)}
       />
     </EditorShell>
   );
