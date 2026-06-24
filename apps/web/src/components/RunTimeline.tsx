@@ -221,6 +221,13 @@ export function RunTimeline({
             </div>
           )}
 
+          {step.status === StepStatus.Running && step.jobId && (
+            <div className="rt-progress">
+              <div className="rt-progress-bar"><span style={{ transform: `scaleX(${(step.progress ?? 0) / 100})` }} /></div>
+              <span className="rt-progress-label">{t('run.generatingVideo')} {step.progress ?? 0}%</span>
+            </div>
+          )}
+
           {runnable && !locked && editing !== step.index && (
             <button type="button" className="btn-primary btn-inline btn-sm rt-run" disabled={busy} onClick={() => onRunStep(step.index)}>
               <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>

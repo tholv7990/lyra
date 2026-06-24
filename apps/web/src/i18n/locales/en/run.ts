@@ -113,4 +113,5 @@ export default {
   phaseEconomicsSub: 'score the factors + unit economics',
   phaseDecide: 'Score & decide',
   phaseDecideSub: 'weighted score → grade → decision → save',
+  generatingVideo: 'Generating video…',
 } as const;

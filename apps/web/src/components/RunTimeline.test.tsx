@@ -16,6 +16,7 @@ vi.mock('react-i18next', () => ({
         'run.phaseEconomicsSub': 'score the factors + unit economics',
         'run.phaseDecide': 'Score & decide',
         'run.phaseDecideSub': 'weighted score → grade → decision → save',
+        'run.generatingVideo': 'Generating video…',
       };
       return map[key] ?? key;
     },
@@ -75,4 +76,12 @@ describe('RunTimeline 4-phase view', () => {
     expect(html).not.toContain('Find candidates');
     expect(html).toContain('Hook');
   });
+});
+
+it('shows a video progress indicator for an in-flight async step', () => {
+  const run = baseRun([step({ index: 0, name: 'Video', provider: Provider.Video, status: StepStatus.Running, jobId: 'j1', progress: 50 })]);
+  run.status = 'running'; run.currentStep = 0;
+  const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
+  expect(html).toContain('Generating video');
+  expect(html).toMatch(/50%/);
 });
