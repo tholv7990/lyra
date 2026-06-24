@@ -49,4 +49,57 @@ describe('StepCard', () => {
     expect(html).toContain('Claude Sonnet 4');
     expect(html).not.toContain('Anthropic ·');
   });
+
+  test('renders "Customized" badge when promptOverride is set', () => {
+    const customizedStep: PipelineStep = {
+      ...step,
+      promptOverride: 'My custom prompt text that overrides the library',
+    };
+    const html = renderToStaticMarkup(
+      <FlowCallbacksProvider value={{ busy: false }}>
+        <StepCard
+          step={customizedStep}
+          index={0}
+          canEdit
+          prompt={prompt}
+          labels={[]}
+          modelLabel={() => 'Claude Sonnet 4'}
+        />
+      </FlowCallbacksProvider>,
+    );
+
+    expect(html).toContain('Customized');
+    expect(html).toContain('customized');
+  });
+
+  test('does NOT render "Customized" badge when promptOverride is empty or absent', () => {
+    const noOverrideStep: PipelineStep = { ...step, promptOverride: '' };
+    const htmlEmpty = renderToStaticMarkup(
+      <FlowCallbacksProvider value={{ busy: false }}>
+        <StepCard
+          step={noOverrideStep}
+          index={0}
+          canEdit
+          prompt={prompt}
+          labels={[]}
+          modelLabel={() => 'Claude Sonnet 4'}
+        />
+      </FlowCallbacksProvider>,
+    );
+    expect(htmlEmpty).not.toContain('Customized');
+
+    const htmlAbsent = renderToStaticMarkup(
+      <FlowCallbacksProvider value={{ busy: false }}>
+        <StepCard
+          step={step}
+          index={0}
+          canEdit
+          prompt={prompt}
+          labels={[]}
+          modelLabel={() => 'Claude Sonnet 4'}
+        />
+      </FlowCallbacksProvider>,
+    );
+    expect(htmlAbsent).not.toContain('Customized');
+  });
 });

@@ -80,6 +80,11 @@ export function StepCard({ step: s, index: i, canEdit, prompt: p, modelLabel, pr
               IF
             </span>
           )}
+          {!!(s.promptOverride?.trim()) && (
+            <span className="mode-tag customized" title={t('run.customizedTitle')}>
+              {t('run.customized')}
+            </span>
+          )}
           {promptMissing && (
             <span className="mode-tag missing" title={t('run.promptDeletedTitle')}>
               ⚠ {t('run.promptDeleted')}

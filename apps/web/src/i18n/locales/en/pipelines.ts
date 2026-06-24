@@ -152,4 +152,5 @@ export default {
   condOpContains: 'contains',
   condOpGt: 'greater than',
   condOpLt: 'less than',
+  overrideLabel: 'Prompt override (run-time edit)',
 } as const;

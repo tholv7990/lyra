@@ -47,6 +47,9 @@ export interface RunStepCardProps {
   onSavePrompt: (prompt: string) => void;
   // Bypass cache and re-run a completed step from scratch.
   onRegenerate?: () => void;
+  // Promote this step's current prompt to the originating pipeline step.
+  // Shown only when step.pipelineStepId is set (i.e. not a builder test run).
+  onSaveToPipeline?: () => Promise<void>;
   // The run this step belongs to — needed by the result modal for downloads.
   runId: string;
   // Composer affordance: variables this step can reference, and every step name
@@ -65,7 +68,7 @@ export interface RunStepCardProps {
 
 export function RunStepCard(props: RunStepCardProps) {
   const { t } = useTranslation();
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, runId, vars, stepNames, assets, history, onImageAction } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, onSaveToPipeline, runId, vars, stepNames, assets, history, onImageAction } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
@@ -242,6 +245,11 @@ export function RunStepCard(props: RunStepCardProps) {
             {dirty && (
               <button className="btn-ghost" disabled={busy} onClick={() => props.onSavePrompt(draft)}>
                 {t('run.savePrompt')}
+              </button>
+            )}
+            {onSaveToPipeline && step.pipelineStepId && (
+              <button className="btn-ghost" disabled={busy} onClick={() => void onSaveToPipeline()}>
+                {t('run.saveToPipeline')}
               </button>
             )}
             {locked && (

@@ -17,6 +17,7 @@ interface RunTimelineProps {
   onReject?: (index: number) => void;
   onSavePrompt: (index: number, prompt: string) => void;
   onRegenerate?: (index: number) => void;
+  onSaveToPipeline?: (index: number) => Promise<void>;
   onImageAction?: (index: number, assetId: string, op: ImageOp) => void;
   assets?: Asset[];
   historyForStep?: (index: number) => StepHistoryEntry[];
@@ -66,6 +67,7 @@ export function RunTimeline({
   onReject,
   onSavePrompt,
   onRegenerate,
+  onSaveToPipeline,
   assets = [],
   historyForStep,
   onImageAction,
@@ -81,6 +83,7 @@ export function RunTimeline({
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const [resultFor, setResultFor] = useState<number | null>(null);
+  const [savedToPipeline, setSavedToPipeline] = useState<number | null>(null);
   const { open: openMedia, viewer } = useMediaViewer();
 
   const toggle = (i: number) =>
@@ -209,6 +212,13 @@ export function RunTimeline({
             </div>
           )}
 
+          {/* "Edit prompt" affordance for non-gate, non-editing, non-running steps */}
+          {step.status !== StepStatus.Waiting && step.status !== StepStatus.Running && editing !== step.index && !locked && (
+            <button type="button" className="txt-btn rt-edit-prompt" disabled={busy} onClick={() => startEdit(step)}>
+              {t('run.editPrompt')}
+            </button>
+          )}
+
           {editing === step.index && (
             <div className="rt-edit">
               <textarea className="text-input" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} />
@@ -216,8 +226,30 @@ export function RunTimeline({
                 <button type="button" className="btn-primary btn-inline btn-sm" disabled={busy} onClick={() => { onSavePrompt(step.index, draft); onRunStep(step.index); setEditing(null); }}>
                   {t('run.saveRerun')}
                 </button>
+                {onSaveToPipeline && step.pipelineStepId && (
+                  <button
+                    type="button"
+                    className="btn-ghost btn-inline btn-sm"
+                    disabled={busy}
+                    onClick={async () => {
+                      onSavePrompt(step.index, draft);
+                      await onSaveToPipeline(step.index);
+                      setEditing(null);
+                      setSavedToPipeline(step.index);
+                      setTimeout(() => setSavedToPipeline(null), 4000);
+                    }}
+                  >
+                    {t('run.saveToPipeline')}
+                  </button>
+                )}
                 <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => setEditing(null)}>{t('common.cancel')}</button>
               </div>
+            </div>
+          )}
+
+          {savedToPipeline === step.index && (
+            <div className="rt-saved-confirm" role="status" aria-live="polite">
+              {t('run.savedToPipelineConfirm')}
             </div>
           )}
 
