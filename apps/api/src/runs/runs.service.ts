@@ -46,6 +46,7 @@ import {
   failStep,
   skipStep,
   shouldSkip,
+  submitAsyncStep,
   approveGateAt,
   rejectGateAt,
   stopRun,
@@ -470,8 +471,12 @@ export class RunsService extends BaseRepository<Run> {
     beginStep(state, index);
     try {
       const output = await this.executeStep(doc, state, index, bypassCache);
-      completeStep(state, index, output);
-      await this.saveAssets(doc, state, index, output, actorId);
+      if (output.async) {
+        submitAsyncStep(state, index, output.async.jobId);
+      } else {
+        completeStep(state, index, output);
+        await this.saveAssets(doc, state, index, output, actorId);
+      }
     } catch (err) {
       failStep(state, index, errMessage(err));
     }
@@ -551,30 +556,63 @@ export class RunsService extends BaseRepository<Run> {
     state.steps[index].assetIds = ids;
   }
 
-  // Run consecutive steps until a gate pauses, a step is locked (missing key),
-  // a step errors, or the run completes.
-  async runAll(doc: RunDocument, actorId: string) {
-    const present = await this.keysPresent(doc.workspaceId);
-    const state = toState(doc);
+  // Advance the run loop: run consecutive steps until a gate pauses, a step is
+  // locked (missing key), a step errors, a step submits an async job, or the run
+  // completes. Extracted so resumeAfterAsync can reuse the same loop.
+  private async advance(doc: RunDocument, state: RunState, present: Set<string>, actorId: string): Promise<void> {
     while (state.status === 'idle' && state.currentStep < state.steps.length) {
       const index = state.currentStep;
-      // Skip a step whose guard condition fails, then continue with the next.
-      if (shouldSkip(state.steps[index], doc.variables ?? {})) {
-        skipStep(state, index);
-        continue;
-      }
+      if (shouldSkip(state.steps[index], doc.variables ?? {})) { skipStep(state, index); continue; }
       if (isLocked(state.steps[index], present)) break;
       beginStep(state, index);
       try {
         const output = await this.executeStep(doc, state, index);
+        if (output.async) { submitAsyncStep(state, index, output.async.jobId); break; }
         completeStep(state, index, output);
         await this.saveAssets(doc, state, index, output, actorId);
-      } catch (err) {
-        failStep(state, index, errMessage(err));
-        break;
-      }
+      } catch (err) { failStep(state, index, errMessage(err)); break; }
     }
+  }
+
+  // Run consecutive steps until a gate pauses, a step is locked (missing key),
+  // a step errors, a step submits an async job, or the run completes.
+  async runAll(doc: RunDocument, actorId: string) {
+    const present = await this.keysPresent(doc.workspaceId);
+    const state = toState(doc);
+    await this.advance(doc, state, present, actorId);
     return this.persist(doc, state, actorId);
+  }
+
+  // Called by the poller when an async job finishes successfully. Marks the step
+  // done, saves its assets, then continues the run from the next step.
+  async resumeAfterAsync(doc: RunDocument, index: number, output: StepRunOutput, actorId: string) {
+    const present = await this.keysPresent(doc.workspaceId);
+    const state = toState(doc);
+    if (state.steps[index]?.status !== StepStatus.Running) return this.persist(doc, state, actorId);
+    completeStep(state, index, output);
+    await this.saveAssets(doc, state, index, output, actorId);
+    await this.advance(doc, state, present, actorId);
+    return this.persist(doc, state, actorId);
+  }
+
+  // Called by the poller when an async job fails permanently.
+  async failAsyncStep(doc: RunDocument, index: number, message: string, actorId = 'system') {
+    const state = toState(doc);
+    if (state.steps[index]?.status === StepStatus.Running) failStep(state, index, message);
+    return this.persist(doc, state, actorId);
+  }
+
+  // Called by the poller to report generation progress (0–100) on a running async step.
+  async updateAsyncProgress(doc: RunDocument, index: number, progress: number | undefined, actorId = 'system') {
+    const state = toState(doc);
+    const step = state.steps[index];
+    if (step && step.status === StepStatus.Running && progress !== undefined) step.progress = progress;
+    return this.persist(doc, state, actorId);
+  }
+
+  // Returns all runs that have a step with an in-flight async job (for the poller).
+  findInFlightAsync(): Promise<RunDocument[]> {
+    return this.model.find({ status: 'running', steps: { $elemMatch: { status: StepStatus.Running, jobId: { $exists: true, $ne: null } } } }).exec();
   }
 
   approveGate(doc: RunDocument, index: number, actorId: string) {

@@ -393,6 +393,80 @@ describe('RunsService.appendImageAction', () => {
   });
 });
 
+describe('RunsService async-step seam', () => {
+  function makeRegistryAndKeys(providerOutput: any) {
+    const providerExecute = jest.fn().mockResolvedValue(providerOutput);
+    const registry = { get: jest.fn().mockReturnValue({ execute: providerExecute }) };
+    const keys = {
+      list: jest.fn().mockResolvedValue([{ provider: 'anthropic' }]),
+      getDecrypted: jest.fn().mockResolvedValue('sk-test'),
+    };
+    const assets = { createForStep: jest.fn().mockResolvedValue([]) };
+    return { providerExecute, registry, keys, assets };
+  }
+
+  it('runAll: when provider returns async, run stays running and step keeps jobId', async () => {
+    const asyncOutput = { result: '', async: { jobId: 'j1' } };
+    const { registry, keys, assets } = makeRegistryAndKeys(asyncOutput);
+    const cache = makeCacheMock(null);
+    const svc = makeService({ cache, registry, keys, assets });
+    const runDoc = makeRunDoc(Provider.Anthropic);
+    // runAll calls keysPresent (keys.list) + executeStep (registry.get) + persist (save).
+    await svc.runAll(runDoc, 'actor-1');
+    // Step 0 must still be Running (not Done/Error).
+    expect(runDoc.steps[0].status).toBe(StepStatus.Running);
+    // jobId must be stamped.
+    expect(runDoc.steps[0].jobId).toBe('j1');
+    // currentStep must not advance.
+    expect(runDoc.currentStep).toBe(0);
+    // The run document must have been saved.
+    expect(runDoc.save).toHaveBeenCalled();
+  });
+
+  it('resumeAfterAsync: marks step done and advances the run', async () => {
+    // Start with a doc that has step 0 in Running state (as if the async job was submitted).
+    const runDoc: RunDocument = {
+      _id: { toString: () => 'run-2' },
+      workspaceId: 'ws-1',
+      projectId: undefined,
+      variables: {},
+      collections: {},
+      status: 'running',
+      currentStep: 0,
+      updatedBy: '',
+      steps: [
+        {
+          index: 0,
+          name: 'Video',
+          provider: Provider.Anthropic,
+          model: 'video-model',
+          mode: StepMode.Auto,
+          status: StepStatus.Running,
+          prompt: 'render a video',
+          jobId: 'j1',
+          progress: 0,
+        },
+      ],
+      markModified: jest.fn(),
+      save: jest.fn().mockResolvedValue(undefined),
+    } as unknown as RunDocument;
+
+    const { registry, keys, assets } = makeRegistryAndKeys({ result: 'done', assets: [] });
+    const cache = makeCacheMock(null);
+    const svc = makeService({ cache, registry, keys, assets });
+
+    const doneOutput: any = { result: 'video done', assets: [] };
+    await svc.resumeAfterAsync(runDoc, 0, doneOutput, 'system');
+
+    // Step 0 must be Done.
+    expect(runDoc.steps[0].status).toBe(StepStatus.Done);
+    // Run must advance to done (only one step).
+    expect(runDoc.status).toBe('done');
+    expect(runDoc.currentStep).toBe(1);
+    expect(runDoc.save).toHaveBeenCalled();
+  });
+});
+
 describe('SaveProductAction', () => {
   it('SaveProduct enriches the run\'s target product via applyResearch', async () => {
     const applyResearch = jest.fn().mockResolvedValue({ id: 'p1' });
