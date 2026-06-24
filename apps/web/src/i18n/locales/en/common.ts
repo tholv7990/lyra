@@ -11,6 +11,7 @@ export default {
   commandPlaceholder: 'Type a command or search…',
   commandNoResults: 'No results',
   loading: 'Loading…',
+  notFound: 'Not found.',
   back: 'Back',
   next: 'Next',
   prev: 'Prev',

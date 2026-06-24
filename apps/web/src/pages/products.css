@@ -45,3 +45,58 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Add product — full-page form (design/Add Product.html) ───────────────── */
+/* Full-bleed: the page owns its scroll so the footer can stick to the bottom. */
+.content:has(.ap-scroll) { max-width: none; padding: 0; display: flex; flex-direction: column; min-height: 0; }
+.main:has(.ap-scroll) { overflow-y: hidden; }
+.ap-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+
+.ap-head { padding: 22px 32px 18px; border-bottom: 1px solid var(--hairline); background: var(--surface-1); }
+.ap-head h1 { font-size: var(--text-title2); letter-spacing: -0.025em; }
+
+.ap-body { max-width: 760px; margin: 0 auto; width: 100%; padding: 26px 32px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+
+/* Panel — reused by the detail page too (Phase B). */
+.panel { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); }
+.panel-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--hairline); }
+.panel-head .pn { font-size: 14px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; flex: 1; }
+.panel-head .step { width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--primary-tint); color: var(--primary); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.panel-pad { padding: 18px 20px; }
+
+.fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.panel-pad .field { margin-bottom: 0; }
+.panel-pad .field + .field,
+.panel-pad .fields-grid + .field,
+.panel-pad .field + .fields-grid { margin-top: 16px; }
+
+/* Affix: a $/icon prefix glued to the left inside a .text-input. */
+.field .affix { position: relative; display: block; margin-bottom: 0; }
+.affix .pre { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-tertiary); font-size: 14px; pointer-events: none; display: inline-flex; align-items: center; margin: 0; }
+.affix .text-input { padding-left: 24px; }
+.affix .pre.ic { left: 10px; }
+.affix .pre.ic + .text-input { padding-left: 34px; }
+
+/* Images "dropzone" — a visual header above the URL textarea (URLs only). */
+.dropzone-note { display: flex; align-items: center; gap: 12px; border: 1.5px dashed var(--hairline-strong); border-radius: var(--radius-md); background: var(--surface-1); padding: 14px 15px; margin-bottom: 10px; }
+.dz-ic { width: 38px; height: 38px; flex: none; border-radius: 9px; display: grid; place-items: center; background: var(--card); border: 1px solid var(--hairline); color: var(--ink-muted); }
+.dropzone-note .dz-txt strong { display: block; font-size: 13px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.dropzone-note .dz-txt > span { display: block; font-size: 12px; color: var(--ink-tertiary); line-height: 1.4; margin: 0; }
+textarea.dz-area { min-height: 72px; resize: vertical; }
+
+/* Sticky footer action bar. */
+.ap-foot { position: sticky; bottom: 0; z-index: 20; display: flex; align-items: center; gap: 10px; max-width: 760px; margin: 0 auto; width: 100%; padding: 14px 32px; background: var(--card); border-top: 1px solid var(--hairline-strong); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.ap-foot .note { font-size: 12.5px; color: var(--ink-tertiary); display: inline-flex; align-items: center; gap: 7px; }
+.ap-foot .badge { display: inline-flex; align-items: center; gap: 6px; }
+.ap-foot-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-tertiary); display: inline-block; }
+.ap-foot .grow { flex: 1; }
+
+@media (max-width: 720px) {
+  .ap-head { padding: 18px 16px 16px; }
+  .ap-body { padding: 18px 16px; }
+  .fields-grid { grid-template-columns: 1fr; }
+  .ap-foot { padding: 12px 16px; flex-wrap: wrap; }
+  .ap-foot .note { width: 100%; order: 2; justify-content: center; }
+  .ap-foot .grow { display: none; }
+  .ap-foot .btn-ghost, .ap-foot .btn-primary { flex: 1; order: 1; }
+}

@@ -11,6 +11,7 @@ export default {
   commandPlaceholder: 'Nhập lệnh hoặc tìm kiếm…',
   commandNoResults: 'Không có kết quả',
   loading: 'Đang tải…',
+  notFound: 'Không tìm thấy.',
   back: 'Quay lại',
   next: 'Tiếp',
   prev: 'Trước',
