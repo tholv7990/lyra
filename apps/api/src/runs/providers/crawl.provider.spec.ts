@@ -1,3 +1,7 @@
+// Mock node:dns/promises so safeFetchFollow (now wired into directFetch) resolves the
+// test hostnames to a public IP instead of doing real DNS.
+jest.mock('node:dns/promises', () => ({ lookup: jest.fn().mockResolvedValue([{ address: '93.184.216.34', family: 4 }]) }));
+
 import { CrawlStepProvider } from './crawl.provider';
 
 const PAGE = '<html><head><meta property="og:title" content="Dog Bed"><meta property="og:image" content="https://img.test/a.jpg"></head><body>' + 'x'.repeat(5000) + '</body></html>';

@@ -8,6 +8,7 @@ import type {
 import { ConnectorCredentialsService } from '../../connectors/connector-credentials.service';
 import { FirecrawlClient } from './firecrawl.client';
 import { fetchPage } from './fetch-page';
+import { safeFetchFollow } from '../../common/safe-fetch';
 
 // Source step: fetch a URL (from the step's prompt) and extract product images +
 // title/description. Direct fetch first (free); if the page is bot-blocked/thin and the
@@ -31,12 +32,12 @@ export class CrawlStepProvider implements StepProvider {
     const firecrawlKey = await this.creds.getDecrypted(ctx.workspaceId, 'firecrawl');
     const page = await fetchPage(url, {
       firecrawlKey,
-      // Existing direct-fetch behavior preserved (UA + follow redirects). A non-2xx or a
-      // network error returns an empty body so fetchPage escalates instead of hard-failing.
+      // safeFetchFollow: http(s)-only, blocks private hosts + redirect-to-private (SSRF),
+      // follows public redirects, per-request timeout. A block/timeout/network error returns
+      // an empty body so fetchPage escalates to Firecrawl instead of hard-failing.
       directFetch: async (u) => {
         try {
-          const res = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0 (LyraCrawler)' }, signal: AbortSignal.timeout(20000) });
-          return { ok: res.ok, status: res.status, body: res.ok ? await res.text() : '' };
+          return await safeFetchFollow(u, { headers: { 'user-agent': 'Mozilla/5.0 (LyraCrawler)' } });
         } catch {
           return { ok: false, status: 0, body: '' };
         }
