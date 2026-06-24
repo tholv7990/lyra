@@ -1,0 +1,28 @@
+{
+  "pkg": "@lyra/web",
+  "globalName": "Lyra",
+  "shape": "package",
+  "projectId": "538aa172-b9fb-41d1-b4eb-4281dc51a5e6",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".ds-styles.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "Modal": { "cardMode": "single", "viewport": "480x360" },
+    "ConfirmDialog": { "cardMode": "single", "viewport": "480x340" }
+  },
+  "componentSrcMap": {
+    "IconButton": "src/components/IconButton.tsx",
+    "MenuPicker": "src/components/MenuPicker.tsx",
+    "Avatar": "src/components/Avatar.tsx",
+    "Modal": "src/components/Modal.tsx",
+    "ConfirmDialog": "src/components/ConfirmDialog.tsx",
+    "Toggle": "src/components/Toggle.tsx",
+    "Checkbox": "src/components/Checkbox.tsx",
+    "Tooltip": "src/components/Tooltip.tsx",
+    "EmptyState": "src/components/EmptyState.tsx",
+    "StatusPill": "src/components/StatusPill.tsx",
+    "TagChip": "src/components/TagChip.tsx",
+    "ProviderIcon": "src/components/ProviderIcon.tsx"
+  }
+}

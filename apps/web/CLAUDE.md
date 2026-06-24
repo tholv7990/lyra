@@ -11,9 +11,8 @@ The workbench SPA. Keep it thin: no business logic in components, server is the 
 
 ## UI / design
 
-- **The UI is LIGHT + Linear-style.** The dark "pure-black canvas / pill CTAs /
-  orange glow" spec in `docs/lyra-design-system.md` is **superseded** — do not
-  follow it. The live system is:
+- **The UI is LIGHT + Notion-style.** (The older dark/Apple and Linear/orange
+  specs are **superseded** — do not follow them.) The live system is:
   - **Tokens:** `src/index.css` `:root` (what components read; full
     `[data-theme=dark]` overrides) + `src/styles/tokens.css` (Tailwind `@theme`
     layer). Always style via `var(--…)` tokens — never hardcode hex/px. Use

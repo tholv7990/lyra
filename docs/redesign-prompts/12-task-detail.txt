@@ -1,0 +1,44 @@
+# Task Detail — `/projects/:id/tasks/:taskId`
+# ATTACH THIS IMAGE: docs/redesign-screens/task-detail.desktop.png
+# (drag it into Claude Design; set Design system = Lyra Component Library; then paste everything below)
+
+You are RESTYLING one existing screen of Lyra (a web app where dropshipping teams
+research winning products and run AI creative pipelines). This is a visual restyle,
+NOT a behavior redesign.
+
+DESIGN SYSTEM: use the selected "Lyra Component Library" as the only source of
+components and styling. One blue accent (#0075DE), warm-neutral surfaces, system font,
+flat with hairlines, full light + dark. Read the library README/conventions first.
+Never invent a color, control, or component.
+
+SCREEN: Task workbench: editable metadata + pipeline tabs + run viewer/history. — see the attached screenshot (current state).
+
+ABSOLUTE RULE — preserve everything, change only the look:
+- Reproduce the screenshot's EXACT information architecture: same sections in the same
+  order, same data fields, same controls/actions, same navigation, same copy/labels.
+- Do NOT add, remove, rename, reorder, merge, or rewire anything. Every field, button,
+  menu, badge, column, and state must still exist and behave identically.
+- Change ONLY visual design: hierarchy, spacing, typography, color, component usage,
+  alignment, responsive layout.
+
+COMPLETENESS PROTOCOL — follow in order, do not skip step 1:
+1. INVENTORY (before designing): from the screenshot + the notes below, list EVERY
+   element — each section, data field/label, control (button, dropdown, toggle,
+   icon-action, link, input), badge/pill/status, list/table column, and each state.
+2. MAP each item to the Lyra component or token it uses (dropdowns -> MenuPicker;
+   view=eye / delete=X / add=+ via IconButton; status -> StatusPill; cards -> lib-card;
+   dialogs -> Modal/ConfirmDialog; buttons -> btn-primary/ghost/danger; text -> --text-*;
+   status colors -> running=primary, awaiting=warning, done=success, error=danger).
+3. REDESIGN for desktop (1240px) AND mobile (390px), in light AND dark, keeping each
+   item's position and behavior. Keep every state listed.
+4. COVERAGE CHECK (output last): a table of every step-1 item -> its counterpart -> the
+   component/token used. Flag anything you could NOT carry over (should be nothing). If
+   inventory and redesign don't match 1:1, fix it.
+
+SCREEN-SPECIFIC (preserve exactly / states / rules / restyle goal):
+**Preserve exactly:** EditorShell (breadcrumb to project, close); inline-editable title + description (✓ when dirty); properties row (TaskStatusPicker, TaskPriorityPicker, Assignee menu [team-only], Labels); pipeline tabs (one per assigned pipeline + Add Pipeline menu); active tab: Run header (run selector / status badge / created-by + Run All / Stop / Reset + optional rating) + RunTimeline (vertical per-step status) + earlier-runs (collapsed). Empty states for no-pipelines / no-runs. Error banner.
+**States:** loading; not found; no pipelines; no runs; run selected; earlier runs visible.
+**Rules:** Project-editor only; status/priority/assignee/tags PATCH immediately; tabs filter runs per pipeline; earlier runs read-only; product picker prefills a run; assignee menu hidden in personal workspaces.
+**Restyle goal:** Improve tab layout, tighten run header, better section separation.
+
+DELIVER: light + dark, desktop + mobile, every state, with the coverage table.

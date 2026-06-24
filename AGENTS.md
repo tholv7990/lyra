@@ -35,7 +35,7 @@ Step execution goes through `apps/api/src/runs/providers/` (`StepProvider` inter
 - [docs/lyra-prompt-testing.md](docs/lyra-prompt-testing.md) — **superseded.** The per-prompt testing playground it describes was replaced by **Chats** (top-level, multi-turn, auto-persisted conversations in `apps/api/src/conversations` + `apps/web/src/pages/Chats.tsx`); good prompts are promoted to the library via **Save as prompt**. Read the doc only for historical context.
 - [docs/lyra-requirements.md](docs/lyra-requirements.md) — business + technical requirements, data model, API surface, resolved decisions, **build-phase order (§B8)**. (Fixed 8-step run model is superseded by lyra-pipelines.md.)
 - [docs/lyra-getting-started.md](docs/lyra-getting-started.md) — the concrete kickoff: exact bootstrap commands, root config files, and **copy-paste-ready `@lyra/shared` contracts (§5)**. Build Phase 0 (Monorepo + Auth) from this.
-- [docs/lyra-design-system.md](docs/lyra-design-system.md) — the dark, Apple-style design tokens for the web UI. Honor these tokens when building React components.
+- [docs/lyra-design-system.md](docs/lyra-design-system.md) — the LIVE Notion design tokens (light, warm‑neutral + blue `#0075DE`, synced from `apps/web/src/index.css`) for the web UI. Honor these tokens when building React components.
 - [docs/lyra-hosting-cicd.md](docs/lyra-hosting-cicd.md) — hosting topology, GitHub Actions CI, Dockerfile, required Mongo indexes, deploy flow.
 
 > Note: the getting-started doc predates the Anthropic provider correction. The pipeline uses **5 providers** (openai, anthropic, deepseek, image, video), not 4 — the Brain steps (brief/insight/prompts/qa) run on Codex.

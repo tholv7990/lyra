@@ -1,0 +1,98 @@
+════════════════════════════════════════════════════════════════════════
+ LYRA REDESIGN — START HERE
+ Everything is prepared. Per screen you do 3 things in Claude Design:
+   1) Design system → "Lyra Component Library"
+   2) Click + and attach the screenshot named below (from docs/redesign-screens/)
+   3) Open the matching prompt .txt, copy all, paste, send.
+ The prompt forces restyle-only + a coverage check, so nothing gets dropped.
+════════════════════════════════════════════════════════════════════════
+
+STEP 0 — paste this ONCE at the start of a Claude Design session (design system selected):
+
+----------------------------------------------------------------------
+PROJECT CONTEXT — read and remember for everything that follows.
+
+I'm redesigning an existing web app called Lyra: a multi-user workbench where
+e-commerce / dropshipping teams (1) research winning products with an evidence-cited
+pipeline and (2) run AI creative pipelines (find -> crawl -> brief -> images -> video ->
+publish) with human approval gates. Roles: owner / member / viewer (viewer = read-only).
+Core objects: Workspace, Project, Task, Prompt, Pipeline (+ Steps), Run (idle -> running
+-> awaiting_gate -> done/error), Product (score 0-100, confidence A-D, decision
+TEST_NOW..REJECT), Chats, Marketplace.
+
+DESIGN SYSTEM — the selected "Lyra Component Library" is the ONLY source of components
+and styling. Notion-style: one blue accent (#0075DE), warm-neutral paper surfaces, system
+UI font, flat with hairlines, full light + dark. Read its README/conventions. Use its real
+components and tokens; never invent a color, control, or component. Mappings: dropdowns ->
+MenuPicker (never native select); view = eye, delete/close = X, add = + via IconButton;
+status -> StatusPill; cards -> lib-card; dialogs -> Modal/ConfirmDialog; buttons ->
+btn-primary/ghost/danger; text -> --text-* scale; status colors -> running=primary,
+awaiting=warning, done=success, error=danger.
+
+THE JOB — this is a RESTYLE, not a behavior redesign. I'll give you the app one screen at
+a time (a screenshot of the CURRENT screen + notes). For each: reproduce its EXACT
+information architecture (same sections/order/fields/controls/nav/copy), do NOT add,
+remove, rename, reorder, merge, or rewire anything, change ONLY the visual design. Always
+run the protocol: (1) INVENTORY every element + state, (2) MAP each to a Lyra
+component/token, (3) REDESIGN desktop 1240 AND mobile 390, light AND dark, (4) output a
+COVERAGE table proving every element has a counterpart. Honor: gates pause runs (inline
+Approve); a step with no provider key is disabled with an "add key" tooltip; viewers are
+read-only; research numbers always show source + confidence; prompts are creator-only
+editable; API keys show last4 only.
+
+Confirm you understand, then I'll send the first screen.
+----------------------------------------------------------------------
+
+STEP 1.. — for each screen: attach the screenshot, paste the prompt file. Order:
+
+PAGES (exact 1:1 screenshot — desktop + mobile both exist):
+  00-home.txt                  ->  home.desktop.png      (+ home.mobile.png)
+  01-projects.txt              ->  projects.desktop.png
+  02-project-detail.txt        ->  project-detail.desktop.png
+  03-project-new.txt           ->  project-new.desktop.png
+  04-prompts.txt               ->  prompts.desktop.png
+  05-prompt-new.txt            ->  prompt-new.desktop.png  (editor; prompt-edit.desktop.png = edit mode)
+  06-pipelines.txt             ->  pipelines.desktop.png
+  07-pipeline-builder.txt      ->  pipeline-builder.desktop.png  (pipeline-new.desktop.png = empty builder)
+  08-marketplace.txt           ->  marketplace.desktop.png
+  09-products.txt              ->  products.desktop.png
+  10-chats.txt                 ->  chats.desktop.png
+  11-components.txt            ->  (SKIP — dev reference page, do not restyle)
+  12-task-detail.txt           ->  task-detail.desktop.png
+  13-task-editor.txt           ->  (no shot; same shell as project-new — use project-new.desktop.png as a style ref)
+  14-settings.txt              ->  settings.desktop.png
+  15-members.txt               ->  members.desktop.png
+  16-connections.txt           ->  connections.desktop.png
+  17-publish.txt               ->  publish.desktop.png
+  18-import.txt                ->  import.desktop.png
+  19-monitor.txt               ->  monitor.desktop.png
+  20-admin.txt                 ->  admin.desktop.png
+  21-login.txt                 ->  login.desktop.png
+  22-signup.txt                ->  signup.desktop.png
+  23-forgot-password.txt       ->  forgot-password.desktop.png
+  24-reset-password.txt        ->  (no shot; reached via emailed link — see prompt notes)
+
+MODALS / POPUPS (attach the real captured screenshot listed; some need manual capture):
+  25-add-replace-api-key.txt   ->  settings__modal-add-google-gemini-key.png  (or settings__modal-replace-openai-key.png)
+  26-confirm-dialog.txt        ->  (capture: open any delete action — it's a simple confirm)
+  27-save-as-prompt.txt        ->  (capture: open from a chat message's Save)
+  28-request-provider.txt      ->  settings__modal-request-a-provider.png
+  29-request-team-upgrade.txt  ->  members__modal-request-team-upgrade.png
+  30-run-variables.txt         ->  (capture: Run a pipeline that has variables)
+  31-task-create.txt           ->  components__modal-add-task.png
+  32-step-result.txt           ->  (capture: click a finished run step in task-detail)
+  33-build-with-ai.txt         ->  (capture: Pipelines -> Build with AI)
+  34-copilot-panel.txt         ->  (capture: the Copilot button)
+  35-marketplace-prompt-details.txt -> marketplace__modal-ad-concept-board.png  (any marketplace__modal-*.png)
+  36-prompt-details.txt        ->  prompts__modal-product-research.png  (any prompts__modal-*.png that is a detail)
+  37-filter-popover.txt        ->  prompts__modal-filter.png  (also projects__modal-filter / pipelines__modal-filter)
+  38-command-bar.txt           ->  components__modal-open-k.png
+  39-media-viewer.txt          ->  (capture: click a media thumbnail in a chat/run)
+  40-model-picker.txt          ->  (capture: the model pill in a chat/builder footer)
+  41-label-picker.txt          ->  components__modal-add-label.png
+  42-task-status-picker.txt    ->  components__modal-add-task.png  (the Status pill inside it)
+  43-task-priority-picker.txt  ->  components__modal-add-task.png  (the Priority pill inside it)
+  44-platform-select.txt       ->  connections__modal-add-a-channel.png  (the platform dropdown inside it)
+
+That's it. Work top-to-bottom or pick the screens you care about most
+(task-detail, product-detail, products, project-detail are the highest-impact).

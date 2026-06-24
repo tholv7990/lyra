@@ -46,3 +46,15 @@ coverage/
 
 # Impeccable design-hook cache (per-tree, not source)
 .impeccable/
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/node_modules/
+
+# design-sync (claude.ai/design) build scratch — never commit
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/node_modules/
+scripts/.auth-state.json
+docs/redesign-screens/
