@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AssetStorageService } from '../../assets/asset-storage.service';
 import { ReplicateClient, type Prediction } from './replicate.client';
 import type { StepProvider, StepRunContext, StepRunOutput } from './step-provider.interface';
@@ -20,6 +20,8 @@ const IMG2VIDEO_IMAGE_FIELD: Record<string, string> = {
 // it polls — no queue.
 @Injectable()
 export class VideoStepProvider implements StepProvider {
+  private readonly log = new Logger('VideoStepProvider');
+
   constructor(
     private readonly replicate: ReplicateClient,
     private readonly storage: AssetStorageService,
@@ -46,6 +48,7 @@ export class VideoStepProvider implements StepProvider {
         : '';
 
     const created = await this.replicate.create(model, input, ctx.apiKey);
+    this.log.log(`replicate prediction ${created.id} submitted (model ${model})`);
     return {
       result: `Submitted video generation with ${model}.${imageIgnoredNote}`,
       async: { jobId: created.id },

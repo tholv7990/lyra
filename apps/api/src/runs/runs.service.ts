@@ -99,6 +99,8 @@ const FANOUT_RETRIES = 2;
 const VISUAL_PROVIDERS = new Set<Provider>([Provider.Image, Provider.Google, Provider.Video]);
 // How long a cached step result is reusable. Mongo TTL prunes past expiresAt.
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// Max reload-and-retry attempts when an optimistic-concurrency conflict (VersionError) hits a cheap transition.
+const COMMIT_MAX_RETRIES = 4;
 
 @Injectable()
 export class RunsService extends BaseRepository<Run> {
@@ -214,6 +216,63 @@ export class RunsService extends BaseRepository<Run> {
     doc.updatedBy = actorId;
     await doc.save();
     return this.toView(doc);
+  }
+
+  private async reload(doc: RunDocument): Promise<RunDocument> {
+    const fresh = await this.model.findById(doc._id).exec();
+    if (!fresh) throw new BadRequestException('Run no longer exists.');
+    return fresh as RunDocument;
+  }
+
+  // Apply a cheap, PURE transition with reload-retry on an optimistic-concurrency
+  // conflict. `mutate` must be re-runnable against a freshly-loaded state (no I/O,
+  // no spend) — it is replayed on a reloaded doc when a concurrent writer bumped __v.
+  private async commit(
+    doc: RunDocument,
+    mutate: (s: RunState) => void,
+    actorId: string,
+  ): Promise<RunModel> {
+    let working = doc;
+    for (let attempt = 0; ; attempt++) {
+      const state = toState(working);
+      mutate(state);
+      try {
+        return await this.persist(working, state, actorId);
+      } catch (e) {
+        if (isVersionError(e) && attempt < COMMIT_MAX_RETRIES) {
+          working = await this.reload(working);
+          continue;
+        }
+        throw e;
+      }
+    }
+  }
+
+  // Expensive transitions do provider I/O before saving, so they cannot be replayed
+  // on conflict. On a VersionError, surface a clean 409-style error to the user (no
+  // silent clobber); if a step had just submitted an async job, log its jobId so the
+  // paid prediction is recoverable.
+  private translatePersistError(e: unknown, state: RunState): never {
+    if (isVersionError(e)) {
+      const submitting = state.steps.find((s) => s.status === StepStatus.Running && (s as { jobId?: string }).jobId);
+      if (submitting) this.logger.warn(`orphaned replicate jobId ${(submitting as { jobId?: string }).jobId} (run changed before save)`);
+      throw new BadRequestException('This run changed in another session — refresh and try again.');
+    }
+    throw e;
+  }
+
+  // For the poller: a VersionError means a concurrent writer changed the run; drop
+  // this update (the next tick re-reads and recovers) rather than clobber.
+  private async persistOrDrop(doc: RunDocument, state: RunState, actorId: string): Promise<RunModel> {
+    try {
+      return await this.persist(doc, state, actorId);
+    } catch (e) {
+      if (isVersionError(e)) {
+        this.logger.warn(`run ${String(doc._id)}: persist dropped on conflict (recovers next tick)`);
+        return this.toView(doc);
+      }
+      throw e;
+    }
   }
 
   // Map pure-engine transition errors to HTTP 400.
@@ -480,7 +539,8 @@ export class RunsService extends BaseRepository<Run> {
     } catch (err) {
       failStep(state, index, errMessage(err));
     }
-    return this.persist(doc, state, actorId);
+    try { return await this.persist(doc, state, actorId); }
+    catch (e) { return this.translatePersistError(e, state); }
   }
 
   // Apply an image operation (upscale/variation/outpaint) to a result asset:
@@ -531,7 +591,8 @@ export class RunsService extends BaseRepository<Run> {
     } catch (err) {
       failDerivedStep(state, index, errMessage(err));
     }
-    return this.persist(doc, state, actorId);
+    try { return await this.persist(doc, state, actorId); }
+    catch (e) { return this.translatePersistError(e, state); }
   }
 
   // Persist any media a step produced as Asset docs and stamp their ids onto the
@@ -580,7 +641,8 @@ export class RunsService extends BaseRepository<Run> {
     const present = await this.keysPresent(doc.workspaceId);
     const state = toState(doc);
     await this.advance(doc, state, present, actorId);
-    return this.persist(doc, state, actorId);
+    try { return await this.persist(doc, state, actorId); }
+    catch (e) { return this.translatePersistError(e, state); }
   }
 
   // Called by the poller when an async job finishes successfully. Marks the step
@@ -588,26 +650,11 @@ export class RunsService extends BaseRepository<Run> {
   async resumeAfterAsync(doc: RunDocument, index: number, output: StepRunOutput, actorId: string) {
     const present = await this.keysPresent(doc.workspaceId);
     const state = toState(doc);
-    if (state.steps[index]?.status !== StepStatus.Running) return this.persist(doc, state, actorId);
+    if (state.steps[index]?.status !== StepStatus.Running) return this.persistOrDrop(doc, state, actorId);
     completeStep(state, index, output);
     await this.saveAssets(doc, state, index, output, actorId);
     await this.advance(doc, state, present, actorId);
-    return this.persist(doc, state, actorId);
-  }
-
-  // Called by the poller when an async job fails permanently.
-  async failAsyncStep(doc: RunDocument, index: number, message: string, actorId = 'system') {
-    const state = toState(doc);
-    if (state.steps[index]?.status === StepStatus.Running) failStep(state, index, message);
-    return this.persist(doc, state, actorId);
-  }
-
-  // Called by the poller to report generation progress (0–100) on a running async step.
-  async updateAsyncProgress(doc: RunDocument, index: number, progress: number | undefined, actorId = 'system') {
-    const state = toState(doc);
-    const step = state.steps[index];
-    if (step && step.status === StepStatus.Running && progress !== undefined) step.progress = progress;
-    return this.persist(doc, state, actorId);
+    return this.persistOrDrop(doc, state, actorId);
   }
 
   // Returns all runs that have a step with an in-flight async job (for the poller).
@@ -616,27 +663,32 @@ export class RunsService extends BaseRepository<Run> {
   }
 
   approveGate(doc: RunDocument, index: number, actorId: string) {
-    const state = toState(doc);
-    this.guard(() => approveGateAt(state, index));
-    return this.persist(doc, state, actorId);
+    return this.commit(doc, (s) => this.guard(() => approveGateAt(s, index)), actorId);
   }
 
   rejectGate(doc: RunDocument, index: number, actorId: string) {
-    const state = toState(doc);
-    this.guard(() => rejectGateAt(state, index));
-    return this.persist(doc, state, actorId);
+    return this.commit(doc, (s) => this.guard(() => rejectGateAt(s, index)), actorId);
   }
 
   stop(doc: RunDocument, actorId: string) {
-    const state = toState(doc);
-    stopRun(state);
-    return this.persist(doc, state, actorId);
+    return this.commit(doc, (s) => stopRun(s), actorId);
   }
 
   reset(doc: RunDocument, actorId: string) {
-    const state = toState(doc);
-    resetRun(state);
-    return this.persist(doc, state, actorId);
+    return this.commit(doc, (s) => resetRun(s), actorId);
+  }
+
+  async failAsyncStep(doc: RunDocument, index: number, message: string, actorId = 'system') {
+    return this.commit(doc, (s) => {
+      if (s.steps[index]?.status === StepStatus.Running) failStep(s, index, message);
+    }, actorId);
+  }
+
+  async updateAsyncProgress(doc: RunDocument, index: number, progress: number | undefined, actorId = 'system') {
+    return this.commit(doc, (s) => {
+      const step = s.steps[index];
+      if (step && step.status === StepStatus.Running && progress !== undefined) step.progress = progress;
+    }, actorId);
   }
 
   async updatePrompt(
@@ -645,26 +697,42 @@ export class RunsService extends BaseRepository<Run> {
     prompt: string,
     actorId: string,
   ) {
-    const step = doc.steps[index];
-    if (!step) throw new BadRequestException('No such step');
-    step.prompt = prompt;
-    doc.updatedBy = actorId;
-    await doc.save();
-    return this.toView(doc);
+    let working = doc;
+    for (let attempt = 0; ; attempt++) {
+      const step = working.steps[index];
+      if (!step) throw new BadRequestException('No such step');
+      step.prompt = prompt;
+      working.updatedBy = actorId;
+      try { await working.save(); return this.toView(working); }
+      catch (e) {
+        if (isVersionError(e) && attempt < COMMIT_MAX_RETRIES) { working = await this.reload(working); continue; }
+        throw e;
+      }
+    }
   }
 
   // Set or clear the run's overall rating. Allowed only once a step has completed
   // (rating idle output is meaningless). One verdict per run, last-writer-wins.
   async rate(doc: RunDocument, value: 'up' | 'down' | null, actorId: string) {
-    if (!doc.steps.some((s) => s.status === StepStatus.Done)) {
-      throw new BadRequestException('Rate a run once it has produced a result.');
+    let working = doc;
+    for (let attempt = 0; ; attempt++) {
+      if (!working.steps.some((s) => s.status === StepStatus.Done)) {
+        throw new BadRequestException('Rate a run once it has produced a result.');
+      }
+      working.rating = value === null ? undefined : { value, by: actorId, at: new Date().toISOString() };
+      working.markModified('rating');
+      working.updatedBy = actorId;
+      try { await working.save(); return this.toView(working); }
+      catch (e) {
+        if (isVersionError(e) && attempt < COMMIT_MAX_RETRIES) { working = await this.reload(working); continue; }
+        throw e;
+      }
     }
-    doc.rating = value === null ? undefined : { value, by: actorId, at: new Date().toISOString() };
-    doc.markModified('rating');
-    doc.updatedBy = actorId;
-    await doc.save();
-    return this.toView(doc);
   }
+}
+
+function isVersionError(e: unknown): boolean {
+  return !!e && typeof e === 'object' && (e as { name?: string }).name === 'VersionError';
 }
 
 function errMessage(err: unknown): string {
