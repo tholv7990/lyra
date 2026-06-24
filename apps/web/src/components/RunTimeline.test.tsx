@@ -20,6 +20,10 @@ vi.mock('react-i18next', () => ({
         'run.editPrompt': 'Edit prompt',
         'run.saveToPipeline': 'Save to pipeline',
         'run.savedToPipelineConfirm': 'Saved to the pipeline — future runs use this prompt.',
+        'run.reviewIssuesTitle': 'Auto-QA found issues',
+        'run.approveContinue': 'Approve & continue',
+        'run.gatedTitle': 'This step is gated',
+        'run.gatedSub': 'Review the output before the pipeline saves it and continues.',
       };
       return map[key] ?? key;
     },
@@ -135,5 +139,56 @@ describe('RunTimeline prompt edit affordance', () => {
     ]);
     const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
     expect(html).not.toContain('Save to pipeline');
+  });
+});
+
+describe('RunTimeline Auto-QA review issues', () => {
+  it('renders the "Auto-QA found issues" heading and issue text for a Waiting step with reviewIssues', () => {
+    const run = baseRun([
+      step({ index: 0, name: 'Image', provider: Provider.Image, status: StepStatus.Waiting, reviewIssues: ['image is blank'] }),
+    ]);
+    run.status = 'awaitingGate';
+    run.currentStep = 0;
+    const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
+    expect(html).toContain('Auto-QA found issues');
+    expect(html).toContain('image is blank');
+  });
+
+  it('renders the gate approve action alongside the review issues', () => {
+    const run = baseRun([
+      step({ index: 0, name: 'Image', provider: Provider.Image, status: StepStatus.Waiting, reviewIssues: ['image is blank'] }),
+    ]);
+    run.status = 'awaitingGate';
+    run.currentStep = 0;
+    const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
+    // Issues block appears before the gate approve button
+    expect(html).toContain('Auto-QA found issues');
+    expect(html).toContain('Approve');
+    expect(html.indexOf('Auto-QA found issues')).toBeLessThan(html.indexOf('Approve'));
+  });
+
+  it('renders multiple issues as separate list items', () => {
+    const run = baseRun([
+      step({ index: 0, name: 'Image', provider: Provider.Image, status: StepStatus.Waiting, reviewIssues: ['image is blank', 'width too small'] }),
+    ]);
+    const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
+    expect(html).toContain('image is blank');
+    expect(html).toContain('width too small');
+  });
+
+  it('does NOT render the review issues block when reviewIssues is absent', () => {
+    const run = baseRun([
+      step({ index: 0, name: 'Image', provider: Provider.Image, status: StepStatus.Waiting }),
+    ]);
+    const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
+    expect(html).not.toContain('Auto-QA found issues');
+  });
+
+  it('does NOT render the review issues block for a non-Waiting step even if reviewIssues is set', () => {
+    const run = baseRun([
+      step({ index: 0, name: 'Image', provider: Provider.Image, status: StepStatus.Done, reviewIssues: ['image is blank'] }),
+    ]);
+    const html = renderToStaticMarkup(<RunTimeline run={run} {...props} />);
+    expect(html).not.toContain('Auto-QA found issues');
   });
 });

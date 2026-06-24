@@ -119,4 +119,6 @@ export default {
   customized: 'Customized',
   customizedTitle: 'This step has a prompt override — it no longer uses the library prompt',
   revertToLibrary: 'Revert to library prompt',
+  // Auto-QA (self-review)
+  reviewIssuesTitle: 'Kiểm tra tự động phát hiện vấn đề',
 } as const;

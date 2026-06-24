@@ -154,4 +154,7 @@ export default {
   condOpGt: 'lớn hơn',
   condOpLt: 'nhỏ hơn',
   overrideLabel: 'Prompt override (run-time edit)',
+  // Auto-QA toggle in step drawer
+  qaToggleLabel: 'Kiểm tra chất lượng media',
+  qaToggleHint: 'Sau khi bước tạo ảnh, chạy kiểm tra chất lượng kỹ thuật và dừng để xem lại nếu phát hiện vấn đề.',
 } as const;
