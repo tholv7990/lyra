@@ -26,6 +26,7 @@ import type { ModelCatalog } from '../lib/useModels';
 import { Composer } from './Composer';
 import { Markdown } from './Markdown';
 import { ProviderIcon } from './ProviderIcon';
+import { RememberModal } from './RememberModal';
 
 function modelLabel(catalog: ModelCatalog, provider: Provider, model: string) {
   return catalog[provider]?.find((m) => m.id === model)?.label ?? model;
@@ -120,6 +121,7 @@ export function ChatPane({
   const [error, setError] = useState<string | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [rememberMsg, setRememberMsg] = useState<ConversationMessage | null>(null);
   const { copied, copy } = useCopyToClipboard();
 
   const abortRef = useRef<AbortController | null>(null);
@@ -395,6 +397,11 @@ export function ChatPane({
                             <IconBookmark /> {answerSaved ? t('prompts.answerSaved') : t('prompts.saveAnswer')}
                           </button>
                         )}
+                        {wsId && (
+                          <button className="cmsg-save" onClick={() => setRememberMsg(m)} title={t('chats.remember')}>
+                            {t('chats.remember')}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -425,6 +432,13 @@ export function ChatPane({
           canSubmit={!!input.trim() || attachments.length > 0}
         />
       </div>
+      {rememberMsg && (
+        <RememberModal
+          wsId={wsId}
+          content={rememberMsg.content}
+          onClose={() => setRememberMsg(null)}
+        />
+      )}
     </>
   );
 }

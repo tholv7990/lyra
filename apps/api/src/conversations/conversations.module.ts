@@ -4,6 +4,7 @@ import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { UsersModule } from '../users/users.module';
 import { KeysModule } from '../keys/keys.module';
 import { FilesModule } from '../files/files.module';
+import { MemoryModule } from '../memory/memory.module';
 import { Conversation, ConversationSchema } from './conversation.schema';
 import { ConversationsService } from './conversations.service';
 import { ConversationsController } from './conversations.controller';
@@ -16,6 +17,7 @@ import { OpenAiCompatClient } from '../runs/providers/openai-compat.client';
     UsersModule, // ref expansion
     KeysModule, // decrypt provider key
     FilesModule, // read attachment bytes for the model call
+    MemoryModule, // recall-on-start: inject workspace memories into the chat system prompt
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
     ]),

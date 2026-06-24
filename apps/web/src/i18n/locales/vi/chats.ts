@@ -16,6 +16,7 @@ export default {
   editPrompt: 'Sửa prompt',
   saveAsPrompt: 'Lưu thành prompt',
   saveToLibrary: 'Lưu prompt này vào thư viện',
+  remember: 'Remember',
   imageFallback: 'hình ảnh',
   fileFallback: 'tập tin',
   couldNotLoad: 'Không thể tải cuộc trò chuyện',
