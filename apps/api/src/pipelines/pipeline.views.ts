@@ -1,11 +1,4 @@
-import type {
-  Pipeline as PipelineModel,
-  PipelineOrigin,
-  PipelineStep,
-  PipelineVariable,
-  StepCondition,
-  UserRef,
-} from '@lyra/shared';
+import { type ActionStep, type Pipeline as PipelineModel, type PipelineOrigin, type PipelineStep, type PipelineVariable, type StepCondition, type UserRef } from '@lyra/shared';
 import type { PipelineDocument } from './pipeline.schema';
 import { userRef } from '../common/refs';
 import { iso } from '../common/dates';
@@ -25,6 +18,7 @@ export function toPipeline(
         id: s.id,
         name: s.name,
         promptId: s.promptId,
+        promptOverride: s.promptOverride,
         provider: s.provider,
         model: s.model,
         mode: s.mode,
@@ -36,6 +30,8 @@ export function toPipeline(
               value: s.condition.value,
             }
           : undefined,
+        kind: s.kind as PipelineStep['kind'],
+        action: s.action as PipelineStep['action'],
       }),
     ),
     variables: (p.variables ?? []).map(

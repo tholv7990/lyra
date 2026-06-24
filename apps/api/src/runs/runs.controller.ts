@@ -105,8 +105,10 @@ export class RunsController {
       variables: mergeCustomVars(pipeline.variables, body.variables),
       collections,
       steps: pipeline.steps.map((s) => ({
+        id: s.id,
         name: s.name,
         promptId: s.promptId,
+        promptOverride: s.promptOverride,
         provider: s.provider,
         model: s.model,
         mode: s.mode,
@@ -152,8 +154,10 @@ export class RunsController {
       }),
       collections: body.collections,
       steps: pipeline.steps.map((s) => ({
+        id: s.id,
         name: s.name,
         promptId: s.promptId,
+        promptOverride: s.promptOverride,
         provider: s.provider,
         model: s.model,
         mode: s.mode,
@@ -251,8 +255,10 @@ export class RunsController {
         variables: mergeCustomVars(pipeline.variables, body.variables),
         collections: body.collections,
         steps: pipeline.steps.map((s) => ({
+          id: s.id,
           name: s.name,
           promptId: s.promptId,
+          promptOverride: s.promptOverride,
           provider: s.provider,
           model: s.model,
           mode: s.mode,
@@ -389,6 +395,20 @@ export class RunsController {
     @CurrentUser() user: User,
   ): Promise<RunModel> {
     return this.runs.updatePrompt(run, i, body.prompt, user.id);
+  }
+
+  // Promote a run step's prompt to its originating pipeline step as an override.
+  // Uses the run's provenance (pipelineStepId) — not client input — so the target
+  // is always server-authoritative and workspace-fenced.
+  @Post('runs/:id/steps/:i/save-to-pipeline')
+  @UseGuards(RunAccessGuard)
+  @RequireCreate()
+  saveStepToPipeline(
+    @CurrentRun() run: RunDocument,
+    @Param('i', ParseIntPipe) i: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.runs.saveStepToPipeline(run, i, user.id);
   }
 
   @Patch('runs/:id/rating')

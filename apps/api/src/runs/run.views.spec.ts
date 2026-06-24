@@ -31,4 +31,32 @@ describe('toState/toStep preserves action + structured fields on reload', () => 
     expect(s.sources?.[0].id).toBe('s1');
     expect((s.data as { unitEcon?: { cm1: number } }).unitEcon).toEqual({ cm1: 5 });
   });
+
+  it('round-trips pipelineStepId (critical for save-to-pipeline targeting)', () => {
+    const doc = {
+      status: 'idle',
+      currentStep: 0,
+      steps: [
+        {
+          index: 0,
+          mode: 'auto',
+          status: 'idle',
+          model: 'm',
+          prompt: 'p',
+          pipelineStepId: 'pipeline-step-uuid-abc',
+        },
+        {
+          index: 1,
+          mode: 'auto',
+          status: 'idle',
+          model: 'm',
+          prompt: 'q',
+          // no pipelineStepId — derived / builder test-run step
+        },
+      ],
+    } as never;
+    const state = toState(doc);
+    expect(state.steps[0].pipelineStepId).toBe('pipeline-step-uuid-abc');
+    expect(state.steps[1].pipelineStepId).toBeUndefined();
+  });
 });

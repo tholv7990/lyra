@@ -15,6 +15,12 @@ export class PipelineStepItem {
   @Prop({ required: true, enum: Object.values(StepMode), default: StepMode.Auto })
   mode!: StepMode;
 
+  // When set (non-empty), this is the step's effective prompt — overrides the
+  // library prompt referenced by promptId. Promoted from a run-time edit via
+  // "Save to pipeline". promptId stays as provenance.
+  @Prop()
+  promptOverride?: string;
+
   // When set, this step maps its prompt over a named run collection (parallel).
   @Prop({ type: Object })
   fanOut?: { over: string; itemVar?: string };

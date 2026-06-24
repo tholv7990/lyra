@@ -86,6 +86,13 @@ export class PipelineStepBody implements PipelineStepInput {
   @IsString()
   promptId!: string;
 
+  // When set (non-empty), overrides the library prompt for this pipeline step.
+  // Promoted from a run-time edit via "Save to pipeline".
+  @IsOptional()
+  @IsString()
+  @MaxLength(8000)
+  promptOverride?: string;
+
   @IsEnum(Provider)
   provider!: Provider;
 

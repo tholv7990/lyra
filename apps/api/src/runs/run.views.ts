@@ -19,6 +19,7 @@ function toStep(s: RunStep): Step {
     key: s.key as StepKey | undefined,
     name: s.name,
     promptId: s.promptId,
+    pipelineStepId: s.pipelineStepId,
     provider: s.provider as Step['provider'],
     mode: s.mode as StepMode,
     status: s.status as StepStatus,

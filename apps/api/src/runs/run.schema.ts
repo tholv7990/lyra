@@ -17,6 +17,12 @@ export class RunStep {
   @Prop()
   promptId?: string;
 
+  // The originating pipeline-step id, stamped at run creation. Enables
+  // "Save to pipeline" to target the exact pipeline step (stable even when the
+  // pipeline is reordered/edited). Absent for builder test runs.
+  @Prop()
+  pipelineStepId?: string;
+
   @Prop()
   provider?: string;
 

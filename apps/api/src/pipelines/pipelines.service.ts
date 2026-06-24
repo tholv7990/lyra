@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
@@ -68,6 +68,8 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         id: s.id || randomUUID(),
         name: s.name,
         promptId: s.promptId,
+        // Preserve the per-step override so builder saves don't drop it.
+        promptOverride: s.promptOverride?.trim() || undefined,
         provider: s.provider,
         model: s.model,
         mode: s.mode,
@@ -77,6 +79,31 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         action: s.action,
       };
     });
+  }
+
+  // Promote a run-time prompt edit to a pipeline step: sets `promptOverride` on
+  // the matching step so future runs use this text instead of the library prompt.
+  // Tenant-fenced: the pipeline must belong to the given workspaceId.
+  async setStepOverride(
+    workspaceId: string,
+    pipelineId: string,
+    stepId: string,
+    text: string,
+    actorId: string,
+  ): Promise<PipelineModel> {
+    const pipeline = await this.findOne({ _id: pipelineId, workspaceId });
+    if (!pipeline) throw new NotFoundException('Pipeline not found');
+    const step = pipeline.steps.find((s) => s.id === stepId);
+    if (!step) {
+      throw new BadRequestException(
+        'That pipeline step no longer exists — it may have been removed or changed.',
+      );
+    }
+    step.promptOverride = text;
+    pipeline.updatedBy = actorId;
+    pipeline.markModified('steps');
+    await pipeline.save();
+    return this.toView(pipeline);
   }
 
   // Normalize pipeline variable definitions: trim keys, drop blanks, dedupe by
