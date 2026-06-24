@@ -113,4 +113,10 @@ export default {
   phaseDecide: 'Chấm điểm & quyết định',
   phaseDecideSub: 'điểm có trọng số → hạng → quyết định → lưu',
   generatingVideo: 'Đang tạo video…',
+  editPrompt: 'Edit prompt',
+  saveToPipeline: 'Save to pipeline',
+  savedToPipelineConfirm: 'Saved to the pipeline — future runs use this prompt.',
+  customized: 'Customized',
+  customizedTitle: 'This step has a prompt override — it no longer uses the library prompt',
+  revertToLibrary: 'Revert to library prompt',
 } as const;

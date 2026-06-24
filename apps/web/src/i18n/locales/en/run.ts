@@ -114,4 +114,10 @@ export default {
   phaseDecide: 'Score & decide',
   phaseDecideSub: 'weighted score → grade → decision → save',
   generatingVideo: 'Generating video…',
+  editPrompt: 'Edit prompt',
+  saveToPipeline: 'Save to pipeline',
+  savedToPipelineConfirm: 'Saved to the pipeline — future runs use this prompt.',
+  customized: 'Customized',
+  customizedTitle: 'This step has a prompt override — it no longer uses the library prompt',
+  revertToLibrary: 'Revert to library prompt',
 } as const;

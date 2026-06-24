@@ -12,6 +12,7 @@ function makeSvc(execMap: ExecMap, keyedProviders: Provider[]) {
   const svc = new RunsService(
     {} as never, keys as never, {} as never, registry as never,
     {} as never, {} as never, {} as never, {} as never, {} as never,
+    {} as never, // pipelines
   );
   return { svc, keys };
 }

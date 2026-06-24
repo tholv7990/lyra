@@ -221,6 +221,10 @@ export interface Step {
   key?: StepKey; // fixed pipeline only; composable pipeline steps omit it
   name?: string; // composable pipeline step name
   promptId?: string; // composable: the library prompt this step ran
+  // The originating pipeline-step id, stamped at run creation. Enables
+  // "Save to pipeline" to target the exact step even after the pipeline is
+  // reordered or edited. Absent for builder test runs (no pipeline step id).
+  pipelineStepId?: string;
   provider?: Provider; // composable: per-step provider (else derived from key)
   mode: StepMode;
   status: StepStatus;
@@ -425,6 +429,10 @@ export interface PipelineStep {
   id: string;
   name: string;
   promptId: string;
+  // When set (non-empty), this is the step's effective prompt — it overrides the
+  // library prompt referenced by `promptId`. `promptId` stays as provenance.
+  // A user can promote a run-time edit to this field via "Save to pipeline".
+  promptOverride?: string;
   provider: Provider;
   model: string;
   mode: StepMode;

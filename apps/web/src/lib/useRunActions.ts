@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from './api';
-import { ImageOp, RunStatus, StepStatus, type Run } from '@lyra/shared';
+import { ImageOp, RunStatus, StepStatus, type Pipeline, type Run } from '@lyra/shared';
 
 export function previewRunProgress(run: Run, stepIndex = run.currentStep): Run {
   return {
@@ -54,6 +54,19 @@ export function useRunActions(run: Run | null, setRun: (r: Run) => void) {
     approve: (i: number) => { if (run) void act(() => post(`/runs/${run.id}/steps/${i}/approve`)); },
     savePrompt: (i: number, prompt: string) => {
       if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/prompt`, { method: 'PATCH', body: JSON.stringify({ prompt }) }));
+    },
+    saveToPipeline: async (i: number): Promise<Pipeline | null> => {
+      if (!run) return null;
+      setBusy(true);
+      setError(null);
+      try {
+        return await api<Pipeline>(`/runs/${run.id}/steps/${i}/save-to-pipeline`, { method: 'POST' });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Action failed');
+        return null;
+      } finally {
+        setBusy(false);
+      }
     },
     imageAction: (sourceStepIndex: number, assetId: string, op: ImageOp) => {
       if (run) void act(() => post(`/runs/${run.id}/actions/image`, { sourceStepIndex, assetId, op }));

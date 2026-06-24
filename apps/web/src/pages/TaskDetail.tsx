@@ -351,6 +351,18 @@ export function TaskDetail() {
         }),
       ),
     );
+  const saveToPipeline = async (i: number): Promise<void> => {
+    if (!run) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/runs/${run.id}/steps/${i}/save-to-pipeline`, { method: 'POST' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('projects.actionFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
   const imageAction = (sourceStepIndex: number, assetId: string, op: ImageOp) =>
     run && act(async () => setRun(await api<Run>(`/runs/${run.id}/actions/image`, { method: 'POST', body: JSON.stringify({ sourceStepIndex, assetId, op }) })));
   const rate = (value: 'up' | 'down' | null) =>
@@ -560,6 +572,7 @@ export function TaskDetail() {
                           onApprove={approve}
                           onReject={reject}
                           onSavePrompt={savePrompt}
+                          onSaveToPipeline={saveToPipeline}
                           onRegenerate={regenerate}
                           onImageAction={imageAction}
                           assets={runAssets}

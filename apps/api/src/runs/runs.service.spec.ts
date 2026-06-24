@@ -13,6 +13,7 @@ function makeService(deps?: {
   registry?: any;
   assets?: any;
   cache?: any;
+  pipelines?: any;
 }): RunsService {
   const users = { refMap: jest.fn().mockResolvedValue(new Map()) };
   // rate() only touches doc + users (via toView, which we stub); other deps unused.
@@ -26,6 +27,7 @@ function makeService(deps?: {
     deps?.actions ?? ({} as never), // actions
     deps?.projects ?? ({} as never), // projects
     deps?.cache ?? ({} as never), // cache (StepResultCache model)
+    deps?.pipelines ?? ({} as never), // pipelines
   );
   jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
   return svc;
@@ -126,6 +128,106 @@ describe('RunsService.createForPipeline', () => {
     // The action step's kind/action reach the run document.
     expect(run.steps[1].kind).toBe(StepKind.Action);
     expect(run.steps[1].action?.type).toBe(ActionType.Brand);
+  });
+
+  it('uses promptOverride when set instead of the library prompt', async () => {
+    const findActiveById = jest.fn().mockResolvedValue({ content: 'LIBRARY BODY' });
+    const ModelMock = jest
+      .fn()
+      .mockImplementation((d: Record<string, unknown>) => ({ ...d, save: jest.fn().mockResolvedValue(d) }));
+    const svc = makeService({ model: ModelMock, prompts: { findActiveById } });
+
+    const run = (await svc.createForPipeline(
+      {
+        workspaceId: 'w1',
+        pipelineId: 'pl1',
+        pipelineName: 'P',
+        projectVariables: {},
+        steps: [
+          { id: 'step-a', name: 'Write', promptId: 'lib-id', promptOverride: 'Custom prompt text', provider: 'anthropic', model: 'm', mode: 'auto' },
+          { id: 'step-b', name: 'Improve', promptId: 'lib-id-2', provider: 'anthropic', model: 'm', mode: 'auto' },
+        ],
+      } as never,
+      'actor-1',
+    )) as unknown as { steps: { prompt: string; pipelineStepId: string }[] };
+
+    // Step with override: must use override, not look up the library prompt.
+    expect(findActiveById).not.toHaveBeenCalledWith('lib-id');
+    expect(run.steps[0].prompt).toBe('Custom prompt text');
+    // Step without override: must look up the library prompt.
+    expect(findActiveById).toHaveBeenCalledWith('lib-id-2');
+    expect(run.steps[1].prompt).toBe('LIBRARY BODY');
+    // Both steps stamp pipelineStepId.
+    expect(run.steps[0].pipelineStepId).toBe('step-a');
+    expect(run.steps[1].pipelineStepId).toBe('step-b');
+  });
+
+  it('stamps pipelineStepId from the pipeline step id', async () => {
+    const ModelMock = jest
+      .fn()
+      .mockImplementation((d: Record<string, unknown>) => ({ ...d, save: jest.fn().mockResolvedValue(d) }));
+    const svc = makeService({ model: ModelMock, prompts: { findActiveById: jest.fn().mockResolvedValue({ content: 'x' }) } });
+
+    const run = (await svc.createForPipeline(
+      {
+        workspaceId: 'w1',
+        pipelineId: 'pl1',
+        pipelineName: 'P',
+        projectVariables: {},
+        steps: [
+          { id: 'pipeline-step-uuid-123', name: 'Write', promptId: 'pid', provider: 'anthropic', model: 'm', mode: 'auto' },
+        ],
+      } as never,
+      'actor-1',
+    )) as unknown as { steps: { pipelineStepId: string }[] };
+
+    expect(run.steps[0].pipelineStepId).toBe('pipeline-step-uuid-123');
+  });
+});
+
+describe('RunsService.saveStepToPipeline', () => {
+  function makeRunWithPipeline(overrides: {
+    pipelineId?: string;
+    steps?: Partial<{ index: number; prompt: string; pipelineStepId: string }[]>;
+  }) {
+    return {
+      workspaceId: 'ws-1',
+      pipelineId: overrides.pipelineId ?? 'pl-1',
+      steps: overrides.steps ?? [
+        { index: 0, prompt: 'My edited prompt', pipelineStepId: 'step-uuid-1' },
+      ],
+    } as unknown as import('./run.schema').RunDocument;
+  }
+
+  it('calls setStepOverride with the run workspaceId, pipelineId, pipelineStepId, and step prompt', async () => {
+    const setStepOverride = jest.fn().mockResolvedValue({ id: 'pl-1', steps: [] });
+    const svc = makeService({ pipelines: { setStepOverride } });
+
+    await svc.saveStepToPipeline(makeRunWithPipeline({}), 0, 'actor-1');
+
+    expect(setStepOverride).toHaveBeenCalledWith('ws-1', 'pl-1', 'step-uuid-1', 'My edited prompt', 'actor-1');
+  });
+
+  it('throws BadRequest when the run has no pipelineId', async () => {
+    const svc = makeService({});
+    // Explicitly omit pipelineId (nullish-coalesce doesn't help when we pass undefined,
+    // so build the run doc directly without the field).
+    const run = {
+      workspaceId: 'ws-1',
+      steps: [{ index: 0, prompt: 'p', pipelineStepId: 'step-1' }],
+    } as unknown as import('./run.schema').RunDocument;
+    await expect(svc.saveStepToPipeline(run, 0, 'actor-1')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('throws BadRequest when the step index does not exist', async () => {
+    const svc = makeService({});
+    await expect(svc.saveStepToPipeline(makeRunWithPipeline({}), 99, 'actor-1')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('throws BadRequest when the step has no pipelineStepId (e.g. a derived step)', async () => {
+    const svc = makeService({});
+    const run = makeRunWithPipeline({ steps: [{ index: 0, prompt: 'p' } as any] });
+    await expect(svc.saveStepToPipeline(run, 0, 'actor-1')).rejects.toBeInstanceOf(BadRequestException);
   });
 });
 
@@ -549,6 +651,7 @@ describe('RunsService.executeStep', () => {
       {} as never, // actions
       {} as never, // projects
       makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
+      {} as never, // pipelines
     );
     jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
 
@@ -603,6 +706,7 @@ describe('RunsService.executeStep', () => {
       {} as never, // actions
       {} as never, // projects
       makeCacheMock(null) as never, // cache (no hit → provider is called with inputImages)
+      {} as never, // pipelines
     );
     jest.spyOn(svc, 'toView').mockResolvedValue({ id: 'r1' } as never);
 

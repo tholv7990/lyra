@@ -30,6 +30,7 @@ import { BaseRepository } from '../common/database/base.repository';
 import { KeysService } from '../keys/keys.service';
 import { UsersService } from '../users/users.service';
 import { PromptsService } from '../prompts/prompts.service';
+import { PipelinesService } from '../pipelines/pipelines.service';
 import { AssetsService } from '../assets/assets.service';
 import { ProjectsService } from '../projects/projects.service';
 import { toRun, toState } from './run.views';
@@ -81,8 +82,11 @@ export interface PipelineRunInput {
   // Named lists a fan-out step maps over (e.g. the source images to brand).
   collections?: Record<string, string[]>;
   steps: {
+    id: string;
     name: string;
     promptId: string;
+    // When set (non-empty), used as the step's prompt instead of the library prompt.
+    promptOverride?: string;
     provider: Provider;
     model: string;
     mode: StepMode;
@@ -122,6 +126,7 @@ export class RunsService extends BaseRepository<Run> {
     private readonly actions: ActionRegistry,
     private readonly projects: ProjectsService,
     @InjectModel(StepResultCache.name) private readonly cache: Model<StepResultCache>,
+    private readonly pipelines: PipelinesService,
   ) {
     super(model);
   }
@@ -133,13 +138,25 @@ export class RunsService extends BaseRepository<Run> {
     const steps: Partial<Step>[] = [];
     for (let i = 0; i < input.steps.length; i++) {
       const ps = input.steps[i];
-      // Action steps carry no promptId — don't look one up (an empty id would
-      // throw a Mongoose CastError). Prompt steps always have one.
-      const prompt = ps.promptId ? await this.prompts.findActiveById(ps.promptId) : null;
+      // Resolve the step's effective prompt: a per-step override wins over the
+      // library prompt (promptId lookup). Action steps have neither.
+      let prompt: string;
+      if (ps.promptOverride && ps.promptOverride.trim()) {
+        prompt = ps.promptOverride;
+      } else if (ps.promptId) {
+        // Action steps carry no promptId — don't look one up (an empty id would
+        // throw a Mongoose CastError). Prompt steps always have one.
+        prompt = (await this.prompts.findActiveById(ps.promptId))?.content ?? '';
+      } else {
+        prompt = '';
+      }
       steps.push({
         index: i,
         name: ps.name,
         promptId: ps.promptId,
+        // Stamp the originating pipeline-step id so "Save to pipeline" can
+        // target the exact step even after the pipeline is reordered/edited.
+        pipelineStepId: ps.id,
         provider: ps.provider,
         model: ps.model,
         mode: ps.mode,
@@ -150,7 +167,7 @@ export class RunsService extends BaseRepository<Run> {
         status: StepStatus.Idle,
         // Store the raw template — project/custom/system vars and {input}/{step:Name}
         // resolve at run time from the run's variable snapshot + prior outputs.
-        prompt: prompt?.content ?? '',
+        prompt,
       });
     }
     // Variable snapshot: the project's variables (token-keyed) + system {note}/
@@ -724,6 +741,29 @@ export class RunsService extends BaseRepository<Run> {
         throw e;
       }
     }
+  }
+
+  // Promote a run step's prompt to the originating pipeline step as an override.
+  // Uses the run's recorded provenance (pipelineId + pipelineStepId) — not client
+  // input — so the target is always authoritative and workspace-fenced.
+  async saveStepToPipeline(run: RunDocument, index: number, actorId: string) {
+    if (!run.pipelineId) {
+      throw new BadRequestException('This run has no pipeline to save to.');
+    }
+    const step = run.steps[index];
+    if (!step) {
+      throw new BadRequestException('No such step.');
+    }
+    if (!step.pipelineStepId) {
+      throw new BadRequestException('This step has no originating pipeline step — it may be a derived or test-run step.');
+    }
+    return this.pipelines.setStepOverride(
+      run.workspaceId,
+      run.pipelineId,
+      step.pipelineStepId,
+      step.prompt,
+      actorId,
+    );
   }
 
   // Set or clear the run's overall rating. Allowed only once a step has completed

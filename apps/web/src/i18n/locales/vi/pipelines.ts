@@ -153,4 +153,5 @@ export default {
   condOpContains: 'chứa',
   condOpGt: 'lớn hơn',
   condOpLt: 'nhỏ hơn',
+  overrideLabel: 'Prompt override (run-time edit)',
 } as const;

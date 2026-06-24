@@ -166,6 +166,9 @@ export interface PipelineStepInput {
   id?: string;
   name: string;
   promptId: string;
+  // Per-step prompt override: when set (non-empty), overrides the library prompt
+  // at run time (scoped to this pipeline, not the library prompt).
+  promptOverride?: string;
   provider: Provider;
   model: string;
   mode: StepMode;

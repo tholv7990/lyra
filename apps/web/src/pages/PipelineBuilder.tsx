@@ -271,6 +271,7 @@ export function PipelineBuilder() {
       id: s.id ?? uuid(),
       name: (s.name || (isAction ? t('pipelines.actionBrand') : p?.title) || t('pipelines.defaultStepName')).trim(),
       promptId: isAction ? '' : s.promptId,
+      promptOverride: s.promptOverride || undefined,
       provider: s.provider,
       model: s.model,
       mode: s.mode,
@@ -705,25 +706,47 @@ export function PipelineBuilder() {
                 t={t}
               />
             ) : (
-              <PromptPicker
-                prompts={pickablePrompts}
-                labels={labels}
-                value={ed.promptId}
-                modelLabel={(p) => (p.model ? modelLabel(p.provider ?? Provider.Anthropic, p.model) : '')}
-                onChange={(promptId) => {
-                  const p = pickablePrompts.find((x) => x.id === promptId);
-                  setEditing({
-                    ...editing!,
-                    step: {
-                      ...ed,
-                      promptId,
-                      name: p?.title ?? ed.name,
-                      provider: p?.provider ?? ed.provider,
-                      model: p?.model ?? ed.model,
-                    },
-                  });
-                }}
-              />
+              <>
+                <PromptPicker
+                  prompts={pickablePrompts}
+                  labels={labels}
+                  value={ed.promptId}
+                  modelLabel={(p) => (p.model ? modelLabel(p.provider ?? Provider.Anthropic, p.model) : '')}
+                  onChange={(promptId) => {
+                    const p = pickablePrompts.find((x) => x.id === promptId);
+                    setEditing({
+                      ...editing!,
+                      step: {
+                        ...ed,
+                        promptId,
+                        name: p?.title ?? ed.name,
+                        provider: p?.provider ?? ed.provider,
+                        model: p?.model ?? ed.model,
+                      },
+                    });
+                  }}
+                />
+                {ed.promptOverride?.trim() && (
+                  <div className="addstep-override">
+                    <div className="addstep-override-head">
+                      <span className="addstep-override-label">{t('pipelines.overrideLabel')}</span>
+                      <button
+                        type="button"
+                        className="txt-btn addstep-override-revert"
+                        onClick={() => setEditing({ ...editing!, step: { ...ed, promptOverride: undefined } })}
+                      >
+                        {t('run.revertToLibrary')}
+                      </button>
+                    </div>
+                    <textarea
+                      className="text-input addstep-override-text"
+                      rows={4}
+                      value={ed.promptOverride}
+                      onChange={(e) => setEditing({ ...editing!, step: { ...ed, promptOverride: e.target.value } })}
+                    />
+                  </div>
+                )}
+              </>
             )}
 
             {/* Fan-out: run this step once per item in a run collection (parallel). */}
