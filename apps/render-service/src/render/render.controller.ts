@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { createReadStream } from 'node:fs';
 import { RenderService, RenderImageRes } from './render.service';
 import { RenderStore } from './render.store';
-import { RenderImageDto } from './dto';
+import { RenderImageDto, ReviewDto } from './dto';
 import { ServiceTokenGuard } from '../auth/service-token.guard';
 
 @Controller()
@@ -14,6 +14,12 @@ export class RenderController {
   @UseGuards(ServiceTokenGuard)
   async renderImage(@Body() dto: RenderImageDto): Promise<RenderImageRes> {
     return this.renderService.renderImage(dto);
+  }
+
+  @Post('review')
+  @UseGuards(ServiceTokenGuard)
+  async review(@Body() dto: ReviewDto): Promise<{ pass: boolean; issues: string[] }> {
+    return this.renderService.review(dto);
   }
 
   @Get('files/:id')
