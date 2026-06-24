@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 const PRIVATE_IPV4 = [
   /^127\./, /^10\./, /^192\.168\./, /^169\.254\./, /^0\./,
   /^172\.(1[6-9]|2\d|3[01])\./,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, // 100.64.0.0/10 carrier-grade NAT
 ];
 
 function isPrivateIPv4(dotted: string): boolean {
@@ -23,10 +24,15 @@ export function isPrivateAddress(host: string): boolean {
   // plain IPv4 private ranges
   if (isPrivateIPv4(h)) return true;
 
-  // IPv6 loopback
-  if (h === '::1') return true;
+  // IPv6 loopback + unspecified (:: routes to loopback on most stacks)
+  if (h === '::1' || h === '::') return true;
 
-  // IPv4-mapped IPv6: ::ffff:XXXX:XXXX
+  // IPv4-mapped IPv6 in DOTTED form (what dns.lookup actually returns for a
+  // v4-mapped AAAA record): ::ffff:a.b.c.d — judge by the embedded v4.
+  const mappedDotted = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(h);
+  if (mappedDotted && isPrivateIPv4(mappedDotted[1])) return true;
+
+  // IPv4-mapped IPv6 in HEX form (what `new URL` normalises a literal to): ::ffff:XXXX:XXXX
   const mappedMatch = /^::ffff:([0-9a-f:]+)$/.exec(h);
   if (mappedMatch) {
     const dotted = mappedHexToDotted(mappedMatch[1]);
@@ -80,8 +86,8 @@ export function assertSafeUrl(raw: string): URL {
 
   const host = stripBrackets(url.hostname).toLowerCase();
 
-  // --- localhost / loopback ---
-  if (host === 'localhost' || host === '::1' || host.endsWith('.localhost')) {
+  // --- localhost / loopback / unspecified ---
+  if (host === 'localhost' || host === '::1' || host === '::' || host.endsWith('.localhost')) {
     throw new BadRequestException('URL host not allowed');
   }
 
