@@ -4,7 +4,7 @@
 >
 > **Source of truth = code.** Token values mirror `apps/web/src/index.css` `:root` + `[data-theme='dark']` (also exposed to Tailwind via `apps/web/src/styles/tokens.css`). If this doc and `index.css` ever disagree, **`index.css` wins** — re‑sync from it. Design‑language narrative: `docs/notion-design.md`.
 >
-> **History:** earlier versions of this file held a dark/Apple spec and a Linear/orange (`#FF6B1A`) spec — both **superseded** and kept only in git history. `docs/lyra-linear-audit.md` is likewise historical.
+> **History:** earlier versions of this file (a dark/Apple spec; a Linear/orange `#FF6B1A` spec) are **superseded** and kept only in git history.
 >
 > **Golden rule:** style **only** via `var(--…)` tokens — never hardcode a hex or px. New status/section colors go in the token block (light **and** dark), not inline.
 

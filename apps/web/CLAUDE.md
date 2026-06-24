@@ -22,8 +22,7 @@ The workbench SPA. Keep it thin: no business logic in components, server is the 
     dark block), not inline.
   - **Spec:** [docs/notion-design.md](../../docs/notion-design.md) — the LIVE
     Notion design system (neutral paper + blue `#0075DE`, system UI font, bold
-    700 headings, flat components). `lyra-linear-audit.md` is historical
-    (superseded). `scripts/figma-mcp.sh` re-pulls specs from the Figma MCP.
+    700 headings, flat components). `scripts/figma-mcp.sh` re-pulls specs from the Figma MCP.
   - Blue `#0075DE` is the single accent — brand mark, primary CTA, focus, active.
   - **i18n:** all user-facing copy goes through `t('…')` with keys in
     `src/i18n/locales/{en,vi}/*` — add BOTH locales.

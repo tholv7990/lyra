@@ -1,7 +1,7 @@
 # Lyra UI consistency rules (actions, tokens, reusable components)
 
 The enforceable rules behind a consistent UI. New web code MUST follow these.
-Companion to `docs/lyra-linear-audit.md` (the Linear visual spec).
+Companion to `docs/notion-design.md` (the live Notion visual spec) and `docs/lyra-design-system.md` (tokens).
 
 ## 1. No hardcoded CSS values — use tokens
 

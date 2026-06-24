@@ -71,9 +71,8 @@
   --shadow-sm: 0 1px 2px rgba(16, 17, 26, 0.04), 0 1px 3px rgba(16, 17, 26, 0.03);
   --shadow-md: 0 1px 2px rgba(16, 17, 26, 0.04), 0 8px 24px rgba(16, 17, 26, 0.07);
   --shadow-lg: 0 1px 2px rgba(16, 17, 26, 0.05), 0 16px 40px rgba(16, 17, 26, 0.1);
-  /* Control + overlay elevation — Linear's ramp (tight shadow on buttons, large
-     soft downward blur on overlays), translated from its dark tokens to light
-     alphas. See docs/lyra-linear-audit.md. */
+  /* Control + overlay elevation — tight shadow on buttons, large soft downward
+     blur on overlays; light alphas. */
   --shadow-button: 0 1px 2px rgba(16, 17, 26, 0.08);
   --shadow-button-strong: 0 1px 2px rgba(16, 17, 26, 0.1), 0 2px 6px rgba(16, 17, 26, 0.08);
   --shadow-tooltip: 0 2px 4px rgba(16, 17, 26, 0.12), 0 4px 12px rgba(16, 17, 26, 0.1);

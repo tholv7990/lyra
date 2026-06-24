@@ -2,7 +2,7 @@
   "pkg": "@lyra/web",
   "globalName": "Lyra",
   "shape": "package",
-  "projectId": "538aa172-b9fb-41d1-b4eb-4281dc51a5e6",
+  "projectId": "edccf360-4175-4563-9a9f-cca9aa13331c",
   "srcDir": "src",
   "tsconfig": "tsconfig.json",
   "cssEntry": ".ds-styles.css",

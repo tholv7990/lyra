@@ -4,7 +4,7 @@
 >
 > Written in two voices: a **business analyst** (Parts 1–2: features, flows, data fields) and a **UI/UX designer** (Part 3: design system). Part 4 is a ready-to-paste prompt for the design agent.
 >
-> **Source of truth.** Distilled from the code (`packages/shared`, `apps/web`, `apps/api`) and docs (`docs/lyra-pipelines.md`, `docs/lyra-requirements.md`, `docs/notion-design.md`). Where this doc and `CLAUDE.md` disagree on visual style, **this doc wins** — the UI migrated to **Notion** (warm-neutral + blue), so the "Linear / orange `#FF6B1A`" notes in `CLAUDE.md` and `docs/lyra-linear-audit.md` are **superseded**.
+> **Source of truth.** Distilled from the code (`packages/shared`, `apps/web`, `apps/api`) and docs (`docs/lyra-pipelines.md`, `docs/lyra-requirements.md`, `docs/notion-design.md`). Where this doc and `CLAUDE.md` disagree on visual style, **this doc wins** — the UI migrated to **Notion** (warm-neutral + blue), so the old "Linear / orange `#FF6B1A`" notes in `CLAUDE.md` are **superseded**.
 
 ---
 

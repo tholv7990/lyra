@@ -1,7 +1,7 @@
 # Lyra — Feature reference (design context)
 
 > The full feature/behavior/function map for mocking up Lyra screens in Claude
-> Design. Read with `PRODUCT.md` (the brief) and `DATA-MODEL.md` (entities +
+> Design. Read with `lyra-design-brief.md` (the brief) and `DATA-MODEL.md` (entities +
 > fields). Distilled from the live code (`apps/api/src`, `apps/web/src`,
 > `packages/shared`); the code is the source of truth. Each feature lists **What ·
 > Behavior · Functions/API · Data · Permissions**.
