@@ -3,9 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import {
+  Provider,
   type Pipeline as PipelineModel,
   type PipelineStepInput,
   type PipelineVariableInput,
+  type PromptMedia,
 } from '@lyra/shared';
 import { Pipeline } from './pipeline.schema';
 import type { PipelineDocument } from './pipeline.schema';
@@ -85,19 +87,20 @@ export class PipelinesService extends BaseRepository<Pipeline> {
     });
   }
 
-  // Promote a run-time prompt edit to a pipeline step: sets `promptOverride` on
-  // the matching step so future runs use this text instead of the library prompt.
+  // Promote a run-time step config to a pipeline step: sets promptOverride,
+  // provider, model, and/or media on the matching step so future runs use this
+  // config instead of the pipeline defaults.
   // Tenant-fenced: the pipeline must belong to the given workspaceId.
   async setStepOverride(
     workspaceId: string,
     pipelineId: string,
     stepId: string,
-    text: string,
+    cfg: { promptOverride?: string; provider?: Provider; model?: string; media?: PromptMedia[] },
     actorId: string,
   ): Promise<PipelineModel> {
     // Enforce the same bound the builder DTO applies (@MaxLength 8000) — the promote
     // path comes from the run-step prompt, which isn't length-capped at its source.
-    if (text.length > 8000) {
+    if (cfg.promptOverride !== undefined && cfg.promptOverride.length > 8000) {
       throw new BadRequestException('Prompt is too long to save to the pipeline (max 8000 characters).');
     }
     const pipeline = await this.findOne({ _id: pipelineId, workspaceId });
@@ -108,7 +111,10 @@ export class PipelinesService extends BaseRepository<Pipeline> {
         'That pipeline step no longer exists — it may have been removed or changed.',
       );
     }
-    step.promptOverride = text;
+    if (cfg.promptOverride !== undefined) step.promptOverride = cfg.promptOverride;
+    if (cfg.provider) step.provider = cfg.provider;
+    if (cfg.model?.trim()) step.model = cfg.model;
+    if (cfg.media !== undefined) step.media = cfg.media;
     pipeline.updatedBy = actorId;
     pipeline.markModified('steps');
     await pipeline.save();

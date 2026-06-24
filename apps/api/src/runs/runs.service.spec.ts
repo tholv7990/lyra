@@ -208,7 +208,7 @@ describe('RunsService.saveStepToPipeline', () => {
 
     await svc.saveStepToPipeline(makeRunWithPipeline({}), 0, 'actor-1');
 
-    expect(setStepOverride).toHaveBeenCalledWith('ws-1', 'pl-1', 'step-uuid-1', 'My edited prompt', 'actor-1');
+    expect(setStepOverride).toHaveBeenCalledWith('ws-1', 'pl-1', 'step-uuid-1', { promptOverride: 'My edited prompt', provider: undefined, model: undefined, media: undefined }, 'actor-1');
   });
 
   it('throws BadRequest when the run has no pipelineId', async () => {

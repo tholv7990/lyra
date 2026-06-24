@@ -104,6 +104,12 @@ export interface UpdateStepPromptDto {
   prompt: string;
 }
 
+// Editing a run step's provider·model in the workbench.
+export interface UpdateStepModelDto {
+  provider: Provider;
+  model: string;
+}
+
 export interface UpsertKeyDto {
   key: string;
 }

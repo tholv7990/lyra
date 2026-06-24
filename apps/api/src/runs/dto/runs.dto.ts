@@ -1,10 +1,19 @@
-import { IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Min, ValidateIf } from 'class-validator';
-import type { RateRunDto, RunPipelineDto, RunStepDto, UpdateStepPromptDto } from '@lyra/shared';
-import { ImageOp, type ImageActionDto } from '@lyra/shared';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Min, MinLength, ValidateIf } from 'class-validator';
+import type { RateRunDto, RunPipelineDto, RunStepDto, UpdateStepModelDto, UpdateStepPromptDto } from '@lyra/shared';
+import { ImageOp, Provider, type ImageActionDto } from '@lyra/shared';
 
 export class UpdatePromptBody implements UpdateStepPromptDto {
   @IsString()
   prompt!: string;
+}
+
+export class UpdateStepModelBody implements UpdateStepModelDto {
+  @IsEnum(Provider)
+  provider!: Provider;
+
+  @IsString()
+  @MinLength(1)
+  model!: string;
 }
 
 // Rate a run's overall output. `value: null` clears it (validation runs only when
