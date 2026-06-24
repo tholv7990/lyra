@@ -33,6 +33,14 @@ export class ProductsController {
     return this.importSvc.extractFromUrl(ws, body.url);
   }
 
+  // Re-crawl the product's stored source URL + refresh its commercial fields
+  // (price/compare-at/offer/images). Same gate as create (spends keys/crawls).
+  @Post('workspaces/:id/products/:productId/resync')
+  @RequireCreate()
+  resync(@Param('id') ws: string, @Param('productId') productId: string, @CurrentUser() user: User): Promise<Product> {
+    return this.products.resyncFromSource(productId, ws, user.id);
+  }
+
   @Get('workspaces/:id/products/:productId')
   get(@Param('id') ws: string, @Param('productId') productId: string): Promise<Product> { return this.products.get(productId, ws); }
 

@@ -1,7 +1,7 @@
 import { ProductsService } from './products.service';
 
 function svc(model: any) {
-  return new ProductsService(model, { refMap: jest.fn().mockResolvedValue(new Map()) } as any);
+  return new ProductsService(model, { refMap: jest.fn().mockResolvedValue(new Map()) } as any, {} as any);
 }
 
 describe('ProductsService copies', () => {

@@ -12,6 +12,7 @@ import {
 } from '@lyra/shared';
 import { Product, ProductDocument } from './product.schema';
 import { UsersService } from '../users/users.service';
+import { ProductImportService } from './product-import.service';
 import { toProductView, productActorIds } from './product.views';
 
 const MAX_NAME = 160;
@@ -22,6 +23,7 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name) private readonly model: Model<Product>,
     private readonly users: UsersService,
+    private readonly productImport: ProductImportService,
   ) {}
 
   async list(workspaceId: string): Promise<ProductView[]> {
@@ -170,6 +172,27 @@ export class ProductsService {
       .exec();
     if (!doc) throw new NotFoundException('Product not found.');
     return this.toView(doc);
+  }
+
+  // Re-crawl the product's stored source URL and refresh the volatile commercial
+  // fields (price, compare-at, offer, images) from the page. Curated/workflow
+  // fields (name, niche, category, status, research, tags) are left untouched.
+  // Reuses the security-reviewed ProductImportService.extractFromUrl (SSRF-safe
+  // fetch → Firecrawl → LLM map), which throws BadRequestException on a blocked
+  // page / missing AI key — surfaced to the caller as a graceful error.
+  async resyncFromSource(id: string, workspaceId: string, actorId: string): Promise<ProductView> {
+    const product = await this.model.findOne({ _id: id, workspaceId, active: { $ne: false } }).exec();
+    if (!product) throw new NotFoundException('Product not found.');
+    const url = product.source?.url;
+    if (!url) throw new BadRequestException('This product has no source URL to re-sync from.');
+
+    const extracted = await this.productImport.extractFromUrl(workspaceId, url);
+    const patch: UpdateProductDto = {};
+    if (extracted.price !== undefined) patch.price = extracted.price;
+    if (extracted.compareAtPrice !== undefined) patch.compareAtPrice = extracted.compareAtPrice;
+    if (extracted.offer !== undefined) patch.offer = extracted.offer;
+    if (extracted.images && extracted.images.length) patch.images = extracted.images;
+    return this.update(id, workspaceId, actorId, patch);
   }
 
   // ===== Saved results (branding / run outputs) =====

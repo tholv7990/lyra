@@ -86,6 +86,11 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
   const [run, setRun] = useState<Run | null>(null);
   const [runAssets, setRunAssets] = useState<Asset[]>([]);
 
+  // Re-sync from the stored e-commerce source URL.
+  const [resyncing, setResyncing] = useState(false);
+  const [resyncNote, setResyncNote] = useState<string | null>(null);
+  const [resyncError, setResyncError] = useState<string | null>(null);
+
   // Copy-product extras
   const [brandingRuns, setBrandingRuns] = useState<Run[]>([]);
   const [poolProduct, setPoolProduct] = useState<Product | null>(null);
@@ -146,6 +151,22 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
 
   async function handleStatusChange(status: ProductStatus) {
     await onUpdate({ status });
+  }
+
+  async function handleResync() {
+    if (resyncing) return;
+    setResyncing(true);
+    setResyncError(null);
+    setResyncNote(null);
+    try {
+      await productsApi.resync(workspaceId, product.id);
+      await onProductRefresh();
+      setResyncNote(t('products.resynced'));
+    } catch (e) {
+      setResyncError(e instanceof Error ? e.message : t('products.resyncFailed'));
+    } finally {
+      setResyncing(false);
+    }
   }
 
   async function handleOutcomeBlur() {
@@ -266,6 +287,17 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
             {starting ? t('products.running') : t('products.runResearch')}
           </button>
         )}
+        {product.source?.url && (
+          <button
+            type="button"
+            className="btn-ghost btn-inline btn-sm"
+            disabled={resyncing}
+            title={t('products.resyncHint')}
+            onClick={() => void handleResync()}
+          >
+            {resyncing ? t('products.resyncing') : t('products.resync')}
+          </button>
+        )}
         {primarySource?.url && (
           <a
             href={primarySource.url}
@@ -278,6 +310,8 @@ export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRef
           </a>
         )}
       </div>
+      {resyncError && <p className="error">{resyncError}</p>}
+      {resyncNote && <p className="pd-resync-note">{resyncNote}</p>}
 
       {/* ── Body grid ───────────────────────────────────────────────────── */}
       <div className="pd-body">
