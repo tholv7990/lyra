@@ -753,14 +753,14 @@ describe('reviewAssets (post-render QA seam)', () => {
 
   it('returns issues when the QA verdict is pass:false (so the caller gates)', async () => {
     const review = jest.fn().mockResolvedValue({ pass: false, issues: ['image is blank'] });
-    const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(undefined), 0, imgOutput);
+    const out = await (svcWith(review) as unknown as { reviewAssets: (state: unknown, i: number, output: unknown) => Promise<string[]> }).reviewAssets(stateWith(undefined), 0, imgOutput);
     expect(out).toEqual(['image is blank']);
     expect(review).toHaveBeenCalledWith({ assetUrl: 'https://x/a.png' });
   });
 
   it('skips QA (no call) when the step has review === false', async () => {
     const review = jest.fn();
-    const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(false), 0, imgOutput);
+    const out = await (svcWith(review) as unknown as { reviewAssets: (state: unknown, i: number, output: unknown) => Promise<string[]> }).reviewAssets(stateWith(false), 0, imgOutput);
     expect(out).toEqual([]);
     expect(review).not.toHaveBeenCalled();
   });
@@ -768,7 +768,7 @@ describe('reviewAssets (post-render QA seam)', () => {
   it('skips a non-http asset url (e.g. data:) rather than false-gating', async () => {
     const review = jest.fn();
     const dataOut = { assets: [{ type: 'image', url: 'data:image/png;base64,xx' }] } as never;
-    const out = await (svcWith(review) as unknown as { reviewAssets: Function }).reviewAssets(stateWith(undefined), 0, dataOut);
+    const out = await (svcWith(review) as unknown as { reviewAssets: (state: unknown, i: number, output: unknown) => Promise<string[]> }).reviewAssets(stateWith(undefined), 0, dataOut);
     expect(out).toEqual([]);
     expect(review).not.toHaveBeenCalled();
   });

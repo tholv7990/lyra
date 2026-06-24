@@ -28,12 +28,6 @@ function fakeDoc(overrides: Record<string, unknown> = {}) {
 // resolves to one doc or null; model.create(...) resolves to a doc;
 // model.updateOne(...).exec() resolves to undefined.
 // ---------------------------------------------------------------------------
-function makeFindChain(result: unknown) {
-  const exec = jest.fn().mockResolvedValue(result);
-  const chain = { exec };
-  return { chain, exec };
-}
-
 function makeService(model: Record<string, unknown>) {
   const users = { refMap: jest.fn().mockResolvedValue(new Map()) };
   return new MemoryService(model as any, users as any);
