@@ -1,0 +1,68 @@
+/* ===== Product gallery view — card layout layered on the shared .mkt-card
+   (marketplace.css). Token-only; mirrors the other list-page galleries. ===== */
+
+.prodg-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+
+.prodg-card { gap: 12px; cursor: pointer; }
+.prodg-card:hover { border-color: var(--hairline-strong); box-shadow: var(--shadow-sm); }
+.prodg-card:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--primary); }
+
+/* Media row: thumbnail + name/status */
+.prodg-media { display: flex; gap: 12px; align-items: flex-start; }
+.prodg-thumb {
+  flex: none; width: 56px; height: 56px; padding: 0;
+  border: 1px solid var(--hairline); border-radius: 10px; overflow: hidden;
+  position: relative; background: var(--surface-2); cursor: zoom-in; display: block;
+}
+.prodg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.prodg-thumb--empty {
+  cursor: default; display: grid; place-items: center; color: var(--ink-tertiary);
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface-1) 6px 12px);
+}
+.prodg-thumb:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--primary); }
+.prodg-img-count {
+  position: absolute; right: 2px; bottom: 2px;
+  background: rgba(0, 0, 0, 0.62); color: #fff; font-size: 9px; font-weight: 600; line-height: 1;
+  padding: 2px 4px; border-radius: 4px; font-variant-numeric: tabular-nums;
+}
+.prodg-headinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.prodg-name {
+  margin: 0; font-size: 14.5px; font-weight: var(--weight-semibold); letter-spacing: -0.01em;
+  color: var(--ink); line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.prodg-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); }
+.prodg-status-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+
+/* Niche · price */
+.prodg-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; }
+.prodg-niche { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-tertiary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prodg-niche-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.prodg-price { font-weight: var(--weight-semibold); color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Verdict: score · grade · decision */
+.prodg-verdict { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+.prodg-score { font-size: 15px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.prodg-score-den { font-size: 11px; font-weight: 400; color: var(--ink-tertiary); }
+.prodg-grade { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--hairline-strong); background: var(--surface-1); color: var(--ink-muted); }
+.prodg-grade.g-a { color: var(--success); border-color: color-mix(in srgb, var(--success) 32%, transparent); background: color-mix(in srgb, var(--success) 10%, transparent); }
+.prodg-grade.g-b { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 30%, transparent); background: var(--primary-tint); }
+.prodg-grade.g-c { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 32%, transparent); background: color-mix(in srgb, var(--warning) 10%, transparent); }
+.prodg-decision { margin-left: auto; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: var(--primary-tint); color: var(--primary); }
+.prodg-verdict--none { color: var(--ink-tertiary); font-size: 12.5px; }
+
+/* Footer: updated date + actions */
+.prodg-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 10px; }
+.prodg-date { font-size: 12px; color: var(--ink-tertiary); }
+.prodg-actions { display: inline-flex; gap: 2px; }
+.prodg-act { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: none; background: none; border-radius: var(--radius-sm); color: var(--ink-tertiary); cursor: pointer; }
+.prodg-act:hover { background: var(--surface-2); color: var(--ink); }
+.prodg-act--danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--danger); }
+.prodg-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (hover: hover) {
+  .prodg-actions { opacity: 0; visibility: hidden; transition: opacity 0.14s ease; }
+  .prodg-card:hover .prodg-actions,
+  .prodg-card:focus-within .prodg-actions { opacity: 1; visibility: visible; }
+}
+@media (prefers-reduced-motion: reduce) { .prodg-actions { transition: none; } }

@@ -45,6 +45,8 @@ it('renders product cards with grade + decision + groups by status', () => {
         p({ name: 'Cat Bed', status: ProductStatus.Killed }),
       ]}
       onOpen={() => {}}
+      onEdit={() => {}}
+      onDelete={() => {}}
     />,
   );
   expect(html).toContain('Dog Toy');
@@ -53,6 +55,6 @@ it('renders product cards with grade + decision + groups by status', () => {
 });
 
 it('renders an empty state with no products', () => {
-  const html = renderToStaticMarkup(<ProductBoard products={[]} onOpen={() => {}} />);
+  const html = renderToStaticMarkup(<ProductBoard products={[]} onOpen={() => {}} onEdit={() => {}} onDelete={() => {}} />);
   expect(html.toLowerCase()).toMatch(/no products|run the/i);
 });

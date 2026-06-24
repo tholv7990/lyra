@@ -47,9 +47,13 @@ function groupByStatus(products: Product[]): Record<ProductStatus, Product[]> {
 export function ProductBoard({
   products,
   onOpen,
+  onEdit,
+  onDelete,
 }: {
   products: Product[];
   onOpen: (p: Product) => void;
+  onEdit: (p: Product) => void;
+  onDelete: (p: Product) => void;
 }) {
   const { t } = useTranslation();
   // Image lightbox: the gallery of one product's images (opened from its card thumb).
@@ -143,6 +147,26 @@ export function ProductBoard({
                             {product.score !== undefined && (
                               <span className="pcard-score">{product.score}/100</span>
                             )}
+                            <div className="pcard-actions">
+                              <button
+                                type="button"
+                                className="pcard-act"
+                                title={t('products.edit')}
+                                aria-label={`${t('products.edit')} — ${product.name}`}
+                                onClick={(e) => { e.stopPropagation(); onEdit(product); }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3 7.5-7.5z" /></svg>
+                              </button>
+                              <button
+                                type="button"
+                                className="pcard-act pcard-act--danger"
+                                title={t('common.delete')}
+                                aria-label={`${t('common.delete')} — ${product.name}`}
+                                onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3.2h3v1.3M4.8 4.5l.5 8h5.4l.5-8" /></svg>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>

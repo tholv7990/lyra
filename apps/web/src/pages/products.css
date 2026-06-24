@@ -90,3 +90,30 @@
   .ap-import-row { flex-direction: column; }
   .ap-import-row .btn-inline { width: 100%; }
 }
+
+/* ── List view toggle (Board / Gallery) ────────────────────────────────────── */
+.pv-seg { display: inline-flex; margin-left: auto; border: 1px solid var(--hairline); border-radius: var(--radius-md); overflow: hidden; background: var(--card); }
+.pv-seg-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; font-size: 12.5px; font-weight: var(--weight-medium); color: var(--ink-muted); background: none; border: none; cursor: pointer; }
+.pv-seg-btn + .pv-seg-btn { border-left: 1px solid var(--hairline); }
+.pv-seg-btn.active { background: var(--surface-2); color: var(--ink); }
+.pv-seg-btn:hover:not(.active) { background: var(--surface-1); color: var(--ink); }
+.pv-seg-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--primary); }
+.pv-seg-btn svg { color: var(--ink-tertiary); }
+.pv-seg-btn.active svg { color: var(--primary); }
+
+/* ── Gallery view layout inside the full-bleed products page ────────────────── */
+/* Toolbar mirrors the shared list pages (Prompts/etc.): the search keeps its
+   min-width, so on narrow screens it sits on its own line with filter + add
+   wrapping below. Only the page gutter + internal scroll are products-specific. */
+.products-page .mkt-toolbar { padding: 0 24px; margin: 6px 0 0; }
+.products-page .mkt-meta { display: flex; align-items: center; gap: 10px; padding: 0 24px; margin: 10px 0 0; }
+.prodg-sort { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; font-size: 12.5px; color: var(--ink-muted); white-space: nowrap; }
+.prodg-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 24px 28px; }
+.prodg-wrap .mkt-pager { margin-top: 18px; }
+
+@media (max-width: 760px) {
+  .pv-seg { margin-left: 0; }
+  .products-page .mkt-toolbar { padding: 0 15px; }
+  .products-page .mkt-meta { padding: 0 15px; }
+  .prodg-wrap { padding: 12px 15px 24px; }
+}

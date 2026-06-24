@@ -101,6 +101,27 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Card actions (edit · delete). Revealed on hover/focus on pointer devices,
+   always visible on touch; space is reserved (visibility) so nothing shifts. */
+.pcard .tcard-foot-r { display: flex; align-items: center; gap: 6px; }
+.pcard-actions { display: inline-flex; align-items: center; gap: 2px; }
+.pcard-act {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; padding: 0;
+  border: none; background: none; border-radius: var(--radius-sm);
+  color: var(--ink-tertiary); cursor: pointer;
+}
+.pcard-act:hover { background: var(--surface-2); color: var(--ink); }
+.pcard-act--danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--danger); }
+.pcard-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (hover: hover) {
+  .pcard-actions { opacity: 0; visibility: hidden; transition: opacity 0.14s ease; }
+  .pcard:hover .pcard-actions,
+  .pcard:focus-within .pcard-actions { opacity: 1; visibility: visible; }
+}
+@media (prefers-reduced-motion: reduce) { .pcard-actions { transition: none; } }
+
 /* Empty state — no products at all. */
 .pboard-empty {
   display: flex;
