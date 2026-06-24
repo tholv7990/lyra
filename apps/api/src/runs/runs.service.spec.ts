@@ -840,8 +840,8 @@ describe('RunsService step-media (multimodal)', () => {
 
     await svc.runStep(runDoc, 0, 'actor-1');
 
-    // readBuffer must have been called with the file id from the url
-    expect(readBuffer).toHaveBeenCalledWith('img1');
+    // readBuffer must have been called with the file id from the url + the run's workspace (tenant fence)
+    expect(readBuffer).toHaveBeenCalledWith('img1', 'ws-1');
     // The provider must have been called with attachments
     const ctx = providerExecute.mock.calls[0][0];
     expect(ctx.attachments).toHaveLength(1);

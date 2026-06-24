@@ -71,8 +71,11 @@ export class FilesService {
   }
 
   // Read a stored file fully into a Buffer (e.g. to base64-encode for the model).
-  async readBuffer(id: string): Promise<Buffer> {
-    const { stream } = await this.open(id);
+  // workspaceId is REQUIRED here: server-side reads (chat/run attachments) must be
+  // tenant-fenced so a crafted media URL can't pull another workspace's bytes into
+  // a model call.
+  async readBuffer(id: string, workspaceId: string): Promise<Buffer> {
+    const { stream } = await this.open(id, workspaceId);
     const chunks: Buffer[] = [];
     for await (const chunk of stream as AsyncIterable<Buffer>) {
       chunks.push(Buffer.from(chunk));
@@ -80,7 +83,10 @@ export class FilesService {
     return Buffer.concat(chunks);
   }
 
-  async open(id: string): Promise<{
+  // When `workspaceId` is given, the file must belong to that workspace (tenant
+  // fence). Omitting it preserves the capability-URL behaviour for the public
+  // `GET /files/:id` download route (which has no workspace context).
+  async open(id: string, workspaceId?: string): Promise<{
     file: mongo.GridFSFile;
     stream: NodeJS.ReadableStream;
   }> {
@@ -93,6 +99,9 @@ export class FilesService {
     const bucket = this.bucket();
     const [file] = await bucket.find({ _id: oid }).limit(1).toArray();
     if (!file) throw new NotFoundException('File not found');
+    if (workspaceId !== undefined && file.metadata?.workspaceId !== workspaceId) {
+      throw new NotFoundException('File not found');
+    }
     return { file, stream: bucket.openDownloadStream(oid) };
   }
 }

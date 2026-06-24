@@ -137,7 +137,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
 
   // Turn stored media into model attachments (images + PDFs, base64). Other
   // types stay on the record but aren't sent to the model. Capped for sane payloads.
-  private async buildAttachments(media: PromptMedia[]): Promise<LlmAttachment[]> {
+  private async buildAttachments(media: PromptMedia[], workspaceId: string): Promise<LlmAttachment[]> {
     const out: LlmAttachment[] = [];
     for (const m of media.slice(0, 5)) {
       const mime = m.mime ?? '';
@@ -147,7 +147,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
       const id = m.url.split('/').pop();
       if (!id) continue;
       try {
-        const buf = await this.files.readBuffer(id);
+        const buf = await this.files.readBuffer(id, workspaceId);
         out.push({
           kind: isImage ? 'image' : 'document',
           mediaType: mime,
@@ -209,6 +209,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
         history,
         onDelta,
         signal,
+        convo.workspaceId,
       );
     } catch (err) {
       // Persist the failure so the thread shows it on reload, then rethrow so
@@ -262,9 +263,10 @@ export class ConversationsService extends BaseRepository<Conversation> {
     history: LlmTurn[],
     onDelta: (text: string) => void,
     signal: AbortSignal,
+    workspaceId: string,
   ): Promise<CallOutput> {
     if (provider === Provider.Anthropic) {
-      const attachments = await this.buildAttachments(media);
+      const attachments = await this.buildAttachments(media, workspaceId);
       const out = await this.anthropic.stream(
         { apiKey, model, system, prompt: input, history, attachments, signal },
         onDelta,
@@ -276,7 +278,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
     const baseUrl = compatBaseUrl(provider);
     if (baseUrl) {
       const attachments =
-        provider === Provider.OpenAI ? await this.buildAttachments(media) : [];
+        provider === Provider.OpenAI ? await this.buildAttachments(media, workspaceId) : [];
       const out = await this.openai.stream(
         { baseUrl, provider, apiKey, model, system, prompt: input, history, attachments, signal },
         onDelta,
