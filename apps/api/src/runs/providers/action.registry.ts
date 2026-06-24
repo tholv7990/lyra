@@ -9,13 +9,18 @@ import { ScoreAction } from './score.action';
 import { ResolveInputsAction } from './resolve-inputs.action';
 import { CompetitionAction } from './competition.action';
 import { RiskScreenAction } from './risk-screen.action';
+import { CustomerJobAction } from './customer-job.action';
+import { ReviewMiningAction } from './review-mining.action';
+import { CreativePotentialAction } from './creative-potential.action';
+import { SupplyChainAction } from './supply-chain.action';
+import { ValidationPlanAction } from './validation-plan.action';
 import type { ActionProvider } from './action-provider.interface';
 
 @Injectable()
 export class ActionRegistry {
   private readonly impls: Partial<Record<ActionType, ActionProvider>>;
 
-  constructor(brand: BrandActionProvider, unitEcon: UnitEconAction, evaluate: EvaluateAction, saveProduct: SaveProductAction, demandGate: DemandGateAction, score: ScoreAction, resolveInputs: ResolveInputsAction, competition: CompetitionAction, riskScreen: RiskScreenAction) {
+  constructor(brand: BrandActionProvider, unitEcon: UnitEconAction, evaluate: EvaluateAction, saveProduct: SaveProductAction, demandGate: DemandGateAction, score: ScoreAction, resolveInputs: ResolveInputsAction, competition: CompetitionAction, riskScreen: RiskScreenAction, customerJob: CustomerJobAction, reviewMining: ReviewMiningAction, creativePotential: CreativePotentialAction, supplyChain: SupplyChainAction, validationPlan: ValidationPlanAction) {
     this.impls = {
       [ActionType.Brand]: brand,
       [ActionType.UnitEcon]: unitEcon,
@@ -26,6 +31,11 @@ export class ActionRegistry {
       [ActionType.ResolveInputs]: resolveInputs,
       [ActionType.Competition]: competition,
       [ActionType.RiskScreen]: riskScreen,
+      [ActionType.CustomerJob]: customerJob,
+      [ActionType.ReviewMining]: reviewMining,
+      [ActionType.CreativePotential]: creativePotential,
+      [ActionType.SupplyChain]: supplyChain,
+      [ActionType.ValidationPlan]: validationPlan,
     }; // Crawl/Publish added in later phases
   }
 

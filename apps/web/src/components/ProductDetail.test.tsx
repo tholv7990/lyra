@@ -106,4 +106,29 @@ describe('ProductDetail', () => {
     expect(html).toContain('Branded character');
     expect(html).toContain('Sensitivity');
   });
+
+  it('shows the v2 evidence sections when present', () => {
+    const html = renderToStaticMarkup(
+      <ProductDetailBody product={{ ...product,
+        customerJob: { customer: 'busy parents', job: 'keep kids busy', problem: 'boredom', alternative: 'TV', trigger: 'rainy day' },
+        reviewMining: { complaints: ['too small'], desiredFeatures: ['bigger'], objections: [] },
+        creativeConcepts: [{ hook: 'Never bored again', angle: 'relief' }],
+        supplyChain: { suppliers: ['Acme Co'], certs: [], notes: ['MOQ unverified'] },
+      } as any} workspaceId="w" onClose={() => {}} onUpdate={async () => {}} onProductRefresh={async () => {}} />,
+    );
+    expect(html).toContain('busy parents');
+    expect(html).toContain('too small');
+    expect(html).toContain('Never bored again');
+    expect(html).toContain('Acme Co');
+  });
+
+  it('shows the validation plan when present', () => {
+    const html = renderToStaticMarkup(
+      <ProductDetailBody product={{ ...product, validationPlan: { offer: 'BOGO', landingPageHypothesis: 'speed sells', creatives: ['hook A'], channel: 'TikTok', testBudget: 500, decisionRule: 'kill if CPA>maxCAC' } } as any}
+        workspaceId="w" onClose={() => {}} onUpdate={async () => {}} onProductRefresh={async () => {}} />,
+    );
+    expect(html).toContain('BOGO');
+    expect(html).toContain('TikTok');
+    expect(html).toContain('hook A');
+  });
 });
