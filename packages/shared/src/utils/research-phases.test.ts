@@ -34,6 +34,9 @@ describe('researchPhaseOf', () => {
     expect(researchPhaseOf(step({ action: { type: ActionType.CreativePotential } as never }))).toBe(3);
     expect(researchPhaseOf(step({ action: { type: ActionType.SupplyChain } as never }))).toBe(3);
   });
+  it('maps validation-plan to phase 4', () => {
+    expect(researchPhaseOf(step({ action: { type: ActionType.ValidationPlan } as never }))).toBe(4);
+  });
 });
 
 describe('isResearchRun', () => {

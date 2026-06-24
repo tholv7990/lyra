@@ -23,7 +23,8 @@ export function researchPhaseOf(step: Step): ResearchPhase | null {
     case ActionType.CreativePotential:
     case ActionType.SupplyChain: return 3;
     case ActionType.Evaluate:
-    case ActionType.SaveProduct: return 4;
+    case ActionType.SaveProduct:
+    case ActionType.ValidationPlan: return 4;
     case ActionType.ResolveInputs: return 1;
     case ActionType.Competition:
     case ActionType.CustomerJob:

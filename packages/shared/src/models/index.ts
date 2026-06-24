@@ -207,7 +207,8 @@ export type ActionStep =
   | { type: ActionType.CustomerJob }
   | { type: ActionType.ReviewMining }
   | { type: ActionType.CreativePotential }
-  | { type: ActionType.SupplyChain };
+  | { type: ActionType.SupplyChain }
+  | { type: ActionType.ValidationPlan };
 
 export interface ProjectBrandKit {
   logoUrl?: string;
@@ -752,6 +753,15 @@ export interface ReviewMining { complaints: string[]; desiredFeatures: string[];
 export interface CreativeConcept { hook: string; angle: string; }
 export interface SupplyChainInfo { suppliers: string[]; moq?: string; leadTime?: string; certs: string[]; notes: string[]; }
 
+export interface ValidationPlan {
+  offer: string;
+  landingPageHypothesis: string;
+  creatives: string[];
+  channel: string;
+  testBudget?: number;
+  decisionRule: string;
+}
+
 // ── Scoring / grading / decision (spec §1E) ────────────────────────────────
 export type ConfidenceGrade = 'A' | 'B' | 'C' | 'D';
 export interface HardGates {
@@ -829,6 +839,7 @@ export interface Product {
   reviewMining?: ReviewMining;
   creativeConcepts?: CreativeConcept[];
   supplyChain?: SupplyChainInfo;
+  validationPlan?: ValidationPlan;
   econInputs?: ProductEconInputs;
   competitorIds: string[];
   outcome?: string;
