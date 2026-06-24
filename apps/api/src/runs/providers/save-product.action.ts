@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { EvidenceClaim, SourceRow, UnitEcon, SubScores, ConfidenceGrade, Decision, HardGates, UnitEconInputs, CompetitionData, RiskFlags, Scenarios, CustomerJob, ReviewMining, CreativeConcept, SupplyChainInfo } from '@lyra/shared';
+import type { EvidenceClaim, SourceRow, UnitEcon, SubScores, ConfidenceGrade, Decision, HardGates, UnitEconInputs, CompetitionData, RiskFlags, Scenarios, CustomerJob, ReviewMining, CreativeConcept, SupplyChainInfo, ValidationPlan } from '@lyra/shared';
 import { ProductsService } from '../../products/products.service';
 import type { ActionProvider, ActionRunContext } from './action-provider.interface';
 import type { StepRunOutput } from './step-provider.interface';
@@ -9,7 +9,7 @@ export class SaveProductAction implements ActionProvider {
   constructor(private readonly products: ProductsService) {}
 
   async execute(ctx: ActionRunContext): Promise<StepRunOutput> {
-    const d = ctx.ledger.data as { unitEcon?: UnitEcon; subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision; hardGates?: HardGates; assumptions?: string[]; competition?: CompetitionData; riskFlags?: RiskFlags; riskNotes?: string[]; scenarios?: Scenarios; customerJob?: CustomerJob; reviewMining?: ReviewMining; creativeConcepts?: CreativeConcept[]; supplyChain?: SupplyChainInfo };
+    const d = ctx.ledger.data as { unitEcon?: UnitEcon; subScores?: SubScores; score?: number; grade?: ConfidenceGrade; decision?: Decision; hardGates?: HardGates; assumptions?: string[]; competition?: CompetitionData; riskFlags?: RiskFlags; riskNotes?: string[]; scenarios?: Scenarios; customerJob?: CustomerJob; reviewMining?: ReviewMining; creativeConcepts?: CreativeConcept[]; supplyChain?: SupplyChainInfo; validationPlan?: ValidationPlan };
     if (!ctx.productId) {
       return { result: '[save] no product on this run — not persisted (builder/test run).', data: {}, usage: { tokens: 0 } };
     }
@@ -21,6 +21,7 @@ export class SaveProductAction implements ActionProvider {
       assumptions: d.assumptions, competition: d.competition,
       riskFlags: d.riskFlags, riskNotes: d.riskNotes, scenarios: d.scenarios,
       customerJob: d.customerJob, reviewMining: d.reviewMining, creativeConcepts: d.creativeConcepts, supplyChain: d.supplyChain,
+      validationPlan: d.validationPlan,
     });
     return { result: `# Research saved to product\n${ctx.productId} (${d.decision ?? 'no decision'})`, data: { productId: ctx.productId }, usage: { tokens: 0 } };
   }

@@ -4,7 +4,7 @@ import { ProductStatus } from '@lyra/shared';
 import type {
   EvidenceClaim, SourceRow, UnitEcon, SubScores, ConfidenceGrade, Decision,
   HardGates, UnitEconInputs, CompetitionData, RiskFlags, Scenarios,
-  CustomerJob, ReviewMining, CreativeConcept, SupplyChainInfo,
+  CustomerJob, ReviewMining, CreativeConcept, SupplyChainInfo, ValidationPlan,
   ProductEconInputs, ProductSource,
 } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
@@ -126,6 +126,9 @@ export class Product extends AuditedEntity {
 
   @Prop({ type: Object })
   supplyChain?: SupplyChainInfo;
+
+  @Prop({ type: Object })
+  validationPlan?: ValidationPlan;
 
   @Prop({ type: Object })
   econInputs?: ProductEconInputs;

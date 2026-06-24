@@ -38,6 +38,7 @@ export function toProductView(d: ProductDocument, refs: Map<string, UserRef>): P
     reviewMining: d.reviewMining,
     creativeConcepts: d.creativeConcepts,
     supplyChain: d.supplyChain,
+    validationPlan: d.validationPlan,
     econInputs: d.econInputs,
     competitorIds: d.competitorIds ?? [],
     outcome: d.outcome,

@@ -59,11 +59,12 @@ export class ResearchTemplateService {
       act(ActionType.RiskScreen, 'Risk screen'),
       act(ActionType.Evaluate, 'Evaluate'),
       act(ActionType.SaveProduct, 'Save & review', StepMode.Gate),
+      act(ActionType.ValidationPlan, 'Validation plan'),
     ] as never);
 
     if (existing) {
       const upToDate = (existing.steps ?? []).some(
-        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.SupplyChain,
+        (s) => (s as { action?: { type?: string } }).action?.type === ActionType.ValidationPlan,
       );
       if (!upToDate) {
         const research = (existing.steps ?? []).find((s) => (s as { promptId?: string }).promptId);

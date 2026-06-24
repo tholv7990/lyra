@@ -10,6 +10,7 @@ import { ReviewMiningAction } from './providers/review-mining.action';
 import { CreativePotentialAction } from './providers/creative-potential.action';
 import { SupplyChainAction } from './providers/supply-chain.action';
 import { EvaluateAction } from './providers/evaluate.action';
+import { ValidationPlanAction } from './providers/validation-plan.action';
 import { SaveProductAction } from './providers/save-product.action';
 import { Provider, WEIGHTS, StepKind, type Step } from '@lyra/shared';
 
@@ -59,6 +60,12 @@ function supplyChainAction() {
   const keys = { list: jest.fn().mockResolvedValue([{ provider: Provider.Anthropic }]), getDecrypted: jest.fn().mockResolvedValue('k') };
   return new SupplyChainAction(client as never, client as never, keys as never);
 }
+function validationPlanAction() {
+  const json = JSON.stringify({ offer: 'BOGO', landingPageHypothesis: 'speed sells', creatives: ['hook A'], channel: 'TikTok', decisionRule: 'kill if CPA>maxCAC' });
+  const client = { complete: jest.fn().mockResolvedValue({ text: json }) };
+  const keys = { list: jest.fn().mockResolvedValue([{ provider: Provider.Anthropic }]), getDecrypted: jest.fn().mockResolvedValue('k') };
+  return new ValidationPlanAction(client as never, client as never, keys as never);
+}
 
 describe('research pipeline chain', () => {
   const econVars = { aov: '50', landedCost: '12', paymentFeePct: '0.03', fulfillment: '4', shippingSubsidy: '2', expectedReturnLossPct: '0.05', warrantyReservePct: '0', desiredPostAdCmPct: '0.15' };
@@ -94,9 +101,11 @@ describe('research pipeline chain', () => {
     steps[10].data = (await riskScreenAction().execute(run(10))).data;
     steps.push(step({ index: 11, kind: StepKind.Action, action: { type: 'evaluate' } as never }));
     steps[11].data = (await new EvaluateAction().execute(run(11))).data;
-    steps.push(step({ index: 12, kind: StepKind.Action, action: { type: 'save-product' } as never }));
+    steps.push(step({ index: 12, kind: StepKind.Action, action: { type: 'validation-plan' } as never }));
+    steps[12].data = (await validationPlanAction().execute(run(12))).data;
+    steps.push(step({ index: 13, kind: StepKind.Action, action: { type: 'save-product' } as never }));
     const products = { applyResearch: jest.fn().mockResolvedValue({ id: 'prod-1' }) };
-    const out = await new SaveProductAction(products as never).execute(run(12));
+    const out = await new SaveProductAction(products as never).execute(run(13));
 
     const saved = products.applyResearch.mock.calls[0][3];
     expect(saved.score).toBeGreaterThan(0);
@@ -106,6 +115,7 @@ describe('research pipeline chain', () => {
     expect(saved.assumptions).toBeDefined();
     expect(saved.riskFlags).toBeDefined();
     expect(saved.customerJob).toBeDefined();
+    expect(saved.validationPlan).toBeDefined();
     expect((out.data as any).productId).toBe('prod-1');
   });
 
