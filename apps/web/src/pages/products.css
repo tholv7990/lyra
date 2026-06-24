@@ -8,15 +8,18 @@
 .products-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5) 0;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  padding-top: var(--space-4);
 }
+/* Toolbar aligns with the board gutter (the .tboard owns the side padding, like
+   the project task board). Desktop 24px / mobile 15px — matches tasks.css. */
+.products-page .lin-toolbar { padding: 0 24px; margin: 0; }
 
-@media (max-width: 700px) {
-  .products-page { padding: 14px 14px 0; gap: var(--space-2); }
+@media (max-width: 760px) {
+  .products-page { padding-top: 12px; }
+  .products-page .lin-toolbar { padding: 0 15px; }
 }
 
 /* ── Add product — full-page form, hosted in EditorShell (system header) ─────── */
