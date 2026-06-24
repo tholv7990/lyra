@@ -577,9 +577,10 @@
 .content:has(.eshell.wide) { max-width: none; padding: 0; }
 /* Chats: full-bleed and blended with the page (no narrow centered card column). */
 .content:has(.chat) { max-width: none; padding: 12px 24px; }
-/* Project detail: full-bleed column so the inline header + kanban fill the
-   viewport. .main overflow is locked so only .pd-body scrolls internally. */
-.content:has(.pd-page) { max-width: none; padding: 0; display: flex; flex-direction: column; min-height: 0; }
+/* Project detail: a centered, constrained column (like the other pages), not
+   full-bleed. The inline header strip + kanban live inside it; .main overflow is
+   locked so only .pd-body scrolls internally. (Width is set in projects.css.) */
+.content:has(.pd-page) { max-width: 1080px; margin-inline: auto; padding: 0; display: flex; flex-direction: column; min-height: 0; }
 .main:has(.pd-page) { overflow-y: hidden; }
 
 /* ===== Home content ===== */

@@ -167,10 +167,13 @@
   min-height: 0;
 }
 
-/* Content container needs full height and no extra padding for pd-page. */
+/* Content container needs full height and no extra padding for pd-page. Capped at
+   a centered, constrained column (like the other pages / marketplace) instead of
+   full-bleed; the header strip + internal scroll stay, just centered. */
 .content:has(.pd-page) {
   padding: 0;
-  max-width: none;
+  max-width: 1080px;
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   height: 100%;

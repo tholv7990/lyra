@@ -6,11 +6,16 @@
 
 .pd-state { padding: 56px 24px; text-align: center; font-size: 14px; }
 
+/* One scroll only: the EditorShell body owns the scroll, so the page/main must
+   not also scroll (otherwise two scrollbars appear). Mirrors the .pd-page lock. */
+.content:has(.pd-detail) { padding: 0; }
+.main:has(.pd-detail) { overflow-y: hidden; }
+
 .pd-detail {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 2px 24px 4px;
+  gap: 16px;
+  padding: 2px 0 6px;
 }
 
 /* Primary actions row — status picker + run research + re-sync + source link. */
@@ -21,23 +26,110 @@
 /* Flat sections — the detail uses the SAME flat style as the create/edit form
    (bold heading + content, no boxed cards, tight spacing) instead of padded panels.
    Scoped to .pd-detail so the shared .panel class is untouched elsewhere. */
-.pd-detail .panel { background: none; border: none; box-shadow: none; border-radius: 0; }
+/* Flatten the section panels — note .panel is also defined globally in layout.css
+   (home nav cards) with padding:20px, so we must zero padding here too, otherwise
+   every section is inset 20px more than the hero. */
+.pd-detail .panel { background: none; border: none; box-shadow: none; border-radius: 0; padding: 0; }
 .pd-detail .panel-head { padding: 0; border-bottom: none; margin-bottom: 10px; }
 .pd-detail .panel-head h2 { font-size: 15px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); margin: 0; }
 .pd-detail .panel-pad { padding: 0; }
 
-/* ── Body grid ────────────────────────────────────────────────────────────── */
+/* ── Body — single column by default; 2-column on wide desktop ─────────────── */
 
-.pd-body {
-  display: grid; grid-template-columns: 1fr 320px; gap: 28px; align-items: start;
+.pdtl-body { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.pd-main, .pd-aside { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.pd-verdict, .pd-timeline { min-width: 0; }
+
+/* Desktop ≥1024px: a constrained 2-column layout — the research narrative beside
+   a deep-economics / copy-data aside. Wide enough for two readable columns, but
+   well short of full-bleed (the EditorShell column grows to ~1080px). */
+@media (min-width: 1024px) {
+  .eshell:has(.pd-detail) { max-width: 1080px; }
+  .pdtl-body { display: grid; grid-template-columns: minmax(0, 1fr) 328px; gap: 30px; align-items: start; }
 }
-.pd-main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
-.pd-aside { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+
+/* ── Hero — product-page style (gallery left, info right) ──────────────────────
+   Stacked on mobile, 2-column on wide desktop. Mirrors a real PDP: image beside
+   description · pricing · unit-econ summary · score. The product name lives in
+   the EditorShell header (not repeated here). All text uses the system scale. */
+.pdtl-hero { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.pdtl-hero-media { min-width: 0; }
+.pdtl-hero-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+@media (min-width: 1024px) {
+  .pdtl-hero { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 32px; align-items: start; }
+}
+
+.pdtl-hero-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.pdtl-chip { font-size: 12px; color: var(--ink-muted); background: var(--surface-3); border-radius: var(--radius-sm); padding: 3px 9px; white-space: nowrap; }
+.pdtl-chip--soft { background: var(--surface-2); color: var(--ink-tertiary); }
+
+.pdtl-hero-desc { margin: 0; font-size: 13.5px; line-height: var(--lh-body); color: var(--ink-muted); max-width: 62ch; }
+
+.pdtl-pricing { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+.pdtl-price { font-size: 20px; font-weight: var(--weight-semibold); letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.pdtl-compare { font-size: 14px; color: var(--ink-tertiary); text-decoration: line-through; }
+.pdtl-offer { font-size: 12px; font-weight: var(--weight-medium); color: var(--primary); background: var(--primary-tint); border-radius: var(--radius-sm); padding: 2px 8px; }
+
+.pdtl-econ-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--ink); }
+.pdtl-econ-summary > span { white-space: nowrap; }
+.pdtl-econ-summary b { font-weight: var(--weight-semibold); color: var(--ink-tertiary); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 5px; }
+
+.pdtl-hero-info .score-hero { margin-top: 2px; }
+
+/* ── Evidence as FAQ (collapsible on every viewport, unlike .pd-sec) ──────────
+   Each claim is a "question"; expanding reveals its detail + the source as a
+   reference with live/dead status. Sources are merged here — no separate list. */
+.pdtl-faq-list { display: flex; flex-direction: column; }
+.pdtl-faq { border-top: 1px solid var(--hairline); }
+.pdtl-faq:first-child { border-top: 0; }
+.pdtl-faq > summary {
+  display: flex; align-items: flex-start; gap: 8px; cursor: pointer;
+  list-style: none; padding: 11px 0; user-select: none;
+}
+.pdtl-faq > summary::-webkit-details-marker { display: none; }
+.pdtl-faq-q { flex: 1; min-width: 0; font-size: 13.5px; line-height: var(--lh-body); color: var(--ink); }
+.pdtl-faq > summary .pdtl-kind { margin-top: 1px; }
+.pdtl-faq-chev { flex: none; margin-top: 3px; color: var(--ink-tertiary); transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+.pdtl-faq[open] > summary .pdtl-faq-chev { transform: rotate(90deg); }
+.pdtl-faq[open] > summary .pdtl-faq-q { font-weight: var(--weight-medium); }
+.pdtl-faq-body { display: flex; flex-direction: column; gap: 6px; padding: 0 0 12px; }
+.pdtl-faq-ref { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.pdtl-faq-ref-label { color: var(--ink-tertiary); }
+.pdtl-faq-ref-name { color: var(--ink-muted); }
+@media (hover: hover) { .pdtl-faq > summary:hover .pdtl-faq-q { color: var(--primary); } }
+@media (prefers-reduced-motion: reduce) { .pdtl-faq-chev { transition: none; } }
+
+/* ── Collapsible research sections (native <details>) ──────────────────────────
+   The detail is a long research read. Mobile shows it as a scannable list of
+   collapsible sections (progressive disclosure) so the page isn't an endless
+   scroll; desktop forces every section open and hides the toggle, so the desktop
+   layout is identical to a plain stacked column. No JS, no library. */
+.pd-sec { min-width: 0; }
+.pd-sec > summary {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; user-select: none; list-style: none; margin-bottom: 0;
+}
+.pd-sec > summary::-webkit-details-marker { display: none; }
+.pd-sec > summary h2 { flex: 1; min-width: 0; }
+.pd-sec-chev { color: var(--ink-tertiary); flex: none; transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+.pd-sec[open] > summary { margin-bottom: 10px; }
+.pd-sec[open] > summary .pd-sec-chev { transform: rotate(90deg); }
+@media (hover: hover) { .pd-sec > summary:hover h2 { color: var(--primary); } }
+@media (prefers-reduced-motion: reduce) { .pd-sec-chev { transition: none; } }
+
+/* Desktop: behave like a normal stacked section — always shown, no toggle. */
+@media (min-width: 768px) {
+  .pd-sec::details-content { content-visibility: visible; }   /* defeat new <details> hiding */
+  .pd-sec > .panel-pad { display: block; }                    /* defeat legacy <details> hiding */
+  .pd-sec > summary { cursor: default; pointer-events: none; margin-bottom: 10px; }
+  .pd-sec-chev { display: none; }
+}
 
 /* ── Score hero ───────────────────────────────────────────────────────────── */
 
 .score-hero { display: flex; align-items: center; gap: 20px; padding: 0; flex-wrap: wrap; }
-.score-ring { position: relative; width: 96px; height: 96px; flex: none; display: grid; place-items: center; }
+.score-ring { position: relative; width: 96px; height: 96px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .score-ring svg { position: absolute; inset: 0; width: 96px; height: 96px; transform: rotate(-90deg); }
 .score-ring .rnum { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
 .score-ring .rden { font-size: 11px; color: var(--ink-tertiary); margin-top: 2px; }
@@ -168,7 +260,9 @@
 .pdtl-claim-src { font-size: 12px; color: var(--primary); text-decoration: none; }
 .pdtl-claim-src:hover { text-decoration: underline; }
 .pdtl-claim-value { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-.pdtl-claim-quote { margin: 4px 0 0; padding-left: 8px; border-left: 2px solid var(--hairline); color: var(--ink-muted); font-size: 12px; }
+/* Source quote — the statement already wraps in literal "…" marks, so italics
+   alone read it as a quote (no side-stripe border; impeccable absolute ban). */
+.pdtl-claim-quote { margin: 4px 0 0; color: var(--ink-muted); font-size: 12px; font-style: italic; }
 
 /* ── Sources ──────────────────────────────────────────────────────────────── */
 
@@ -206,7 +300,7 @@
 /* ── Assumptions / risk / competition / customer-job / lists ──────────────── */
 
 .pdtl-assumptions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.pdtl-assumption { font-size: 12px; color: var(--ink-muted); font-style: italic; padding-left: 10px; border-left: 2px solid var(--hairline); }
+.pdtl-assumption { font-size: 12px; color: var(--ink-muted); font-style: italic; }
 
 .pdtl-risk-flags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .pdtl-risk-flag { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); border-radius: var(--radius-pill); padding: 2px 8px; font-size: 12px; font-weight: 600; }
@@ -259,14 +353,20 @@
 
 .pdtl-pool-research { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-/* ── Responsive (≤980px → single column) ──────────────────────────────────── */
+/* ── Responsive ───────────────────────────────────────────────────────────── */
 
-@media (max-width: 980px) {
-  .pd-head { padding: 18px 16px 16px; }
-  .pd-head-row { flex-wrap: wrap; }
-  .pd-actions { width: 100%; }
-  .pd-actions .btn-primary { flex: 1; }
-  .pd-body { grid-template-columns: 1fr; padding: 18px 16px; gap: 16px; }
+@media (max-width: 767px) {
+  /* The EditorShell body already provides a 14px gutter on mobile — don't add a
+     second one here (that was the "super big" edge spacing). */
+  .pd-detail { gap: 12px; padding: 0 0 6px; }
+
+  /* Collapsed accordions read as a tidy list: tighter gaps + a hairline divider
+     between sections, comfortable 44px tap targets on the summaries. */
+  .pdtl-body { gap: 0; }
+  .pd-sec { border-top: 1px solid var(--hairline); }
+  .pd-sec > summary { min-height: 44px; }
+  .pd-timeline { border-top: 1px solid var(--hairline); padding-top: 12px; }
+
   .pdtl-econ { grid-template-columns: 1fr; }
   .break-row { grid-template-columns: 110px 1fr 34px 48px; gap: 8px; }
 }
