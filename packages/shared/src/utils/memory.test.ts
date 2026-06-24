@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { scoreMemory, MAX_RECALL_MEMORIES, MAX_RECALL_TOKENS } from './memory';
+import { scoreMemory, MAX_RECALL_MEMORIES, MAX_RECALL_TOKENS, selectPriorContext, DEFAULT_RUN_CONTEXT_TOKENS } from './memory';
 import { MemoryKind } from '../enums';
 import type { Memory } from '../models';
 
@@ -19,5 +19,30 @@ describe('scoreMemory', () => {
   it('exposes recall budget constants', () => {
     expect(MAX_RECALL_MEMORIES).toBeGreaterThan(0);
     expect(MAX_RECALL_TOKENS).toBeGreaterThan(0);
+  });
+});
+
+describe('selectPriorContext', () => {
+  const p = (id: string, chars: number) => ({ key: id, result: 'x'.repeat(chars) });
+
+  it('keeps all priors when under budget', () => {
+    const priors = [p('a', 40), p('b', 40)];
+    expect(selectPriorContext(priors, DEFAULT_RUN_CONTEXT_TOKENS)).toEqual(priors);
+  });
+
+  it('drops the OLDEST first when over budget, preserving order', () => {
+    // each ~25 tokens (100 chars / 4); budget 60 tokens fits 2 newest (b,c), drops a.
+    const priors = [p('a', 100), p('b', 100), p('c', 100)];
+    const kept = selectPriorContext(priors, 60);
+    expect(kept.map((x) => x.key)).toEqual(['b', 'c']);
+  });
+
+  it('always keeps at least the most-recent prior even if it alone exceeds budget', () => {
+    const priors = [p('a', 100), p('b', 4000)];
+    expect(selectPriorContext(priors, 10).map((x) => x.key)).toEqual(['b']);
+  });
+
+  it('returns [] for no priors', () => {
+    expect(selectPriorContext([], 100)).toEqual([]);
   });
 });

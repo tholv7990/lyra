@@ -9,6 +9,8 @@ import {
   fallbackChain,
   defaultModel,
   resolveStepRefs,
+  selectPriorContext,
+  DEFAULT_RUN_CONTEXT_TOKENS,
   STEP_DEFS,
   StepStatus,
   Provider,
@@ -99,6 +101,10 @@ const FANOUT_RETRIES = 2;
 const VISUAL_PROVIDERS = new Set<Provider>([Provider.Image, Provider.Google, Provider.Video]);
 // How long a cached step result is reusable. Mongo TTL prunes past expiresAt.
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// "Recall, don't append-all": cap the auto-appended prior-step context to a token budget
+// (most-recent priors kept). Default ON; RUN_CONTEXT_RECALL=off restores legacy append-all.
+const RUN_CONTEXT_RECALL = process.env.RUN_CONTEXT_RECALL !== 'off';
+const RUN_CONTEXT_BUDGET = Number(process.env.RUN_CONTEXT_MAX_TOKENS) || DEFAULT_RUN_CONTEXT_TOKENS;
 // Max reload-and-retry attempts when an optimistic-concurrency conflict (VersionError) hits a cheap transition.
 const COMMIT_MAX_RETRIES = 4;
 
@@ -340,7 +346,7 @@ export class RunsService extends BaseRepository<Run> {
     // (a reference into `state`) persists when the run state is saved.
     step.sentPrompt = prompt;
     const stepForRun = { ...step, prompt };
-    const priorResults = used
+    const allPriors = used
       ? []
       : state.steps
           .filter((s) => s.index < index && s.result)
@@ -350,6 +356,15 @@ export class RunsService extends BaseRepository<Run> {
               s.name ?? STEP_DEFS[s.index]?.title ?? s.key ?? `Step ${s.index + 1}`,
             result: s.result as string,
           }));
+    // Recall, don't append-all: keep the most-recent priors within a token budget so
+    // long pipelines don't balloon context (the token win). Explicit {step:Name}/{input}
+    // chaining already bypasses this (used=true → no auto-append). Flag-gated.
+    const priorResults = RUN_CONTEXT_RECALL ? selectPriorContext(allPriors, RUN_CONTEXT_BUDGET) : allPriors;
+    if (priorResults.length < allPriors.length) {
+      this.logger.log(
+        `run ${doc._id.toString()} step ${index}: prior context trimmed ${allPriors.length}→${priorResults.length} (budget ${RUN_CONTEXT_BUDGET} tok)`,
+      );
+    }
     // Visual steps may take prior steps' images as inputs (edit/compose). Resolve
     // {input}/{step:Name} → prior image assets, fetched to base64 (capped). Pass
     // `filled` (pre-resolveStepRefs) — resolveStepRefs replaces the chaining tokens
