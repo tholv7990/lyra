@@ -8,6 +8,7 @@ import { productRunsApi } from '../lib/productRuns';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import { useRunActions } from '../lib/useRunActions';
+import { EditorShell } from './EditorShell';
 import { MenuPicker, type MenuPickerOption } from './MenuPicker';
 import { RunTimeline } from './RunTimeline';
 import { PRODUCT_STATUS_COLOR } from './ProductBoard';
@@ -66,7 +67,8 @@ const BAND_STROKE: Record<string, string> = {
 interface Props {
   product: Product;
   workspaceId: string;
-  onClose: () => void;
+  /** Optional — the page hosts the body in EditorShell, which owns close/back. */
+  onClose?: () => void;
   onUpdate: (patch: UpdateProductDto) => Promise<void>;
   onProductRefresh: () => Promise<void>;
 }
@@ -75,7 +77,7 @@ interface Props {
 // Presentational body — no portal/hooks that require a DOM. Exported so tests
 // can render it with renderToStaticMarkup; ProductDetailPage hosts it full-page.
 
-export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onProductRefresh }: Props) {
+export function ProductDetailBody({ product, workspaceId, onUpdate, onProductRefresh }: Props) {
   const { t } = useTranslation();
   const [outcome, setOutcome] = useState(product.outcome ?? '');
   const [savingOutcome, setSavingOutcome] = useState(false);
@@ -234,9 +236,6 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
       ? decideWithReason(product.score, product.hardGates, product.subScores).reason
       : null;
 
-  // Hero thumbnail: first image, else first source preview, else placeholder.
-  const heroImage = product.images?.[0];
-
   // Gallery: main shot + strip (static — first image is the main shot).
   const galleryImages = product.images ?? [];
 
@@ -248,85 +247,36 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
 
   return (
     <div className="pd-detail">
-      {/* ── Header band ─────────────────────────────────────────────────── */}
-      <div className="pd-head">
-        <button type="button" className="pd-back" onClick={onClose}>
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M10 3.5L5.5 8l4.5 4.5" />
-          </svg>
-          {t('common.back')}
-        </button>
-
-        <div className="pd-head-row">
-          {/* Hero thumb */}
-          <div className="pd-hero-thumb">
-            {heroImage ? (
-              <img src={heroImage} alt="" />
-            ) : (
-              <span className="ph" aria-hidden="true">IMG</span>
-            )}
-          </div>
-
-          {/* Title + niche + primary source link */}
-          <div className="pd-title">
-            <h1>{product.name}</h1>
-            <div className="pd-meta">
-              {product.niche && <span className="pdtl-niche">{product.niche}</span>}
-              {primarySource?.url && (
-                <a
-                  href={primarySource.url}
-                  className="pdtl-src-link"
-                  target="_blank"
-                  rel="noreferrer"
-                  title={primarySource.name}
-                >
-                  {primarySource.name} ↗
-                </a>
-              )}
-              {product.score !== undefined && (
-                <span className="pdtl-score">{product.score}/100</span>
-              )}
-              {product.grade && (
-                <span className={`pdtl-grade ${gradeClass(product.grade)}`} aria-label={t('projects.productGrade')}>
-                  {product.grade}
-                </span>
-              )}
-              {product.decision && (
-                <span
-                  className="pdtl-decision"
-                  title={t(`projects.productDecision.${product.decision}`, { defaultValue: product.decision })}
-                >
-                  {product.decision}
-                </span>
-              )}
-              {decisionReason && (
-                <span className="pdtl-decision-reason" title={t('projects.decisionReason', { reason: decisionReason })}>
-                  {t('projects.decisionReason', { reason: decisionReason })}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Actions: status picker + Run research (pool products only) */}
-          <div className="pd-actions">
-            <MenuPicker<ProductStatus>
-              value={product.status}
-              options={statusOptions}
-              onChange={handleStatusChange}
-              ariaLabel={t('projects.statusAria')}
-            />
-            {!isCopy && (
-              <button
-                type="button"
-                className="btn-primary btn-inline btn-sm"
-                disabled={isBusy}
-                onClick={() => void handleRunResearch()}
-              >
-                {starting ? t('products.running') : t('products.runResearch')}
-              </button>
-            )}
-          </div>
-        </div>
+      {/* Primary actions — status + run research (+ source). Title/back live in
+          the EditorShell header provided by ProductDetailPage. */}
+      <div className="pd-actions-row">
+        <MenuPicker<ProductStatus>
+          value={product.status}
+          options={statusOptions}
+          onChange={handleStatusChange}
+          ariaLabel={t('projects.statusAria')}
+        />
+        {!isCopy && (
+          <button
+            type="button"
+            className="btn-primary btn-inline btn-sm"
+            disabled={isBusy}
+            onClick={() => void handleRunResearch()}
+          >
+            {starting ? t('products.running') : t('products.runResearch')}
+          </button>
+        )}
+        {primarySource?.url && (
+          <a
+            href={primarySource.url}
+            className="pdtl-src-link pd-actions-src"
+            target="_blank"
+            rel="noreferrer"
+            title={primarySource.name}
+          >
+            {primarySource.name} ↗
+          </a>
+        )}
       </div>
 
       {/* ── Body grid ───────────────────────────────────────────────────── */}
@@ -367,7 +317,7 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
                     )}
                     <div className="grade-txt">
                       {product.decision && (
-                        <div className="g1">{t(`projects.productDecision.${product.decision}`, { defaultValue: product.decision })}</div>
+                        <div className="g1" title={t(`projects.productDecision.${product.decision}`, { defaultValue: product.decision })}>{product.decision}</div>
                       )}
                       {decisionReason && <div className="g2">{t('projects.decisionReason', { reason: decisionReason })}</div>}
                     </div>
@@ -937,32 +887,37 @@ export function ProductDetailPage() {
     setProduct(updated);
   }
 
+  const productsCrumb = { label: t('nav.products'), to: '/products' };
+  const back = () => navigate('/products');
+
   if (loading) {
-    return <div className="pd-detail"><div className="pd-state center muted">{t('common.loading')}</div></div>;
+    return (
+      <EditorShell wide crumb={productsCrumb} onClose={back} title={<h2 className="eshell-name">{t('common.loading')}</h2>}>
+        <div className="pd-state center muted">{t('common.loading')}</div>
+      </EditorShell>
+    );
   }
   if (notFound || !product || !ws) {
     return (
-      <div className="pd-detail">
-        <div className="pd-head">
-          <button type="button" className="pd-back" onClick={() => navigate('/products')}>
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M10 3.5L5.5 8l4.5 4.5" />
-            </svg>
-            {t('common.back')}
-          </button>
-        </div>
+      <EditorShell wide crumb={productsCrumb} onClose={back} title={<h2 className="eshell-name">{t('common.notFound')}</h2>}>
         <div className="pd-state center muted">{t('common.notFound')}</div>
-      </div>
+      </EditorShell>
     );
   }
 
   return (
-    <ProductDetailBody
-      product={product}
-      workspaceId={ws}
-      onClose={() => navigate('/products')}
-      onUpdate={handleUpdate}
-      onProductRefresh={handleProductRefresh}
-    />
+    <EditorShell
+      wide
+      crumb={productsCrumb}
+      onClose={back}
+      title={<h2 className="eshell-name">{product.name}</h2>}
+    >
+      <ProductDetailBody
+        product={product}
+        workspaceId={ws}
+        onUpdate={handleUpdate}
+        onProductRefresh={handleProductRefresh}
+      />
+    </EditorShell>
   );
 }

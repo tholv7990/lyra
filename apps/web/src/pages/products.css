@@ -1,63 +1,40 @@
-/* ── Products page ─────────────────────────────────────────────────────────── */
+/* ── Products board page ───────────────────────────────────────────────────── */
+/* Full-bleed: the Kanban spans the full screen width (like the project detail /
+   chat pages) instead of the centered reading column, so columns use all the
+   width — especially important on mobile. The board owns its own scroll. */
+.content:has(.products-page) { max-width: none; padding: 0; display: flex; flex-direction: column; min-height: 0; }
+.main:has(.products-page) { overflow-y: hidden; }
 
 .products-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  height: 100%;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) 0;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
-/* ── Add-product modal overrides ─────────────────────────────────────────── */
-
-.add-product-modal {
-  width: min(480px, 94vw);
-  max-height: min(90vh, 680px);
-  overflow-y: auto;
+@media (max-width: 700px) {
+  .products-page { padding: 14px 14px 0; gap: var(--space-2); }
 }
 
-/* Two-column field row */
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+/* ── Add product — full-page form, hosted in EditorShell (system header) ─────── */
+/* The form column inside .eshell-body (EditorShell provides the floating header). */
+.ap-form {
+  max-width: 752px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 6px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
+.ap-enters { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-tertiary); padding: 2px 2px 0; }
+.ap-enters .badge { display: inline-flex; align-items: center; gap: 6px; }
+.ap-enters-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-tertiary); display: inline-block; }
 
-.field-textarea {
-  resize: vertical;
-  min-height: 72px;
-}
-
-.field-hint {
-  font-size: var(--text-xs);
-  color: var(--ink-muted);
-  margin-top: var(--space-1);
-  display: block;
-}
-
-@media (max-width: 480px) {
-  .products-page {
-    padding: var(--space-3) var(--space-3);
-  }
-
-  .field-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── Add product — full-page form (design/Add Product.html) ───────────────── */
-/* Full-bleed: the page owns its scroll so the footer can stick to the bottom. */
-.content:has(.ap-scroll) { max-width: none; padding: 0; display: flex; flex-direction: column; min-height: 0; }
-.main:has(.ap-scroll) { overflow-y: hidden; }
-.ap-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
-
-.ap-head { padding: 22px 32px 18px; border-bottom: 1px solid var(--hairline); background: var(--surface-1); }
-.ap-head h1 { font-size: var(--text-title2); letter-spacing: -0.025em; }
-
-.ap-body { max-width: 760px; margin: 0 auto; width: 100%; padding: 26px 32px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
-
-/* Panel — reused by the detail page too (Phase B). */
+/* Panel — numbered card; reused by the detail page too. */
 .panel { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); }
 .panel-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--hairline); }
 .panel-head .pn { font-size: 14px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; flex: 1; }
@@ -84,19 +61,6 @@
 .dropzone-note .dz-txt > span { display: block; font-size: 12px; color: var(--ink-tertiary); line-height: 1.4; margin: 0; }
 textarea.dz-area { min-height: 72px; resize: vertical; }
 
-/* Sticky footer action bar. */
-.ap-foot { position: sticky; bottom: 0; z-index: 20; display: flex; align-items: center; gap: 10px; max-width: 760px; margin: 0 auto; width: 100%; padding: 14px 32px; background: var(--card); border-top: 1px solid var(--hairline-strong); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-.ap-foot .note { font-size: 12.5px; color: var(--ink-tertiary); display: inline-flex; align-items: center; gap: 7px; }
-.ap-foot .badge { display: inline-flex; align-items: center; gap: 6px; }
-.ap-foot-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-tertiary); display: inline-block; }
-.ap-foot .grow { flex: 1; }
-
 @media (max-width: 720px) {
-  .ap-head { padding: 18px 16px 16px; }
-  .ap-body { padding: 18px 16px; }
   .fields-grid { grid-template-columns: 1fr; }
-  .ap-foot { padding: 12px 16px; flex-wrap: wrap; }
-  .ap-foot .note { width: 100%; order: 2; justify-content: center; }
-  .ap-foot .grow { display: none; }
-  .ap-foot .btn-ghost, .ap-foot .btn-primary { flex: 1; order: 1; }
 }

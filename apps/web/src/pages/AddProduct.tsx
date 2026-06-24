@@ -5,11 +5,13 @@ import type { CreateProductDto } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { productsApi } from '../lib/products';
 import { useBreadcrumb } from '../layout/breadcrumb';
-import { PlusIcon } from '../layout/icons';
+import { EditorShell } from '../components/EditorShell';
+import { CheckIcon } from '../layout/icons';
 import './products.css';
 
-// Full-page "Add product" form (design/Add Product.html): a 760px column of three
-// numbered panels + a sticky footer action bar. Replaces the old cramped modal.
+// Full-page "Add product" form. Uses the shared EditorShell so its header (logo ·
+// crumb · title · ✓ save · ✕ close) matches every other create/edit page in the app.
+// The body is a centered column of three numbered panels.
 export function AddProduct() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -29,8 +31,8 @@ export function AddProduct() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: FormEvent) {
+    e?.preventDefault();
     if (!ws || !name.trim() || saving) return;
     setSaving(true);
     setError(null);
@@ -56,12 +58,24 @@ export function AddProduct() {
   }
 
   return (
-    <div className="ap-scroll">
-      <div className="ap-head">
-        <h1>{t('products.addProduct')}</h1>
-      </div>
-
-      <form className="ap-body" onSubmit={(e) => void handleSubmit(e)}>
+    <EditorShell
+      crumb={{ label: t('nav.products'), to: '/products' }}
+      onClose={() => navigate('/products')}
+      title={<h2 className="eshell-name">{t('products.addProduct')}</h2>}
+      actions={
+        <button
+          type="button"
+          className="icon-btn-success"
+          title={saving ? t('common.saving') : t('products.addProduct')}
+          aria-label={t('products.addProduct')}
+          disabled={saving || !name.trim()}
+          onClick={() => void handleSubmit()}
+        >
+          <CheckIcon width={16} height={16} />
+        </button>
+      }
+    >
+      <form className="ap-form" onSubmit={(e) => void handleSubmit(e)}>
         {error && <p className="error">{error}</p>}
 
         {/* 1 · Product */}
@@ -131,22 +145,12 @@ export function AddProduct() {
             </label>
           </div>
         </section>
-      </form>
 
-      <div className="ap-foot">
-        <span className="note">
+        <span className="ap-enters">
           {t('products.entersAs')}
-          <span className="badge"><span className="ap-foot-dot" aria-hidden="true" />{t('projects.productStatus.candidate')}</span>
+          <span className="badge"><span className="ap-enters-dot" aria-hidden="true" />{t('projects.productStatus.candidate')}</span>
         </span>
-        <span className="grow" />
-        <button type="button" className="btn-ghost btn-inline" onClick={() => navigate('/products')} disabled={saving}>
-          {t('common.cancel')}
-        </button>
-        <button type="button" className="btn-primary btn-inline" onClick={(e) => void handleSubmit(e)} disabled={saving || !name.trim()}>
-          <PlusIcon width={13} height={13} />
-          {saving ? t('common.saving') : t('products.addProduct')}
-        </button>
-      </div>
-    </div>
+      </form>
+    </EditorShell>
   );
 }

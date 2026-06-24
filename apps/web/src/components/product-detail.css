@@ -1,58 +1,26 @@
-/* ── Product detail — full-page route (/products/:id) ──────────────────────
-   Maps design/Product Detail.html to our tokens. Full-bleed: the page owns its
-   own scroll so the head band can stay pinned while the body scrolls.
-   Token-only; no hardcoded colors. Reuses .panel/.panel-head/.panel-pad from
-   pages/products.css. */
-
-.content:has(.pd-detail) { max-width: none; padding: 0; display: flex; flex-direction: column; min-height: 0; }
-.main:has(.pd-detail) { overflow-y: hidden; }
-
-.pd-detail { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+/* ── Product detail — full-page route (/products/:id), hosted in EditorShell ──
+   The shared EditorShell (components/EditorShell) provides the floating header
+   (logo · crumb · title · ✕) + scrolling body, matching every other create/edit/
+   view page. This file styles only the detail BODY: a compact actions row + the
+   1fr/360px content grid. Token-only; reuses .panel from pages/products.css. */
 
 .pd-state { padding: 56px 24px; text-align: center; font-size: 14px; }
 
-/* ── Page header band ─────────────────────────────────────────────────────── */
-
-.pd-head {
-  padding: 22px 32px 18px;
-  border-bottom: 1px solid var(--hairline);
-  background: var(--surface-1);
-  flex: none;
+.pd-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 24px 4px;
 }
 
-.pd-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 13px; font-weight: var(--weight-medium);
-  color: var(--ink-tertiary); text-decoration: none; margin-bottom: 14px;
-  background: none; border: none; cursor: pointer; padding: 0;
-}
-.pd-back:hover { color: var(--ink); }
-
-.pd-head-row { display: flex; align-items: flex-start; gap: 18px; }
-
-.pd-hero-thumb {
-  width: 76px; height: 76px; flex: none; border-radius: var(--radius-md);
-  overflow: hidden; position: relative; border: 1px solid var(--hairline);
-  background: repeating-linear-gradient(135deg, var(--surface-2) 0 7px, var(--surface-1) 7px 14px);
-}
-.pd-hero-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.pd-hero-thumb .ph {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  font-family: var(--font-mono); font-size: 9px; color: var(--ink-tertiary);
-}
-
-.pd-title { flex: 1; min-width: 0; }
-.pd-title h1 { font-size: var(--text-title2); letter-spacing: -0.025em; line-height: 1.15; margin: 0; }
-
-.pd-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
-
-.pd-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+/* Primary actions row — status picker + run research + source link. */
+.pd-actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pd-actions-src { margin-left: auto; font-size: 13px; }
 
 /* ── Body grid ────────────────────────────────────────────────────────────── */
 
 .pd-body {
-  display: grid; grid-template-columns: 1fr 360px; gap: 22px;
-  padding: 24px 32px; align-items: start;
+  display: grid; grid-template-columns: 1fr 360px; gap: 22px; align-items: start;
 }
 .pd-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .pd-aside { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
