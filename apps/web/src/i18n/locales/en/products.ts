@@ -3,6 +3,7 @@ export default {
   addProduct: 'Add product',
   saveFailed: 'Could not save product',
   viewImages: 'View images',
+  trackedNote: '{{n}} tracked across {{stages}} stages',
   importTitle: 'Import from a product link',
   importPlaceholder: 'Paste an AliExpress / Amazon / Walmart product URL…',
   importBtn: 'Sync',

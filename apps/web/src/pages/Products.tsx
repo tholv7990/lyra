@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Product } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { productsApi } from '../lib/products';
-import { ProductBoard } from '../components/ProductBoard';
+import { ProductBoard, PRODUCT_STATUS_ORDER } from '../components/ProductBoard';
 import { PlusIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import './products.css';
@@ -35,6 +35,11 @@ export function Products() {
     <div className="products-page">
       <div className="lin-toolbar">
         <h1 className="lin-toolbar-title">{t('products.title')}</h1>
+        {products.length > 0 && (
+          <span className="lin-toolbar-note">
+            {t('products.trackedNote', { n: products.length, stages: PRODUCT_STATUS_ORDER.length })}
+          </span>
+        )}
         <button
           type="button"
           className="btn-primary btn-inline btn-sm"

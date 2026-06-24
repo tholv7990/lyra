@@ -16,6 +16,7 @@
 /* Toolbar aligns with the board gutter (the .tboard owns the side padding, like
    the project task board). Desktop 24px / mobile 15px — matches tasks.css. */
 .products-page .lin-toolbar { padding: 0 24px; margin: 0; }
+.products-page .lin-toolbar-note { font-size: 13px; color: var(--ink-tertiary); }
 
 @media (max-width: 760px) {
   .products-page { padding-top: 12px; }

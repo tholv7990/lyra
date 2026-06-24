@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ProductStatus, type Product } from '@lyra/shared';
+import { ProductStatus, tagColor, type Product } from '@lyra/shared';
 import { ImageLightbox } from './ImageLightbox';
 import './tasks.css';        // shared kanban chrome (.tboard/.tcol/.tcard) — same as the project task board
 import './product-board.css'; // product-specific card extras layered on .tcard
@@ -91,6 +91,7 @@ export function ProductBoard({
                 <div className="tcol-body">
                   {col.map((product) => {
                     const imgs = product.images ?? [];
+                    const niche = product.niche ?? product.source?.platform;
                     return (
                       <div
                         key={product.id}
@@ -101,7 +102,7 @@ export function ProductBoard({
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(product); } }}
                       >
                         <div className="tcard-top">
-                          {imgs.length > 0 && (
+                          {imgs.length > 0 ? (
                             <button
                               type="button"
                               className="pcard-thumb"
@@ -112,6 +113,10 @@ export function ProductBoard({
                               <img src={imgs[0]} alt="" loading="lazy" />
                               {imgs.length > 1 && <span className="pcard-img-count">{imgs.length}</span>}
                             </button>
+                          ) : (
+                            <span className="pcard-thumb pcard-thumb--empty" aria-hidden="true">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="2" /><path d="M2.5 11l3-3 2.5 2.5L11 7l2.5 2.5" /><circle cx="6" cy="6" r="1" /></svg>
+                            </span>
                           )}
                           <span className="tcard-name">{product.name}</span>
                           {product.grade && (
@@ -121,8 +126,11 @@ export function ProductBoard({
                           )}
                         </div>
 
-                        {(product.niche ?? product.source?.platform) && (
-                          <div className="pcard-sub">{product.niche ?? product.source?.platform}</div>
+                        {niche && (
+                          <div className="pcard-sub">
+                            <span className="pcard-niche-dot" style={{ background: tagColor(niche) }} aria-hidden="true" />
+                            {niche}
+                          </div>
                         )}
 
                         <div className="tcard-foot">
