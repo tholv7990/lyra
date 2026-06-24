@@ -25,24 +25,34 @@
 /* ── Add product — full-page form, hosted in EditorShell (system header) ─────── */
 /* The form column inside .eshell-body (EditorShell provides the floating header). */
 .ap-form {
-  max-width: 752px;
+  max-width: 760px;
   margin: 0 auto;
   width: 100%;
   padding: 6px 16px 8px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
 }
+/* Flat sections — mirrors the project/prompt editor form (bold label + tight
+   fields), instead of boxed numbered panels. Keeps the spacing consistent with
+   every other create/edit page. */
+.ap-section { display: block; }
+.ap-section-label { font-size: 15px; font-weight: var(--weight-semibold); color: var(--ink); margin-bottom: 12px; letter-spacing: -0.01em; }
+.ap-section-sub { font-size: 12.5px; color: var(--ink-muted); margin: -6px 0 12px; line-height: 1.45; }
+.ap-section .field { margin-bottom: 14px; }
+.ap-section .field:last-child { margin-bottom: 0; }
+.ap-section .fields-grid { margin-bottom: 14px; }
+.ap-section .fields-grid:last-child { margin-bottom: 0; }
 .ap-enters { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-tertiary); padding: 2px 2px 0; }
 .ap-enters .badge { display: inline-flex; align-items: center; gap: 6px; }
 .ap-enters-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-tertiary); display: inline-block; }
 
 /* Panel — numbered card; reused by the detail page too. */
 .panel { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); }
-.panel-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--hairline); }
+.panel-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--hairline); }
 .panel-head .pn { font-size: 14px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; flex: 1; }
 .panel-head .step { width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--primary-tint); color: var(--primary); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
-.panel-pad { padding: 18px 20px; }
+.panel-pad { padding: 16px 18px; }
 
 .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .panel-pad .field { margin-bottom: 0; }
@@ -56,13 +66,6 @@
 .affix .text-input { padding-left: 24px; }
 .affix .pre.ic { left: 10px; }
 .affix .pre.ic + .text-input { padding-left: 34px; }
-
-/* Images "dropzone" — a visual header above the URL textarea (URLs only). */
-.dropzone-note { display: flex; align-items: center; gap: 12px; border: 1.5px dashed var(--hairline-strong); border-radius: var(--radius-md); background: var(--surface-1); padding: 14px 15px; margin-bottom: 10px; }
-.dz-ic { width: 38px; height: 38px; flex: none; border-radius: 9px; display: grid; place-items: center; background: var(--card); border: 1px solid var(--hairline); color: var(--ink-muted); }
-.dropzone-note .dz-txt strong { display: block; font-size: 13px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); margin: 0; }
-.dropzone-note .dz-txt > span { display: block; font-size: 12px; color: var(--ink-tertiary); line-height: 1.4; margin: 0; }
-textarea.dz-area { min-height: 72px; resize: vertical; }
 
 /* ── Import bar — paste a product link, crawl + prefill the form ─────────────── */
 .ap-import {

@@ -21,14 +21,14 @@
 /* ── Body grid ────────────────────────────────────────────────────────────── */
 
 .pd-body {
-  display: grid; grid-template-columns: 1fr 360px; gap: 22px; align-items: start;
+  display: grid; grid-template-columns: 1fr 340px; gap: 18px; align-items: start;
 }
-.pd-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.pd-aside { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.pd-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pd-aside { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 /* ── Score hero ───────────────────────────────────────────────────────────── */
 
-.score-hero { display: flex; align-items: center; gap: 22px; padding: 22px 24px; flex-wrap: wrap; }
+.score-hero { display: flex; align-items: center; gap: 20px; padding: 16px 20px; flex-wrap: wrap; }
 .score-ring { position: relative; width: 96px; height: 96px; flex: none; display: grid; place-items: center; }
 .score-ring svg { position: absolute; inset: 0; width: 96px; height: 96px; transform: rotate(-90deg); }
 .score-ring .rnum { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
