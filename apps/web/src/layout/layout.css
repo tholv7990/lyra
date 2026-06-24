@@ -577,11 +577,10 @@
 .content:has(.eshell.wide) { max-width: none; padding: 0; }
 /* Chats: full-bleed and blended with the page (no narrow centered card column). */
 .content:has(.chat) { max-width: none; padding: 12px 24px; }
-/* Project detail: a centered, constrained column (like the other pages), not
-   full-bleed. The inline header strip + kanban live inside it; .main overflow is
-   locked so only .pd-body scrolls internally. (Width is set in projects.css.) */
-.content:has(.pd-page) { max-width: 1080px; margin-inline: auto; padding: 0; display: flex; flex-direction: column; min-height: 0; }
-.main:has(.pd-page) { overflow-y: hidden; }
+/* Project detail: a centered, constrained column (like the other pages). The
+   page scrolls normally with .main (no sticky header / internal-scroll app-view).
+   (Width is set in projects.css.) */
+.content:has(.pd-page) { max-width: 1080px; margin-inline: auto; padding: 0; }
 
 /* ===== Home content ===== */
 /* Hero: greeting + workspace meta on the left, quick actions on the right. */

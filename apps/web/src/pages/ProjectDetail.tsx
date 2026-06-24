@@ -7,12 +7,12 @@ import { channelsApi } from '../lib/channels';
 import { postsApi } from '../lib/posts';
 import { platformColor, platformGlyph } from '../lib/platform';
 import { fmtDate } from '../lib/format';
-import { Avatar } from '../components/Avatar';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { TaskList } from '../components/TaskList';
 import { ProjectProducts } from '../components/ProjectProducts';
 import { StatusPill } from '../components/StatusPill';
+import { EditorShell } from '../components/EditorShell';
 import { useLabels } from '../lib/useLabels';
 import { PencilIcon, PlusIcon, PublishIcon } from '../layout/icons';
 import { useBreadcrumb } from '../layout/breadcrumb';
@@ -86,47 +86,31 @@ export function ProjectDetail() {
   const channels = project.channels?.length ? pool.filter((c) => project.channels.includes(c.id)) : [];
 
   return (
-    <div className="pd-page">
-      {error && <p className="error">{error}</p>}
+    <EditorShell
+      crumb={{ label: t('nav.projects'), to: '/projects' }}
+      onClose={() => navigate('/projects')}
+      title={<h2 className="eshell-name">{project.name}</h2>}
+      actions={canEdit ? (
+        <button
+          type="button"
+          className="cicon eshell-edit"
+          onClick={() => navigate(editUrl)}
+          aria-label={t('projects.editProject')}
+          title={t('projects.editProject')}
+        >
+          <PencilIcon width={15} height={15} />
+        </button>
+      ) : undefined}
+    >
+      <div className="proj-detail">
+        {error && <p className="error">{error}</p>}
 
-      {/* Project header strip: title + close / meta / description */}
-      <div className="pd-header">
-        <div className="pd-header-top">
-          <h1 className="pd-title">{project.name}</h1>
-          <button
-            type="button"
-            className="icon-btn pd-close"
-            onClick={() => navigate('/projects')}
-            title={t('common.close')}
-            aria-label={t('common.close')}
-          >
-            {/* X icon */}
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M4 4l8 8M12 4l-8 8" /></svg>
-          </button>
+        {/* Description (left) + status (pinned top-right, same row). */}
+        <div className="pd-summary">
+          {project.description && <p className="pd-desc">{project.description}</p>}
+          <span className="pd-summary-status"><StatusPill status={project.status} /></span>
         </div>
-        <div className="pd-header-meta">
-          <span className="pd-by">
-            <Avatar name={project.createdBy.name} size={22} />
-            {project.createdBy.name} · {fmtDate(project.createdAt)}
-          </span>
-          <div className="pd-header-actions">
-            <StatusPill status={project.status} />
-            {canEdit && (
-              <button
-                type="button"
-                className="btn-ghost btn-inline btn-sm"
-                onClick={() => navigate(editUrl)}
-                title={t('projects.editProject')}
-              >
-                <PencilIcon width={13} height={13} />
-                <span>{t('projects.editProject')}</span>
-              </button>
-            )}
-          </div>
-        </div>
-        {project.description && (
-          <p className="pd-desc">{project.description}</p>
-        )}
+
         {project.variables.length > 0 && (
           <div className="pd-vars">
             <span className="pd-vars-label">{t('projects.variablesLabel')}</span>
@@ -139,10 +123,9 @@ export function ProjectDetail() {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Scrollable body: channels · posts · tasks kanban */}
-      <div className="pd-body">
+        {/* Sections: channels · posts · products · tasks kanban */}
+        <div className="pd-body">
 
         {/* Channels & publishing */}
         <section className="pd-section">
@@ -156,6 +139,7 @@ export function ProjectDetail() {
               className="btn-primary btn-inline btn-sm pd-act"
               onClick={() => navigate(`/publish?project=${project.id}`)}
               title={t('projects.publish')}
+              aria-label={t('projects.publish')}
             >
               <PublishIcon width={14} height={14} />
               <span className="pd-act-label">{t('projects.publish')}</span>
@@ -251,6 +235,7 @@ export function ProjectDetail() {
                 className="btn-ghost btn-inline btn-sm pd-act"
                 onClick={() => setAddTick((n) => n + 1)}
                 title={t('projects.newTask')}
+                aria-label={t('projects.newTask')}
               >
                 <PlusIcon width={14} height={14} />
                 <span className="pd-act-label">{t('projects.newTask')}</span>
@@ -266,7 +251,8 @@ export function ProjectDetail() {
           />
         </section>
 
+        </div>
       </div>
-    </div>
+    </EditorShell>
   );
 }

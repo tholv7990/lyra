@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { Product } from '@lyra/shared';
+import { tagColor, type Product } from '@lyra/shared';
 import { productsApi, projectProductsApi } from '../lib/products';
-import { MenuPicker, type MenuPickerOption } from './MenuPicker';
+import { PRODUCT_STATUS_COLOR } from './ProductBoard';
+import { useOutsideClick } from '../lib/useOutsideClick';
+import { useEscapeKey } from '../lib/useEscapeKey';
+
+function gradeClass(grade?: string): string {
+  const g = grade?.[0]?.toUpperCase();
+  return g === 'A' ? 'g-a' : g === 'B' ? 'g-b' : g === 'C' ? 'g-c' : '';
+}
 
 // ── Props ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +34,10 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
   const [pool, setPool] = useState<Product[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const addRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(addRef, addOpen, () => setAddOpen(false));
+  useEscapeKey(() => setAddOpen(false), addOpen);
 
   // ── load copies ────────────────────────────────────────────────────────────
   const loadCopies = useCallback(async () => {
@@ -98,15 +109,6 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
   const selectedPoolIds = new Set(copies.map((c) => c.poolProductId).filter(Boolean));
   const availablePool = truePool.filter((p) => !selectedPoolIds.has(p.id));
 
-  const placeholderOption: MenuPickerOption<string> = {
-    value: '',
-    label: t('projects.products.select'),
-  };
-  const pickerOptions: MenuPickerOption<string>[] = [
-    placeholderOption,
-    ...availablePool.map((p) => ({ value: p.id, label: p.name })),
-  ];
-
   return (
     <div className="pp-section">
       {/* Section header */}
@@ -116,16 +118,41 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
           <span className="pd-count">{copies.length}</span>
         </span>
 
-        {/* Select picker — only show when there are pool products to add */}
-        {availablePool.length > 0 && (
-          <MenuPicker<string>
-            value=""
-            options={pickerOptions}
-            onChange={(v) => { if (v) void handleSelect(v); }}
-            disabled={selecting}
-            ariaLabel={t('projects.products.select')}
-          />
-        )}
+        <div className="pd-act pp-actions">
+          {/* Select an existing pool product to add — a dropdown, no Create here. */}
+          <div className="pp-addwrap" ref={addRef}>
+            <button
+              type="button"
+              className="pp-selbtn"
+              aria-haspopup="menu"
+              aria-expanded={addOpen}
+              disabled={selecting}
+              onClick={() => setAddOpen((o) => !o)}
+            >
+              {t('projects.products.select')}
+              <svg className="pp-selcaret" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>
+            </button>
+            {addOpen && (
+              <div className="lin-menu pp-addmenu" role="menu">
+                {availablePool.length === 0 ? (
+                  <div className="pp-addempty">{t('projects.products.allAdded')}</div>
+                ) : (
+                  availablePool.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      role="menuitem"
+                      className="lin-menu-item"
+                      onClick={() => { setAddOpen(false); void handleSelect(p.id); }}
+                    >
+                      {p.name}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {error && <p className="error">{error}</p>}
@@ -137,76 +164,83 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
         </div>
       ) : (
         <div className="lib-grid pp-grid">
-          {copies.map((copy) => (
-            <div
-              key={copy.id}
-              className={`lib-card pp-card${copy.drift ? ' pp-card--drift' : ''}`}
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate(`/products/${copy.id}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/products/${copy.id}`); }}
-            >
-              {/* Thumbnail */}
-              {copy.images?.[0] && (
-                <img
-                  src={copy.images[0]}
-                  alt={copy.name}
-                  className="pp-card-img"
-                />
-              )}
+          {copies.map((copy) => {
+            const imgs = copy.images ?? [];
+            const niche = copy.niche ?? copy.source?.platform;
+            return (
+              <div
+                key={copy.id}
+                className={`lib-card pp-card${copy.drift ? ' pp-card--drift' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/products/${copy.id}`)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/products/${copy.id}`); } }}
+              >
+                <div className="pp-media">
+                  {imgs[0] ? (
+                    <div className="pp-thumb">
+                      <img src={imgs[0]} alt="" loading="lazy" />
+                      {imgs.length > 1 && <span className="pp-thumb-count">{imgs.length}</span>}
+                    </div>
+                  ) : (
+                    <span className="pp-thumb pp-thumb--empty" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="2" /><path d="M2.5 11l3-3 2.5 2.5L11 7l2.5 2.5" /><circle cx="6" cy="6" r="1" /></svg>
+                    </span>
+                  )}
+                  <div className="pp-headinfo">
+                    <h3 className="pp-name">{copy.name}</h3>
+                    <span className="pp-status">
+                      <span className="pp-status-dot" style={{ background: PRODUCT_STATUS_COLOR[copy.status] }} aria-hidden="true" />
+                      {t(`projects.productStatus.${copy.status}`)}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="pp-unselect icon-btn"
+                    title={t('projects.products.unselect')}
+                    aria-label={`${t('projects.products.unselect')} — ${copy.name}`}
+                    onClick={(e) => { e.stopPropagation(); void handleUnselect(copy.id); }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+                  </button>
+                </div>
 
-              {/* Card body */}
-              <div className="pp-card-body">
-                <div className="pp-card-name">{copy.name}</div>
-
-                {/* Price / offer */}
-                {(copy.price !== undefined || copy.offer) && (
-                  <div className="pp-card-meta">
-                    {copy.price !== undefined && (
-                      <span className="pp-price">${copy.price}</span>
+                {(niche || copy.price !== undefined) && (
+                  <div className="pp-meta">
+                    {niche && (
+                      <span className="pp-niche">
+                        <span className="pp-niche-dot" style={{ background: tagColor(niche) }} aria-hidden="true" />
+                        {niche}
+                      </span>
                     )}
-                    {copy.compareAtPrice !== undefined && (
-                      <span className="pp-compare">${copy.compareAtPrice}</span>
-                    )}
-                    {copy.offer && (
-                      <span className="pp-offer">{copy.offer}</span>
-                    )}
+                    {copy.price !== undefined && <span className="pp-price">${copy.price}</span>}
                   </div>
                 )}
 
-                {/* Status */}
-                <div className="pp-card-status">{copy.status}</div>
+                {copy.score !== undefined && (
+                  <div className="pp-verdict">
+                    <span className="pp-score">{copy.score}<span className="pp-score-den">/100</span></span>
+                    {copy.grade && <span className={`pp-grade ${gradeClass(copy.grade)}`}>{copy.grade}</span>}
+                    {copy.decision && <span className="pp-decision">{copy.decision}</span>}
+                  </div>
+                )}
+
+                {copy.drift && (
+                  <div className="pp-drift-row" onClick={(e) => e.stopPropagation()}>
+                    <span className="pp-drift-badge">{t('projects.products.drift')}</span>
+                    <button
+                      type="button"
+                      className="btn-ghost btn-inline btn-sm"
+                      title={t('projects.products.refresh')}
+                      onClick={(e) => { e.stopPropagation(); void handleRefresh(copy.id); }}
+                    >
+                      {t('projects.products.refresh')}
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* Drift badge + refresh */}
-              {copy.drift && (
-                <div className="pp-drift-row" onClick={(e) => e.stopPropagation()}>
-                  <span className="pp-drift-badge">{t('projects.products.drift')}</span>
-                  <button
-                    type="button"
-                    className="btn-ghost btn-inline btn-sm"
-                    title={t('projects.products.refresh')}
-                    onClick={(e) => { e.stopPropagation(); void handleRefresh(copy.id); }}
-                  >
-                    {t('projects.products.refresh')}
-                  </button>
-                </div>
-              )}
-
-              {/* Unselect (X) */}
-              <button
-                type="button"
-                className="pp-unselect icon-btn"
-                title={t('projects.products.unselect')}
-                aria-label={t('projects.products.unselect')}
-                onClick={(e) => { e.stopPropagation(); void handleUnselect(copy.id); }}
-              >
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
-                  <path d="M4 4l8 8M12 4l-8 8" />
-                </svg>
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

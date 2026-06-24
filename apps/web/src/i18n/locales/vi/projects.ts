@@ -210,11 +210,12 @@ export default {
   // Project Products section
   products: {
     title: 'Sản phẩm',
-    select: 'Chọn sản phẩm…',
+    select: 'Chọn sản phẩm để thêm…',
+    allAdded: 'Đã thêm tất cả sản phẩm',
     drift: 'Lỗi thời',
     refresh: 'Làm mới',
     unselect: 'Xóa',
-    empty: 'Chưa có sản phẩm nào được chọn.',
+    empty: 'Chưa có sản phẩm nào. Chọn một sản phẩm từ danh sách để thêm vào dự án này.',
   },
 
   // Move to team

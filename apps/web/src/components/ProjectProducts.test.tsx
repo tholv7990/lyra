@@ -93,7 +93,9 @@ describe('ProjectProducts', () => {
         <ProjectProducts projectId="p1" workspaceId="ws1" initialCopies={[]} />
       </MemoryRouter>,
     );
-    // Empty state key: projects.products.empty = 'No products selected yet.'
-    expect(html).toContain('No products selected yet.');
+    // Empty state key: projects.products.empty
+    expect(html).toContain('No products yet.');
+    // The always-visible "Select product to add…" dropdown is present even with no copies.
+    expect(html).toContain('Select product to add');
   });
 });

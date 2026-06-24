@@ -210,11 +210,12 @@ export default {
   // Project Products section
   products: {
     title: 'Products',
-    select: 'Select a product…',
+    select: 'Select product to add…',
+    allAdded: 'All products added',
     drift: 'Outdated',
     refresh: 'Refresh',
     unselect: 'Remove',
-    empty: 'No products selected yet.',
+    empty: 'No products yet. Pick one from the dropdown to add it to this project.',
   },
 
   // Move to team

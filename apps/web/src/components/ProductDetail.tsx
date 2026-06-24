@@ -9,6 +9,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import { useRunActions } from '../lib/useRunActions';
 import { EditorShell } from './EditorShell';
+import { PencilIcon } from '../layout/icons';
 import { MenuPicker, type MenuPickerOption } from './MenuPicker';
 import { RunTimeline } from './RunTimeline';
 import { PRODUCT_STATUS_COLOR } from './ProductBoard';
@@ -925,6 +926,17 @@ export function ProductDetailPage() {
       crumb={productsCrumb}
       onClose={back}
       title={<h2 className="eshell-name">{product.name}</h2>}
+      actions={
+        <button
+          type="button"
+          className="cicon eshell-edit"
+          onClick={() => navigate(`/products/${id}/edit`)}
+          aria-label={t('products.edit')}
+          title={t('products.edit')}
+        >
+          <PencilIcon width={15} height={15} />
+        </button>
+      }
     >
       <ProductDetailBody
         product={product}
