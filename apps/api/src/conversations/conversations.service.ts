@@ -17,6 +17,7 @@ import { FilesService } from '../files/files.service';
 import { AnthropicClient } from '../runs/providers/anthropic.client';
 import type { LlmAttachment, LlmTurn } from '../runs/providers/anthropic.client';
 import { OpenAiCompatClient, compatBaseUrl } from '../runs/providers/openai-compat.client';
+import { MemoryService } from '../memory/memory.service';
 import {
   conversationActorIds,
   toConversation,
@@ -28,6 +29,15 @@ import {
 const CHAT_SYSTEM =
   'You are Lyra, a helpful AI assistant for crafting and testing prompts. ' +
   'Respond directly and helpfully, returning well-structured Markdown.';
+
+// Append a compact, budgeted block of recalled memories to the system prompt so the
+// assistant has cross-session context. Non-LLM (recall is keyword/recency). Capped tight
+// for chat (≤8); recall already enforces the token budget. Empty → unchanged base prompt.
+function withMemories(base: string, mems: { kind: string; text: string }[]): string {
+  if (!mems.length) return base;
+  const lines = mems.slice(0, 8).map((m) => `- [${m.kind}] ${m.text}`).join('\n');
+  return `${base}\n\n## What you remember about this workspace\n(Use only if relevant to the user's message; never repeat this list verbatim.)\n${lines}`;
+}
 
 // A new turn to append (plain shape — Mongoose builds the subdoc on save).
 interface NewMsg {
@@ -62,6 +72,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
     private readonly files: FilesService,
     private readonly anthropic: AnthropicClient,
     private readonly openai: OpenAiCompatClient,
+    private readonly memory: MemoryService,
   ) {
     super(model);
   }
@@ -178,12 +189,21 @@ export class ConversationsService extends BaseRepository<Conversation> {
     convo.updatedBy = userId;
     await convo.save();
 
+    // Recall-on-start: pull workspace-shared + this user's own memories (non-LLM,
+    // keyword-ranked on the message) and fold them into the system prompt. Best-effort —
+    // a memory failure must never break the reply.
+    const recalled = await this.memory
+      .recall(convo.workspaceId, { query: dto.content }, userId)
+      .catch(() => [] as { kind: string; text: string }[]);
+    const system = withMemories(CHAT_SYSTEM, recalled);
+
     let out: CallOutput;
     try {
       out = await this.callModel(
         dto.provider,
         dto.model,
         apiKey,
+        system,
         dto.content,
         dto.media,
         history,
@@ -236,6 +256,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
     provider: Provider,
     model: string,
     apiKey: string,
+    system: string,
     input: string,
     media: PromptMedia[],
     history: LlmTurn[],
@@ -245,7 +266,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
     if (provider === Provider.Anthropic) {
       const attachments = await this.buildAttachments(media);
       const out = await this.anthropic.stream(
-        { apiKey, model, system: CHAT_SYSTEM, prompt: input, history, attachments, signal },
+        { apiKey, model, system, prompt: input, history, attachments, signal },
         onDelta,
       );
       if (!out.text && !out.aborted) throw new Error('Claude returned an empty response');
@@ -257,7 +278,7 @@ export class ConversationsService extends BaseRepository<Conversation> {
       const attachments =
         provider === Provider.OpenAI ? await this.buildAttachments(media) : [];
       const out = await this.openai.stream(
-        { baseUrl, provider, apiKey, model, system: CHAT_SYSTEM, prompt: input, history, attachments, signal },
+        { baseUrl, provider, apiKey, model, system, prompt: input, history, attachments, signal },
         onDelta,
       );
       if (!out.text && !out.aborted) throw new Error(`No response from ${provider}`);

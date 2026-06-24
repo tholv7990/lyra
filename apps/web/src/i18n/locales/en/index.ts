@@ -18,5 +18,6 @@ import landing from './landing';
 import tasks from './tasks';
 import monitor from './monitor';
 import products from './products';
+import memory from './memory';
 
-export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing, tasks, monitor, products };
+export default { common, nav, auth, home, settings, run, projects, pipelines, prompts, chats, copilot, connectors, marketplace, admin, notifications, members, landing, tasks, monitor, products, memory };

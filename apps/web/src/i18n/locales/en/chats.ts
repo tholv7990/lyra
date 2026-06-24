@@ -16,6 +16,7 @@ export default {
   editPrompt: 'Edit prompt',
   saveAsPrompt: 'Save as prompt',
   saveToLibrary: 'Save this prompt to the library',
+  remember: 'Remember',
   imageFallback: 'image',
   fileFallback: 'file',
   couldNotLoad: 'Could not load chat',
