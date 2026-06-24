@@ -163,3 +163,46 @@ describe('RunStepCard image actions', () => {
     expect(html).not.toContain('Upscale');
   });
 });
+
+describe('RunStepCard StepEditModal affordance', () => {
+  // The card auto-expands when isCurrent=true, which is how we see the body.
+  const currentStep: Step = {
+    index: 0,
+    name: 'Brief',
+    mode: StepMode.Auto,
+    status: StepStatus.Idle,
+    model: 'claude-sonnet-4',
+    prompt: 'Write a brief',
+  };
+
+  it('shows an Edit button (not an inline textarea) when wsId is provided', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <RunStepCard
+          step={currentStep}
+          input="" inputLabel="" locked={false} isCurrent={true} busy={false}
+          onRun={() => {}} onApprove={() => {}} onSavePrompt={() => {}} runId="r1"
+          wsId="ws-1"
+        />
+      </MemoryRouter>,
+    );
+    // The Composer modal edit affordance must be present (rendered as translated text)…
+    expect(html).toContain('Edit prompt');
+    // …and the inline textarea must be gone.
+    expect(html).not.toContain('<textarea');
+  });
+
+  it('shows no Edit button and no inline textarea when wsId is omitted', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <RunStepCard
+          step={currentStep}
+          input="" inputLabel="" locked={false} isCurrent={true} busy={false}
+          onRun={() => {}} onApprove={() => {}} onSavePrompt={() => {}} runId="r1"
+        />
+      </MemoryRouter>,
+    );
+    expect(html).not.toContain('Edit prompt');
+    expect(html).not.toContain('<textarea');
+  });
+});

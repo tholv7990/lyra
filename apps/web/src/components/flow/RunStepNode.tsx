@@ -23,8 +23,6 @@ export function RunStepNode({ data }: NodeProps) {
         onRegenerate={cb.onRegenerate ? () => cb.onRegenerate!(i) : undefined}
         onImageAction={cb.onImageAction ? (assetId, op) => cb.onImageAction!(i, assetId, op) : undefined}
         runId={d.runId}
-        vars={d.vars}
-        stepNames={d.stepNames}
         assets={d.assets}
         history={d.history}
       />
