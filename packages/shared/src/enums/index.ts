@@ -144,6 +144,8 @@ export enum ChannelType {
   GoLogin = 'gologin',
 }
 
+export enum MemoryKind { Preference = 'preference', Decision = 'decision', Goal = 'goal', Fact = 'fact', Instruction = 'instruction', Relationship = 'relationship' }
+
 export enum MonitorPlatform { Meta = 'meta' }
 export enum CompetitorStatus { Candidate = 'candidate', Watching = 'watching', Archived = 'archived' }
 export enum AdStatus { Active = 'active', Stopped = 'stopped' }

@@ -1,4 +1,4 @@
-import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind, ProductStatus, ImageOp } from '../enums';
+import { Role, ProjectStatus, ProjectShare, PromptStatus, PromptType, Provider, StepMode, RequestType, RequestStatus, TaskStatus, TaskPriority, StepKind, ProductStatus, ImageOp, MemoryKind } from '../enums';
 import type { FanOutConfig, PipelineOrigin, PromptMedia, Receipt, StepCondition, ActionStep, ProjectBrandKit, ProductSource, ProductEconInputs } from '../models';
 
 // DTO *interfaces* only — no validation library lives in shared.
@@ -474,3 +474,22 @@ export interface UpdateProductDto {
   offer?: string;
 }
 export interface SelectProductDto { poolProductId: string }
+
+export interface RememberDto {
+  kind: MemoryKind;
+  text: string;
+  subjectType?: 'project' | 'product' | 'brand' | 'pipeline' | 'global';
+  subjectId?: string;
+  relatedIds?: string[];
+  dedupeKey?: string;
+  confidence?: number;
+  provenance?: 'explicit' | 'inferred';
+  userId?: string;
+  source?: { conversationId?: string; runId?: string };
+}
+export interface RecallDto {
+  subjectId?: string;
+  kinds?: MemoryKind[];
+  query?: string;
+  userId?: string;
+}
