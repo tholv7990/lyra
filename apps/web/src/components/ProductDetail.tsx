@@ -9,6 +9,7 @@ import { useWorkspace } from '../workspace/useWorkspace';
 import { useBreadcrumb } from '../layout/breadcrumb';
 import { useRunActions } from '../lib/useRunActions';
 import { EditorShell } from './EditorShell';
+import { ConfirmDialog } from './ConfirmDialog';
 import { MenuPicker, type MenuPickerOption } from './MenuPicker';
 import { RunTimeline } from './RunTimeline';
 import { PRODUCT_STATUS_COLOR } from './ProductBoard';
@@ -890,6 +891,8 @@ export function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useBreadcrumb(product?.name ?? null);
 
@@ -921,6 +924,17 @@ export function ProductDetailPage() {
     setProduct(updated);
   }
 
+  async function handleDelete() {
+    if (!ws || !id || deleting) return;
+    setDeleting(true);
+    try {
+      await productsApi.remove(ws, id);
+      navigate('/products');
+    } catch {
+      setDeleting(false);
+    }
+  }
+
   const productsCrumb = { label: t('nav.products'), to: '/products' };
   const back = () => navigate('/products');
 
@@ -946,13 +960,23 @@ export function ProductDetailPage() {
       onClose={back}
       title={<h2 className="eshell-name">{product.name}</h2>}
       actions={
-        <button
-          type="button"
-          className="btn-ghost btn-inline btn-sm"
-          onClick={() => navigate(`/products/${id}/edit`)}
-        >
-          {t('products.edit')}
-        </button>
+        <>
+          <button
+            type="button"
+            className="btn-ghost btn-inline btn-sm"
+            onClick={() => navigate(`/products/${id}/edit`)}
+          >
+            {t('products.edit')}
+          </button>
+          <button
+            type="button"
+            className="btn-ghost btn-inline btn-sm"
+            style={{ color: 'var(--danger)' }}
+            onClick={() => setConfirmDelete(true)}
+          >
+            {t('common.delete')}
+          </button>
+        </>
       }
     >
       <ProductDetailBody
@@ -960,6 +984,16 @@ export function ProductDetailPage() {
         workspaceId={ws}
         onUpdate={handleUpdate}
         onProductRefresh={handleProductRefresh}
+      />
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t('products.deleteTitle')}
+        message={<><strong>{product.name}</strong>{t('products.deleteMessage')}</>}
+        confirmLabel={t('common.delete')}
+        danger
+        busy={deleting}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmDelete(false)}
       />
     </EditorShell>
   );

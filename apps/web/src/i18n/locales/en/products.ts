@@ -35,6 +35,8 @@ export default {
   entersAs: 'Enters as',
   editProduct: 'Edit product',
   edit: 'Edit',
+  deleteTitle: 'Delete product?',
+  deleteMessage: ' will be permanently deleted. This cannot be undone.',
   fieldDescription: 'Description',
   fieldDescriptionPlaceholder: 'Short product description (optional)',
   runResearch: 'Run research',

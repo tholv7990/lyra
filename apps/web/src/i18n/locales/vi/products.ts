@@ -35,6 +35,8 @@ export default {
   entersAs: 'Thêm vào dạng',
   editProduct: 'Chỉnh sửa sản phẩm',
   edit: 'Chỉnh sửa',
+  deleteTitle: 'Xóa sản phẩm?',
+  deleteMessage: ' sẽ bị xóa vĩnh viễn. Không thể hoàn tác.',
   fieldDescription: 'Mô tả',
   fieldDescriptionPlaceholder: 'Mô tả sản phẩm ngắn (tùy chọn)',
   runResearch: 'Chạy nghiên cứu',
