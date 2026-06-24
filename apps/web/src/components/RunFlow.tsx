@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageOp, promptVarsForStep, BUILTIN_VAR_LABELS, type Asset, type Run, type Step } from '@lyra/shared';
+import { ImageOp, type Asset, type PromptMedia, type Provider, type Run, type Step } from '@lyra/shared';
 import { FlowPagerControls, useFlowPager } from './FlowPager';
 import { RunStepCard, providerOf } from './RunStepCard';
 import type { StepHistoryEntry } from './StepResultModal';
@@ -23,6 +23,10 @@ interface RunFlowProps {
   // Per-run result history for a step (prior runs of the same pipeline). When
   // omitted (e.g. the builder test-run), the result modal shows the current run only.
   historyForStep?: (index: number) => StepHistoryEntry[];
+  // Passed through to RunStepCard to enable the StepEditModal Composer editor.
+  wsId?: string;
+  onSaveModel?: (index: number, provider: Provider, model: string) => void;
+  onSaveMedia?: (index: number, media: PromptMedia[]) => void;
 }
 
 // The unified run view (n8n-style): the pipeline rendered as the same vertical
@@ -41,6 +45,9 @@ export function RunFlow({
   mobileLayout = 'pager',
   assets = [],
   historyForStep,
+  wsId,
+  onSaveModel,
+  onSaveMedia,
 }: RunFlowProps) {
   const { t } = useTranslation();
   const pager = useFlowPager(run.steps.length);
@@ -54,7 +61,6 @@ export function RunFlow({
     }
   }, [isMobile, run.status, run.currentStep, setPage]);
 
-  const stepNames = run.steps.map((s) => s.name).filter((n): n is string => !!n);
   const node = (step: Step) => (
     <RunStepCard
       key={step.index}
@@ -71,10 +77,11 @@ export function RunFlow({
       onRegenerate={onRegenerate ? () => onRegenerate(step.index) : undefined}
       onImageAction={onImageAction ? (assetId, op) => onImageAction(step.index, assetId, op) : undefined}
       runId={run.id}
-      vars={promptVarsForStep(run.steps, step.index, run.variables ?? {}, BUILTIN_VAR_LABELS)}
-      stepNames={stepNames}
       assets={assetsFor(step.index)}
       history={historyForStep?.(step.index)}
+      wsId={wsId}
+      onSaveModel={onSaveModel ? (p, m) => onSaveModel(step.index, p, m) : undefined}
+      onSaveMedia={onSaveMedia ? (med) => onSaveMedia(step.index, med) : undefined}
     />
   );
 

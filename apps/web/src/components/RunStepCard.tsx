@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,12 +9,13 @@ import {
   StepMode,
   StepStatus,
   tagColor,
-  unknownStepRefs,
   type Asset,
-  type PromptVar,
+  type PromptMedia,
+  type Provider,
   type Step,
 } from '@lyra/shared';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
+import { StepEditModal } from './StepEditModal';
 import { useMediaViewer } from './MediaViewer';
 
 export const STATUS_LABEL: Record<string, string> = {
@@ -52,11 +53,6 @@ export interface RunStepCardProps {
   onSaveToPipeline?: () => Promise<void>;
   // The run this step belongs to — needed by the result modal for downloads.
   runId: string;
-  // Composer affordance: variables this step can reference, and every step name
-  // in the run (to flag dangling {step:X} references). Optional — when omitted,
-  // the card renders exactly as before.
-  vars?: PromptVar[];
-  stepNames?: string[];
   // Media this step produced (image/video). Rendered as a thumbnail strip.
   assets?: Asset[];
   // Prior runs of the same pipeline for this step (per-run result history).
@@ -64,15 +60,21 @@ export interface RunStepCardProps {
   // Apply an image op (upscale/variation/outpaint) to one of this step's image
   // assets. Spawns a derived image step on the run. Omit to hide the action bar.
   onImageAction?: (assetId: string, op: ImageOp) => void;
+  // When provided, the card shows an "Edit" button that opens StepEditModal
+  // (the Composer-modal step editor) instead of the inline textarea.
+  wsId?: string;
+  onSaveModel?: (provider: Provider, model: string) => Promise<unknown> | void;
+  onSaveMedia?: (media: PromptMedia[]) => Promise<unknown> | void;
 }
 
 export function RunStepCard(props: RunStepCardProps) {
   const { t } = useTranslation();
-  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, onSaveToPipeline, runId, vars, stepNames, assets, history, onImageAction } =
+  const { step, input, inputLabel, locked, isCurrent, busy, onRun, onApprove, onRegenerate, onSaveToPipeline, runId, assets, history, onImageAction, wsId, onSaveModel, onSaveMedia } =
     props;
   const isGate = step.mode === StepMode.Gate;
   const provider = providerOf(step);
   const [showResult, setShowResult] = useState(false);
+  const [editing, setEditing] = useState(false);
   // "View result" is a first-class action (decoupled from the prompt): available
   // whenever this step has produced something, or has prior runs to look back on.
   const hasResult =
@@ -82,30 +84,7 @@ export function RunStepCard(props: RunStepCardProps) {
   const wantsAttention =
     isCurrent || step.status === StepStatus.Waiting || step.status === StepStatus.Error;
   const [expanded, setExpanded] = useState(wantsAttention);
-  const [draft, setDraft] = useState(step.prompt);
   const { open: openMedia, viewer } = useMediaViewer();
-  useEffect(() => setDraft(step.prompt), [step.prompt]);
-  const dirty = draft !== step.prompt;
-
-  const taRef = useRef<HTMLTextAreaElement>(null);
-  const dangling = unknownStepRefs(draft, stepNames ?? []);
-
-  // Insert a variable token at the cursor (or append if the textarea isn't focused).
-  function insertToken(token: string) {
-    const ta = taRef.current;
-    if (!ta) {
-      setDraft((d) => d + token);
-      return;
-    }
-    const start = ta.selectionStart ?? draft.length;
-    const end = ta.selectionEnd ?? draft.length;
-    setDraft(draft.slice(0, start) + token + draft.slice(end));
-    requestAnimationFrame(() => {
-      ta.focus();
-      const pos = start + token.length;
-      ta.setSelectionRange(pos, pos);
-    });
-  }
 
   const runnable = isCurrent && step.status !== StepStatus.Done && step.status !== StepStatus.Waiting;
   const accent = tagColor(step.name || step.promptId || String(step.index));
@@ -212,44 +191,10 @@ export function RunStepCard(props: RunStepCardProps) {
               <pre className="result-box rn-input-box">{input}</pre>
             </div>
           )}
-          {vars && vars.length > 0 && (
-            <div className="rn-vars">
-              <span className="rn-vars-label">{t('run.insert')}</span>
-              {vars.map((v) => (
-                <button
-                  key={v.token}
-                  type="button"
-                  className={`var-chip kind-${v.kind}`}
-                  title={`Insert ${v.token}`}
-                  onClick={() => insertToken(v.token)}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <textarea
-            ref={taRef}
-            className="text-input prompt-area"
-            rows={3}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          {dangling.length > 0 && (
-            <p className="rn-var-warn">
-              {t('run.unknownStepRef')}:{' '}
-              {dangling.map((n) => `{step:${n}}`).join(', ')}
-            </p>
-          )}
           <div className="rn-body-actions">
-            {dirty && (
-              <button className="btn-ghost" disabled={busy} onClick={() => props.onSavePrompt(draft)}>
-                {t('run.savePrompt')}
-              </button>
-            )}
-            {onSaveToPipeline && step.pipelineStepId && (
-              <button className="btn-ghost" disabled={busy} onClick={() => void onSaveToPipeline()}>
-                {t('run.saveToPipeline')}
+            {wsId && !locked && (
+              <button className="btn-ghost" disabled={busy} onClick={() => setEditing(true)}>
+                {t('run.editPrompt')}
               </button>
             )}
             {locked && (
@@ -261,6 +206,25 @@ export function RunStepCard(props: RunStepCardProps) {
           </div>
           {step.error && <p className="step-error">{step.error}</p>}
         </div>
+      )}
+      {editing && wsId && (
+        <StepEditModal
+          wsId={wsId}
+          stepIndex={step.index}
+          prompt={step.prompt}
+          media={step.media ?? []}
+          provider={(step.provider ?? 'anthropic') as Provider}
+          model={step.model ?? ''}
+          onClose={() => setEditing(false)}
+          onSavePrompt={(_, p) => Promise.resolve(props.onSavePrompt(p))}
+          onSaveModel={(_, p, m) => Promise.resolve(onSaveModel?.(p, m))}
+          onSaveMedia={(_, med) => Promise.resolve(onSaveMedia?.(med))}
+          onSaveToPipeline={onSaveToPipeline && step.pipelineStepId
+            ? async (_) => { await onSaveToPipeline(); }
+            : undefined}
+          onRerun={() => { onRun(); }}
+          canPromote={!!step.pipelineStepId && !!onSaveToPipeline}
+        />
       )}
       {showResult && (
         <StepResultModal

@@ -1,6 +1,5 @@
 import type { Node, Edge } from '@xyflow/react';
-import { promptVarsForStep, BUILTIN_VAR_LABELS } from '@lyra/shared';
-import type { Asset, Run, Step, PipelineStep, PromptVar } from '@lyra/shared';
+import type { Asset, Run, Step, PipelineStep } from '@lyra/shared';
 import type { StepHistoryEntry } from '../StepResultModal';
 
 export const NODE_W = 280;
@@ -16,8 +15,6 @@ export interface RunNodeData {
   locked: boolean;
   isCurrent: boolean;
   runId: string;
-  vars: PromptVar[];
-  stepNames: string[];
   assets: Asset[];
   history: StepHistoryEntry[];
   [key: string]: unknown;
@@ -31,7 +28,6 @@ export function buildRunGraph(opts: {
 }): { nodes: Node[]; edges: Edge[] } {
   const { run, hasKey, assets = [], historyForStep } = opts;
   const provider = (s: Step) => s.provider ?? '';
-  const stepNames = run.steps.map((s) => s.name).filter((n): n is string => !!n);
   const nodes: Node[] = [{ id: 'cap-start', type: 'cap', position: { x: x(0), y: Y }, data: { kind: 'start' }, draggable: false }];
 
   run.steps.forEach((step, i) => {
@@ -46,8 +42,6 @@ export function buildRunGraph(opts: {
         locked: !hasKey(provider(step)),
         isCurrent: step.index === run.currentStep && run.status !== 'done',
         runId: run.id,
-        vars: promptVarsForStep(run.steps, i, run.variables ?? {}, BUILTIN_VAR_LABELS),
-        stepNames,
         assets: assets.filter((a) => a.stepIndex === i),
         history: historyForStep?.(i) ?? [],
       } satisfies RunNodeData,
