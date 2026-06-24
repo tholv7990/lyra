@@ -31,6 +31,35 @@ export function AddProduct() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Import bar: paste a product link → crawl + LLM-map → prefill the form.
+  const [importUrlInput, setImportUrlInput] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+
+  async function handleImport() {
+    if (!ws || !importUrlInput.trim() || importing) return;
+    setImporting(true);
+    setImportError(null);
+    setImportWarnings([]);
+    try {
+      const result = await productsApi.importUrl(ws, importUrlInput.trim());
+      if (result.name !== undefined) setName(result.name);
+      if (result.price !== undefined) setPrice(String(result.price));
+      if (result.compareAtPrice !== undefined) setCompareAtPrice(String(result.compareAtPrice));
+      if (result.offer !== undefined) setOffer(result.offer);
+      if (result.niche !== undefined) setNiche(result.niche);
+      if (result.category !== undefined) setCategory(result.category);
+      if (result.images && result.images.length) setImages(result.images.join('\n'));
+      if (result.source?.url) setSource(result.source.url);
+      setImportWarnings(result.warnings ?? []);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : t('products.importFailed'));
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function handleSubmit(e?: FormEvent) {
     e?.preventDefault();
     if (!ws || !name.trim() || saving) return;
@@ -77,6 +106,34 @@ export function AddProduct() {
     >
       <form className="ap-form" onSubmit={(e) => void handleSubmit(e)}>
         {error && <p className="error">{error}</p>}
+
+        {/* Import from a product link — crawl + prefill */}
+        <section className="ap-import">
+          <span className="field-label ap-import-label">{t('products.importTitle')}</span>
+          <div className="ap-import-row">
+            <input
+              className="text-input"
+              type="url"
+              value={importUrlInput}
+              onChange={(e) => setImportUrlInput(e.target.value)}
+              placeholder={t('products.importPlaceholder')}
+              disabled={importing}
+            />
+            <button
+              type="button"
+              className="btn-primary btn-inline"
+              onClick={() => void handleImport()}
+              disabled={importing || !importUrlInput.trim()}
+            >
+              {importing ? t('products.importing') : t('products.importBtn')}
+            </button>
+          </div>
+          <span className="ap-import-hint">{t('products.importHint')}</span>
+          {importError && <p className="error">{importError}</p>}
+          {importWarnings.map((w, i) => (
+            <p key={i} className="ap-import-warn">{w}</p>
+          ))}
+        </section>
 
         {/* 1 · Product */}
         <section className="panel">

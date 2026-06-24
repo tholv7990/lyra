@@ -9,6 +9,7 @@ import { ConnectorCredentialsService } from '../../connectors/connector-credenti
 import { FirecrawlClient } from './firecrawl.client';
 import { fetchPage } from './fetch-page';
 import { safeFetchFollow } from '../../common/safe-fetch';
+import { metaProp, metaName, tag, absolutize, httpsify, extractImages, decode } from './page-extract';
 
 // Source step: fetch a URL (from the step's prompt) and extract product images +
 // title/description. Direct fetch first (free); if the page is bot-blocked/thin and the
@@ -77,51 +78,4 @@ export class CrawlStepProvider implements StepProvider {
 function firstUrl(text: string): string | null {
   const m = text.match(/https?:\/\/[^\s)"'<>]+/i);
   return m ? m[0].replace(/[.,]+$/, '') : null;
-}
-function metaProp(html: string, prop: string): string | null {
-  const a = new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i');
-  const b = new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`, 'i');
-  return html.match(a)?.[1] ?? html.match(b)?.[1] ?? null;
-}
-function metaName(html: string, name: string): string | null {
-  const re = new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i');
-  return html.match(re)?.[1] ?? null;
-}
-function tag(html: string, re: RegExp): string | null {
-  return html.match(re)?.[1]?.trim() ?? null;
-}
-function absolutize(u: string | null, base: string): string | null {
-  if (!u) return null;
-  try {
-    return new URL(u, base).toString();
-  } catch {
-    return u;
-  }
-}
-function httpsify(u: string | null): string | null {
-  return u ? u.replace(/^http:\/\//i, 'https://') : u;
-}
-function extractImages(html: string): string[] {
-  const raw = [
-    ...html.matchAll(/https?:\/\/[^"' )<>]+?\.(?:png|jpe?g|webp)(?:\?[^"' )<>]*)?/gi),
-  ].map((m) => httpsify(m[0]) as string);
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const u of raw) {
-    const key = u.split('?')[0];
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(u);
-  }
-  const products = out.filter((u) => /cdn\/shop\/(files|products)/i.test(u));
-  return products.length ? products : out;
-}
-function decode(s: string): string {
-  return s
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'");
 }

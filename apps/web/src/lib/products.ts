@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Product, CreateProductDto, UpdateProductDto, SaveProductResultDto } from '@lyra/shared';
+import type { Product, CreateProductDto, UpdateProductDto, SaveProductResultDto, ImportedProduct } from '@lyra/shared';
 
 const base = (ws: string) => `/workspaces/${ws}/products`;
 
@@ -9,6 +9,8 @@ export const productsApi = {
   create: (ws: string, dto: CreateProductDto) => api<Product>(base(ws), { method: 'POST', body: JSON.stringify(dto) }),
   update: (ws: string, id: string, patch: UpdateProductDto) => api<Product>(`${base(ws)}/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   remove: (ws: string, id: string) => api<void>(`${base(ws)}/${id}`, { method: 'DELETE' }),
+  // One-time crawl + LLM map of an e-commerce URL → unsaved ImportedProduct (prefill only).
+  importUrl: (ws: string, url: string) => api<ImportedProduct>(`${base(ws)}/import-url`, { method: 'POST', body: JSON.stringify({ url }) }),
 };
 
 export const productResultsApi = {
