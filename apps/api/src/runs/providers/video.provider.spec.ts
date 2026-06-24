@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { VideoStepProvider } from './video.provider';
 
 describe('VideoStepProvider', () => {
@@ -70,5 +71,17 @@ describe('VideoStepProvider', () => {
     expect(storage.store).toHaveBeenCalledWith(expect.any(Buffer), 'video/mp4', expect.stringContaining('generated/'));
     expect(out.assets![0].type).toBe('video');
     expect(out.assets![0].url).toBe('https://r2/v.mp4');
+  });
+});
+
+describe('VideoStepProvider submit log', () => {
+  it('logs the replicate prediction id', async () => {
+    const replicate = { create: jest.fn().mockResolvedValue({ id: 'pred_123' }) } as any;
+    const storage = { enabled: true } as any;
+    const spy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const out = await new VideoStepProvider(replicate, storage).execute({ apiKey: 'k', step: { prompt: 'a cat', model: 'minimax/video-01' }, inputImages: [] } as any);
+    expect(out.async?.jobId).toBe('pred_123');
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('pred_123'));
+    spy.mockRestore();
   });
 });

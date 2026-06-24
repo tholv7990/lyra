@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { RunsService } from './runs.service';
 import { StepStatus } from '@lyra/shared';
 
@@ -31,5 +32,22 @@ describe('RunsService.commit retry', () => {
     (svc as any).model = { findById: jest.fn() };
     await expect((svc as any).commit(doc, () => {}, 'u')).rejects.toThrow('boom');
     expect((svc as any).model.findById).not.toHaveBeenCalled();
+  });
+});
+
+describe('RunsService expensive-path VersionError', () => {
+  const svc = Object.create(RunsService.prototype) as RunsService;
+  (svc as any).users = { refMap: jest.fn().mockResolvedValue(new Map()) };
+  (svc as any).logger = { warn: jest.fn(), log: jest.fn() };
+
+  it('translatePersistError maps VersionError to BadRequest and logs an orphan jobId', () => {
+    const state: any = { status: 'running', currentStep: 0, steps: [{ index: 0, status: StepStatus.Running, jobId: 'job9' }] };
+    expect(() => (svc as any).translatePersistError(versionError(), state)).toThrow(BadRequestException);
+    expect((svc as any).logger.warn).toHaveBeenCalledWith(expect.stringContaining('job9'));
+  });
+
+  it('translatePersistError rethrows a non-VersionError unchanged', () => {
+    const err = new Error('boom');
+    expect(() => (svc as any).translatePersistError(err, { steps: [] })).toThrow('boom');
   });
 });

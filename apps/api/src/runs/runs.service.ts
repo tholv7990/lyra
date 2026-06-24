@@ -248,6 +248,33 @@ export class RunsService extends BaseRepository<Run> {
     }
   }
 
+  // Expensive transitions do provider I/O before saving, so they cannot be replayed
+  // on conflict. On a VersionError, surface a clean 409-style error to the user (no
+  // silent clobber); if a step had just submitted an async job, log its jobId so the
+  // paid prediction is recoverable.
+  private translatePersistError(e: unknown, state: RunState): never {
+    if (isVersionError(e)) {
+      const submitting = state.steps.find((s) => s.status === StepStatus.Running && (s as { jobId?: string }).jobId);
+      if (submitting) this.logger.warn(`orphaned replicate jobId ${(submitting as { jobId?: string }).jobId} (run changed before save)`);
+      throw new BadRequestException('This run changed in another session — refresh and try again.');
+    }
+    throw e;
+  }
+
+  // For the poller: a VersionError means a concurrent writer changed the run; drop
+  // this update (the next tick re-reads and recovers) rather than clobber.
+  private async persistOrDrop(doc: RunDocument, state: RunState, actorId: string): Promise<RunModel> {
+    try {
+      return await this.persist(doc, state, actorId);
+    } catch (e) {
+      if (isVersionError(e)) {
+        this.logger.warn(`run ${String(doc._id)}: persist dropped on conflict (recovers next tick)`);
+        return this.toView(doc);
+      }
+      throw e;
+    }
+  }
+
   // Map pure-engine transition errors to HTTP 400.
   private guard(fn: () => void) {
     try {
@@ -512,7 +539,8 @@ export class RunsService extends BaseRepository<Run> {
     } catch (err) {
       failStep(state, index, errMessage(err));
     }
-    return this.persist(doc, state, actorId);
+    try { return await this.persist(doc, state, actorId); }
+    catch (e) { return this.translatePersistError(e, state); }
   }
 
   // Apply an image operation (upscale/variation/outpaint) to a result asset:
@@ -563,7 +591,8 @@ export class RunsService extends BaseRepository<Run> {
     } catch (err) {
       failDerivedStep(state, index, errMessage(err));
     }
-    return this.persist(doc, state, actorId);
+    try { return await this.persist(doc, state, actorId); }
+    catch (e) { return this.translatePersistError(e, state); }
   }
 
   // Persist any media a step produced as Asset docs and stamp their ids onto the
@@ -612,7 +641,8 @@ export class RunsService extends BaseRepository<Run> {
     const present = await this.keysPresent(doc.workspaceId);
     const state = toState(doc);
     await this.advance(doc, state, present, actorId);
-    return this.persist(doc, state, actorId);
+    try { return await this.persist(doc, state, actorId); }
+    catch (e) { return this.translatePersistError(e, state); }
   }
 
   // Called by the poller when an async job finishes successfully. Marks the step
@@ -620,11 +650,11 @@ export class RunsService extends BaseRepository<Run> {
   async resumeAfterAsync(doc: RunDocument, index: number, output: StepRunOutput, actorId: string) {
     const present = await this.keysPresent(doc.workspaceId);
     const state = toState(doc);
-    if (state.steps[index]?.status !== StepStatus.Running) return this.persist(doc, state, actorId);
+    if (state.steps[index]?.status !== StepStatus.Running) return this.persistOrDrop(doc, state, actorId);
     completeStep(state, index, output);
     await this.saveAssets(doc, state, index, output, actorId);
     await this.advance(doc, state, present, actorId);
-    return this.persist(doc, state, actorId);
+    return this.persistOrDrop(doc, state, actorId);
   }
 
   // Returns all runs that have a step with an in-flight async job (for the poller).
