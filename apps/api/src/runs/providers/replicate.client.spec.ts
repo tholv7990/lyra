@@ -53,4 +53,16 @@ describe('ReplicateClient', () => {
       .rejects.toThrow(/invalid.*slug/i);
     expect(f).not.toHaveBeenCalled();
   });
+
+  it('progressOf returns 100 for succeeded', () => {
+    const client = new ReplicateClient();
+    expect(client.progressOf({ status: 'succeeded' } as any)).toBe(100);
+  });
+
+  it('progressOf returns a number > 0 for processing', () => {
+    const client = new ReplicateClient();
+    const progress = client.progressOf({ status: 'processing' } as any);
+    expect(typeof progress).toBe('number');
+    expect(progress!).toBeGreaterThan(0);
+  });
 });

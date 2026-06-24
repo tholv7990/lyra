@@ -6,6 +6,7 @@ import {
   beginStep,
   completeStep,
   failStep,
+  submitAsyncStep,
   approveGateAt,
   rejectGateAt,
   resetRun,
@@ -135,6 +136,20 @@ describe('run engine', () => {
     expect(s.steps[0].status).toBe(StepStatus.Error);
     expect(s.steps[0].error).toBe('Claude returned an empty response');
     expect(s.status).toBe(RunStatus.Error);
+  });
+
+  it('submitAsyncStep records jobId + progress and stays Running without advancing', () => {
+    const s = freshState();
+    // Build a state with >=2 steps; step 0 is Running via beginStep.
+    beginStep(s, 0);
+    expect(s.steps[0].status).toBe(StepStatus.Running);
+    expect(s.currentStep).toBe(0);
+    submitAsyncStep(s, 0, 'job1');
+    expect(s.steps[0].jobId).toBe('job1');
+    expect(s.steps[0].progress).toBe(0);
+    expect(s.steps[0].status).toBe(StepStatus.Running);
+    expect(s.status).toBe(RunStatus.Running);
+    expect(s.currentStep).toBe(0);
   });
 
   it('resets back to a clean idle run', () => {

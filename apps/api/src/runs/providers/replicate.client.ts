@@ -6,7 +6,7 @@ const POLL_DEADLINE_MS = 240_000; // ~4 min, just under the browser fetch ceilin
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-interface Prediction {
+export interface Prediction {
   id: string;
   status: string; // starting | processing | succeeded | failed | canceled
   output?: unknown;
@@ -35,7 +35,7 @@ export class ReplicateClient {
     return url;
   }
 
-  private async create(model: string, input: object, token: string): Promise<Prediction> {
+  async create(model: string, input: object, token: string): Promise<Prediction> {
     const res = await fetch(`${API}/models/${model}/predictions`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -49,13 +49,21 @@ export class ReplicateClient {
     return data as Prediction;
   }
 
-  private async get(id: string, token: string): Promise<Prediction> {
+  async get(id: string, token: string): Promise<Prediction> {
     const res = await fetch(`${API}/predictions/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) throw new Error(`replicate get ${id} -> ${res.status}`);
     return (await res.json()) as Prediction;
+  }
+
+  // Best-effort 0–100 from Replicate status; undefined when indeterminate.
+  progressOf(p: Prediction): number | undefined {
+    if (p.status === 'succeeded') return 100;
+    if (p.status === 'starting') return 5;
+    if (p.status === 'processing') return 50;
+    return undefined;
   }
 
   private async pollUntilDone(

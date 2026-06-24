@@ -238,6 +238,8 @@ export interface Step {
   startedAt?: string;
   finishedAt?: string;
   cached?: boolean;
+  jobId?: string;       // async (video) provider job id, set when a long job is submitted
+  progress?: number;    // 0–100, async generation progress (poller updates it)
   evidence?: EvidenceClaim[];
   sources?: SourceRow[];
   data?: Record<string, unknown>;

@@ -45,6 +45,7 @@ import { ActionRegistry } from './providers/action.registry';
 import { TavilyClient } from './providers/tavily.client';
 import { FirecrawlClient } from './providers/firecrawl.client';
 import { ResearchStepProvider } from './providers/research.provider';
+import { VideoJobPoller } from './video-job.poller';
 
 @Module({
   imports: [
@@ -100,6 +101,8 @@ import { ResearchStepProvider } from './providers/research.provider';
     TavilyClient,
     FirecrawlClient,
     ResearchStepProvider,
+    // Async video poller: advances in-flight Replicate predictions.
+    VideoJobPoller,
   ],
   exports: [RunsService], // Lyra Copilot reads runs
 })

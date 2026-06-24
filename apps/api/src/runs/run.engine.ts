@@ -177,6 +177,14 @@ export function skipStep(state: RunState, index: number): void {
     state.currentStep >= state.steps.length ? RunStatus.Done : RunStatus.Idle;
 }
 
+// A long job was SUBMITTED (video): record jobId + 0% and STAY Running (set by
+// beginStep). The poller completes it later via resumeAfterAsync. No advance.
+export function submitAsyncStep(state: RunState, index: number, jobId: string): void {
+  const step = state.steps[index];
+  step.jobId = jobId;
+  step.progress = 0;
+}
+
 // Record a provider failure: the step errors and the run halts in error.
 export function failStep(state: RunState, index: number, message: string): void {
   const step = state.steps[index];

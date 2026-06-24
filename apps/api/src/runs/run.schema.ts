@@ -86,6 +86,12 @@ export class RunStep {
 
   @Prop()
   cached?: boolean;
+
+  @Prop()
+  jobId?: string;
+
+  @Prop()
+  progress?: number;
 }
 const RunStepSchema = SchemaFactory.createForClass(RunStep);
 

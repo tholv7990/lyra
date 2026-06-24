@@ -112,4 +112,5 @@ export default {
   phaseEconomicsSub: 'chấm các yếu tố + kinh tế đơn vị',
   phaseDecide: 'Chấm điểm & quyết định',
   phaseDecideSub: 'điểm có trọng số → hạng → quyết định → lưu',
+  generatingVideo: 'Đang tạo video…',
 } as const;

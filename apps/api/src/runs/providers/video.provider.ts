@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AssetStorageService } from '../../assets/asset-storage.service';
-import { ReplicateClient } from './replicate.client';
+import { ReplicateClient, type Prediction } from './replicate.client';
 import type { StepProvider, StepRunContext, StepRunOutput } from './step-provider.interface';
 
 const DEFAULT_VIDEO_MODEL = 'minimax/video-01';
@@ -45,18 +45,28 @@ export class VideoStepProvider implements StepProvider {
         ? ` (note: ${model} has no image-to-video input — pick an img2video-capable model to animate the input.)`
         : '';
 
-    const outputUrl = await this.replicate.run(model, input, ctx.apiKey, {});
+    const created = await this.replicate.create(model, input, ctx.apiKey);
+    return {
+      result: `Submitted video generation with ${model}.${imageIgnoredNote}`,
+      async: { jobId: created.id },
+      usage: { tokens: 0 },
+    };
+  }
 
-    // Re-host to R2 — Replicate delivery URLs expire, so the asset must be durable.
+  // Re-host a finished Replicate prediction's mp4 to durable storage (R2). Used by
+  // the video-job poller when the prediction succeeds. Replicate URLs expire.
+  async finalize(pred: Prediction, model: string): Promise<StepRunOutput> {
+    const out = pred.output;
+    const outputUrl = Array.isArray(out) ? out[0] : out;
+    if (typeof outputUrl !== 'string' || !outputUrl) throw new Error('Replicate returned no video output.');
     const res = await fetch(outputUrl, { signal: AbortSignal.timeout(120_000) });
     if (!res.ok) throw new Error(`Failed to fetch the rendered video (HTTP ${res.status}).`);
     const buf = Buffer.from(await res.arrayBuffer());
     const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.mp4`;
     const url = await this.storage.store(buf, 'video/mp4', key);
-
     return {
-      result: `Generated 1 video with ${model}.${imageIgnoredNote}`,
-      assets: [{ type: 'video', url, meta: { role: 'generated', model, imageInput: useImage } }],
+      result: `Generated 1 video with ${model}.`,
+      assets: [{ type: 'video', url, meta: { role: 'generated', model } }],
       usage: { tokens: 0 },
     };
   }

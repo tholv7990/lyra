@@ -261,3 +261,9 @@
 .rt-phase-name { font-weight: 600; color: var(--ink); font-size: 13px; }
 .rt-phase-sub { color: var(--ink-muted); font-size: 12px; }
 .rt-phase-count { margin-left: auto; color: var(--ink-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* async video progress */
+.rt-progress { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.rt-progress-bar { flex: 1; height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.rt-progress-bar span { display: block; height: 100%; background: var(--primary); transform-origin: left; transition: transform 0.3s; }
+.rt-progress-label { font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
