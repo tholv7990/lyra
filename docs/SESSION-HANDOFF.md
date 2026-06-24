@@ -1,3 +1,33 @@
+# Session handoff — June 24, 2026 — **"Fix defer" + P5 memory + run-step editing/QA + multimodal steps + files tenant-fence** (11 features shipped to dev)
+
+> **Read this first.** Very long build session, all via the superpowers flow (brainstorm → spec → plan → **subagent-driven** → **security-reviewer** → green suite → **merge `--no-ff` → `codex-dev`** → rebuild dist → `pm2 restart` + boot-verify → `git push origin codex-dev:dev`). **`origin/dev` HEAD = `3556c38e`** (== local `codex-dev`). Nothing undeployed — clean stopping point. **Commit/push ONLY when the user asks.** Stage explicit files — **never `git add -A`** (a Codex agent shares this tree; it committed a design-doc cleanup `e94b7ce5` mid-session — **re-verify HEAD + a clean tree before every merge**). **EOL: `apps/api/src/runs/runs.service.ts` is CRLF-base** — stage it with `git -c core.autocrlf=false add`; **all other files are LF** (normal `git add`); verify each staged diff is content-only, not a whole-file flip (`git show HEAD:f | grep $'\r'` LIES — use `git cat-file blob HEAD:f | tr -cd '\r' | wc -c`). Web tests = `renderToStaticMarkup` node-env (no RTL/jsdom). Every dropdown = shared **`MenuPicker`**. The reusable chat editor is **`apps/web/src/components/Composer.tsx`** (text + media + `ModelPicker`).
+
+## ✅ Shipped this session (all live on dev, in order)
+1. **Fix-defer Tier A** (`8c8c3421`): risk-screen "couldn't screen" marker (no false 0-risk), v2 evidence-corpus `(sourceId)` parity, crawl direct-fetch 20s timeout.
+2. **Fix-defer Tier B** (`ac9b2ad7`): crawl **SSRF guard** `safeFetchFollow` (per-redirect-hop private-IP block, reuses Codex's `common/url.ts`) + predicate hardening (dotted v4-mapped/`100.64`/`::`); **run optimistic-concurrency** (`Run` `__v` + `commit` reload-retry for cheap transitions, loud-fail for expensive, log Replicate jobId).
+3. **P5 memory privacy** (`f211616b`): personal (`userId`) memories strictly private to owner; `recall`/`list` scoped, `remember` no-impersonation, `forget` ownership-fenced; `source` DTO bounded.
+4. **P5 SP-A assistant wiring** (`997bf8aa`): Chats recalls workspace+own memories into the system prompt (non-LLM, best-effort) + a **Remember** affordance (`RememberModal`).
+5. **P5 SP-B run-engine token win** (`4bb7fc93`): `selectPriorContext` (shared, recency+budget) replaces append-all prior context, default ON, flag `RUN_CONTEXT_RECALL=off`.
+6. **Run prompt edit → promote** (`6cdb2879`): edit any run step's prompt + **Save to pipeline** → per-step **`promptOverride`** (fork B; the **3-layer prompt model**: library Prompt → pipeline step `promptId`/`promptOverride` → run-step snapshot). `Step.pipelineStepId` provenance; tenant-fenced promote.
+7. **P6 self-review / post-render asset QA** (`21c77264`): render-service **`POST /review`** (sharp: decode/blank/dims) → `RunsService.reviewAssets` after each `saveAssets` → engine **`gateForReview`** (reuses AwaitingGate) on a fail; **fail-open** on outage; per-step "QA generated media" toggle; run-view "Auto-QA found issues". Deploy restarted **lyra-render + lyra-api**.
+8. **Multimodal pipeline-step prompts** (`15a469d0`): `PipelineStep.media`/`Step.media`; the builder step drawer uses the **Composer** (text+media+model); media snapshotted to the run + **sent to the model** as attachments (`buildStepAttachments` → providers forward `ctx.attachments`; clients already build multimodal content).
+9. **Files workspace-fence** (`97c384c9`): `FilesService.open/readBuffer(id, workspaceId?)` verify `metadata.workspaceId` — closes cross-tenant read-into-model; public `/files/:id` stays capability (Vector-2 signed URLs deferred to Phase 6).
+10. **Run step model/media edit + Composer modal** (`5ee43076`): `PATCH /runs/:id/steps/:i/model` + `.../media`; run-view inline edit replaced by **`StepEditModal`** (Composer popup: prompt+media+model); **Save to pipeline promotes the FULL effective config** (`setStepOverride({promptOverride,provider,model,media})`). Fixes the `gpt-5.5-pro` "not a chat model" pain (edit model in run → re-run → save to pipeline).
+11. **RunStepCard modal parity** (`3556c38e`, web-only/HMR): the builder Run-mode/RunFlow card uses the same `StepEditModal`. **Known minor:** the Composer modal drops the old inline editor's variable-insert chips (`{step:X}`) + dangling-ref warning (same as RunTimeline) — re-add to the Composer if wanted.
+
+## 🔜 Deferred backlog (don't start unless asked)
+- **Vector-2 signed URLs** for the public `/files/:id` route (Phase-6 R2/S3 migration; touches every media-url emission + `<img>`).
+- **SP-C Phase-2 vector recall** — gated by its plan ("only if lean recall measured-insufficient") + **needs Atlas Vector Search** (not feasible on dev's local Mongo). Don't build speculatively.
+- **P5 follow-ons:** Phase-0 structured-state context; Copilot-surface wiring (apply SP-A to `/copilot`); conservative LLM-inference auto-remember.
+- **Composer variable-insert chips + dangling-ref warning** — add to the Composer if the run/builder editors should keep that authoring aid.
+
+## Notes
+- Spec/plan docs written this session are **uncommitted** (per convention), under `docs/superpowers/{specs,plans}/2026-06-24-*`. This handoff entry is also uncommitted.
+- Auto-memories updated/added: `backlog-p4-p5-p6-shipped`, `firecrawl-fetch-shipped`, `run-prompt-edit-promote`, `step-composer-multimodal`, `MEMORY.md` index. Read those for per-feature detail.
+- Codex shares the main tree (design-system overhaul in flight). Re-verify before any merge.
+
+---
+
 # Session handoff — June 23, 2026 — **Product-research feature (v3 "find winning products") built end-to-end** (spine → research provider → engine enablers → pipeline template → UI) · + Viewer Crawler access · + multi-provider run fallback
 
 > **Read this first.** A long build session. Each feature built in its own **worktree off `codex-dev`** via the superpowers flow (brainstorm → spec → plan → subagent-driven), **ff-merged → `codex-dev` → `git push origin codex-dev:dev`**. **`origin/dev` HEAD = `6addbaea`** (== local `codex-dev`). **Most of this session is shared+api → needed `pnpm --filter @lyra/shared build` + `--filter @lyra/api build` + `pm2 restart lyra-api` at each deploy** (boot-verified); only 3c-1 + the mobile hotfix were web (vite HMR, no restart). **Commit/push only when the user asks.** Stage explicit files only — **never `git add -A`** (a Codex agent shares this tree). Design = **Notion** (`docs/notion-design.md`), accent `#0075de`; every dropdown = shared **`MenuPicker`**. Test login: `tholv.7990@gmail.com` / `Putiin15042024@@`. The whole product-research thread is tracked in the **`product-research-spine-shipped`** memory (read it).
