@@ -331,7 +331,7 @@ export class RunsService extends BaseRepository<Run> {
   // at 5). Mirrors ConversationsService.buildAttachments. Best-effort: a
   // readBuffer failure silently skips that attachment so a bad/expired file
   // doesn't block the step.
-  private async buildStepAttachments(media: import('@lyra/shared').PromptMedia[]): Promise<LlmAttachment[]> {
+  private async buildStepAttachments(media: import('@lyra/shared').PromptMedia[], workspaceId: string): Promise<LlmAttachment[]> {
     const out: LlmAttachment[] = [];
     for (const m of media.slice(0, 5)) {
       const mime = m.mime ?? '';
@@ -341,7 +341,7 @@ export class RunsService extends BaseRepository<Run> {
       const id = m.url.split('/').pop();
       if (!id) continue;
       try {
-        const buf = await this.files.readBuffer(id);
+        const buf = await this.files.readBuffer(id, workspaceId);
         out.push({ kind: isImage ? 'image' : 'document', mediaType: mime, dataBase64: buf.toString('base64') });
       } catch {
         // skip unreadable attachments
@@ -444,7 +444,7 @@ export class RunsService extends BaseRepository<Run> {
     // Build model attachments from step.media (images + PDFs, base64). For prompt
     // steps only — action and fan-out steps don't reach here.
     const attachments: LlmAttachment[] = step.media?.length
-      ? await this.buildStepAttachments(step.media)
+      ? await this.buildStepAttachments(step.media, doc.workspaceId)
       : [];
 
     // Per-step cache: reuse an identical prior execution to avoid re-spending. Only
