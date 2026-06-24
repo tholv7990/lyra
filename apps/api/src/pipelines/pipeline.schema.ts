@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import type { PromptMedia } from '@lyra/shared';
 import { Provider, StepMode } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
 
@@ -24,6 +25,10 @@ export class PipelineStepItem {
   // Post-render asset QA toggle (undefined/true = on, false = off).
   @Prop()
   review?: boolean;
+
+  // Media files attached to this step's prompt (sent to the model at run time).
+  @Prop({ type: [Object], default: undefined })
+  media?: PromptMedia[];
 
   // When set, this step maps its prompt over a named run collection (parallel).
   @Prop({ type: Object })

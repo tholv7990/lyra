@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import type { PromptMedia } from '@lyra/shared';
 import { AuditedEntity } from '../common/database/audited.entity';
 
 @Schema({ _id: false })
@@ -104,6 +105,10 @@ export class RunStep {
 
   @Prop({ type: [String], default: undefined })
   reviewIssues?: string[];
+
+  // Media files attached to this step's prompt (sent to the model at run time).
+  @Prop({ type: [Object], default: undefined })
+  media?: PromptMedia[];
 }
 const RunStepSchema = SchemaFactory.createForClass(RunStep);
 

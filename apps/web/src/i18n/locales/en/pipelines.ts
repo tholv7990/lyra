@@ -153,6 +153,8 @@ export default {
   condOpGt: 'greater than',
   condOpLt: 'less than',
   overrideLabel: 'Prompt override (run-time edit)',
+  customizePrompt: 'Customize prompt',
+  composerPlaceholder: "Customize this step's prompt…",
   // Auto-QA toggle in step drawer
   qaToggleLabel: 'QA generated media',
   qaToggleHint: 'After the step produces an image, run a technical quality check and pause for review if issues are found.',

@@ -32,10 +32,12 @@ import { UsersService } from '../users/users.service';
 import { PromptsService } from '../prompts/prompts.service';
 import { PipelinesService } from '../pipelines/pipelines.service';
 import { AssetsService } from '../assets/assets.service';
+import { FilesService } from '../files/files.service';
 import { ProjectsService } from '../projects/projects.service';
 import { toRun, toState } from './run.views';
 import { ProviderRegistry } from './providers/provider.registry';
 import { ActionRegistry } from './providers/action.registry';
+import type { LlmAttachment } from './providers/anthropic.client';
 import type { StepRunOutput, PriorStepResult, StepInputImage } from './providers/step-provider.interface';
 import { gatherInputImages, fetchImagesByUrl } from './providers/image-inputs';
 import { isRetryableProviderError } from './providers/retryable';
@@ -97,6 +99,7 @@ export interface PipelineRunInput {
     kind?: StepKind;
     action?: ActionStep;
     review?: boolean;
+    media?: import('@lyra/shared').PromptMedia[];
   }[];
 }
 
@@ -131,6 +134,7 @@ export class RunsService extends BaseRepository<Run> {
     @InjectModel(StepResultCache.name) private readonly cache: Model<StepResultCache>,
     private readonly pipelines: PipelinesService,
     private readonly renderClient: RenderClient,
+    private readonly files: FilesService,
   ) {
     super(model);
   }
@@ -170,6 +174,8 @@ export class RunsService extends BaseRepository<Run> {
         action: ps.action,
         // Post-render QA toggle snapshotted onto the run step (undefined = on).
         review: ps.review,
+        // Media files snapshotted onto the run step.
+        media: ps.media,
         status: StepStatus.Idle,
         // Store the raw template — project/custom/system vars and {input}/{step:Name}
         // resolve at run time from the run's variable snapshot + prior outputs.
@@ -321,6 +327,29 @@ export class RunsService extends BaseRepository<Run> {
     }
   }
 
+  // Build LlmAttachments from a step's media array (images + PDFs only; capped
+  // at 5). Mirrors ConversationsService.buildAttachments. Best-effort: a
+  // readBuffer failure silently skips that attachment so a bad/expired file
+  // doesn't block the step.
+  private async buildStepAttachments(media: import('@lyra/shared').PromptMedia[]): Promise<LlmAttachment[]> {
+    const out: LlmAttachment[] = [];
+    for (const m of media.slice(0, 5)) {
+      const mime = m.mime ?? '';
+      const isImage = mime.startsWith('image/');
+      const isPdf = mime === 'application/pdf';
+      if (!isImage && !isPdf) continue;
+      const id = m.url.split('/').pop();
+      if (!id) continue;
+      try {
+        const buf = await this.files.readBuffer(id);
+        out.push({ kind: isImage ? 'image' : 'document', mediaType: mime, dataBase64: buf.toString('base64') });
+      } catch {
+        // skip unreadable attachments
+      }
+    }
+    return out;
+  }
+
   // Dispatch one step to its provider. The decrypted key is resolved here (BYOK,
   // per-workspace) and prior results are passed as context.
   private async executeStep(
@@ -412,14 +441,22 @@ export class RunsService extends BaseRepository<Run> {
       }
     }
 
+    // Build model attachments from step.media (images + PDFs, base64). For prompt
+    // steps only — action and fan-out steps don't reach here.
+    const attachments: LlmAttachment[] = step.media?.length
+      ? await this.buildStepAttachments(step.media)
+      : [];
+
     // Per-step cache: reuse an identical prior execution to avoid re-spending. Only
     // key-requiring providers (skips Crawl); action + fan-out never reach here. Best-effort.
     // The key folds in the auto-appended prior context (when used=false) AND the image
-    // inputs, so an upstream result change or a different chained image always misses.
+    // inputs AND media, so an upstream result change, a different chained image, or a
+    // media change always misses.
     const cacheable = providerNeedsKey(provider);
     const context =
       (used ? '' : priorResults.map((r) => r.result).join(' ')) +
-      (inputImages.length ? ' img:' + inputImages.map((i) => i.url).join(',') : '');
+      (inputImages.length ? ' img:' + inputImages.map((i) => i.url).join(',') : '') +
+      (attachments.length ? ' media:' + (step.media ?? []).map((m) => m.url).join(',') : '');
     const cacheKey = cacheable
       ? stepCacheKey({ workspaceId: doc.workspaceId, provider, model: stepForRun.model, prompt, context })
       : '';
@@ -432,7 +469,7 @@ export class RunsService extends BaseRepository<Run> {
       }
     }
     const { output, servedBy } = await this.executeWithFallback(
-      provider, stepForRun, apiKey, priorResults, inputImages, doc.workspaceId, ledger,
+      provider, stepForRun, apiKey, priorResults, inputImages, doc.workspaceId, ledger, attachments,
     );
     // Cache only the PRIMARY's result — a transient fallback must not poison the
     // (provider+model)-keyed cache (cacheKey above was built from the primary).
@@ -520,11 +557,12 @@ export class RunsService extends BaseRepository<Run> {
     inputImages: StepInputImage[],
     workspaceId: string,
     ledger: RunLedger,
+    attachments: LlmAttachment[] = [],
   ): Promise<{ output: StepRunOutput; servedBy: Provider }> {
     try {
       const output = await this.registry
         .get(primary)
-        .execute({ step: stepForRun, apiKey, priorResults, inputImages, workspaceId, ledger });
+        .execute({ step: stepForRun, apiKey, priorResults, inputImages, attachments, workspaceId, ledger });
       return { output, servedBy: primary };
     } catch (primaryErr) {
       if (!isRetryableProviderError(primaryErr)) throw primaryErr;
@@ -538,7 +576,7 @@ export class RunsService extends BaseRepository<Run> {
         try {
           const output = await this.registry
             .get(alt)
-            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages, workspaceId, ledger });
+            .execute({ step: altStep, apiKey: altKey, priorResults, inputImages, attachments, workspaceId, ledger });
           this.logger.warn(
             `step "${stepForRun.name ?? stepForRun.key ?? ''}": ${primary} failed (${errMessage(primaryErr)}) → served by ${alt}`,
           );

@@ -45,6 +45,7 @@ export class OpenAiCompatStepProvider implements StepProvider {
       model,
       system: SYSTEM_PROMPT,
       prompt: parts.join('\n'),
+      attachments: ctx.attachments,
     });
     if (!out.text) throw new Error(`No response from ${provider}`);
     return { result: out.text, usage: out.usage };

@@ -53,6 +53,7 @@ export class AnthropicStepProvider implements StepProvider {
       model: this.resolveModel(ctx.step.model),
       system: SYSTEM_PROMPT,
       prompt: parts.join('\n'),
+      attachments: ctx.attachments,
     });
 
     if (!completion.text) {

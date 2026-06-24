@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   defaultModel,
+  isAllowedMedia,
+  MEDIA_MAX_BYTES,
   providerNeedsKey,
   keyProviderFor,
   Provider,
@@ -20,6 +22,7 @@ import {
   type PipelineStep,
   type PipelineVariable,
   type Prompt,
+  type PromptMedia,
   type Run,
 } from '@lyra/shared';
 
@@ -49,6 +52,7 @@ import { EditorShell } from '../components/EditorShell';
 import { BuildWithAiModal } from '../components/BuildWithAiModal';
 import { RunFlow } from '../components/RunFlow';
 import { useFlowPager } from '../components/FlowPager';
+import { Composer } from '../components/Composer';
 import { PromptPicker } from '../components/PromptPicker';
 import { BrandStepFields } from '../components/BrandStepFields';
 import { PromptDetails } from '../components/PromptDetails';
@@ -98,6 +102,7 @@ export function PipelineBuilder() {
   const [steps, setSteps] = useState<PipelineStep[]>([]);
   const [variables, setVariables] = useState<PipelineVariable[]>([]);
   const [editing, setEditing] = useState<Editing>(null);
+  const [stepUploading, setStepUploading] = useState(0); // pending file uploads in the step drawer
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +124,38 @@ export function PipelineBuilder() {
       })),
     );
     setDirty(true);
+  }
+
+  // Upload files attached to the step being edited. Mirrors PromptEditor's upload
+  // helper: validate type/size, POST multipart to /files, append the returned
+  // PromptMedia to ed.media, track an in-flight counter for the Composer spinner.
+  async function uploadStepFiles(files: FileList | null) {
+    if (!files || !wsId || !editing) return;
+    setError(null);
+    for (const file of Array.from(files)) {
+      if (!isAllowedMedia(file.type, file.name)) {
+        setError(t('prompts.errFileType', { name: file.name }));
+        continue;
+      }
+      if (file.size > MEDIA_MAX_BYTES) {
+        setError(t('prompts.errFileSize', { name: file.name }));
+        continue;
+      }
+      setStepUploading((u) => u + 1);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const media = await api<PromptMedia>(`/workspaces/${wsId}/files`, { method: 'POST', body: fd });
+        setEditing((prev) => {
+          if (!prev) return prev;
+          return { ...prev, step: { ...prev.step, media: [...(prev.step.media ?? []), media] } };
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t('prompts.errUpload', { name: file.name }));
+      } finally {
+        setStepUploading((u) => u - 1);
+      }
+    }
   }
 
   // Pre-fill a new pipeline from an AI-generated draft handed over via router
@@ -290,6 +327,9 @@ export function PipelineBuilder() {
       action: isAction ? s.action : undefined,
       // review: undefined = on (default), false = off. Only persist false explicitly.
       review: s.review === false ? false : undefined,
+      // Media attached to this step's prompt — omit when empty so the field stays
+      // absent rather than an empty array on the wire.
+      media: s.media?.length ? s.media : undefined,
     };
     setSteps((list) => {
       if (editing.isNew) {
@@ -729,26 +769,39 @@ export function PipelineBuilder() {
                     });
                   }}
                 />
-                {ed.promptOverride?.trim() && (
-                  <div className="addstep-override">
-                    <div className="addstep-override-head">
-                      <span className="addstep-override-label">{t('pipelines.overrideLabel')}</span>
+                <div className="addstep-override">
+                  <div className="addstep-override-head">
+                    <span className="addstep-override-label">{t('pipelines.customizePrompt')}</span>
+                    {ed.promptOverride?.trim() && (
                       <button
                         type="button"
                         className="txt-btn addstep-override-revert"
-                        onClick={() => setEditing({ ...editing!, step: { ...ed, promptOverride: undefined } })}
+                        onClick={() => setEditing({ ...editing!, step: { ...ed, promptOverride: undefined, media: undefined } })}
                       >
                         {t('run.revertToLibrary')}
                       </button>
-                    </div>
-                    <textarea
-                      className="text-input addstep-override-text"
-                      rows={4}
-                      value={ed.promptOverride}
-                      onChange={(e) => setEditing({ ...editing!, step: { ...ed, promptOverride: e.target.value } })}
-                    />
+                    )}
                   </div>
-                )}
+                  <Composer
+                    value={ed.promptOverride ?? ''}
+                    onChange={(v) => setEditing({ ...editing!, step: { ...ed, promptOverride: v } })}
+                    media={ed.media ?? []}
+                    onFiles={uploadStepFiles}
+                    onRemoveMedia={(i) =>
+                      setEditing({
+                        ...editing!,
+                        step: { ...ed, media: (ed.media ?? []).filter((_, idx) => idx !== i) },
+                      })
+                    }
+                    uploading={stepUploading}
+                    catalog={catalog}
+                    provider={ed.provider}
+                    model={ed.model}
+                    onModelChange={(provider, model) => setEditing({ ...editing!, step: { ...ed, provider, model } })}
+                    hideSend
+                    placeholder={t('pipelines.composerPlaceholder')}
+                  />
+                </div>
               </>
             )}
 

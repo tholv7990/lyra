@@ -31,6 +31,7 @@ import {
   type StepCondition,
   type UpdatePipelineDto,
 } from '@lyra/shared';
+import { PromptMediaBody } from '../../prompts/dto/prompts.dto';
 
 const CONDITION_OPS: ConditionOp[] = ['eq', 'ne', 'contains', 'exists', 'empty', 'gt', 'lt'];
 
@@ -98,6 +99,14 @@ export class PipelineStepBody implements PipelineStepInput {
   @IsOptional()
   @IsBoolean()
   review?: boolean;
+
+  // Media files attached to this step's prompt (sent to the model at run time).
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => PromptMediaBody)
+  media?: PromptMediaBody[];
 
   @IsEnum(Provider)
   provider!: Provider;

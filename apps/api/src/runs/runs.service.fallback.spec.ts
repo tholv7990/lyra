@@ -14,6 +14,7 @@ function makeSvc(execMap: ExecMap, keyedProviders: Provider[]) {
     {} as never, {} as never, {} as never, {} as never, {} as never,
     {} as never, // pipelines
     { review: jest.fn().mockResolvedValue({ pass: true, issues: [] }) } as never, // renderClient
+    {} as never, // files (FilesService — step-media attachments)
   );
   return { svc, keys };
 }
