@@ -41,6 +41,11 @@ function toStep(s: RunStep): Step {
     startedAt: s.startedAt,
     finishedAt: s.finishedAt,
     cached: s.cached,
+    // async (video) job fields must survive the doc<->state round-trip: persist
+    // assigns state.steps wholesale, so dropping these here would wipe an in-flight
+    // jobId on the next progress update (poller would lose the job).
+    jobId: s.jobId,
+    progress: s.progress,
     // kind/action must survive reload so an action step (incl. the research CODE
     // actions) is dispatched correctly in the gated step-by-step flow; the
     // structured ledger fields must survive so prior steps feed the RunLedger.
