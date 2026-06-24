@@ -91,6 +91,11 @@ export class PipelinesService extends BaseRepository<Pipeline> {
     text: string,
     actorId: string,
   ): Promise<PipelineModel> {
+    // Enforce the same bound the builder DTO applies (@MaxLength 8000) — the promote
+    // path comes from the run-step prompt, which isn't length-capped at its source.
+    if (text.length > 8000) {
+      throw new BadRequestException('Prompt is too long to save to the pipeline (max 8000 characters).');
+    }
     const pipeline = await this.findOne({ _id: pipelineId, workspaceId });
     if (!pipeline) throw new NotFoundException('Pipeline not found');
     const step = pipeline.steps.find((s) => s.id === stepId);

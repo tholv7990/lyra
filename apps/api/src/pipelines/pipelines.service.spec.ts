@@ -106,6 +106,15 @@ describe('PipelinesService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
+    it('rejects an over-length prompt (enforces the 8000-char override bound) before any DB read', async () => {
+      const service = makeService();
+      const findOne = jest.spyOn(service as any, 'findOne');
+      await expect(
+        service.setStepOverride('ws-1', 'pl-1', 'step-1', 'x'.repeat(8001), 'actor'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(findOne).not.toHaveBeenCalled();
+    });
+
     it('throws BadRequest when the step id does not exist on the pipeline', async () => {
       const service = makeService();
       const fakePipeline = {
