@@ -110,6 +110,11 @@ export interface UpdateStepModelDto {
   model: string;
 }
 
+// Editing a run step's attached media in the workbench (sent to the model on re-run).
+export interface UpdateStepMediaDto {
+  media: PromptMedia[];
+}
+
 export interface UpsertKeyDto {
   key: string;
 }

@@ -1,6 +1,8 @@
-import { IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Min, MinLength, ValidateIf } from 'class-validator';
-import type { RateRunDto, RunPipelineDto, RunStepDto, UpdateStepModelDto, UpdateStepPromptDto } from '@lyra/shared';
+import { ArrayMaxSize, IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Min, MinLength, ValidateIf, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import type { RateRunDto, RunPipelineDto, RunStepDto, UpdateStepMediaDto, UpdateStepModelDto, UpdateStepPromptDto } from '@lyra/shared';
 import { ImageOp, Provider, type ImageActionDto } from '@lyra/shared';
+import { PromptMediaBody } from '../../prompts/dto/prompts.dto';
 
 export class UpdatePromptBody implements UpdateStepPromptDto {
   @IsString()
@@ -14,6 +16,14 @@ export class UpdateStepModelBody implements UpdateStepModelDto {
   @IsString()
   @MinLength(1)
   model!: string;
+}
+
+export class UpdateStepMediaBody implements UpdateStepMediaDto {
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => PromptMediaBody)
+  media!: PromptMediaBody[];
 }
 
 // Rate a run's overall output. `value: null` clears it (validation runs only when

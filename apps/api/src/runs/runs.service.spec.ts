@@ -949,3 +949,33 @@ describe('RunsService step-media (multimodal)', () => {
     expect(ctx.attachments).toEqual([]);
   });
 });
+
+describe('RunsService.updateStepMedia', () => {
+  const fakeDoc = (over: Record<string, unknown> = {}) => ({
+    _id: 'r1',
+    steps: [{ index: 0 }],
+    updatedBy: '',
+    save: jest.fn().mockResolvedValue(undefined),
+    ...over,
+  }) as never;
+
+  it('sets the step media and saves', async () => {
+    const svc = makeService({});
+    const doc = fakeDoc();
+    await svc.updateStepMedia(doc, 0, [{ type: 'image', url: '/files/x', mime: 'image/png' }] as never, 'u1');
+    expect((doc as never as { steps: { media?: unknown[] }[] }).steps[0].media).toHaveLength(1);
+    expect((doc as never as { save: jest.Mock }).save).toHaveBeenCalled();
+  });
+
+  it('clears media when given an empty array', async () => {
+    const svc = makeService({});
+    const doc = fakeDoc({ steps: [{ index: 0, media: [{ type: 'image', url: '/files/y' }] }] });
+    await svc.updateStepMedia(doc, 0, [], 'u1');
+    expect((doc as never as { steps: { media?: unknown[] }[] }).steps[0].media).toBeUndefined();
+  });
+
+  it('throws on a missing step', async () => {
+    const svc = makeService({});
+    await expect(svc.updateStepMedia(fakeDoc({ steps: [] }), 0, [], 'u1')).rejects.toBeDefined();
+  });
+});
