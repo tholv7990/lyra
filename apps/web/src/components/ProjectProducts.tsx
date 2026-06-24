@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { Product, UpdateProductDto } from '@lyra/shared';
+import type { Product } from '@lyra/shared';
 import { productsApi, projectProductsApi } from '../lib/products';
-import { ProductDetail } from './ProductDetail';
 import { MenuPicker, type MenuPickerOption } from './MenuPicker';
 
 // ── Props ───────────────────────────────────────────────────────────────────
@@ -18,13 +18,13 @@ interface ProjectProductsProps {
 // Renders the Products section inside a project detail page:
 //   • A MenuPicker to select pool products into the project (POST copy)
 //   • Copy cards with drift badge + refresh + unselect (X)
-//   • Click a card → opens the reused ProductDetail modal
+//   • Click a card → navigates to the full-page product detail (/products/:id)
 
 export function ProjectProducts({ projectId, workspaceId, initialCopies }: ProjectProductsProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [copies, setCopies] = useState<Product[]>(initialCopies ?? []);
   const [pool, setPool] = useState<Product[]>([]);
-  const [selected, setSelected] = useState<Product | null>(null);
   const [selecting, setSelecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,24 +107,6 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
     ...availablePool.map((p) => ({ value: p.id, label: p.name })),
   ];
 
-  // ── update handler for ProductDetail ──────────────────────────────────────
-  async function handleUpdate(patch: UpdateProductDto) {
-    if (!selected) return;
-    await productsApi.update(workspaceId, selected.id, patch);
-    // Refresh the selected product in the modal and in the copies list.
-    const updated = await productsApi.get(workspaceId, selected.id);
-    setSelected(updated);
-    setCopies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-  }
-
-  // ── product refresh for ProductDetail (re-load after run finishes) ────────
-  async function handleProductRefresh() {
-    if (!selected) return;
-    const updated = await productsApi.get(workspaceId, selected.id);
-    setSelected(updated);
-    setCopies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-  }
-
   return (
     <div className="pp-section">
       {/* Section header */}
@@ -161,8 +143,8 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
               className={`lib-card pp-card${copy.drift ? ' pp-card--drift' : ''}`}
               role="button"
               tabIndex={0}
-              onClick={() => setSelected(copy)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelected(copy); }}
+              onClick={() => navigate(`/products/${copy.id}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/products/${copy.id}`); }}
             >
               {/* Thumbnail */}
               {copy.images?.[0] && (
@@ -226,17 +208,6 @@ export function ProjectProducts({ projectId, workspaceId, initialCopies }: Proje
             </div>
           ))}
         </div>
-      )}
-
-      {/* ProductDetail modal for the selected copy */}
-      {selected && (
-        <ProductDetail
-          product={selected}
-          workspaceId={workspaceId}
-          onClose={() => setSelected(null)}
-          onUpdate={handleUpdate}
-          onProductRefresh={handleProductRefresh}
-        />
       )}
     </div>
   );

@@ -1,129 +1,139 @@
-/* ===== Product board — kanban columns of product cards.
-   Inherits .tcol / .tcard / .tboard column chrome from tasks.css.
-   Token-only; no hardcoded colors. */
+/* ===== Product board — design/Products Redesign.html
+   Horizontal kanban of status columns. Token-only; no hardcoded colors.
+   Lives inside .products-page (a flex column that owns the page height). */
 
-.pboard {
+.board-wrap {
   flex: 1;
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 16px 24px 20px;
+  padding: 4px 4px 8px;
+  /* negative side margin so the toolbar padding aligns with column edges */
+  margin: 0 -4px;
 }
 
-.pboard-cols {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 304px;
+  gap: 16px;
   height: 100%;
-  min-height: 0;
+  align-items: start;
 }
 
-/* Column header status dot */
-.pboard-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex: none;
-}
-
-/* Product card extras — layered on top of .tcard */
-.pcard {
-  gap: 0;
-}
-
-.pcard .tcard-top {
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-
-/* Grade chip: A/B/C/D — compact, token-colored */
-.pcard-grade {
-  flex: none;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 3px 6px;
-  border-radius: 5px;
-  background: var(--surface-3);
-  color: var(--ink-muted);
-  letter-spacing: 0.02em;
-}
-
-/* Niche / platform sub-label */
-.pcard-sub {
-  font-size: 11.5px;
-  color: var(--ink-tertiary);
-  margin-bottom: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Footer row: decision pill + score */
-.pcard-foot {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-
-/* Decision pill: TEST_NOW / RESOLVE_GAPS / LOW_COST_VALIDATION / PARK / REJECT */
-.pcard-decision {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  color: var(--primary);
-}
-
-.pcard-score {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-tertiary);
-  margin-left: auto;
-}
-
-/* Empty state */
-.pboard-empty {
+.column {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 56px 24px;
-  text-align: center;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  max-height: 100%;
+  min-height: 0;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
 
-.pboard-empty-ico {
-  color: var(--ink-tertiary);
-  opacity: 0.5;
+.col-head { display: flex; align-items: center; gap: 9px; padding: 13px 14px 11px; }
+.col-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.col-name { font-size: 13px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); }
+.col-count {
+  min-width: 20px; height: 20px; padding: 0 6px; display: inline-grid; place-items: center;
+  border-radius: var(--radius-pill); background: var(--surface-3); color: var(--ink-muted);
+  font-size: 11px; font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums;
+}
+.col-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 0 10px 12px; }
+.col-empty {
+  margin: 2px 0 6px; border: 1px dashed var(--hairline-strong); border-radius: var(--radius-md);
+  padding: 18px 12px; text-align: center; color: var(--ink-tertiary); font-size: 12.5px; line-height: var(--lh-body);
 }
 
-.pboard-empty-msg {
-  margin: 0;
-  font-size: 13.5px;
-  color: var(--ink-tertiary);
-  max-width: 320px;
-  line-height: 1.5;
+/* ===== Product card ===== */
+
+.pcard {
+  text-align: left; width: 100%; background: var(--card);
+  border: 1px solid var(--hairline); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+  padding: 11px 12px 12px; cursor: pointer;
+  transition: box-shadow 0.14s ease, transform 0.14s ease, border-color 0.14s ease;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.pcard:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--hairline-strong); }
+.pcard:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--primary); }
+
+.pcard-top { display: flex; gap: 11px; align-items: flex-start; }
+
+.thumb {
+  width: 52px; height: 52px; flex: none; border-radius: 9px; overflow: hidden; position: relative;
+  border: 1px solid var(--hairline);
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface-1) 6px 12px);
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .ph-label {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.02em; color: var(--ink-tertiary);
+  text-align: center; padding: 2px; overflow: hidden;
+}
+.thumb .img-count {
+  position: absolute; right: 3px; bottom: 3px;
+  background: color-mix(in srgb, var(--ink) 78%, transparent); color: var(--surface-1);
+  font-size: 9px; font-weight: 600; line-height: 1; padding: 2px 4px; border-radius: 4px; font-variant-numeric: tabular-nums;
 }
 
-/* Mobile: inherit tboard column stacking from tasks.css.
-   Columns already switch to full-width vertical at ≤760px via .tcol rules.
-   The scroll container switches to visible overflow so stacked sections flow. */
-@media (max-width: 760px) {
-  .pboard {
-    flex: none;
-    overflow-x: visible;
-    padding: 14px 15px 24px;
+.pcard-id { min-width: 0; flex: 1; }
+.pcard-name {
+  font-size: 14px; font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--ink); line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.grade {
+  flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px;
+  border: 1px solid var(--hairline-strong); background: var(--surface-1);
+  font-size: 11px; font-weight: 700; color: var(--ink-muted); letter-spacing: -0.02em;
+}
+.grade.g-a { color: var(--success); border-color: color-mix(in srgb, var(--success) 32%, transparent); background: color-mix(in srgb, var(--success) 10%, transparent); }
+.grade.g-b { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 30%, transparent); background: var(--primary-tint); }
+.grade.g-c { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 32%, transparent); background: color-mix(in srgb, var(--warning) 10%, transparent); }
+
+.score-row { display: flex; align-items: center; gap: 8px; }
+.score-row .meter { flex: 1; height: 5px; border-radius: var(--radius-pill); background: var(--surface-3); overflow: hidden; }
+.score-row .meter > i { display: block; height: 100%; border-radius: inherit; }
+.score-row .meter.b-high > i { background: var(--success); }
+.score-row .meter.b-mid > i  { background: var(--primary); }
+.score-row .meter.b-low > i  { background: var(--warning); }
+.score-row .meter.b-vlow > i { background: var(--danger); }
+.score-val { font-size: 11px; font-weight: 600; color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score-val b { color: var(--ink); }
+
+.pcard-foot { display: flex; align-items: center; gap: 8px; }
+.pcard-decision {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 5px; background: var(--primary-tint); color: var(--primary);
+}
+
+/* ===== Empty state (no products at all) ===== */
+
+.pboard-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 56px 24px; text-align: center; flex: 1; min-height: 0;
+}
+.pboard-empty-ico { color: var(--ink-tertiary); opacity: 0.5; }
+.pboard-empty-msg { margin: 0; font-size: 13.5px; color: var(--ink-tertiary); max-width: 320px; line-height: var(--lh-body); }
+
+/* ===== Mobile (≤900px): columns stack vertically, no horizontal overflow ===== */
+
+@media (max-width: 900px) {
+  .board-wrap {
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex: 1;
   }
-
-  .pboard-cols {
+  .board {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 18px;
+    grid-auto-flow: initial;
+    grid-auto-columns: initial;
     height: auto;
+    gap: 12px;
   }
+  .column { max-height: none; }
+  .col-body { overflow: visible; }
 }

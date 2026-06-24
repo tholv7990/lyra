@@ -22,6 +22,23 @@ export const PRODUCT_STATUS_COLOR: Record<ProductStatus, string> = {
   [ProductStatus.Killed]:     'var(--danger)',
 };
 
+// Grade chip color class: A → success, B → primary, C/lower → warning.
+function gradeClass(grade?: string): string {
+  if (!grade) return '';
+  const g = grade[0]?.toUpperCase();
+  if (g === 'A') return 'g-a';
+  if (g === 'B') return 'g-b';
+  return 'g-c';
+}
+
+// Meter band from a 0–100 score: ≥75 high, ≥50 mid, ≥25 low, else very-low.
+function meterBand(pct: number): string {
+  if (pct >= 75) return 'b-high';
+  if (pct >= 50) return 'b-mid';
+  if (pct >= 25) return 'b-low';
+  return 'b-vlow';
+}
+
 function groupByStatus(products: Product[]): Record<ProductStatus, Product[]> {
   const out = Object.fromEntries(
     PRODUCT_STATUS_ORDER.map((s) => [s, [] as Product[]]),
@@ -32,7 +49,7 @@ function groupByStatus(products: Product[]): Record<ProductStatus, Product[]> {
   return out;
 }
 
-// The product kanban board — mirrors TaskList column layout.
+// The product kanban board — design/Products Redesign.html.
 // Props are pure data: the page owns loading; this is a pure render.
 export function ProductBoard({
   products,
@@ -61,54 +78,75 @@ export function ProductBoard({
   const grouped = groupByStatus(products);
 
   return (
-    <div className="pboard">
-      <div className="pboard-cols">
+    <div className="board-wrap">
+      <div className="board">
         {PRODUCT_STATUS_ORDER.map((status) => {
           const col = grouped[status];
           return (
-            <div className="tcol" key={status}>
-              <div className="tcol-head">
+            <div className="column" key={status}>
+              <div className="col-head">
                 <span
-                  className="pboard-status-dot"
+                  className="col-dot"
                   style={{ background: PRODUCT_STATUS_COLOR[status] }}
                   aria-hidden="true"
                 />
-                <span className="tcol-name">{t(`projects.productStatus.${status}`)}</span>
-                <span className="tcol-count">{col.length}</span>
+                <span className="col-name">{t(`projects.productStatus.${status}`)}</span>
+                <span className="col-count">{col.length}</span>
               </div>
-              <div className="tcol-body">
-                {col.map((product) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    className="tcard pcard"
-                    onClick={() => onOpen(product)}
-                  >
-                    <div className="tcard-top">
-                      <span className="tcard-name">{product.name}</span>
-                      {product.grade && (
-                        <span className="pcard-grade" aria-label={t('projects.productGrade')}>
-                          {product.grade}
-                        </span>
-                      )}
-                    </div>
+              <div className="col-body">
+                {col.length === 0 ? (
+                  <div className="col-empty">{t('projects.noProducts')}</div>
+                ) : (
+                  col.map((product) => {
+                    const imgCount = product.images?.length ?? 0;
+                    const heroImage = product.images?.[0];
+                    const scorePct = product.score !== undefined ? Math.max(0, Math.min(100, product.score)) : null;
+                    return (
+                      <button
+                        key={product.id}
+                        type="button"
+                        className="pcard"
+                        onClick={() => onOpen(product)}
+                      >
+                        <div className="pcard-top">
+                          <span className="thumb">
+                            {heroImage ? (
+                              <img src={heroImage} alt="" />
+                            ) : (
+                              <span className="ph-label" aria-hidden="true">
+                                {product.niche ?? product.source?.platform ?? 'IMG'}
+                              </span>
+                            )}
+                            {imgCount > 1 && <span className="img-count">{imgCount}</span>}
+                          </span>
+                          <span className="pcard-id">
+                            <span className="pcard-name">{product.name}</span>
+                          </span>
+                          {product.grade && (
+                            <span className={`grade ${gradeClass(product.grade)}`} aria-label={t('projects.productGrade')}>
+                              {product.grade}
+                            </span>
+                          )}
+                        </div>
 
-                    {(product.niche ?? product.source?.platform) && (
-                      <div className="pcard-sub">
-                        {product.niche ?? product.source?.platform}
-                      </div>
-                    )}
+                        {scorePct !== null && (
+                          <div className="score-row">
+                            <span className={`meter ${meterBand(scorePct)}`} aria-hidden="true">
+                              <i style={{ width: `${scorePct}%` }} />
+                            </span>
+                            <span className="score-val"><b>{product.score}</b>/100</span>
+                          </div>
+                        )}
 
-                    <div className="pcard-foot">
-                      {product.decision && (
-                        <span className="pcard-decision">{product.decision}</span>
-                      )}
-                      {product.score !== undefined && (
-                        <span className="pcard-score">{product.score}/100</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
+                        {product.decision && (
+                          <div className="pcard-foot">
+                            <span className="pcard-decision">{product.decision}</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
           );
