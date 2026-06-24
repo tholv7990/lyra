@@ -12,10 +12,12 @@ describe('RiskScreenAction', () => {
     expect((out.data as any).riskFlags.unresolvedSafety).toBe(false);
     expect((out.data as any).riskNotes[0]).toMatch(/IP risk/);
   });
-  it('degrades to all-false on bad JSON (no throw)', async () => {
+  it('marks "could not screen" on bad JSON (no throw, no false-clean)', async () => {
     const client = { complete: jest.fn().mockResolvedValue({ text: 'not json' }) };
     const out = await new RiskScreenAction(client as never, client as never, keys as never).execute(ctx());
     expect((out.data as any).riskFlags).toEqual({ unresolvedSafety: false, materialIpRisk: false, misleadingClaimsRequired: false });
-    expect((out.data as any).riskNotes).toEqual([]);
+    expect((out.data as any).riskNotes).toHaveLength(1);
+    expect((out.data as any).riskNotes[0]).toMatch(/could not screen/i);
+    expect(out.result).toMatch(/could not screen/i);
   });
 });

@@ -21,7 +21,7 @@ export class ValidationPlanAction implements ActionProvider {
     if (!aiProvider) throw new BadRequestException('Validation-plan needs an AI provider key (Anthropic/OpenAI/DeepSeek) — add one in Settings.');
     const apiKey = (await this.keys.getDecrypted(ws, aiProvider)) ?? '';
     const model = defaultModel(aiProvider);
-    const corpus = (ctx.ledger.evidence as EvidenceClaim[]).map((c) => `- ${c.statement}`).join('\n') || '(no evidence)';
+    const corpus = (ctx.ledger.evidence as EvidenceClaim[]).map((c) => `- (${c.sourceId}) ${c.statement}`).join('\n') || '(no evidence)';
     const params = { apiKey, model, system: SYS, prompt: `Evidence:\n${corpus}`, maxTokens: 700 };
     let raw: { text: string; usage?: { tokens?: number } };
     if (aiProvider === Provider.Anthropic) raw = await this.anthropic.complete(params);
