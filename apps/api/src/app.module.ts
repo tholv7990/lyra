@@ -24,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
 import { RequestsModule } from './requests/requests.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProductsModule } from './products/products.module';
+import { MemoryModule } from './memory/memory.module';
 import { PostsModule } from './posts/posts.module';
 import { ChannelsModule } from './channels/channels.module';
 import { MonitorModule } from './monitor/monitor.module';
@@ -64,6 +65,7 @@ import { HealthController } from './health.controller';
     RequestsModule,
     TasksModule,
     ProductsModule,
+    MemoryModule,
     PostsModule,
     ChannelsModule,
     MonitorModule,
