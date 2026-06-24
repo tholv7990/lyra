@@ -312,7 +312,7 @@ export function ProductDetailBody({ product, workspaceId, onClose, onUpdate, onP
           <p className="muted" style={{ fontSize: 13 }}>{t('projects.notScored')}</p>
         ) : null}
 
-        {product.riskFlags && (product.riskFlags.unresolvedSafety || product.riskFlags.materialIpRisk || product.riskFlags.misleadingClaimsRequired) && (
+        {product.riskFlags && (product.riskFlags.unresolvedSafety || product.riskFlags.materialIpRisk || product.riskFlags.misleadingClaimsRequired || (product.riskNotes && product.riskNotes.length > 0)) && (
           <section className="pdtl-section">
             <h3 className="pdtl-section-label">{t('projects.riskTitle')}</h3>
             <div className="pdtl-risk-flags">

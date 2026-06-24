@@ -35,7 +35,7 @@ export class CrawlStepProvider implements StepProvider {
       // network error returns an empty body so fetchPage escalates instead of hard-failing.
       directFetch: async (u) => {
         try {
-          const res = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0 (LyraCrawler)' } });
+          const res = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0 (LyraCrawler)' }, signal: AbortSignal.timeout(20000) });
           return { ok: res.ok, status: res.status, body: res.ok ? await res.text() : '' };
         } catch {
           return { ok: false, status: 0, body: '' };
