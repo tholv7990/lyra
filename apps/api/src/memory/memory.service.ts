@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -35,6 +35,9 @@ export class MemoryService extends BaseRepository<Memory> {
   }
 
   async remember(workspaceId: string, dto: RememberDto, actorId: string): Promise<MemoryView> {
+    // Privacy: a personal memory belongs to the actor — you can never write one for
+    // someone else. `userId` omitted ⇒ workspace-shared; `userId === actorId` ⇒ personal.
+    assertSelf(dto.userId, actorId);
     let supersedes: string | undefined;
     if (dto.dedupeKey) {
       const userScope = dto.userId
@@ -69,11 +72,12 @@ export class MemoryService extends BaseRepository<Memory> {
     return this.view(doc as MemoryDocument);
   }
 
-  async recall(workspaceId: string, dto: RecallDto): Promise<MemoryView[]> {
-    const filter: Record<string, unknown> = { workspaceId, active: { $ne: false } };
+  async recall(workspaceId: string, dto: RecallDto, actorId: string): Promise<MemoryView[]> {
+    // Privacy: only ever return shared memories + the actor's own personal ones.
+    assertSelf(dto.userId, actorId);
+    const filter: Record<string, unknown> = { workspaceId, active: { $ne: false }, ...visibilityScope(actorId) };
     if (dto.subjectId) filter.subjectId = dto.subjectId;
     if (dto.kinds?.length) filter.kind = { $in: dto.kinds };
-    if (dto.userId) filter.userId = dto.userId;
 
     let docs = (await this.model.find(filter).exec()) as MemoryDocument[];
 
@@ -100,16 +104,37 @@ export class MemoryService extends BaseRepository<Memory> {
     return this.viewMany(picked);
   }
 
-  async list(workspaceId: string): Promise<MemoryView[]> {
+  async list(workspaceId: string, actorId: string): Promise<MemoryView[]> {
     const docs = (await this.model
-      .find({ workspaceId, active: { $ne: false } }, null, { sort: { updatedAt: -1 } })
+      .find({ workspaceId, active: { $ne: false }, ...visibilityScope(actorId) }, null, { sort: { updatedAt: -1 } })
       .exec()) as MemoryDocument[];
     return this.viewMany(docs);
   }
 
   async forget(id: string, workspaceId: string, actorId: string): Promise<void> {
-    await this.model
-      .updateOne({ _id: id, workspaceId }, { $set: { active: false, updatedBy: actorId } })
+    // Only a shared memory (any member) or the actor's own personal one may be forgotten.
+    // The visibility scope in the filter makes this atomic; a 0-match means it's gone or
+    // belongs to another member — surfaced rather than a silent no-op.
+    const res = await this.model
+      .updateOne(
+        { _id: id, workspaceId, active: { $ne: false }, ...visibilityScope(actorId) },
+        { $set: { active: false, updatedBy: actorId } },
+      )
       .exec();
+    if (!res.matchedCount) {
+      throw new ForbiddenException('Memory not found, already removed, or not yours to forget.');
+    }
+  }
+}
+
+// A member sees/manages shared memories (no userId) + their own personal ones (userId === actor).
+function visibilityScope(actorId: string): Record<string, unknown> {
+  return { $or: [{ userId: { $exists: false } }, { userId: actorId }] };
+}
+
+// A personal memory belongs to the actor; you may never read/write/forget another's.
+function assertSelf(userId: string | undefined, actorId: string): void {
+  if (userId !== undefined && userId !== actorId) {
+    throw new ForbiddenException('You can only access your own personal memories.');
   }
 }

@@ -105,7 +105,7 @@ describe('MemoryService', () => {
     const exec = jest.fn().mockResolvedValue(docs);
     const find = jest.fn().mockReturnValue({ exec });
     const svc = makeService({ find });
-    await svc.recall('ws-1', { subjectId: 'p1' });
+    await svc.recall('ws-1', { subjectId: 'p1' }, 'u1');
     expect(find).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: 'ws-1', subjectId: 'p1', active: { $ne: false } }),
     );
@@ -118,7 +118,7 @@ describe('MemoryService', () => {
     const exec = jest.fn().mockResolvedValue([matching, notMatching]);
     const find = jest.fn().mockReturnValue({ exec });
     const svc = makeService({ find });
-    const views = await svc.recall('ws-1', { query: 'dog' });
+    const views = await svc.recall('ws-1', { query: 'dog' }, 'u1');
     expect(views).toHaveLength(1);
     expect(views[0].id).toBe('m1');
   });
@@ -131,7 +131,7 @@ describe('MemoryService', () => {
     const exec = jest.fn().mockResolvedValue(docs);
     const find = jest.fn().mockReturnValue({ exec });
     const svc = makeService({ find });
-    const views = await svc.recall('ws-1', {});
+    const views = await svc.recall('ws-1', {}, 'u1');
     expect(views.length).toBeLessThanOrEqual(MAX_RECALL_MEMORIES);
   });
 
@@ -145,9 +145,70 @@ describe('MemoryService', () => {
     const exec = jest.fn().mockResolvedValue(docs);
     const find = jest.fn().mockReturnValue({ exec });
     const svc = makeService({ find });
-    const views = await svc.recall('ws-1', {});
+    const views = await svc.recall('ws-1', {}, 'u1');
     // Budget: 1500 tokens; each doc ~400 tokens → at most 3 fit (1200 < 1500 < 1600)
     expect(views.length).toBeLessThanOrEqual(Math.floor(MAX_RECALL_TOKENS / 400) + 1);
     expect(views.length).toBeGreaterThan(0);
+  });
+
+  // ── privacy: no impersonation on write ────────────────────────────────────
+  it('remember rejects a userId that is not the actor (no impersonation)', async () => {
+    const svc = makeService({ create: jest.fn() });
+    await expect(
+      svc.remember('ws-1', { kind: MemoryKind.Preference, text: 'x', userId: 'someone-else' }, 'u1'),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('remember allows a personal memory for yourself (userId === actor)', async () => {
+    const create = jest.fn().mockResolvedValue(fakeDoc({ _id: 'm1', userId: 'u1' }));
+    const svc = makeService({ create });
+    await svc.remember('ws-1', { kind: MemoryKind.Preference, text: 'x', userId: 'u1' }, 'u1');
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1' }));
+  });
+
+  // ── privacy: recall/list scope to shared + own ────────────────────────────
+  it('recall scopes the query to shared memories OR the actor\'s own', async () => {
+    const exec = jest.fn().mockResolvedValue([]);
+    const find = jest.fn().mockReturnValue({ exec });
+    const svc = makeService({ find });
+    await svc.recall('ws-1', {}, 'u1');
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ $or: [{ userId: { $exists: false } }, { userId: 'u1' }] }),
+    );
+  });
+
+  it('recall rejects a userId filter that is not the actor', async () => {
+    const svc = makeService({ find: jest.fn() });
+    await expect(svc.recall('ws-1', { userId: 'other' }, 'u1')).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('list scopes to shared memories OR the actor\'s own', async () => {
+    const exec = jest.fn().mockResolvedValue([]);
+    const find = jest.fn().mockReturnValue({ exec });
+    const svc = makeService({ find });
+    await svc.list('ws-1', 'u1');
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ $or: [{ userId: { $exists: false } }, { userId: 'u1' }] }),
+      null,
+      expect.anything(),
+    );
+  });
+
+  // ── privacy: forget guards ownership ──────────────────────────────────────
+  it('forget soft-deletes when the scoped update matches (own or shared)', async () => {
+    const updateOneExec = jest.fn().mockResolvedValue({ matchedCount: 1 });
+    const updateOne = jest.fn().mockReturnValue({ exec: updateOneExec });
+    const svc = makeService({ updateOne });
+    await svc.forget('m1', 'ws-1', 'u1');
+    expect(updateOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'm1', workspaceId: 'ws-1', $or: [{ userId: { $exists: false } }, { userId: 'u1' }] }),
+      { $set: { active: false, updatedBy: 'u1' } },
+    );
+  });
+
+  it('forget throws 403 when nothing matched (another member\'s personal / not found)', async () => {
+    const updateOne = jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue({ matchedCount: 0 }) });
+    const svc = makeService({ updateOne });
+    await expect(svc.forget('m1', 'ws-1', 'u1')).rejects.toMatchObject({ status: 403 });
   });
 });
