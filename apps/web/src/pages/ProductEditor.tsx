@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { CreateProductDto } from '@lyra/shared';
+import type { CreateProductDto, UpdateProductDto } from '@lyra/shared';
 import { useWorkspace } from '../workspace/useWorkspace';
 import { productsApi } from '../lib/products';
 import { useBreadcrumb } from '../layout/breadcrumb';
@@ -9,33 +9,60 @@ import { EditorShell } from '../components/EditorShell';
 import { CheckIcon } from '../layout/icons';
 import './products.css';
 
-// Full-page "Add product" form. Uses the shared EditorShell so its header (logo ·
-// crumb · title · ✓ save · ✕ close) matches every other create/edit page in the app.
-// The body is a centered column of three numbered panels.
-export function AddProduct() {
+// Full-page product create + edit form. `/products/new` creates; `/products/:id/edit`
+// edits (prefilled, saved via PATCH). Uses the shared EditorShell so the header
+// matches every other create/edit page; the body is a column of numbered panels.
+export function ProductEditor() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEdit = !!id;
   const { current } = useWorkspace();
   const ws = current?.id;
 
-  useBreadcrumb(t('products.addProduct'));
+  useBreadcrumb(isEdit ? t('products.editProduct') : t('products.addProduct'));
 
   const [name, setName] = useState('');
   const [niche, setNiche] = useState('');
   const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [compareAtPrice, setCompareAtPrice] = useState('');
   const [offer, setOffer] = useState('');
   const [source, setSource] = useState('');
   const [images, setImages] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
   const [error, setError] = useState<string | null>(null);
 
-  // Import bar: paste a product link → crawl + LLM-map → prefill the form.
+  // Import bar (create only): paste a product link → crawl + LLM-map → prefill.
   const [importUrlInput, setImportUrlInput] = useState('');
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
+
+  // Edit mode: load the product and prefill the form.
+  useEffect(() => {
+    if (!isEdit || !ws || !id) return;
+    let cancelled = false;
+    setLoading(true);
+    productsApi.get(ws, id)
+      .then((p) => {
+        if (cancelled) return;
+        setName(p.name ?? '');
+        setNiche(p.niche ?? '');
+        setCategory(p.category ?? '');
+        setDescription(p.description ?? '');
+        setPrice(p.price !== undefined ? String(p.price) : '');
+        setCompareAtPrice(p.compareAtPrice !== undefined ? String(p.compareAtPrice) : '');
+        setOffer(p.offer ?? '');
+        setSource(p.source?.url ?? '');
+        setImages((p.images ?? []).join('\n'));
+      })
+      .catch(() => { if (!cancelled) setError(t('common.notFound')); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [isEdit, ws, id, t]);
 
   async function handleImport() {
     if (!ws || !importUrlInput.trim() || importing) return;
@@ -50,6 +77,7 @@ export function AddProduct() {
       if (result.offer !== undefined) setOffer(result.offer);
       if (result.niche !== undefined) setNiche(result.niche);
       if (result.category !== undefined) setCategory(result.category);
+      if (result.description !== undefined) setDescription(result.description);
       if (result.images && result.images.length) setImages(result.images.join('\n'));
       if (result.source?.url) setSource(result.source.url);
       setImportWarnings(result.warnings ?? []);
@@ -66,37 +94,70 @@ export function AddProduct() {
     setSaving(true);
     setError(null);
     try {
-      const dto: CreateProductDto = {
-        name: name.trim(),
-        ...(niche.trim() && { niche: niche.trim() }),
-        ...(category.trim() && { category: category.trim() }),
-        ...(price && { price: parseFloat(price) }),
-        ...(compareAtPrice && { compareAtPrice: parseFloat(compareAtPrice) }),
-        ...(offer.trim() && { offer: offer.trim() }),
-        ...(source.trim() && { source: { url: source.trim() } }),
-        ...(images.trim() && {
+      if (isEdit && id) {
+        // Edit: the form is the desired state of these fields. Send strings as-is
+        // (empty clears them); numbers only when present (clearing a number is rare).
+        const patch: UpdateProductDto = {
+          name: name.trim(),
+          niche: niche.trim(),
+          category: category.trim(),
+          description: description.trim(),
+          offer: offer.trim(),
+          source: { url: source.trim() },
           images: images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean),
-        }),
-      };
-      await productsApi.create(ws, dto);
-      navigate('/products');
+          ...(price.trim() ? { price: parseFloat(price) } : {}),
+          ...(compareAtPrice.trim() ? { compareAtPrice: parseFloat(compareAtPrice) } : {}),
+        };
+        await productsApi.update(ws, id, patch);
+        navigate(`/products/${id}`);
+      } else {
+        const dto: CreateProductDto = {
+          name: name.trim(),
+          ...(niche.trim() && { niche: niche.trim() }),
+          ...(category.trim() && { category: category.trim() }),
+          ...(description.trim() && { description: description.trim() }),
+          ...(price && { price: parseFloat(price) }),
+          ...(compareAtPrice && { compareAtPrice: parseFloat(compareAtPrice) }),
+          ...(offer.trim() && { offer: offer.trim() }),
+          ...(source.trim() && { source: { url: source.trim() } }),
+          ...(images.trim() && {
+            images: images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean),
+          }),
+        };
+        await productsApi.create(ws, dto);
+        navigate('/products');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('products.saveFailed'));
       setSaving(false);
     }
   }
 
+  const backTo = isEdit && id ? `/products/${id}` : '/products';
+
+  if (loading) {
+    return (
+      <EditorShell
+        crumb={{ label: t('nav.products'), to: '/products' }}
+        onClose={() => navigate(backTo)}
+        title={<h2 className="eshell-name">{t('common.loading')}</h2>}
+      >
+        <div className="ap-form" />
+      </EditorShell>
+    );
+  }
+
   return (
     <EditorShell
       crumb={{ label: t('nav.products'), to: '/products' }}
-      onClose={() => navigate('/products')}
-      title={<h2 className="eshell-name">{t('products.addProduct')}</h2>}
+      onClose={() => navigate(backTo)}
+      title={<h2 className="eshell-name">{isEdit ? t('products.editProduct') : t('products.addProduct')}</h2>}
       actions={
         <button
           type="button"
           className="icon-btn-success"
-          title={saving ? t('common.saving') : t('products.addProduct')}
-          aria-label={t('products.addProduct')}
+          title={saving ? t('common.saving') : t('common.save')}
+          aria-label={t('common.save')}
           disabled={saving || !name.trim()}
           onClick={() => void handleSubmit()}
         >
@@ -107,33 +168,35 @@ export function AddProduct() {
       <form className="ap-form" onSubmit={(e) => void handleSubmit(e)}>
         {error && <p className="error">{error}</p>}
 
-        {/* Import from a product link — crawl + prefill */}
-        <section className="ap-import">
-          <span className="field-label ap-import-label">{t('products.importTitle')}</span>
-          <div className="ap-import-row">
-            <input
-              className="text-input"
-              type="url"
-              value={importUrlInput}
-              onChange={(e) => setImportUrlInput(e.target.value)}
-              placeholder={t('products.importPlaceholder')}
-              disabled={importing}
-            />
-            <button
-              type="button"
-              className="btn-primary btn-inline"
-              onClick={() => void handleImport()}
-              disabled={importing || !importUrlInput.trim()}
-            >
-              {importing ? t('products.importing') : t('products.importBtn')}
-            </button>
-          </div>
-          <span className="ap-import-hint">{t('products.importHint')}</span>
-          {importError && <p className="error">{importError}</p>}
-          {importWarnings.map((w, i) => (
-            <p key={i} className="ap-import-warn">{w}</p>
-          ))}
-        </section>
+        {/* Import from a product link — crawl + prefill (create only) */}
+        {!isEdit && (
+          <section className="ap-import">
+            <span className="field-label ap-import-label">{t('products.importTitle')}</span>
+            <div className="ap-import-row">
+              <input
+                className="text-input"
+                type="url"
+                value={importUrlInput}
+                onChange={(e) => setImportUrlInput(e.target.value)}
+                placeholder={t('products.importPlaceholder')}
+                disabled={importing}
+              />
+              <button
+                type="button"
+                className="btn-primary btn-inline"
+                onClick={() => void handleImport()}
+                disabled={importing || !importUrlInput.trim()}
+              >
+                {importing ? t('products.importing') : t('products.importBtn')}
+              </button>
+            </div>
+            <span className="ap-import-hint">{t('products.importHint')}</span>
+            {importError && <p className="error">{importError}</p>}
+            {importWarnings.map((w, i) => (
+              <p key={i} className="ap-import-warn">{w}</p>
+            ))}
+          </section>
+        )}
 
         {/* 1 · Product */}
         <section className="panel">
@@ -153,6 +216,10 @@ export function AddProduct() {
                 <input className="text-input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t('products.fieldCategoryPlaceholder')} />
               </label>
             </div>
+            <label className="field full">
+              <span className="field-label">{t('products.fieldDescription')}</span>
+              <textarea className="text-input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('products.fieldDescriptionPlaceholder')} rows={3} style={{ resize: 'vertical' }} />
+            </label>
           </div>
         </section>
 
@@ -203,10 +270,12 @@ export function AddProduct() {
           </div>
         </section>
 
-        <span className="ap-enters">
-          {t('products.entersAs')}
-          <span className="badge"><span className="ap-enters-dot" aria-hidden="true" />{t('projects.productStatus.candidate')}</span>
-        </span>
+        {!isEdit && (
+          <span className="ap-enters">
+            {t('products.entersAs')}
+            <span className="badge"><span className="ap-enters-dot" aria-hidden="true" />{t('projects.productStatus.candidate')}</span>
+          </span>
+        )}
       </form>
     </EditorShell>
   );

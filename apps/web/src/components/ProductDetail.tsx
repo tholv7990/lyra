@@ -945,6 +945,15 @@ export function ProductDetailPage() {
       crumb={productsCrumb}
       onClose={back}
       title={<h2 className="eshell-name">{product.name}</h2>}
+      actions={
+        <button
+          type="button"
+          className="btn-ghost btn-inline btn-sm"
+          onClick={() => navigate(`/products/${id}/edit`)}
+        >
+          {t('products.edit')}
+        </button>
+      }
     >
       <ProductDetailBody
         product={product}

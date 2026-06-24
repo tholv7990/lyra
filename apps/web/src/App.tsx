@@ -34,7 +34,7 @@ import { TaskEditor } from './pages/TaskEditor';
 import { Components } from './pages/Components';
 import { Monitor } from './pages/Monitor';
 import { Products } from './pages/Products';
-import { AddProduct } from './pages/AddProduct';
+import { ProductEditor } from './pages/ProductEditor';
 import { ProductDetailPage } from './components/ProductDetail';
 import { AppLayout } from './layout/AppLayout';
 
@@ -106,8 +106,9 @@ const router = createBrowserRouter([
       { path: 'connections', element: <Connections /> },
       { path: 'monitor', element: <Monitor /> },
       { path: 'products', element: <Products /> },
-      { path: 'products/new', element: <AddProduct /> },
+      { path: 'products/new', element: <ProductEditor /> },
       { path: 'products/:id', element: <ProductDetailPage /> },
+      { path: 'products/:id/edit', element: <ProductEditor /> },
       { path: 'members', element: <Members /> },
       { path: 'settings', element: <Settings /> },
       { path: 'admin', element: <Admin /> },
