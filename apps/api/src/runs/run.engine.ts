@@ -134,6 +134,7 @@ export function beginStep(state: RunState, index: number): void {
   step.status = StepStatus.Running;
   step.startedAt = now();
   step.error = undefined;
+  step.reviewIssues = undefined; // clear any prior QA findings — this is a fresh attempt
   state.status = RunStatus.Running;
 }
 
@@ -290,6 +291,7 @@ export function resetRun(state: RunState): void {
     step.evidence = undefined;
     step.sources = undefined;
     step.data = undefined;
+    step.reviewIssues = undefined;
   }
   state.currentStep = 0;
   state.status = RunStatus.Idle;

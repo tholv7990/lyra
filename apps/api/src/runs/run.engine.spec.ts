@@ -191,6 +191,18 @@ describe('gateForReview (post-render QA gate)', () => {
     expect(s.steps[0].status).toBe(StepStatus.Done);
     expect(s.currentStep).toBe(1);
   });
+
+  it('clears stale reviewIssues on a re-run (beginStep) and on reset', () => {
+    const s = freshState();
+    runStep(s, 0);
+    gateForReview(s, 0, ['image is blank']);
+    rejectGateAt(s, 0); // user rejects → step back to Idle, run Idle
+    beginStep(s, 0); // re-run the step
+    expect(s.steps[0].reviewIssues).toBeUndefined();
+    gateForReview(s, 0, ['still blank']);
+    resetRun(s);
+    expect(s.steps[0].reviewIssues).toBeUndefined();
+  });
 });
 
 describe('derived (out-of-band) step transitions', () => {
