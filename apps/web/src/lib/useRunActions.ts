@@ -55,6 +55,12 @@ export function useRunActions(run: Run | null, setRun: (r: Run) => void) {
     savePrompt: (i: number, prompt: string) => {
       if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/prompt`, { method: 'PATCH', body: JSON.stringify({ prompt }) }));
     },
+    saveModel: (i: number, provider: string, model: string) => {
+      if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/model`, { method: 'PATCH', body: JSON.stringify({ provider, model }) }));
+    },
+    saveMedia: (i: number, media: import('@lyra/shared').PromptMedia[]) => {
+      if (run) void act(() => api<Run>(`/runs/${run.id}/steps/${i}/media`, { method: 'PATCH', body: JSON.stringify({ media }) }));
+    },
     saveToPipeline: async (i: number): Promise<Pipeline | null> => {
       if (!run) return null;
       setBusy(true);

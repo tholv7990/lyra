@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ImageOp, MediaType, StepMode, StepStatus, type Asset, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
+import { ImageOp, MediaType, StepMode, StepStatus, type Asset, type PromptMedia, type Provider, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
+import { StepEditModal } from './StepEditModal';
 import { useMediaViewer } from './MediaViewer';
 import './runtimeline.css';
 
@@ -15,12 +16,15 @@ interface RunTimelineProps {
   onRunStep: (index: number) => void;
   onApprove: (index: number) => void;
   onReject?: (index: number) => void;
-  onSavePrompt: (index: number, prompt: string) => void;
+  onSavePrompt: (index: number, prompt: string) => Promise<unknown> | void;
+  onSaveModel?: (index: number, provider: Provider, model: string) => Promise<unknown> | void;
+  onSaveMedia?: (index: number, media: PromptMedia[]) => Promise<unknown> | void;
   onRegenerate?: (index: number) => void;
   onSaveToPipeline?: (index: number) => Promise<void>;
   onImageAction?: (index: number, assetId: string, op: ImageOp) => void;
   assets?: Asset[];
   historyForStep?: (index: number) => StepHistoryEntry[];
+  wsId?: string;
 }
 
 // Per-status timeline glyph (matches the design's vertical step rail).
@@ -66,11 +70,14 @@ export function RunTimeline({
   onApprove,
   onReject,
   onSavePrompt,
+  onSaveModel,
+  onSaveMedia,
   onRegenerate,
   onSaveToPipeline,
   assets = [],
   historyForStep,
   onImageAction,
+  wsId,
 }: RunTimelineProps) {
   const { t } = useTranslation();
   // Steps auto-open when they need attention (current / waiting / error).
@@ -80,8 +87,7 @@ export function RunTimeline({
       .map((s) => s.index),
   );
   const [open, setOpen] = useState<Set<number>>(initialOpen);
-  const [editing, setEditing] = useState<number | null>(null);
-  const [draft, setDraft] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [resultFor, setResultFor] = useState<number | null>(null);
   const [savedToPipeline, setSavedToPipeline] = useState<number | null>(null);
   const { open: openMedia, viewer } = useMediaViewer();
@@ -93,7 +99,8 @@ export function RunTimeline({
       else next.add(i);
       return next;
     });
-  const startEdit = (step: Step) => { setDraft(step.prompt); setEditing(step.index); };
+
+  const editingStep = editingIndex !== null ? run.steps[editingIndex] ?? null : null;
 
   const renderStep = (step: Step) => {
     const isGate = step.mode === StepMode.Gate;
@@ -186,7 +193,7 @@ export function RunTimeline({
             </div>
           )}
 
-          {step.status === StepStatus.Waiting && !locked && editing !== step.index && (
+          {step.status === StepStatus.Waiting && !locked && (
             <div className="rt-gate">
               {step.reviewIssues && step.reviewIssues.length > 0 && (
                 <div className="rt-review-issues">
@@ -215,46 +222,18 @@ export function RunTimeline({
                     {t('run.reject')}
                   </button>
                 )}
-                <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => startEdit(step)}>
+                <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => setEditingIndex(step.index)}>
                   {t('run.editRerun')}
                 </button>
               </div>
             </div>
           )}
 
-          {/* "Edit prompt" affordance for non-gate, non-editing, non-running steps */}
-          {step.status !== StepStatus.Waiting && step.status !== StepStatus.Running && editing !== step.index && !locked && (
-            <button type="button" className="txt-btn rt-edit-prompt" disabled={busy} onClick={() => startEdit(step)}>
+          {/* "Edit" affordance for non-waiting, non-running steps — opens the modal */}
+          {step.status !== StepStatus.Waiting && step.status !== StepStatus.Running && !locked && (
+            <button type="button" className="txt-btn rt-edit-prompt" disabled={busy} onClick={() => setEditingIndex(step.index)}>
               {t('run.editPrompt')}
             </button>
-          )}
-
-          {editing === step.index && (
-            <div className="rt-edit">
-              <textarea className="text-input" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} />
-              <div className="rt-edit-actions">
-                <button type="button" className="btn-primary btn-inline btn-sm" disabled={busy} onClick={() => { onSavePrompt(step.index, draft); onRunStep(step.index); setEditing(null); }}>
-                  {t('run.saveRerun')}
-                </button>
-                {onSaveToPipeline && step.pipelineStepId && (
-                  <button
-                    type="button"
-                    className="btn-ghost btn-inline btn-sm"
-                    disabled={busy}
-                    onClick={async () => {
-                      onSavePrompt(step.index, draft);
-                      await onSaveToPipeline(step.index);
-                      setEditing(null);
-                      setSavedToPipeline(step.index);
-                      setTimeout(() => setSavedToPipeline(null), 4000);
-                    }}
-                  >
-                    {t('run.saveToPipeline')}
-                  </button>
-                )}
-                <button type="button" className="btn-ghost btn-inline btn-sm" onClick={() => setEditing(null)}>{t('common.cancel')}</button>
-              </div>
-            </div>
           )}
 
           {savedToPipeline === step.index && (
@@ -270,14 +249,14 @@ export function RunTimeline({
             </div>
           )}
 
-          {runnable && !locked && editing !== step.index && (
+          {runnable && !locked && (
             <button type="button" className="btn-primary btn-inline btn-sm rt-run" disabled={busy} onClick={() => onRunStep(step.index)}>
               <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>
               {t('common.run')}
             </button>
           )}
 
-          {step.status === StepStatus.Done && !locked && onRegenerate && editing !== step.index && (
+          {step.status === StepStatus.Done && !locked && onRegenerate && (
             <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => onRegenerate(step.index)}>
               {t('run.regenerate')}
             </button>
@@ -341,6 +320,27 @@ export function RunTimeline({
           input={resultFor > 0 ? run.steps[resultFor - 1]?.result ?? '' : run.context?.note ?? ''}
           history={historyForStep?.(resultFor)}
           onClose={() => setResultFor(null)}
+        />
+      )}
+      {editingIndex !== null && editingStep && wsId && (
+        <StepEditModal
+          wsId={wsId}
+          stepIndex={editingIndex}
+          prompt={editingStep.prompt}
+          media={editingStep.media ?? []}
+          provider={(editingStep.provider ?? 'anthropic') as Provider}
+          model={editingStep.model ?? ''}
+          onClose={() => setEditingIndex(null)}
+          onSavePrompt={(i, p) => Promise.resolve(onSavePrompt(i, p))}
+          onSaveModel={(i, p, m) => Promise.resolve(onSaveModel?.(i, p, m))}
+          onSaveMedia={(i, med) => Promise.resolve(onSaveMedia?.(i, med))}
+          onSaveToPipeline={onSaveToPipeline ? async (i) => {
+            await onSaveToPipeline(i);
+            setSavedToPipeline(i);
+            setTimeout(() => setSavedToPipeline(null), 4000);
+          } : undefined}
+          onRerun={onRunStep}
+          canPromote={!!editingStep.pipelineStepId && !!onSaveToPipeline}
         />
       )}
       {viewer}

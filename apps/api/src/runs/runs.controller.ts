@@ -34,7 +34,7 @@ import type { PipelineRunInput } from './runs.service';
 import { RunAccessGuard } from './guards/run-access.guard';
 import { CurrentRun } from './decorators/current-run.decorator';
 import type { RunDocument } from './run.schema';
-import { ImageActionBody, RateRunBody, RunPipelineBody, RunStepBody, UpdatePromptBody } from './dto/runs.dto';
+import { ImageActionBody, RateRunBody, RunPipelineBody, RunStepBody, UpdatePromptBody, UpdateStepMediaBody, UpdateStepModelBody } from './dto/runs.dto';
 
 // Merge entered values with the pipeline's variable definitions: only keys the
 // pipeline declares are kept; a missing value falls back to the variable default.
@@ -401,6 +401,30 @@ export class RunsController {
     @CurrentUser() user: User,
   ): Promise<RunModel> {
     return this.runs.updatePrompt(run, i, body.prompt, user.id);
+  }
+
+  @Patch('runs/:id/steps/:i/model')
+  @UseGuards(RunAccessGuard)
+  @RequireCreate()
+  setModel(
+    @CurrentRun() run: RunDocument,
+    @Param('i', ParseIntPipe) i: number,
+    @Body() body: UpdateStepModelBody,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    return this.runs.updateStepModel(run, i, body.provider, body.model, user.id);
+  }
+
+  @Patch('runs/:id/steps/:i/media')
+  @UseGuards(RunAccessGuard)
+  @RequireCreate()
+  setMedia(
+    @CurrentRun() run: RunDocument,
+    @Param('i', ParseIntPipe) i: number,
+    @Body() body: UpdateStepMediaBody,
+    @CurrentUser() user: User,
+  ): Promise<RunModel> {
+    return this.runs.updateStepMedia(run, i, body.media, user.id);
   }
 
   // Promote a run step's prompt to its originating pipeline step as an override.

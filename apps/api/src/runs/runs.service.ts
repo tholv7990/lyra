@@ -808,6 +808,49 @@ export class RunsService extends BaseRepository<Run> {
     }
   }
 
+  async updateStepModel(
+    doc: RunDocument,
+    index: number,
+    provider: Provider,
+    model: string,
+    actorId: string,
+  ) {
+    if (!model?.trim()) throw new BadRequestException('model must be a non-empty string');
+    let working = doc;
+    for (let attempt = 0; ; attempt++) {
+      const step = working.steps[index];
+      if (!step) throw new BadRequestException('No such step');
+      step.provider = provider;
+      step.model = model;
+      working.updatedBy = actorId;
+      try { await working.save(); return this.toView(working); }
+      catch (e) {
+        if (isVersionError(e) && attempt < COMMIT_MAX_RETRIES) { working = await this.reload(working); continue; }
+        throw e;
+      }
+    }
+  }
+
+  async updateStepMedia(
+    doc: RunDocument,
+    index: number,
+    media: import('@lyra/shared').PromptMedia[],
+    actorId: string,
+  ) {
+    let working = doc;
+    for (let attempt = 0; ; attempt++) {
+      const step = working.steps[index];
+      if (!step) throw new BadRequestException('No such step');
+      step.media = media.length ? media : undefined;
+      working.updatedBy = actorId;
+      try { await working.save(); return this.toView(working); }
+      catch (e) {
+        if (isVersionError(e) && attempt < COMMIT_MAX_RETRIES) { working = await this.reload(working); continue; }
+        throw e;
+      }
+    }
+  }
+
   // Promote a run step's prompt to the originating pipeline step as an override.
   // Uses the run's recorded provenance (pipelineId + pipelineStepId) — not client
   // input — so the target is always authoritative and workspace-fenced.
@@ -826,7 +869,7 @@ export class RunsService extends BaseRepository<Run> {
       run.workspaceId,
       run.pipelineId,
       step.pipelineStepId,
-      step.prompt,
+      { promptOverride: step.prompt, provider: step.provider as Provider | undefined, model: step.model, media: step.media },
       actorId,
     );
   }

@@ -341,9 +341,9 @@ export function TaskDetail() {
         throw err;
       }
     });
-  const savePrompt = (i: number, prompt: string) =>
-    run &&
-    act(async () =>
+  const savePrompt = async (i: number, prompt: string): Promise<void> => {
+    if (!run) return;
+    await act(async () =>
       setRun(
         await api<Run>(`/runs/${run.id}/steps/${i}/prompt`, {
           method: 'PATCH',
@@ -351,6 +351,29 @@ export function TaskDetail() {
         }),
       ),
     );
+  };
+  const saveModel = async (i: number, provider: Provider, model: string): Promise<void> => {
+    if (!run) return;
+    await act(async () =>
+      setRun(
+        await api<Run>(`/runs/${run.id}/steps/${i}/model`, {
+          method: 'PATCH',
+          body: JSON.stringify({ provider, model }),
+        }),
+      ),
+    );
+  };
+  const saveMedia = async (i: number, media: import('@lyra/shared').PromptMedia[]): Promise<void> => {
+    if (!run) return;
+    await act(async () =>
+      setRun(
+        await api<Run>(`/runs/${run.id}/steps/${i}/media`, {
+          method: 'PATCH',
+          body: JSON.stringify({ media }),
+        }),
+      ),
+    );
+  };
   const saveToPipeline = async (i: number): Promise<void> => {
     if (!run) return;
     setBusy(true);
@@ -572,11 +595,14 @@ export function TaskDetail() {
                           onApprove={approve}
                           onReject={reject}
                           onSavePrompt={savePrompt}
+                          onSaveModel={saveModel}
+                          onSaveMedia={saveMedia}
                           onSaveToPipeline={saveToPipeline}
                           onRegenerate={regenerate}
                           onImageAction={imageAction}
                           assets={runAssets}
                           historyForStep={historyForStep}
+                          wsId={wsId}
                         />
                         <RunSummary run={run} busy={busy} onRetry={runStep} />
                       </>

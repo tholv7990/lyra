@@ -208,7 +208,7 @@ describe('RunsService.saveStepToPipeline', () => {
 
     await svc.saveStepToPipeline(makeRunWithPipeline({}), 0, 'actor-1');
 
-    expect(setStepOverride).toHaveBeenCalledWith('ws-1', 'pl-1', 'step-uuid-1', 'My edited prompt', 'actor-1');
+    expect(setStepOverride).toHaveBeenCalledWith('ws-1', 'pl-1', 'step-uuid-1', { promptOverride: 'My edited prompt', provider: undefined, model: undefined, media: undefined }, 'actor-1');
   });
 
   it('throws BadRequest when the run has no pipelineId', async () => {
@@ -947,5 +947,35 @@ describe('RunsService step-media (multimodal)', () => {
     // Provider must be called but with no attachments
     const ctx = providerExecute.mock.calls[0][0];
     expect(ctx.attachments).toEqual([]);
+  });
+});
+
+describe('RunsService.updateStepMedia', () => {
+  const fakeDoc = (over: Record<string, unknown> = {}) => ({
+    _id: 'r1',
+    steps: [{ index: 0 }],
+    updatedBy: '',
+    save: jest.fn().mockResolvedValue(undefined),
+    ...over,
+  }) as never;
+
+  it('sets the step media and saves', async () => {
+    const svc = makeService({});
+    const doc = fakeDoc();
+    await svc.updateStepMedia(doc, 0, [{ type: 'image', url: '/files/x', mime: 'image/png' }] as never, 'u1');
+    expect((doc as never as { steps: { media?: unknown[] }[] }).steps[0].media).toHaveLength(1);
+    expect((doc as never as { save: jest.Mock }).save).toHaveBeenCalled();
+  });
+
+  it('clears media when given an empty array', async () => {
+    const svc = makeService({});
+    const doc = fakeDoc({ steps: [{ index: 0, media: [{ type: 'image', url: '/files/y' }] }] });
+    await svc.updateStepMedia(doc, 0, [], 'u1');
+    expect((doc as never as { steps: { media?: unknown[] }[] }).steps[0].media).toBeUndefined();
+  });
+
+  it('throws on a missing step', async () => {
+    const svc = makeService({});
+    await expect(svc.updateStepMedia(fakeDoc({ steps: [] }), 0, [], 'u1')).rejects.toBeDefined();
   });
 });
