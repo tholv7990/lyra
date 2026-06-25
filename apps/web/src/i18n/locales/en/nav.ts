@@ -1,7 +1,7 @@
 export default {
   home: 'Home',
   projects: 'Projects',
-  pipelines: 'Pipelines',
+  pipelines: 'Flows',
   prompts: 'Prompts',
   marketplace: 'Marketplace',
   chats: 'Chats',

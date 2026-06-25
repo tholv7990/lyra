@@ -2,35 +2,35 @@ export default {
   // Heading
   subtitle:
     'Chain prompts into a repeatable flow — each step binds a prompt to a model and runs automatically or pauses at a gate.',
-  showingRange: 'Showing {{start}}–{{end}} of {{total}} pipelines',
+  showingRange: 'Showing {{start}}–{{end}} of {{total}} flows',
 
   // Toolbar / filters
-  searchPlaceholder: 'Search pipelines…',
+  searchPlaceholder: 'Search flows…',
   filter: '+ Filter',
   filterLabel: 'Filter',
   filterAiOnly: 'AI-built only',
   filterGate: 'Has a gate',
   gateHint: 'Gate — pauses for approval',
   tags: 'Tags',
-  noTags: 'No pipeline tags',
+  noTags: 'No flow tags',
   createdBy: 'Created by',
-  newPipeline: 'New pipeline',
-  createResearchPipeline: 'Create research pipeline',
+  newPipeline: 'New flow',
+  createResearchPipeline: 'Create research flow',
   open: 'Open',
   next: 'Next',
   duplicateNamed: 'Duplicate {{name}}',
-  duplicateError: 'Could not duplicate pipeline',
+  duplicateError: 'Could not duplicate flow',
   copyName: '{{name}} (copy)',
 
   // AI builder
   buildWithAi: 'Build with AI',
-  buildWithAiTitle: 'Build a pipeline with AI',
+  buildWithAiTitle: 'Build a flow with AI',
   buildWithAiHint:
-    'Describe what this pipeline should do — AI designs it from your prompt library. You can edit it before saving.',
+    'Describe what this flow should do — AI designs it from your prompt library. You can edit it before saving.',
   goalPlaceholder: 'e.g. Crawl a store, write a creative brief, then generate branded images',
   generate: 'Generate',
   generating: 'Generating…',
-  generateError: 'Could not generate a pipeline',
+  generateError: 'Could not generate a flow',
   aiBuilt: 'AI-built',
   needsPrompt: 'Needs a prompt',
 
@@ -38,19 +38,19 @@ export default {
   editWithAi: 'Edit with AI',
   builderLabel: 'Builder',
   aiBuilder: 'AI builder',
-  editWithAiTitle: 'Edit this pipeline with AI',
+  editWithAiTitle: 'Edit this flow with AI',
   editWithAiHint:
-    'Describe the change — AI revises the whole pipeline from your prompt library. Review it before saving.',
+    'Describe the change — AI revises the whole flow from your prompt library. Review it before saving.',
   editGoalPlaceholder: 'e.g. Add an image-generation step after branding; make step 2 a gate',
   revise: 'Revise',
   applyToBuilder: 'Apply to builder',
   send: 'Send',
-  askPlaceholder: 'Describe the pipeline, or reply to refine it…',
+  askPlaceholder: 'Describe the flow, or reply to refine it…',
 
   // List states
-  loading: 'Loading pipelines…',
-  noMatch: 'No pipelines match your search.',
-  emptyTitle: 'Build your first pipeline',
+  loading: 'Loading flows…',
+  noMatch: 'No flows match your search.',
+  emptyTitle: 'Build your first flow',
   emptyBody:
     'Chain prompts into a flow — each step runs a prompt on a model you pick, feeding its output to the next.',
 
@@ -59,9 +59,9 @@ export default {
   steps_one: '{{count}} step',
   steps_other: '{{count}} steps',
   createdByName: 'Created by {{name}}',
-  openPipeline: 'Open pipeline',
+  openPipeline: 'Open flow',
   openNamed: 'Open {{name}}',
-  deletePipeline: 'Delete pipeline',
+  deletePipeline: 'Delete flow',
   deleteNamed: 'Delete {{name}}',
 
   // Pager
@@ -69,30 +69,30 @@ export default {
   pageInfo: 'Page {{page}} of {{totalPages}} · {{total}} total',
 
   // Delete confirm
-  deleteConfirmTitle: 'Delete pipeline?',
+  deleteConfirmTitle: 'Delete flow?',
   deleteConfirmBefore: '',
   deleteConfirmAfter: ' will be removed. Projects using it lose access. This can’t be undone.',
 
   // Duplicate confirm
-  duplicateConfirmTitle: 'Duplicate pipeline?',
+  duplicateConfirmTitle: 'Duplicate flow?',
   duplicateConfirmBefore: 'A copy of ',
-  duplicateConfirmAfter: ' will be created as a new pipeline you can edit.',
+  duplicateConfirmAfter: ' will be created as a new flow you can edit.',
 
   // Errors
-  updateError: 'Could not update pipeline',
-  deleteError: 'Could not delete pipeline',
-  loadError: 'Could not load pipeline',
-  createError: 'Could not create pipeline',
-  saveError: 'Could not save pipeline',
+  updateError: 'Could not update flow',
+  deleteError: 'Could not delete flow',
+  loadError: 'Could not load flow',
+  createError: 'Could not create flow',
+  saveError: 'Could not save flow',
   startTestError: 'Could not start test',
   pickPromptError: 'Pick a prompt for this step.',
 
   // Builder header / actions
   breadcrumbNew: 'New',
-  namePlaceholder: 'Pipeline name',
+  namePlaceholder: 'Flow name',
   notePlaceholder: 'Note (optional) — available to prompts as {note}',
   defaultStepName: 'Step',
-  createTitle: 'Create pipeline',
+  createTitle: 'Create flow',
   saveChanges: 'Save changes',
   testHint: 'Runs with no project · {note} fills from the note',
   test: 'Test',

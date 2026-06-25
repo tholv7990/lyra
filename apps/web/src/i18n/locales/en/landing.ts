@@ -1,17 +1,17 @@
 export default {
   navAria: 'Primary',
   navHow: 'How it works',
-  navPipelines: 'Pipelines',
+  navPipelines: 'Flows',
   navMarketplace: 'Marketplace',
   navSecurity: 'Security',
   preferences: 'Preferences',
   login: 'Log in',
   signIn: 'Sign in',
   backToTop: 'Back to top',
-  eyebrow: 'AI creative pipelines · built for teams',
+  eyebrow: 'AI creative flows · built for teams',
   heroTitle: 'Run your AI content like a real project.',
   heroSub:
-    'Lyra is the workspace where your team turns prompts into published campaigns — a shared task board, reusable pipelines, and human approval gates that take a product page all the way to on-brand images, UGC, and video.',
+    'Lyra is the workspace where your team turns prompts into published campaigns — a shared task board, reusable flows, and human approval gates that take a product page all the way to on-brand images, UGC, and video.',
   startFree: 'Start free',
   seeHow: 'See how it works',
   noCard: 'Bring your own API keys · No card required · Free while in v1',
@@ -32,11 +32,11 @@ export default {
   soon: 'Soon',
   painText:
     'Your winning prompts live in scattered chats. Your tasks live in three other tools. And only one person on the team actually knows how the good content gets made.',
-  painEmph: 'Lyra puts the prompts, the pipeline, and the people on <b>one board.</b>',
+  painEmph: 'Lyra puts the prompts, the flow, and the people on <b>one board.</b>',
   galleryEyebrow: 'Made with Lyra',
   galleryTitle: 'One brand, a whole content set',
   galleryLead:
-    'A single pipeline run produces a coordinated set — hero, lifestyle, UGC, and the cut-downs every channel needs.',
+    'A single flow run produces a coordinated set — hero, lifestyle, UGC, and the cut-downs every channel needs.',
   make: {
     studio: { label: 'Hero · product visual', alt: 'Studio product photo of a skincare bottle on a clean seamless backdrop' },
     lifestyle: { label: 'Lifestyle', alt: 'Lifestyle photo of a product styled in a sunlit kitchen with warm tones' },
@@ -48,7 +48,7 @@ export default {
   flowEyebrow: 'The workflow',
   flowTitle: 'Five steps from idea to published',
   flowLead:
-    'Every part of Lyra is one continuous flow — find a prompt, wire it into a pipeline, point it at a brand, run it, and ship the result.',
+    'Every part of Lyra is one continuous flow — find a prompt, wire it into a flow, point it at a brand, run it, and ship the result.',
   flow: {
     find: {
       h: 'Find a prompt',
@@ -56,9 +56,9 @@ export default {
       chip: 'Marketplace · Chats',
     },
     brand: {
-      h: 'Compose a pipeline',
+      h: 'Compose a flow',
       b: 'Chain prompts into linear steps. Bind each to a model and choose auto, or a gate that pauses for a human.',
-      chip: 'Pipeline builder',
+      chip: 'Flow builder',
     },
     create: {
       h: 'Open a project',
@@ -67,7 +67,7 @@ export default {
     },
     approve: {
       h: 'Assign & run',
-      b: 'Drop pipelines onto a task and run. Lyra fills variables, chains step outputs, and pauses at every gate.',
+      b: 'Drop flows onto a task and run. Lyra fills variables, chains step outputs, and pauses at every gate.',
       chip: 'Run engine',
     },
     publish: {
@@ -88,14 +88,14 @@ export default {
       alt: 'A cohesive set of on-brand product images sharing the same palette and styling',
     },
     pipeline: {
-      eyebrow: 'Pipelines & the run engine',
+      eyebrow: 'Flows & the run engine',
       title: 'Automation with a human in the loop',
       body:
         'Compose linear steps, bind each to its own model, and drop a <b>gate</b> anywhere you need eyes before spend. Chain outputs with <chip>{input}</chip> and <chip>{step:Name}</chip>, skip on conditions, or fan a step out across a whole collection.',
       point1: 'Gate steps pause the run for a one-tap Approve',
       point2: 'Per-step key gating — runnable only when a key exists',
       point3: 'Runs freeze prompts and variables at start — no drift',
-      glimpseAria: 'A pipeline run paused at an approval gate, holding a generated image for review',
+      glimpseAria: 'A flow run paused at an approval gate, holding a generated image for review',
       heroShot: 'Render Lyra-orange visual',
       gateWaiting: 'AWAITING GATE',
       glimpseBody: 'Step 3 of 5 produced a hero image with GPT Image 1. Approve to continue the run, or send it back for another pass.',
@@ -106,9 +106,9 @@ export default {
       eyebrow: 'Projects & task board',
       title: 'Manage it like a real project',
       body:
-        'A project is the board for one brand. Tasks move through <b>New, In progress, On hold,</b> and <b>Complete</b> — each with a priority, an assignee, tags, and the pipelines that produce its output. Set the brand’s variables once and every run inherits them.',
+        'A project is the board for one brand. Tasks move through <b>New, In progress, On hold,</b> and <b>Complete</b> — each with a priority, an assignee, tags, and the flows that produce its output. Set the brand’s variables once and every run inherits them.',
       point1: 'Linear-style board — status, priority, assignee, tags',
-      point2: 'Every task holds its own pipelines and run history',
+      point2: 'Every task holds its own flows and run history',
       point3: 'Share with the whole workspace or just the right people',
       boardTitle: 'CozyClaw — Lyra branding',
       draft: 'Draft',
@@ -128,10 +128,10 @@ export default {
       eyebrow: 'Start from anything',
       title: 'Paste a product link. Get assets.',
       body:
-        'The built-in crawler turns any store page into product images and copy — no API key required. It’s the natural first step of most pipelines, and it works on carousels too.',
+        'The built-in crawler turns any store page into product images and copy — no API key required. It’s the natural first step of most flows, and it works on carousels too.',
       point1: '1,000+ supported sites',
       point2: 'Video, image, and audio',
-      point3: 'Straight into a pipeline',
+      point3: 'Straight into a flow',
       altA: 'Imported reference frame pulled from a product video',
       altB: 'Second imported reference frame from the same clip',
       altC: 'Third imported reference frame from the same clip',
@@ -167,10 +167,10 @@ export default {
   },
   ctaTitle: 'Stop prompting. Start shipping.',
   ctaBody:
-    'Wire your best prompts into pipelines your whole team can run — and turn a product page into a publish-ready campaign today.',
+    'Wire your best prompts into flows your whole team can run — and turn a product page into a publish-ready campaign today.',
   bookWalkthrough: 'Book a walkthrough',
   footerTagline:
-    'AI creative pipelines for the teams turning product pages into on-brand content — and shipping it everywhere.',
+    'AI creative flows for the teams turning product pages into on-brand content — and shipping it everywhere.',
   footerProduct: 'Product',
   footerResources: 'Resources',
   footerCompany: 'Company',

@@ -3,7 +3,7 @@ export default {
   providerKeys: 'Provider keys',
   providerKeysHint: 'Bring your own API keys — stored encrypted, per workspace.',
   providerKeysLongHint:
-    'Bring-your-own keys, encrypted at rest per workspace. Each pipeline step unlocks once its provider key is set.',
+    'Bring-your-own keys, encrypted at rest per workspace. Each flow step unlocks once its provider key is set.',
   keyManagePermissionHint: ' You need Owner or key-management permission to change these.',
   set: 'Set',
   notSet: 'Not set',
@@ -19,7 +19,7 @@ export default {
   loadingKeys: 'Loading keys…',
   // Providers section (catalog + cards)
   providers: 'Providers',
-  providersHint: 'Connect AI providers with your own keys — stored encrypted, per workspace. Each pipeline step unlocks once its provider is connected.',
+  providersHint: 'Connect AI providers with your own keys — stored encrypted, per workspace. Each flow step unlocks once its provider is connected.',
   chooseProvider: 'Choose a provider',
   addProvider: 'Add',
   noProvidersYet: 'No providers yet. Add one to start running steps.',
@@ -64,7 +64,7 @@ export default {
   },
   models: 'Models',
   modelsHint:
-    'Models available in the prompt playground and pipeline steps. Refresh to fetch the current list from each provider — no code change needed.',
+    'Models available in the prompt playground and flow steps. Refresh to fetch the current list from each provider — no code change needed.',
   modelsCount: '{{count}} models',
   fetchLatestModels: 'Fetch latest models from provider',
   addProviderKeyToFetch: 'Add the {{provider}} key above to fetch its models.',
@@ -87,7 +87,7 @@ export default {
   passwordUpdated: 'Password updated. Your other devices were signed out.',
   passwordChangeFailed: 'Could not change password',
   saveProviderKeyTitle: 'Save provider key?',
-  saveProviderKeyMessage: 'Save this {{provider}} key for this workspace? It will replace the current key and affect future pipeline runs that use this provider.',
+  saveProviderKeyMessage: 'Save this {{provider}} key for this workspace? It will replace the current key and affect future flow runs that use this provider.',
   removeKeyTitle: 'Remove key?',
   removeKeyMessage: 'Remove the {{provider}} key for this workspace? Steps using it will lock until a new key is set.',
   // Preferences section

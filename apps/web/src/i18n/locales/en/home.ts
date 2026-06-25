@@ -22,15 +22,15 @@ export default {
   marketplaceCta: 'Browse marketplace',
   promptsTitle: 'Prompts',
   promptsBody:
-    'Your library of reusable, on-brand prompts with media, tags, {placeholders}, and the best answers saved from chat. Open one in chat to iterate, or wire it into a pipeline step.',
+    'Your library of reusable, on-brand prompts with media, tags, {placeholders}, and the best answers saved from chat. Open one in chat to iterate, or wire it into a flow step.',
   promptsCta: 'Open prompts',
-  pipelinesTitle: 'Pipelines',
+  pipelinesTitle: 'Flows',
   pipelinesBody:
     'Compose linear flows of steps — each binds a prompt to a provider·model with gate or auto mode. Assign to a project and run; the flow lights up step by step.',
-  pipelinesCta: 'Open pipelines',
+  pipelinesCta: 'Open flows',
   projectsTitle: 'Projects',
   projectsBody:
-    'A project per brand, product, or store. It supplies the run context ({product}, {niche}, {homepage}) and is where you assign pipelines and launch runs.',
+    'A project per brand, product, or store. It supplies the run context ({product}, {niche}, {homepage}) and is where you assign flows and launch runs.',
   projectsCta: 'Open projects',
   importTitle: 'Crawler',
   importBody:
@@ -66,11 +66,11 @@ export default {
   gsPromptTitle: 'Craft a prompt',
   gsPromptBody: 'Chat with any model, then save the best result to your prompt library.',
   gsPromptCta: 'Open Chats',
-  gsPipelineTitle: 'Build a pipeline',
+  gsPipelineTitle: 'Build a flow',
   gsPipelineBody:
     'Chain prompts into a flow — each step picks a model and runs automatically or waits for your approval.',
-  gsPipelineCta: 'Build pipeline',
+  gsPipelineCta: 'Build flow',
   gsProjectTitle: 'Create a project and run',
-  gsProjectBody: 'A project holds your brand context. Assign a pipeline and launch your first run.',
+  gsProjectBody: 'A project holds your brand context. Assign a flow and launch your first run.',
   gsProjectCta: 'New project',
 } as const;

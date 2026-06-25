@@ -37,7 +37,7 @@ const MODULES = [
   { path: '/chats', name: 'Chats' },
   { path: '/prompts', name: 'Prompts' },
   { path: '/marketplace', name: 'Marketplace' },
-  { path: '/pipelines', name: 'Pipelines' },
+  { path: '/pipelines', name: 'Flows' },
   { path: '/projects', name: 'Projects' },
   { path: '/products', name: 'Products' },
   { path: '/publish', name: 'Publish' },

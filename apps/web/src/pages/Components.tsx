@@ -266,7 +266,7 @@ export function Components() {
             <EmptyState
               icon={<PlusIcon width={26} height={26} />}
               title="No tasks yet"
-              body="Tasks group the pipelines you run for this project."
+              body="Tasks group the flows you run for this project."
               cta={{ label: 'Add task', onClick: () => {} }}
             />
           </div>

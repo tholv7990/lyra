@@ -6,7 +6,7 @@ export default {
   // Prompts list — heading
   heading: 'Prompts',
   subtitle:
-    'Your workspace library of reusable, on-brand prompts. Open one in chat or wire it into a pipeline.',
+    'Your workspace library of reusable, on-brand prompts. Open one in chat or wire it into a flow.',
 
   // Prompts list — toolbar / filters
   searchPlaceholder: 'Search prompts…',
@@ -34,7 +34,7 @@ export default {
   // Prompts list — states
   loadingPrompts: 'Loading prompts…',
   emptyTitle: 'Build your prompt library',
-  emptyBody: 'Save reusable prompts, tag them, and use them as steps in your pipelines.',
+  emptyBody: 'Save reusable prompts, tag them, and use them as steps in your flows.',
   emptyCta: 'Create your first prompt',
   noMatch: 'No prompts match these filters.',
 
@@ -66,8 +66,8 @@ export default {
   // delete dialog
   deleteTitle: 'Delete prompt?',
   deleteRemoved: 'will be removed from the library. This can’t be undone.',
-  deleteUsageWarn_one: 'Used by {{count}} pipeline — those steps will be left empty.',
-  deleteUsageWarn_other: 'Used by {{count}} pipelines — those steps will be left empty.',
+  deleteUsageWarn_one: 'Used by {{count}} flow — those steps will be left empty.',
+  deleteUsageWarn_other: 'Used by {{count}} flows — those steps will be left empty.',
 
   // errors
   errUpdate: 'Could not update prompt',
@@ -106,7 +106,7 @@ export default {
   writeHeading: 'Write your prompt',
   writeHint: 'Type your prompt in the box below — wrap variables in braces.',
   variables: 'Variables',
-  variablesPipeline: 'and in a pipeline,',
+  variablesPipeline: 'and in a flow,',
   variablesPrevStep: 'previous step',
   variablesOr: 'or',
   variablesAnyStep: 'any earlier step',

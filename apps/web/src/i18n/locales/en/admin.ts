@@ -41,7 +41,7 @@ export default {
     users: 'Users',
     workspaces: 'Workspaces',
     projects: 'Projects',
-    pipelines: 'Pipelines',
+    pipelines: 'Flows',
     prompts: 'Prompts',
     runs: 'Runs',
     chats: 'Chats',

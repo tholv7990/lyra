@@ -34,7 +34,7 @@ export default {
   upgradeFailed: 'Could not submit your request. Please try again.',
   // Hero card (solo workspace gate)
   heroTitle: 'Bring your team into Lyra',
-  heroBody: 'Your workspace is personal. Upgrade to a team workspace to invite collaborators, share prompts and pipelines, and run with roles.',
+  heroBody: 'Your workspace is personal. Upgrade to a team workspace to invite collaborators, share prompts and flows, and run with roles.',
   heroSoloBadge: 'solo',
   heroTeamBadge: 'Team workspace',
   heroComparePlans: 'Compare plans',
@@ -46,7 +46,7 @@ export default {
   perkInviteDesc: 'Add teammates by email and manage them from one roster.',
   perkRolesTitle: 'Roles & permissions',
   perkRolesDesc: 'Owner, editor, and viewer access across every workspace asset.',
-  perkSharedTitle: 'Shared prompts & pipelines',
+  perkSharedTitle: 'Shared prompts & flows',
   perkSharedDesc: 'Everyone works from the same library and run history.',
   perkKeysTitle: 'Shared provider keys',
   perkKeysDesc: 'Connect keys once at the workspace level — no re-entry per person.',
