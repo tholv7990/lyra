@@ -7,6 +7,11 @@ import react from '@vitejs/plugin-react';
 // tunnel expose the whole app for previews. Set VITE_API_URL to override.
 const API = 'http://localhost:3001';
 
+// Hosts allowed to reach the Vite server (custom domain + tunnels + local).
+// Applies to BOTH `vite dev` (server) and `vite preview` (preview) — the deploy
+// serves the built app via `vite preview`, which has its OWN allowedHosts.
+const allowedHosts = ['localhost', '.getlyras.app', '.trycloudflare.com'];
+
 // Some API path prefixes (/projects, /prompts, /pipelines) are ALSO client-side
 // SPA routes. Clicking links is client routing and works, but a real page load
 // or refresh issues GET /prompts — which would hit the API (404) instead of the
@@ -27,8 +32,7 @@ export default defineConfig({
   server: {
     host: true, // listen on all interfaces (LAN / tunnel previews)
     port: 5173,
-    // Hosts allowed to reach the dev server (custom domain + tunnels + local).
-    allowedHosts: ['localhost', '.getlyras.app', '.trycloudflare.com'],
+    allowedHosts,
     proxy: {
       '/auth': api(),
       '/workspaces': api(),
@@ -42,5 +46,13 @@ export default defineConfig({
       '/health': api(),
       '/admin': api(true), // /admin is a SPA route AND the /admin/* API prefix
     },
+  },
+  // `vite preview` (how the deployed app is served) host-blocks by default and
+  // does NOT inherit server.allowedHosts — set it here too so dev.getlyras.app
+  // is reachable. (API routing for preview is handled by the front proxy.)
+  preview: {
+    host: true,
+    port: 5173,
+    allowedHosts,
   },
 });
