@@ -4,6 +4,8 @@ export default {
   gated: 'Có cổng',
   viewOutput: 'Xem kết quả',
   hideOutput: 'Ẩn kết quả',
+  expand: 'Mở rộng',
+  collapse: 'Thu gọn',
   acrossRuns: 'Bước này qua các lần chạy',
   viewFull: 'Xem đầy đủ',
   gatedTitle: 'Bước này cần duyệt',

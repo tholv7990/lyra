@@ -120,20 +120,20 @@
   box-shadow: var(--focus-ring);
   border-color: var(--primary);
 }
-/* eye toggle while output is open */
-.rt-ibtn.on {
-  color: var(--primary);
-  border-color: var(--primary);
-  background: var(--primary-tint);
+/* expand / collapse chevron — rotates right (closed) → down (open) */
+.rt-chev svg { transition: transform 0.15s ease; }
+.rt-ibtn.rt-chev[aria-expanded="true"] {
+  color: var(--ink);
+  border-color: var(--ink-tertiary);
 }
 /* the "run this step" primary action */
 .rt-ibtn.run {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--primary);
   border-color: var(--primary);
 }
 .rt-ibtn.run:hover:not(:disabled) {
-  color: #fff;
+  color: var(--on-accent);
   background: color-mix(in srgb, var(--primary) 88%, #000);
   border-color: transparent;
 }

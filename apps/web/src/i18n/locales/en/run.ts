@@ -4,6 +4,8 @@ export default {
   gated: 'Gated',
   viewOutput: 'View output',
   hideOutput: 'Hide output',
+  expand: 'Expand',
+  collapse: 'Collapse',
   acrossRuns: 'This step across runs',
   viewFull: 'View full output',
   gatedTitle: 'This step is gated',

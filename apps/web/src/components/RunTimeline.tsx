@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BUILTIN_VAR_LABELS, ImageOp, MediaType, StepMode, StepStatus, promptVarsForStep, type Asset, type PromptMedia, type Provider, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
-import { EyeIcon, PencilIcon, PlayIcon, RefreshIcon } from '../layout/icons';
+import { PencilIcon, PlayIcon, RefreshIcon } from '../layout/icons';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
 import { StepEditModal } from './StepEditModal';
@@ -139,11 +139,6 @@ export function RunTimeline({
                 Each carries a title + aria-label; the row data gets the width. */}
             {(hasResult || canEditStep || (runnable && !locked) || (step.status === StepStatus.Done && !locked && onRegenerate)) && (
               <div className="rt-acts">
-                {hasResult && (
-                  <button type="button" className={`rt-ibtn${exp ? ' on' : ''}`} aria-pressed={exp} title={exp ? t('run.hideOutput') : t('run.viewOutput')} aria-label={exp ? t('run.hideOutput') : t('run.viewOutput')} onClick={() => toggle(step.index)}>
-                    <EyeIcon width={15} height={15} />
-                  </button>
-                )}
                 {canEditStep && (
                   <button type="button" className="rt-ibtn" disabled={busy} title={t('run.editPrompt')} aria-label={t('run.editPrompt')} onClick={() => setEditingIndex(step.index)}>
                     <PencilIcon width={14} height={14} />
@@ -157,6 +152,11 @@ export function RunTimeline({
                 {step.status === StepStatus.Done && !locked && onRegenerate && (
                   <button type="button" className="rt-ibtn" disabled={busy} title={t('run.regenerate')} aria-label={t('run.regenerate')} onClick={() => onRegenerate(step.index)}>
                     <RefreshIcon width={14} height={14} />
+                  </button>
+                )}
+                {hasResult && (
+                  <button type="button" className="rt-ibtn rt-chev" aria-expanded={exp} title={exp ? t('run.collapse') : t('run.expand')} aria-label={exp ? t('run.collapse') : t('run.expand')} onClick={() => toggle(step.index)}>
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ transform: exp ? 'none' : 'rotate(-90deg)' }}><path d="m4.5 6.5 3.5 3 3.5-3" /></svg>
                   </button>
                 )}
               </div>
