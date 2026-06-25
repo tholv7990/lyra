@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BUILTIN_VAR_LABELS, ImageOp, MediaType, StepMode, StepStatus, promptVarsForStep, type Asset, type PromptMedia, type Provider, type Run, type Step, isResearchRun, groupByResearchPhase, type ResearchPhaseGroup } from '@lyra/shared';
 import { ProviderIcon } from './ProviderIcon';
+import { EyeIcon, PencilIcon, PlayIcon, RefreshIcon } from '../layout/icons';
 import { providerOf, stepTitle } from './RunStepCard';
 import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
 import { StepEditModal } from './StepEditModal';
@@ -108,6 +109,7 @@ export function RunTimeline({
     const locked = !hasKey(provider);
     const isCurrent = step.index === run.currentStep && run.status !== 'done';
     const runnable = isCurrent && step.status !== StepStatus.Done && step.status !== StepStatus.Waiting;
+    const canEditStep = step.status !== StepStatus.Waiting && step.status !== StepStatus.Running && !locked;
     const queued = step.status === StepStatus.Idle || step.status === StepStatus.Queued;
     const stepAssets = assets.filter((a) => a.stepIndex === step.index);
     const history = historyForStep?.(step.index) ?? [];
@@ -133,11 +135,31 @@ export function RunTimeline({
             {isGate && <span className="rt-gated">{t('run.gated')}</span>}
             {step.cached && <span className="rt-cached">{t('run.cached')}</span>}
             <span className="rt-flex" />
-            {hasResult && (
-              <button type="button" className="rt-toggle" onClick={() => toggle(step.index)}>
-                {exp ? t('run.hideOutput') : t('run.viewOutput')}
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ transform: exp ? 'rotate(180deg)' : 'none' }} aria-hidden><path d="m4.5 6.5 3.5 3 3.5-3" /></svg>
-              </button>
+            {/* Compact icon controls — view output · edit prompt · run/regenerate.
+                Each carries a title + aria-label; the row data gets the width. */}
+            {(hasResult || canEditStep || (runnable && !locked) || (step.status === StepStatus.Done && !locked && onRegenerate)) && (
+              <div className="rt-acts">
+                {hasResult && (
+                  <button type="button" className={`rt-ibtn${exp ? ' on' : ''}`} aria-pressed={exp} title={exp ? t('run.hideOutput') : t('run.viewOutput')} aria-label={exp ? t('run.hideOutput') : t('run.viewOutput')} onClick={() => toggle(step.index)}>
+                    <EyeIcon width={15} height={15} />
+                  </button>
+                )}
+                {canEditStep && (
+                  <button type="button" className="rt-ibtn" disabled={busy} title={t('run.editPrompt')} aria-label={t('run.editPrompt')} onClick={() => setEditingIndex(step.index)}>
+                    <PencilIcon width={14} height={14} />
+                  </button>
+                )}
+                {runnable && !locked && (
+                  <button type="button" className="rt-ibtn run" disabled={busy} title={t('common.run')} aria-label={t('common.run')} onClick={() => onRunStep(step.index)}>
+                    <PlayIcon width={13} height={13} />
+                  </button>
+                )}
+                {step.status === StepStatus.Done && !locked && onRegenerate && (
+                  <button type="button" className="rt-ibtn" disabled={busy} title={t('run.regenerate')} aria-label={t('run.regenerate')} onClick={() => onRegenerate(step.index)}>
+                    <RefreshIcon width={14} height={14} />
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -229,13 +251,6 @@ export function RunTimeline({
             </div>
           )}
 
-          {/* "Edit" affordance for non-waiting, non-running steps — opens the modal */}
-          {step.status !== StepStatus.Waiting && step.status !== StepStatus.Running && !locked && (
-            <button type="button" className="txt-btn rt-edit-prompt" disabled={busy} onClick={() => setEditingIndex(step.index)}>
-              {t('run.editPrompt')}
-            </button>
-          )}
-
           {savedToPipeline === step.index && (
             <div className="rt-saved-confirm" role="status" aria-live="polite">
               {t('run.savedToPipelineConfirm')}
@@ -247,19 +262,6 @@ export function RunTimeline({
               <div className="rt-progress-bar"><span style={{ transform: `scaleX(${(step.progress ?? 0) / 100})` }} /></div>
               <span className="rt-progress-label">{t('run.generatingVideo')} {step.progress ?? 0}%</span>
             </div>
-          )}
-
-          {runnable && !locked && (
-            <button type="button" className="btn-primary btn-inline btn-sm rt-run" disabled={busy} onClick={() => onRunStep(step.index)}>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden><path d="M4.5 3.2 12 8l-7.5 4.8Z" /></svg>
-              {t('common.run')}
-            </button>
-          )}
-
-          {step.status === StepStatus.Done && !locked && onRegenerate && (
-            <button type="button" className="btn-ghost btn-inline btn-sm" disabled={busy} onClick={() => onRegenerate(step.index)}>
-              {t('run.regenerate')}
-            </button>
           )}
 
           {queued && !runnable && (

@@ -87,25 +87,55 @@
 .rt-flex {
   flex: 1;
 }
-.rt-toggle {
+/* Per-step action cluster — compact icon buttons (view · edit · run/regenerate).
+   Replaces the stacked text buttons so the step row keeps width for its data. */
+.rt-acts {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 6px;
-  border: 1px solid var(--hairline);
-  background: var(--surface-1);
-  color: var(--ink-muted);
-  font: inherit;
-  font-size: 11.5px;
-  font-weight: 500;
-  cursor: pointer;
   flex: none;
 }
-.rt-toggle:hover {
+.rt-ibtn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.rt-ibtn:hover:not(:disabled) {
   color: var(--ink);
-  border-color: var(--hairline-strong);
+  border-color: var(--ink-tertiary);
+}
+.rt-ibtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.rt-ibtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-color: var(--primary);
+}
+/* eye toggle while output is open */
+.rt-ibtn.on {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-tint);
+}
+/* the "run this step" primary action */
+.rt-ibtn.run {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.rt-ibtn.run:hover:not(:disabled) {
+  color: #fff;
+  background: color-mix(in srgb, var(--primary) 88%, #000);
+  border-color: transparent;
 }
 
 /* output card */
@@ -231,18 +261,6 @@
   color: var(--danger);
 }
 
-/* edit & rerun + run */
-.rt-edit {
-  margin-top: 4px;
-}
-.rt-edit-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.rt-run {
-  margin-top: 2px;
-}
 .rt-queued {
   font-size: 12.5px;
   color: var(--ink-tertiary);

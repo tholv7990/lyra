@@ -406,11 +406,34 @@ export function TaskDetail() {
 
   return (
     <EditorShell
-      wide
       crumb={{ label: project?.name ?? '…', to: `/projects/${projectId}` }}
       onClose={() => navigate(`/projects/${projectId}`)}
       title={
-        <h2 className="eshell-name">{task.name}</h2>
+        canEdit ? (
+          <input
+            className="eshell-name"
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            placeholder={t('tasks.namePlaceholder')}
+            aria-label={t('tasks.namePlaceholder')}
+          />
+        ) : (
+          <h2 className="eshell-name">{task.name}</h2>
+        )
+      }
+      actions={
+        canEdit && (titleDraft !== task.name || descDraft !== (task.description ?? '')) ? (
+          <button
+            type="button"
+            className="cicon eshell-save"
+            disabled={savingTask || !titleDraft.trim()}
+            onClick={() => void patchTask({ name: titleDraft.trim(), description: descDraft })}
+            title={t('common.save')}
+            aria-label={t('common.save')}
+          >
+            <CheckIcon width={16} height={16} />
+          </button>
+        ) : undefined
       }
     >
       {askVarsFor && (
@@ -429,31 +452,7 @@ export function TaskDetail() {
           <div className="tw-single">
             {error && <p className="error">{error}</p>}
 
-            {/* Task title + description — editable inline; ✓ saves when changed. */}
-            <div className="tw-title">
-              {canEdit ? (
-                <input
-                  className="tw-title-input"
-                  value={titleDraft}
-                  onChange={(e) => setTitleDraft(e.target.value)}
-                  placeholder={t('tasks.namePlaceholder')}
-                />
-              ) : (
-                <h1>{task.name}</h1>
-              )}
-              {canEdit && (titleDraft !== task.name || descDraft !== (task.description ?? '')) && (
-                <button
-                  type="button"
-                  className="icon-btn-success tw-save"
-                  disabled={savingTask || !titleDraft.trim()}
-                  onClick={() => void patchTask({ name: titleDraft.trim(), description: descDraft })}
-                  title={t('common.save')}
-                  aria-label={t('common.save')}
-                >
-                  <CheckIcon width={16} height={16} />
-                </button>
-              )}
-            </div>
+            {/* Description — editable inline (light ghost field); saved with the ✓ in the header. */}
             {canEdit ? (
               <textarea
                 className="tw-desc-input"

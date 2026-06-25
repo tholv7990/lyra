@@ -1,88 +1,65 @@
 /* ===== Task detail — the design's single-column run workbench. Token-only.
    Centered column: title · props · tabs · run header · timeline · earlier runs. ===== */
 
-/* ===== Run workbench (design): single centered column ===== */
+/* ===== Run workbench (design): single centered column =====
+   Non-wide EditorShell, like product/project detail — the header bar (editable
+   title · ✓ save · ✕ close) shows on desktop AND mobile. The shell is 760 + a
+   16px gutter each side so the head aligns with the content column. */
+.eshell:has(.proj-page) { max-width: 792px; }
 .tw-single {
   max-width: 760px;
   margin: 0 auto;
+  padding-bottom: 40px;
 }
+/* the header ✓ save — a success-tinted icon button next to the ✕ close */
+.eshell-save { color: var(--success); }
+.eshell-save:hover:not(:disabled) { background: color-mix(in srgb, var(--success) 12%, transparent); }
 /* Compact inline properties row (replaces the sidebar). */
 .tw-props {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin: -8px 0 18px;
+  margin: 10px 0 18px;
 }
 .tw-props .tw-edit {
   margin-left: auto;
 }
 
-.tw-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 7px;
-}
-.tw-title h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.4px;
-  color: var(--ink);
-}
+/* Read-only description (viewer). */
 .tw-desc {
-  margin: 0 0 14px;
+  margin: 4px 0 0;
   font-size: 13.5px;
   color: var(--ink-muted);
   line-height: 1.6;
-  max-width: 760px;
 }
-/* inline-editable title + description — clearly look like fields you can type in
-   (subtle resting border + a focus ring), so it's obvious they're editable. */
-.tw-title-input {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--hairline);
-  border-radius: 8px;
-  outline: none;
-  background: var(--surface-1);
-  font: inherit;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.4px;
-  color: var(--ink);
-  padding: 5px 10px;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-}
-.tw-title-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-tint);
-}
-.tw-title-input::placeholder { color: var(--placeholder); }
-.tw-save { flex-shrink: 0; }
+/* Editable description — a light "ghost" field: borderless at rest (so the top of
+   the page reads as content, not a form), a surface tint on hover, a clear field
+   on focus. The title is edited in the header bar, not here. */
 .tw-desc-input {
   display: block;
   width: 100%;
-  max-width: 760px;
-  margin: 6px 0 14px;
-  border: 1px solid var(--hairline);
+  margin: 4px 0 0;
+  border: 1px solid transparent;
   border-radius: 8px;
   outline: none;
   resize: vertical;
-  background: var(--surface-1);
+  background: transparent;
   font: inherit;
   font-size: 13.5px;
-  color: var(--ink);
+  color: var(--ink-muted);
   line-height: 1.6;
-  padding: 8px 10px;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  padding: 6px 8px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
+.tw-desc-input:hover { background: var(--surface-1); }
 .tw-desc-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-tint);
+  background: var(--card);
+  color: var(--ink);
 }
-.tw-desc-input::placeholder { color: var(--ink-faint); }
+.tw-desc-input::placeholder { color: var(--ink-tertiary); }
 
 /* pipeline tabs */
 .tw-tabs {
@@ -277,9 +254,6 @@
 }
 
 @media (max-width: 760px) {
-  .tw-title h1 {
-    font-size: 19px;
-  }
   .tw-runhead-r {
     flex-wrap: wrap;
   }
