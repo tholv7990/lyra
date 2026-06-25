@@ -10,15 +10,11 @@ import { postsApi } from '../lib/posts';
 import { platformColor as color, platformGlyph as glyph, platformLabel } from '../lib/platform';
 import { groupChannels, shortProfileId } from '../lib/connections';
 import { fmtDate } from '../lib/format';
+import { toggleInList } from '../lib/array';
 import { CheckIcon, PlusIcon } from '../layout/icons';
 import { MenuPicker } from '../components/MenuPicker';
 import './connectors.css';
 import './publish.css';
-
-// Pure: toggle a channel id in/out of the selected list (exported for tests).
-export function togglePick(ids: string[], id: string): string[] {
-  return ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
-}
 
 const MAX_CAPTION = 2200;
 
@@ -201,7 +197,7 @@ export function PublishComposer() {
                     {conn.accounts.map((c) => {
                       const on = picked.includes(c.id);
                       return (
-                        <button key={c.id} type="button" className={`pub-channel${on ? ' on' : ''}`} onClick={() => setPicked((p) => togglePick(p, c.id))}>
+                        <button key={c.id} type="button" className={`pub-channel${on ? ' on' : ''}`} onClick={() => setPicked((p) => toggleInList(p, c.id))}>
                           <span className="pub-ico" style={{ background: color(c.platform) }}>{glyph(c.platform)}</span>
                           <span className="pub-channel-id">
                             <span className="pub-channel-name">{c.displayName}</span>

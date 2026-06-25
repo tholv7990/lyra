@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CommandBar } from '../components/CommandBar';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +59,26 @@ function moduleFor(pathname: string) {
 
 const COLLAPSE_KEY = 'lyra.nav.collapsed';
 
+// Breadcrumb module → i18n key (matches the translated sidebar labels). Module
+// scope: it's constant, no need to rebuild it on every render.
+const NAV_KEY: Record<string, string> = {
+  '/': 'nav.home',
+  '/chats': 'nav.chats',
+  '/prompts': 'nav.prompts',
+  '/marketplace': 'nav.marketplace',
+  '/pipelines': 'nav.pipelines',
+  '/projects': 'nav.projects',
+  '/publish': 'nav.publish',
+  '/import': 'nav.import',
+  '/connections': 'nav.connections',
+  '/monitor': 'monitor.title',
+  '/products': 'nav.products',
+  '/components': 'nav.components',
+  '/members': 'nav.members',
+  '/settings': 'nav.settings',
+  '/admin': 'nav.admin',
+};
+
 export function AppLayout() {
   const { user, logout } = useAuth();
   // An unverified password signup is limited to Home + Marketplace until they
@@ -84,24 +104,6 @@ export function AppLayout() {
     });
 
   const mod = moduleFor(location.pathname);
-  // Translate the breadcrumb module label to match the (translated) sidebar.
-  const NAV_KEY: Record<string, string> = {
-    '/': 'nav.home',
-    '/chats': 'nav.chats',
-    '/prompts': 'nav.prompts',
-    '/marketplace': 'nav.marketplace',
-    '/pipelines': 'nav.pipelines',
-    '/projects': 'nav.projects',
-    '/publish': 'nav.publish',
-    '/import': 'nav.import',
-    '/connections': 'nav.connections',
-    '/monitor': 'monitor.title',
-    '/products': 'nav.products',
-    '/components': 'nav.components',
-    '/members': 'nav.members',
-    '/settings': 'nav.settings',
-    '/admin': 'nav.admin',
-  };
   const modLabel = t(NAV_KEY[mod.path] ?? '', { defaultValue: mod.name });
   // A path under a module is a detail view; so is any page that set a parent
   // override (e.g. a chat opened from a prompt, before it gets its own /chats/:id).
@@ -264,7 +266,9 @@ export function AppLayout() {
             </div>
           </header>
           <div className="content">
-            <Outlet />
+            <Suspense fallback={<div className="center muted">{t('common.loading')}</div>}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
 

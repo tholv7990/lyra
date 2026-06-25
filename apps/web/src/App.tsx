@@ -1,3 +1,4 @@
+import { lazy, type ComponentType } from 'react';
 import {
   createBrowserRouter,
   Navigate,
@@ -7,6 +8,7 @@ import {
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth/useAuth';
+// Eager: auth + the first screens a session lands on (no Suspense flash there).
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -19,24 +21,33 @@ import { ProjectDetail } from './pages/ProjectDetail';
 import { ProjectEditor } from './pages/ProjectEditor';
 import { Prompts } from './pages/Prompts';
 import { PromptEditor } from './pages/PromptEditor';
-import { Marketplace } from './pages/Marketplace';
-import { Chats } from './pages/Chats';
 import { Pipelines } from './pages/Pipelines';
-import { PipelineBuilder } from './pages/PipelineBuilder';
-import { Settings } from './pages/Settings';
-import { Admin } from './pages/Admin';
-import { Connections } from './pages/Connections';
-import { PublishComposer } from './pages/PublishComposer';
-import { ImportMedia } from './pages/ImportMedia';
-import { Members } from './pages/Members';
-import { TaskDetail } from './pages/TaskDetail';
-import { TaskEditor } from './pages/TaskEditor';
-import { Components } from './pages/Components';
-import { Monitor } from './pages/Monitor';
 import { Products } from './pages/Products';
 import { ProductEditor } from './pages/ProductEditor';
 import { ProductDetailPage } from './components/ProductDetail';
+import { TaskDetail } from './pages/TaskDetail';
+import { TaskEditor } from './pages/TaskEditor';
 import { AppLayout } from './layout/AppLayout';
+
+// Code-split rare/heavy routes out of the main bundle. They render inside
+// AppLayout's <Suspense> boundary, so no per-route fallback is needed here.
+function lazyPage<M extends Record<string, unknown>, K extends keyof M>(
+  loader: () => Promise<M>,
+  name: K,
+) {
+  return lazy(() => loader().then((m) => ({ default: m[name] as ComponentType })));
+}
+const Marketplace = lazyPage(() => import('./pages/Marketplace'), 'Marketplace');
+const Chats = lazyPage(() => import('./pages/Chats'), 'Chats');
+const PipelineBuilder = lazyPage(() => import('./pages/PipelineBuilder'), 'PipelineBuilder');
+const Settings = lazyPage(() => import('./pages/Settings'), 'Settings');
+const Admin = lazyPage(() => import('./pages/Admin'), 'Admin');
+const Connections = lazyPage(() => import('./pages/Connections'), 'Connections');
+const PublishComposer = lazyPage(() => import('./pages/PublishComposer'), 'PublishComposer');
+const ImportMedia = lazyPage(() => import('./pages/ImportMedia'), 'ImportMedia');
+const Members = lazyPage(() => import('./pages/Members'), 'Members');
+const Components = lazyPage(() => import('./pages/Components'), 'Components');
+const Monitor = lazyPage(() => import('./pages/Monitor'), 'Monitor');
 
 function Loading() {
   const { t } = useTranslation();

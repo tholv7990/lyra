@@ -106,14 +106,6 @@ export const KeyIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const MenuIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <rect x="2" y="3.6" width="12" height="1.9" rx="0.95" />
-    <rect x="2" y="7.05" width="12" height="1.9" rx="0.95" />
-    <rect x="2" y="10.5" width="12" height="1.9" rx="0.95" />
-  </svg>
-);
-
 export const ChevronIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s({ width: 14, height: 14, ...p })} className="ws-chevron">
     <path d="M3.3 5.55a1 1 0 0 1 1.4 0L8 8.84l3.3-3.29a1 1 0 1 1 1.4 1.42l-4 3.98a1 1 0 0 1-1.4 0l-4-3.98a1 1 0 0 1 0-1.42Z" />
@@ -242,14 +234,6 @@ export const LogoutIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-// Paper-plane — the Publish (send to channels) section.
-export const LoginIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon">
-    <path d="M8.5 2.5h4A1.5 1.5 0 0 1 14 4v8a1.5 1.5 0 0 1-1.5 1.5h-4A1.5 1.5 0 0 1 7 12v-1.2a.8.8 0 0 1 1.6 0v1.1H12V4.1H8.6v1.1a.8.8 0 1 1-1.6 0V4a1.5 1.5 0 0 1 1.5-1.5Z" />
-    <path d="M5.06 5.64 7.7 7.4a.7.7 0 0 1 0 1.2l-2.64 1.76a.7.7 0 0 1-1.09-.58V8.8H2.3a.8.8 0 0 1 0-1.6h1.67V6.22a.7.7 0 0 1 1.09-.58Z" />
-  </svg>
-);
-
 // Paper plane — Publish (post to channels).
 export const PublishIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...s(p)} className="icon" {...stroke}>
@@ -352,17 +336,6 @@ export const MonitorIcon = (p: SVGProps<SVGSVGElement>) => (
 
 // Generic fingerprint (nested arcs) — denotes a browser-automation (GoLogin)
 // connection. A neutral placeholder, not any brand's logo.
-export const FingerprintIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...s(p)} className="icon" {...stroke}>
-    <path d="M8 7.4v4.2" />
-    <path d="M5.5 6.1a3.3 3.3 0 0 1 5 .4" />
-    <path d="M3.9 8.3A5.1 5.1 0 0 1 12 4.7" />
-    <path d="M6 9.7a2.2 2.2 0 0 1 4-.1v2.1" />
-    <path d="M5.1 12.2q.4.9.9 1.5" />
-    <path d="M11.5 10.1v1.3q0 1.4-.6 2.5" />
-  </svg>
-);
-
 // Magnifier — the search-box glyph for the library list toolbars.
 export const SearchGlyph = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>

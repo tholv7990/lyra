@@ -20,6 +20,7 @@ import { api } from '../lib/api';
 import { channelsApi } from '../lib/channels';
 import { groupChannels, shortProfileId } from '../lib/connections';
 import { platformColor, platformGlyph } from '../lib/platform';
+import { toggleInList } from '../lib/array';
 import { initials } from '../lib/format';
 import { useAuth } from '../auth/useAuth';
 import { useWorkspace } from '../workspace/useWorkspace';
@@ -117,10 +118,7 @@ export function ProjectEditor() {
   }, [wsId]);
 
   const toggleChannel = (cid: string) =>
-    setForm((f) => ({
-      ...f,
-      channels: f.channels.includes(cid) ? f.channels.filter((x) => x !== cid) : [...f.channels, cid],
-    }));
+    setForm((f) => ({ ...f, channels: toggleInList(f.channels, cid) }));
 
   const cancelTo = isEdit ? `/projects/${id}` : '/projects';
 
@@ -131,10 +129,7 @@ export function ProjectEditor() {
   const addVar = (key = '') =>
     setForm((f) => ({ ...f, variables: [...f.variables, { key, value: '' }] }));
   const toggleMember = (uid: string) =>
-    setForm((f) => ({
-      ...f,
-      sharedWith: f.sharedWith.includes(uid) ? f.sharedWith.filter((x) => x !== uid) : [...f.sharedWith, uid],
-    }));
+    setForm((f) => ({ ...f, sharedWith: toggleInList(f.sharedWith, uid) }));
 
   async function uploadLogo(files: FileList | null) {
     if (!files || !wsId) return;

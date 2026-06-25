@@ -19,16 +19,6 @@ import { StepResultModal, type StepHistoryEntry } from './StepResultModal';
 import { StepEditModal } from './StepEditModal';
 import { useMediaViewer } from './MediaViewer';
 
-export const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle',
-  queued: 'Queued',
-  running: 'Running',
-  waiting: 'Awaiting approval',
-  skipped: 'Skipped',
-  done: 'Done',
-  error: 'Error',
-};
-
 export function stepTitle(step: Step) {
   return step.name?.trim() || STEP_DEFS[step.index]?.title || `Step ${step.index + 1}`;
 }

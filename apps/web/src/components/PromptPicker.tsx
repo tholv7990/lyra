@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { labelColor, type LabelInfo, type Prompt } from '@lyra/shared';
 import { initial } from '../lib/format';
+import { toggleInList } from '../lib/array';
 import { EyeIcon, FilterIcon } from '../layout/icons';
 import { ProviderIcon } from './ProviderIcon';
 import { PromptDetails } from './PromptDetails';
@@ -42,8 +43,7 @@ export function PromptPicker({
       (activeTags.length === 0 || activeTags.some((t) => p.tags.includes(t))),
   );
 
-  const toggleTag = (t: string) =>
-    setActiveTags((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+  const toggleTag = (t: string) => setActiveTags((cur) => toggleInList(cur, t));
 
   return (
     <div className="ppick">
