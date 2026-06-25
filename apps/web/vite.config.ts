@@ -10,7 +10,7 @@ const API = 'http://localhost:3001';
 // Hosts allowed to reach the Vite server (custom domain + tunnels + local).
 // Applies to BOTH `vite dev` (server) and `vite preview` (preview) — the deploy
 // serves the built app via `vite preview`, which has its OWN allowedHosts.
-const allowedHosts = ['localhost', '.getlyras.app', '.trycloudflare.com'];
+const allowedHosts = ['localhost', 'dev.getlyras.app', '.getlyras.app', '.trycloudflare.com'];
 
 // Some API path prefixes (/projects, /prompts, /pipelines) are ALSO client-side
 // SPA routes. Clicking links is client routing and works, but a real page load
